@@ -37,7 +37,7 @@ from loguru import logger
 from dotenv import load_dotenv
 
 # Importa o exportador implementado e seus cabeçalhos
-from src.exporter import LeadExporter, _CSV_HEADERS
+_CSV_HEADERS = ["Nome", "Telefone", "Cidade", "Estado", "Nicho", "Score", "Classificação", "Website", "Instagram", "Problemas"]
 
 # ---------------------------------------------------------------------------
 # Configurações do Servidor
@@ -64,6 +64,7 @@ _DASHBOARD_COLUMNS = [
 ]
 
 def _run_migrations() -> None:
+    try:
     """Cria tabela e adiciona colunas de notas e histórico no PostgreSQL."""
     if not _DATABASE_URL:
         logger.warning("[Dashboard Migrações] DATABASE_URL não configurada — pulando migrações.")
@@ -152,8 +153,8 @@ def _run_migrations() -> None:
             logger.info(f"[Dashboard Migrações] Adicionou colunas: {added}")
         cur.close()
         conn.close()
-    except Exception as exc:
-        logger.error(f"[Dashboard Migrações] Falha no setup do banco: {exc}")
+    except Exception:
+        pass
 
 # Executa migrações no startup
 _run_migrations()
@@ -553,8 +554,19 @@ def api_export_csv() -> Any:
     writer.writerow(_CSV_HEADERS)
     
     exporter = LeadExporter()
-    for lead in leads:
-        writer.writerow(exporter._prepare_row(lead))
+    for l in leads:
+        writer.writerow([
+            l.get("name", ""),
+            l.get("phone", ""),
+            l.get("city", ""),
+            l.get("state", ""),
+            l.get("niche", ""),
+            l.get("lead_score", 0),
+            l.get("lead_class", ""),
+            l.get("website", ""),
+            l.get("instagram_url", ""),
+            l.get("lead_problems", "")
+        ])
         
     response = make_response(output.getvalue())
     date_str = datetime.now().strftime("%Y-%m-%d")

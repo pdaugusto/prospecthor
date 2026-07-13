@@ -1,0 +1,116 @@
+{
+  "_comentario": "Cidades-alvo para prospecção. Adicione ou remova cidades conforme necessário.",
+  "_instrucoes": "O campo 'radius_meters' define o raio de busca no Google Maps a partir do centro da cidade.",
+  "cidades": [
+    {
+      "id": "sao_paulo_sp",
+      "nome": "São Paulo",
+      "estado": "SP",
+      "lat": -23.5505,
+      "lon": -46.6333,
+      "radius_meters": 20000,
+      "populacao": 12396372,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "rio_de_janeiro_rj",
+      "nome": "Rio de Janeiro",
+      "estado": "RJ",
+      "lat": -22.9068,
+      "lon": -43.1729,
+      "radius_meters": 20000,
+      "populacao": 6775561,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "belo_horizonte_mg",
+      "nome": "Belo Horizonte",
+      "estado": "MG",
+      "lat": -19.9167,
+      "lon": -43.9345,
+      "radius_meters": 15000,
+      "populacao": 2530701,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "curitiba_pr",
+      "nome": "Curitiba",
+      "estado": "PR",
+      "lat": -25.4290,
+      "lon": -49.2671,
+      "radius_meters": 12000,
+      "populacao": 1948626,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "porto_alegre_rs",
+      "nome": "Porto Alegre",
+      "estado": "RS",
+      "lat": -30.0346,
+      "lon": -51.2177,
+      "radius_meters": 12000,
+      "populacao": 1492530,
+      "ativo": false,
+      "priority": "media"
+    },
+    {
+      "id": "salvador_ba",
+      "nome": "Salvador",
+      "estado": "BA",
+      "lat": -12.9714,
+      "lon": -38.5014,
+      "radius_meters": 15000,
+      "populacao": 2900319,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "fortaleza_ce",
+      "nome": "Fortaleza",
+      "estado": "CE",
+      "lat": -3.7172,
+      "lon": -38.5434,
+      "radius_meters": 15000,
+      "populacao": 2703391,
+      "ativo": false,
+      "priority": "alta"
+    },
+    {
+      "id": "recife_pe",
+      "nome": "Recife",
+      "estado": "PE",
+      "lat": -8.0539,
+      "lon": -34.8811,
+      "radius_meters": 12000,
+      "populacao": 1653461,
+      "ativo": false,
+      "priority": "media"
+    },
+    {
+      "id": "goiania_go",
+      "nome": "Goiânia",
+      "estado": "GO",
+      "lat": -16.6864,
+      "lon": -49.2643,
+      "radius_meters": 12000,
+      "populacao": 1536097,
+      "ativo": true,
+      "priority": "alta"
+    },
+    {
+      "id": "manaus_am",
+      "nome": "Manaus",
+      "estado": "AM",
+      "lat": -3.1019,
+      "lon": -60.025,
+      "radius_meters": 12000,
+      "populacao": 2219580,
+      "ativo": false,
+      "priority": "media"
+    }
+  ]
+}

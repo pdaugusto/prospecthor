@@ -1,0 +1,14 @@
+{
+  "_comentario": "Nichos de negócios suportados pelo Prospector Bot.",
+  "_instrucoes": "Cada nicho possui um 'query_term' usado na busca do Google Maps e flags de comportamento.",
+  "nichos": [
+    {
+      "id": "odontologia",
+      "label": "Odontologia",
+      "query_term": "dentista consultório odontológico clínica odontológica",
+      "check_menu": false,
+      "priority_multiplier": 1.5,
+      "description": "Odontologia — alto ticket médio e grande oportunidade de sites profissionais e agendamento online"
+    }
+  ]
+}

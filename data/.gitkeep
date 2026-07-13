@@ -1,0 +1,2 @@
+# Este arquivo garante que a pasta data/ seja rastreada pelo Git.
+# O arquivo leads.db gerado em runtime é ignorado via .gitignore.

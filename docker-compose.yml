@@ -1,0 +1,42 @@
+# ==============================================================
+# docker-compose.yml — Prospector Bot
+# ==============================================================
+
+version: "3.9"
+
+services:
+  prospector-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prospector-bot
+    
+    # Reinicia sempre o container (útil em caso de crashes ou boot da máquina)
+    restart: always
+
+    # Passa as configurações de ambiente do arquivo .env
+    env_file:
+      - .env
+
+    # Porta de acesso ao painel do Dashboard
+    ports:
+      - "5000:5000"
+
+    # Persistência de dados: mapeia o SQLite e exports gerados para a máquina host
+    volumes:
+      - ./data:/app/data
+      - ./bot.log:/app/bot.log
+      - ./config:/app/config:ro
+
+    # Limitação básica de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

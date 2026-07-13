@@ -1,0 +1,2 @@
+# Este arquivo garante que a pasta data/exports/ seja rastreada pelo Git.
+# Os arquivos gerados pelo exporter.py nesta pasta são ignorados via .gitignore.

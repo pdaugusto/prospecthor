@@ -1,5 +1,4 @@
 {
   "version": 2,
-  "builds": [{"src": "dashboard.py", "use": "@vercel/python@3"}],
-  "routes": [{"src": "/(.*)", "dest": "dashboard.py"}]
+  "rewrites": [{"source": "/(.*)", "destination": "/api/index.py"}]
 }

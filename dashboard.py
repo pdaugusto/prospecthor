@@ -16,7 +16,8 @@ import csv
 import io
 import json
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -44,7 +45,8 @@ from src.exporter import LeadExporter, _CSV_HEADERS
 
 load_dotenv()
 
-_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")  # mantido para compatibilidade com main.py
 _DASHBOARD_USER: str = os.getenv("DASHBOARD_USER", "admin")
 _DASHBOARD_PASS: str = os.getenv("DASHBOARD_PASS", "senha123")
 _SECRET_KEY: str = os.getenv("FLASK_SECRET_KEY", "prospector_secret_key_99812")
@@ -62,18 +64,17 @@ _DASHBOARD_COLUMNS = [
 ]
 
 def _run_migrations() -> None:
-    """Cria e adiciona colunas de notas e histórico na tabela de empresas."""
-    db_path = Path(_DB_PATH)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Se o arquivo de banco não existir, o SQLite cria um vazio, então criamos o schema base
-    conn = sqlite3.connect(db_path)
+    """Cria tabela e adiciona colunas de notas e histórico no PostgreSQL."""
+    if not _DATABASE_URL:
+        logger.warning("[Dashboard Migrações] DATABASE_URL não configurada — pulando migrações.")
+        return
     try:
-        conn.execute("PRAGMA journal_mode=WAL;")
+        conn = psycopg2.connect(_DATABASE_URL)
+        cur = conn.cursor()
         # Cria a tabela caso esteja iniciando do zero
-        conn.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS companies (
-            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            id                  SERIAL PRIMARY KEY,
             place_id            TEXT UNIQUE,
             name                TEXT NOT NULL,
             category            TEXT,
@@ -93,7 +94,7 @@ def _run_migrations() -> None:
             business_status     TEXT,
             source              TEXT,
             scraped_at          TEXT NOT NULL,
-            created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+            created_at          TEXT NOT NULL DEFAULT (NOW()::TEXT),
             website_status      TEXT,
             website_flags       TEXT,
             website_mobile      INTEGER,
@@ -135,21 +136,24 @@ def _run_migrations() -> None:
         );
         """)
         conn.commit()
-        
-        # Adiciona colunas do dashboard se necessário
-        existing = {row[1] for row in conn.execute("PRAGMA table_info(companies);").fetchall()}
+
+        # Adiciona colunas do dashboard se necessário (via information_schema)
         added = []
         for col_name, col_type in _DASHBOARD_COLUMNS:
-            if col_name not in existing:
-                conn.execute(f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};")
+            cur.execute("""
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'companies' AND column_name = %s;
+            """, (col_name,))
+            if not cur.fetchone():
+                cur.execute(f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};")
                 added.append(col_name)
         if added:
             conn.commit()
             logger.info(f"[Dashboard Migrações] Adicionou colunas: {added}")
+        cur.close()
+        conn.close()
     except Exception as exc:
         logger.error(f"[Dashboard Migrações] Falha no setup do banco: {exc}")
-    finally:
-        conn.close()
 
 # Executa migrações no startup
 _run_migrations()
@@ -280,22 +284,26 @@ _MOCK_LEADS = [
 # Funções do Banco de Dados
 # ---------------------------------------------------------------------------
 
-def _get_db_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _get_db_connection():
+    """Retorna uma conexão psycopg2 ao PostgreSQL via DATABASE_URL."""
+    return psycopg2.connect(_DATABASE_URL)
 
 def _get_all_leads() -> list[dict[str, Any]]:
-    """Carrega dados reais do banco. Se estiver vazio, retorna mock data."""
+    """Carrega dados reais do banco. Se estiver vazio ou DATABASE_URL ausente, retorna mock data."""
+    if not _DATABASE_URL:
+        return _MOCK_LEADS
     try:
         conn = _get_db_connection()
-        rows = conn.execute("SELECT * FROM companies ORDER BY lead_score DESC;").fetchall()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM companies ORDER BY lead_score DESC;")
+        rows = cur.fetchall()
+        cur.close()
         conn.close()
         if not rows:
             return _MOCK_LEADS
         return [dict(row) for row in rows]
     except Exception as exc:
-        logger.warning(f"[Dashboard] Falha ao carregar SQLite ({exc}). Usando dados fictícios.")
+        logger.warning(f"[Dashboard] Falha ao carregar PostgreSQL ({exc}). Usando dados fictícios.")
         return _MOCK_LEADS
 
 
@@ -405,32 +413,38 @@ def api_update_lead_status(lead_id: int) -> Response:
     status = data.get("status")
     notes = data.get("notes")
 
-    # Tenta atualizar no SQLite
-    try:
-        conn = _get_db_connection()
-        # Verifica se registro existe
-        exists = conn.execute("SELECT 1 FROM companies WHERE id = ? LIMIT 1", (lead_id,)).fetchone()
-        
-        if exists:
-            now = datetime.now().isoformat()
-            if status and notes is not None:
-                conn.execute(
-                    "UPDATE companies SET contact_status = ?, notes = ?, contacted_at = ? WHERE id = ?",
-                    (status, notes, now, lead_id)
-                )
-            elif status:
-                conn.execute(
-                    "UPDATE companies SET contact_status = ?, contacted_at = ? WHERE id = ?",
-                    (status, now, lead_id)
-                )
-            elif notes is not None:
-                conn.execute("UPDATE companies SET notes = ? WHERE id = ?", (notes, lead_id))
-            conn.commit()
+    # Tenta atualizar no PostgreSQL
+    if _DATABASE_URL:
+        try:
+            conn = _get_db_connection()
+            cur = conn.cursor()
+            # Verifica se registro existe
+            cur.execute("SELECT 1 FROM companies WHERE id = %s LIMIT 1", (lead_id,))
+            exists = cur.fetchone()
+
+            if exists:
+                now = datetime.now().isoformat()
+                if status and notes is not None:
+                    cur.execute(
+                        "UPDATE companies SET contact_status = %s, notes = %s, contacted_at = %s WHERE id = %s",
+                        (status, notes, now, lead_id)
+                    )
+                elif status:
+                    cur.execute(
+                        "UPDATE companies SET contact_status = %s, contacted_at = %s WHERE id = %s",
+                        (status, now, lead_id)
+                    )
+                elif notes is not None:
+                    cur.execute("UPDATE companies SET notes = %s WHERE id = %s", (notes, lead_id))
+                conn.commit()
+                cur.close()
+                conn.close()
+                logger.info(f"[Dashboard] Lead {lead_id} atualizado (status={status}, notes={notes is not None})")
+                return jsonify({"success": True})
+            cur.close()
             conn.close()
-            logger.info(f"[Dashboard] Lead {lead_id} atualizado (status={status}, notes={notes is not None})")
-            return jsonify({"success": True})
-    except Exception as exc:
-        logger.warning(f"[Dashboard API] SQLite update failed ({exc}), simulando em mock.")
+        except Exception as exc:
+            logger.warning(f"[Dashboard API] PostgreSQL update failed ({exc}), simulando em mock.")
 
     # Fallback: mock memory update
     lead = next((l for l in _MOCK_LEADS if l["id"] == lead_id), None)
@@ -610,5 +624,6 @@ if __name__ == "__main__":
     # Garante que os templates existam
     Path("templates").mkdir(exist_ok=True)
     
-    logger.info("Iniciando Dashboard Web do Prospector Bot na porta 5000...")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    logger.info(f"Iniciando Dashboard Web do Prospector Bot na porta {port}...")
+    app.run(host="0.0.0.0", port=port)

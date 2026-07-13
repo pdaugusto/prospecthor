@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🤖 Prospector Bot
 > **Bot de prospecção automatizada de leads com presença digital fraca.**
 
@@ -331,3 +332,6 @@ Rode o Prospector Bot 24 horas por dia em uma máquina virtual Linux gratuita da
 ## 📄 16. Licença
 
 Este projeto está licenciado sob os termos da licença **MIT**. Veja o arquivo `LICENSE` para mais detalhes.
+=======
+# prospecthor
+>>>>>>> 1c229396a7dfeba0da6d38d083590beb544a386b

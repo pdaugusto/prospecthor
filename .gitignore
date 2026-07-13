@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ==============================================================
 # .gitignore — Prospector Bot
 # ==============================================================
@@ -134,3 +135,10 @@ temp/
 *.bak
 *.orig
 venv/  __pycache__/  data/leads.db  .env  *.pyc 
+=======
+echo venv/ > .gitignore
+echo __pycache__/ >> .gitignore
+echo data/leads.db >> .gitignore
+echo .env >> .gitignore
+echo *.pyc >> .gitignore
+>>>>>>> 1c229396a7dfeba0da6d38d083590beb544a386b

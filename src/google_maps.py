@@ -33,7 +33,8 @@ import re
 import math
 import time
 import random
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
@@ -59,7 +60,8 @@ load_dotenv()
 
 # Variáveis de ambiente
 _API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "")
-_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")  # mantido para compat com main.py
 _HEADLESS: bool = os.getenv("PLAYWRIGHT_HEADLESS", "true").lower() == "true"
 _TIMEOUT_MS: int = int(os.getenv("PLAYWRIGHT_TIMEOUT_MS", "30000"))
 _DELAY_MIN: float = float(os.getenv("REQUEST_DELAY_MIN_S", "2.0"))
@@ -107,7 +109,7 @@ _BLOCK_SIGNALS = [
 
 _CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS companies (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                  SERIAL PRIMARY KEY,
     place_id            TEXT UNIQUE,
     name                TEXT NOT NULL,
     category            TEXT,
@@ -119,15 +121,15 @@ CREATE TABLE IF NOT EXISTS companies (
     website             TEXT,
     rating              REAL,
     review_count        INTEGER,
-    is_open_now         INTEGER,          -- 0=fechado, 1=aberto, NULL=desconhecido
-    opening_hours       TEXT,             -- JSON string com horários por dia
+    is_open_now         INTEGER,
+    opening_hours       TEXT,
     latitude            REAL,
     longitude           REAL,
     maps_url            TEXT,
-    business_status     TEXT,             -- OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
-    source              TEXT,             -- "playwright" | "places_api"
-    scraped_at          TEXT NOT NULL,    -- ISO-8601
-    created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+    business_status     TEXT,
+    source              TEXT,
+    scraped_at          TEXT NOT NULL,
+    created_at          TEXT NOT NULL DEFAULT (NOW()::TEXT)
 );
 """
 
@@ -137,26 +139,27 @@ INSERT INTO companies (
     website, rating, review_count, is_open_now, opening_hours,
     latitude, longitude, maps_url, business_status, source, scraped_at
 ) VALUES (
-    :place_id, :name, :category, :niche, :city, :state, :address, :phone,
-    :website, :rating, :review_count, :is_open_now, :opening_hours,
-    :latitude, :longitude, :maps_url, :business_status, :source, :scraped_at
+    %(place_id)s, %(name)s, %(category)s, %(niche)s, %(city)s, %(state)s, %(address)s, %(phone)s,
+    %(website)s, %(rating)s, %(review_count)s, %(is_open_now)s, %(opening_hours)s,
+    %(latitude)s, %(longitude)s, %(maps_url)s, %(business_status)s, %(source)s, %(scraped_at)s
 )
 ON CONFLICT(place_id) DO UPDATE SET
-    name            = excluded.name,
-    category        = excluded.category,
-    address         = excluded.address,
-    phone           = excluded.phone,
-    website         = excluded.website,
-    rating          = excluded.rating,
-    review_count    = excluded.review_count,
-    is_open_now     = excluded.is_open_now,
-    opening_hours   = excluded.opening_hours,
-    latitude        = excluded.latitude,
-    longitude       = excluded.longitude,
-    maps_url        = excluded.maps_url,
-    business_status = excluded.business_status,
-    source          = excluded.source,
-    scraped_at      = excluded.scraped_at;
+    name            = EXCLUDED.name,
+    category        = EXCLUDED.category,
+    address         = EXCLUDED.address,
+    phone           = EXCLUDED.phone,
+    website         = EXCLUDED.website,
+    rating          = EXCLUDED.rating,
+    review_count    = EXCLUDED.review_count,
+    is_open_now     = EXCLUDED.is_open_now,
+    opening_hours   = EXCLUDED.opening_hours,
+    latitude        = EXCLUDED.latitude,
+    longitude       = EXCLUDED.longitude,
+    maps_url        = EXCLUDED.maps_url,
+    business_status = EXCLUDED.business_status,
+    source          = EXCLUDED.source,
+    scraped_at      = EXCLUDED.scraped_at
+RETURNING id;
 """
 
 
@@ -306,69 +309,89 @@ def _is_blocked(page: Page) -> bool:
 
 class Database:
     """
-    Gerencia a conexão e operações no banco de dados SQLite.
-
-    Cria o arquivo e as tabelas automaticamente na primeira execução.
+    Gerencia a conexão e operações no banco de dados PostgreSQL via psycopg2.
+    Usa a variável de ambiente DATABASE_URL para a conexão.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # db_path mantido na assinatura para compatibilidade com chamadas existentes
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
+            )
         self._init_schema()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")   # Melhor performance concorrente
-        conn.execute("PRAGMA foreign_keys=ON;")
-        return conn
+    def _connect(self):
+        """Retorna uma nova conexão psycopg2 ao PostgreSQL."""
+        return psycopg2.connect(_DATABASE_URL)
 
     def _init_schema(self) -> None:
         """Cria as tabelas se ainda não existirem."""
-        with self._connect() as conn:
-            conn.execute(_CREATE_TABLE_SQL)
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(_CREATE_TABLE_SQL)
             conn.commit()
-        logger.debug(f"Banco de dados inicializado: {self.db_path}")
+            cur.close()
+        finally:
+            conn.close()
+        logger.debug("Banco de dados PostgreSQL inicializado.")
 
     def upsert_company(self, company: dict[str, Any]) -> int:
         """
-        Insere ou atualiza um registro de empresa.
-
-        Se já existir um registro com o mesmo place_id, os dados são atualizados.
-        Retorna o rowid da linha inserida/atualizada.
+        Insere ou atualiza um registro de empresa via UPSERT.
+        Retorna o id da linha inserida/atualizada.
         """
-        # Garante que a chave place_id exista e não seja None/vazia
         if not company.get("place_id"):
-            # Gera um ID sintético baseado em nome + cidade para evitar duplicatas
             slug = f"{company.get('name', '')}_{company.get('city', '')}".lower()
             slug = re.sub(r"\s+", "_", slug)
             company["place_id"] = f"synthetic:{slug}"
 
-        with self._connect() as conn:
-            cursor = conn.execute(_UPSERT_COMPANY_SQL, company)
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(_UPSERT_COMPANY_SQL, company)
+            row = cur.fetchone()
             conn.commit()
-            return cursor.lastrowid
+            cur.close()
+            return row[0] if row else 0
+        finally:
+            conn.close()
 
     def place_id_exists(self, place_id: str) -> bool:
         """Verifica se o place_id já existe no banco (evita reprocessamento)."""
-        with self._connect() as conn:
-            row = conn.execute(
-                "SELECT 1 FROM companies WHERE place_id = ? LIMIT 1", (place_id,)
-            ).fetchone()
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT 1 FROM companies WHERE place_id = %s LIMIT 1", (place_id,)
+            )
+            row = cur.fetchone()
+            cur.close()
             return row is not None
+        finally:
+            conn.close()
 
     def get_company_count(self, niche: str | None = None, city: str | None = None) -> int:
         """Retorna o número de empresas no banco, com filtros opcionais."""
         query = "SELECT COUNT(*) FROM companies WHERE 1=1"
         params: list[str] = []
         if niche:
-            query += " AND niche = ?"
+            query += " AND niche = %s"
             params.append(niche)
         if city:
-            query += " AND city = ?"
+            query += " AND city = %s"
             params.append(city)
-        with self._connect() as conn:
-            return conn.execute(query, params).fetchone()[0]
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(query, params)
+            count = cur.fetchone()[0]
+            cur.close()
+            return count
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

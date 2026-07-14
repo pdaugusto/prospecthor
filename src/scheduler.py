@@ -22,7 +22,8 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import time
 from datetime import datetime
 from pathlib import Path
@@ -45,6 +46,7 @@ from src.scorer import LeadScorer
 
 load_dotenv()
 
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 _DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
 
 # Horários configuráveis do Scheduler (carregados via settings ou variáveis de ambiente)
@@ -78,7 +80,7 @@ CREATE TABLE IF NOT EXISTS scheduler_state (
 
 _SCHEDULER_TABLE_HISTORY = """
 CREATE TABLE IF NOT EXISTS scheduler_history (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    id            SERIAL PRIMARY KEY,
     task_name     TEXT NOT NULL,
     niche_group   TEXT,
     city          TEXT,
@@ -92,63 +94,86 @@ CREATE TABLE IF NOT EXISTS scheduler_history (
 
 class SchedulerDatabase:
     """
-    Controla o estado de pausa/retomada e logs históricos do agendador no SQLite.
+    Controla o estado de pausa/retomada e logs históricos do agendador no PostgreSQL.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
+            )
         self._init_db()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _connect(self):
+        return psycopg2.connect(_DATABASE_URL)
 
     def _init_db(self) -> None:
         """Cria tabelas de histórico e estado do scheduler."""
-        with self._connect() as conn:
-            conn.execute(_SCHEDULER_TABLE_STATE)
-            conn.execute(_SCHEDULER_TABLE_HISTORY)
-            # Insere valor padrão de pausa (false = rodando)
-            conn.execute(
-                "INSERT OR IGNORE INTO scheduler_state (key, value) VALUES ('paused', '0')"
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(_SCHEDULER_TABLE_STATE)
+            cur.execute(_SCHEDULER_TABLE_HISTORY)
+            # Insere valor padrão de pausa se não existir
+            cur.execute(
+                "INSERT INTO scheduler_state (key, value) VALUES ('paused', '0') ON CONFLICT DO NOTHING;"
             )
             conn.commit()
+            cur.close()
+        finally:
+            conn.close()
 
     def is_paused(self) -> bool:
         """Verifica se o scheduler foi pausado pelo usuário via Dashboard."""
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                row = conn.execute(
-                    "SELECT value FROM scheduler_state WHERE key = 'paused' LIMIT 1"
-                ).fetchone()
-                return row is not None and row[0] == "1"
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT value FROM scheduler_state WHERE key = 'paused' LIMIT 1;"
+            )
+            row = cur.fetchone()
+            cur.close()
+            return row is not None and row[0] == "1"
         except Exception:
             return False
+        finally:
+            conn.close()
 
     def set_paused_state(self, paused: bool) -> None:
         """Define o estado de pausa do scheduler."""
         val = "1" if paused else "0"
-        with self._connect() as conn:
-            conn.execute(
-                "INSERT OR REPLACE INTO scheduler_state (key, value) VALUES ('paused', ?)",
-                (val,)
-            )
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO scheduler_state (key, value) VALUES ('paused', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+            """, (val,))
             conn.commit()
+            cur.close()
+        finally:
+            conn.close()
 
     def has_run_today(self, task_name: str) -> bool:
         """
         Evita duplicação: checa se a tarefa já foi executada com sucesso hoje.
         """
         today_str = datetime.now().strftime("%Y-%m-%d")
-        with self._connect() as conn:
-            row = conn.execute(
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
                 "SELECT 1 FROM scheduler_history "
-                "WHERE task_name = ? AND status = 'success' AND date(executed_at) = ? LIMIT 1",
+                "WHERE task_name = %s AND status = 'success' AND executed_at::date = %s::date LIMIT 1;",
                 (task_name, today_str)
             )
+            row = cur.fetchone()
+            cur.close()
             return row is not None
+        finally:
+            conn.close()
 
     def log_run(
         self,
@@ -161,11 +186,13 @@ class SchedulerDatabase:
         duration: float = 0.0,
     ) -> None:
         """Adiciona o registro de execução para auditoria no Dashboard."""
-        with self._connect() as conn:
-            conn.execute(
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
                 "INSERT INTO scheduler_history "
                 "(task_name, niche_group, city, status, items_found, error_message, executed_at, duration_s) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s);",
                 (
                     task_name,
                     niche_group,
@@ -178,6 +205,9 @@ class SchedulerDatabase:
                 )
             )
             conn.commit()
+            cur.close()
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

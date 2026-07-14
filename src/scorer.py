@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,8 @@ from loguru import logger
 
 load_dotenv()
 
-_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+_DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")  # mantido para compat com main.py
 
 # ---------------------------------------------------------------------------
 # Colunas de migração do banco
@@ -52,13 +54,13 @@ _SCORER_COLUMNS: list[tuple[str, str]] = [
 
 _SAVE_SCORER_SQL = """
 UPDATE companies SET
-    lead_score    = :lead_score,
-    lead_class    = :lead_class,
-    lead_problems = :lead_problems,
-    lead_services = :lead_services,
-    lead_priority = :lead_priority,
-    scored_at     = :scored_at
-WHERE id = :id;
+    lead_score    = %(lead_score)s,
+    lead_class    = %(lead_class)s,
+    lead_problems = %(lead_problems)s,
+    lead_services = %(lead_services)s,
+    lead_priority = %(lead_priority)s,
+    scored_at     = %(scored_at)s
+WHERE id = %(id)s;
 """
 
 _SELECT_ALL_COLLECTED_SQL = """
@@ -75,73 +77,90 @@ ORDER BY id;
 
 class ScorerDatabase:
     """
-    Gerencia transações no SQLite específicas para o qualificador de leads.
+    Gerencia transações no PostgreSQL específicas para o qualificador de leads.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            raise FileNotFoundError(
-                f"Banco de dados não encontrado: {self.db_path}\n"
-                "Execute os checkers para popular e enriquecer os leads antes do scorer."
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada. Execute os checkers com DATABASE_URL no .env."
             )
         self._migrate()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+    def _connect(self):
+        """Retorna uma nova conexão psycopg2."""
+        return psycopg2.connect(_DATABASE_URL)
 
     def _migrate(self) -> None:
         """Adiciona colunas de qualificação à tabela de empresas se necessário."""
-        with self._connect() as conn:
-            existing = {
-                row[1]
-                for row in conn.execute("PRAGMA table_info(companies);").fetchall()
-            }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
             added = []
             for col_name, col_type in _SCORER_COLUMNS:
-                if col_name not in existing:
+                cur.execute("""
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'companies' AND column_name = %s;
+                """, (col_name,))
+                if not cur.fetchone():
                     try:
-                        conn.execute(
+                        cur.execute(
                             f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};"
                         )
                         added.append(col_name)
-                    except sqlite3.OperationalError as exc:
+                    except Exception as exc:
                         logger.warning(f"[DB] Coluna {col_name!r} não adicionada: {exc}")
             if added:
                 conn.commit()
                 logger.info(f"[DB] Migração Scorer: {len(added)} colunas adicionadas → {added}")
             else:
                 logger.debug("[DB] Schema Scorer já atualizado.")
+            cur.close()
+        finally:
+            conn.close()
 
     def get_collected_companies(self) -> list[dict[str, Any]]:
         """Busca todas as empresas que já passaram por análise de site ou instagram."""
-        with self._connect() as conn:
-            rows = conn.execute(_SELECT_ALL_COLLECTED_SQL).fetchall()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_ALL_COLLECTED_SQL)
+            rows = cur.fetchall()
+            cur.close()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
     def save_lead_score(self, result: dict[str, Any]) -> None:
         """Persiste os resultados da pontuação de lead."""
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                conn.execute(_SAVE_SCORER_SQL, result)
-                conn.commit()
-        except sqlite3.Error as exc:
+            cur = conn.cursor()
+            cur.execute(_SAVE_SCORER_SQL, result)
+            conn.commit()
+            cur.close()
+        except Exception as exc:
             logger.error(f"[DB] Erro ao salvar pontuação de lead id={result.get('id')}: {exc}")
+        finally:
+            conn.close()
 
     def get_stats(self) -> dict[str, Any]:
         """Retorna estatísticas dos leads classificados."""
-        with self._connect() as conn:
-            total = conn.execute(
-                "SELECT COUNT(*) FROM companies WHERE scored_at IS NOT NULL"
-            ).fetchone()[0]
-            by_class = conn.execute(
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM companies WHERE scored_at IS NOT NULL")
+            total = cur.fetchone()[0]
+            cur.execute(
                 "SELECT lead_class, COUNT(*) as cnt FROM companies "
                 "WHERE scored_at IS NOT NULL "
                 "GROUP BY lead_class ORDER BY cnt DESC;"
-            ).fetchall()
+            )
+            by_class = cur.fetchall()
+            cur.close()
+        finally:
+            conn.close()
         return {
             "total_scored": total,
             "by_class": {row[0]: row[1] for row in by_class},

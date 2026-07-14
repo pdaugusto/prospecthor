@@ -48,7 +48,8 @@ from __future__ import annotations
 import json
 import os
 import re
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import time
 import random
 import unicodedata
@@ -76,6 +77,7 @@ from playwright.sync_api import (
 
 load_dotenv()
 
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 _DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
 _HEADLESS: bool = os.getenv("PLAYWRIGHT_HEADLESS", "true").lower() == "true"
 _TIMEOUT_MS: int = int(os.getenv("PLAYWRIGHT_TIMEOUT_MS", "30000"))
@@ -162,21 +164,21 @@ _INSTAGRAM_COLUMNS: list[tuple[str, str]] = [
 
 _SAVE_INSTAGRAM_SQL = """
 UPDATE companies SET
-    instagram_url        = :instagram_url,
-    instagram_username   = :instagram_username,
-    instagram_status     = :instagram_status,
-    instagram_followers  = :instagram_followers,
-    instagram_following  = :instagram_following,
-    instagram_posts      = :instagram_posts,
-    instagram_last_post  = :instagram_last_post,
-    instagram_has_bio    = :instagram_has_bio,
-    instagram_has_link   = :instagram_has_link,
-    instagram_bio        = :instagram_bio,
-    instagram_is_verified= :instagram_is_verified,
-    instagram_is_business= :instagram_is_business,
-    instagram_score      = :instagram_score,
-    instagram_checked_at = :instagram_checked_at
-WHERE id = :id;
+    instagram_url        = %(instagram_url)s,
+    instagram_username   = %(instagram_username)s,
+    instagram_status     = %(instagram_status)s,
+    instagram_followers  = %(instagram_followers)s,
+    instagram_following  = %(instagram_following)s,
+    instagram_posts      = %(instagram_posts)s,
+    instagram_last_post  = %(instagram_last_post)s,
+    instagram_has_bio    = %(instagram_has_bio)s,
+    instagram_has_link   = %(instagram_has_link)s,
+    instagram_bio        = %(instagram_bio)s,
+    instagram_is_verified= %(instagram_is_verified)s,
+    instagram_is_business= %(instagram_is_business)s,
+    instagram_score      = %(instagram_score)s,
+    instagram_checked_at = %(instagram_checked_at)s
+WHERE id = %(id)s;
 """
 
 _SELECT_PENDING_SQL = """
@@ -185,12 +187,12 @@ FROM companies
 WHERE instagram_checked_at IS NULL
   AND (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
 ORDER BY id
-LIMIT :limit;
+LIMIT %(limit)s;
 """
 
 _SELECT_BY_ID_SQL = """
 SELECT id, name, website, city, state, niche
-FROM companies WHERE id = ?;
+FROM companies WHERE id = %s;
 """
 
 
@@ -200,99 +202,117 @@ FROM companies WHERE id = ?;
 
 class InstagramDatabase:
     """
-    Gerencia a conexão com o SQLite para o módulo instagram_checker.
-
-    Adiciona as colunas instagram_* à tabela companies via migração
-    não-destrutiva (ALTER TABLE com verificação prévia de existência).
+    Gerencia a conexão com o banco PostgreSQL para o módulo instagram_checker.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            raise FileNotFoundError(
-                f"Banco de dados não encontrado: {self.db_path}\n"
-                "Execute primeiro o google_maps.py para popular o banco."
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
             )
         self._migrate()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+    def _connect(self):
+        return psycopg2.connect(_DATABASE_URL)
 
     def _migrate(self) -> None:
         """
         Adiciona as colunas instagram_* à tabela companies de forma segura.
-
-        Verifica quais colunas já existem antes de tentar adicionar —
-        idempotente e seguro para rodar múltiplas vezes.
         """
-        with self._connect() as conn:
-            existing = {
-                row[1]
-                for row in conn.execute("PRAGMA table_info(companies);").fetchall()
-            }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
             added = []
             for col_name, col_type in _INSTAGRAM_COLUMNS:
-                if col_name not in existing:
+                cur.execute("""
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'companies' AND column_name = %s;
+                """, (col_name,))
+                if not cur.fetchone():
                     try:
-                        conn.execute(
+                        cur.execute(
                             f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};"
                         )
                         added.append(col_name)
-                    except sqlite3.OperationalError as exc:
+                    except Exception as exc:
                         logger.warning(f"[DB] Não adicionou {col_name!r}: {exc}")
             if added:
                 conn.commit()
                 logger.info(f"[DB] Migração Instagram: {len(added)} colunas → {added}")
-            else:
-                logger.debug("[DB] Schema Instagram já atualizado.")
+            cur.close()
+        finally:
+            conn.close()
 
     def get_pending(self, limit: int = 100) -> list[dict[str, Any]]:
         """Retorna empresas com instagram_checked_at IS NULL."""
-        with self._connect() as conn:
-            rows = conn.execute(_SELECT_PENDING_SQL, {"limit": limit}).fetchall()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_PENDING_SQL, {"limit": limit})
+            rows = cur.fetchall()
+            cur.close()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
     def get_by_id(self, company_id: int) -> dict[str, Any] | None:
         """Retorna uma empresa pelo ID."""
-        with self._connect() as conn:
-            row = conn.execute(_SELECT_BY_ID_SQL, (company_id,)).fetchone()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_BY_ID_SQL, (company_id,))
+            row = cur.fetchone()
+            cur.close()
             return dict(row) if row else None
+        finally:
+            conn.close()
 
     def save_result(self, result: dict[str, Any]) -> None:
         """Persiste o resultado da verificação de Instagram."""
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                conn.execute(_SAVE_INSTAGRAM_SQL, result)
-                conn.commit()
+            cur = conn.cursor()
+            cur.execute(_SAVE_INSTAGRAM_SQL, result)
+            conn.commit()
+            cur.close()
             logger.debug(
                 f"[DB] Instagram salvo: status={result['instagram_status']!r} "
                 f"score={result['instagram_score']} id={result['id']}"
             )
-        except sqlite3.Error as exc:
+        except Exception as exc:
             logger.error(f"[DB] Erro ao salvar Instagram id={result.get('id')}: {exc}")
+        finally:
+            conn.close()
 
     def get_stats(self) -> dict[str, Any]:
         """Retorna estatísticas das verificações de Instagram."""
-        with self._connect() as conn:
-            total = conn.execute("SELECT COUNT(*) FROM companies;").fetchone()[0]
-            checked = conn.execute(
-                "SELECT COUNT(*) FROM companies "
-                "WHERE instagram_checked_at IS NOT NULL;"
-            ).fetchone()[0]
-            by_status = conn.execute(
-                "SELECT instagram_status, COUNT(*) as cnt FROM companies "
-                "WHERE instagram_checked_at IS NOT NULL "
-                "GROUP BY instagram_status ORDER BY cnt DESC;"
-            ).fetchall()
-        return {
-            "total": total,
-            "checked": checked,
-            "pending": total - checked,
-            "by_status": {row[0]: row[1] for row in by_status},
-        }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM companies;")
+            total = cur.fetchone()[0]
+            cur.execute("""
+                SELECT COUNT(*) FROM companies 
+                WHERE instagram_checked_at IS NOT NULL;
+            """)
+            checked = cur.fetchone()[0]
+            cur.execute("""
+                SELECT instagram_status, COUNT(*) as cnt FROM companies 
+                WHERE instagram_checked_at IS NOT NULL 
+                GROUP BY instagram_status ORDER BY cnt DESC;
+            """)
+            by_status = cur.fetchall()
+            cur.close()
+            return {
+                "total": total,
+                "checked": checked,
+                "pending": total - checked,
+                "by_status": {row[0]: row[1] for row in by_status},
+            }
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

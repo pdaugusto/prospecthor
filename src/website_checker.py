@@ -45,7 +45,8 @@ import re
 import ssl
 import time
 import socket
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
@@ -68,6 +69,7 @@ from requests.exceptions import (
 
 load_dotenv()
 
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 _DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
 _HTTP_TIMEOUT: int = 10            # Timeout máximo por requisição (segundos)
 _SLOW_THRESHOLD_S: float = 5.0     # Acima disso, site é considerado "lento"
@@ -196,17 +198,17 @@ _WEBSITE_COLUMNS: list[tuple[str, str]] = [
 
 _SAVE_WEBSITE_SQL = """
 UPDATE companies SET
-    website_status      = :website_status,
-    website_flags       = :website_flags,
-    website_mobile      = :website_mobile,
-    website_https       = :website_https,
-    website_speed_s     = :website_speed_s,
-    website_score       = :website_score,
-    website_cms         = :website_cms,
-    website_has_contact = :website_has_contact,
-    website_title       = :website_title,
-    website_checked_at  = :website_checked_at
-WHERE id = :id;
+    website_status      = %(website_status)s,
+    website_flags       = %(website_flags)s,
+    website_mobile      = %(website_mobile)s,
+    website_https       = %(website_https)s,
+    website_speed_s     = %(website_speed_s)s,
+    website_score       = %(website_score)s,
+    website_cms         = %(website_cms)s,
+    website_has_contact = %(website_has_contact)s,
+    website_title       = %(website_title)s,
+    website_checked_at  = %(website_checked_at)s
+WHERE id = %(id)s;
 """
 
 _SELECT_PENDING_SQL = """
@@ -215,10 +217,10 @@ FROM companies
 WHERE website_checked_at IS NULL
   AND (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
 ORDER BY id
-LIMIT :limit;
+LIMIT %(limit)s;
 """
 
-_SELECT_BY_ID_SQL = "SELECT id, name, website, city, state, niche FROM companies WHERE id = ?;"
+_SELECT_BY_ID_SQL = "SELECT id, name, website, city, state, niche FROM companies WHERE id = %s;"
 
 
 # ---------------------------------------------------------------------------
@@ -227,113 +229,118 @@ _SELECT_BY_ID_SQL = "SELECT id, name, website, city, state, niche FROM companies
 
 class WebsiteDatabase:
     """
-    Gerencia a conexão com o banco SQLite para o módulo website_checker.
-
-    Responsável por:
-    - Adicionar as colunas de website à tabela companies (migração)
-    - Salvar resultados de verificação por empresa
-    - Listar empresas pendentes de verificação
+    Gerencia a conexão com o banco PostgreSQL para o módulo website_checker.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            raise FileNotFoundError(
-                f"Banco de dados não encontrado: {self.db_path}\n"
-                "Execute primeiro o google_maps.py para popular o banco."
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
             )
         self._migrate()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+    def _connect(self):
+        return psycopg2.connect(_DATABASE_URL)
 
     def _migrate(self) -> None:
         """
         Adiciona as colunas de website à tabela companies se ainda não existirem.
-
-        Usa ALTER TABLE ... ADD COLUMN com tratamento de erro silencioso
-        (SQLite não suporta IF NOT EXISTS em ALTER TABLE).
         """
-        with self._connect() as conn:
-            existing_cols = {
-                row[1]
-                for row in conn.execute("PRAGMA table_info(companies);").fetchall()
-            }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
             added = []
             for col_name, col_type in _WEBSITE_COLUMNS:
-                if col_name not in existing_cols:
+                cur.execute("""
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'companies' AND column_name = %s;
+                """, (col_name,))
+                if not cur.fetchone():
                     try:
-                        conn.execute(
+                        cur.execute(
                             f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};"
                         )
                         added.append(col_name)
-                    except sqlite3.OperationalError as exc:
+                    except Exception as exc:
                         logger.warning(f"[DB] Coluna {col_name!r} não adicionada: {exc}")
             if added:
                 conn.commit()
                 logger.info(f"[DB] Migração: {len(added)} colunas adicionadas → {added}")
-            else:
-                logger.debug("[DB] Schema já atualizado, nenhuma migração necessária.")
+            cur.close()
+        finally:
+            conn.close()
 
     def get_pending(self, limit: int = 100) -> list[dict[str, Any]]:
         """
         Retorna empresas que ainda não tiveram o site verificado.
-
-        Args:
-            limit: Número máximo de registros a retornar.
-
-        Returns:
-            Lista de dicionários com id, name, website, city, state, niche.
         """
-        with self._connect() as conn:
-            rows = conn.execute(_SELECT_PENDING_SQL, {"limit": limit}).fetchall()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_PENDING_SQL, {"limit": limit})
+            rows = cur.fetchall()
+            cur.close()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
     def get_by_id(self, company_id: int) -> dict[str, Any] | None:
         """Retorna uma empresa pelo ID."""
-        with self._connect() as conn:
-            row = conn.execute(_SELECT_BY_ID_SQL, (company_id,)).fetchone()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_BY_ID_SQL, (company_id,))
+            row = cur.fetchone()
+            cur.close()
             return dict(row) if row else None
+        finally:
+            conn.close()
 
     def save_result(self, result: dict[str, Any]) -> None:
         """
         Persiste o resultado da verificação de website para uma empresa.
-
-        Args:
-            result: Dicionário com id da empresa + todos os campos website_*.
         """
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                conn.execute(_SAVE_WEBSITE_SQL, result)
-                conn.commit()
+            cur = conn.cursor()
+            cur.execute(_SAVE_WEBSITE_SQL, result)
+            conn.commit()
+            cur.close()
             logger.debug(
                 f"[DB] Salvo website_status={result['website_status']!r} "
                 f"score={result['website_score']} para empresa id={result['id']}"
             )
-        except sqlite3.Error as exc:
+        except Exception as exc:
             logger.error(f"[DB] Erro ao salvar resultado para id={result.get('id')}: {exc}")
+        finally:
+            conn.close()
 
     def get_stats(self) -> dict[str, Any]:
         """Retorna estatísticas gerais das verificações de website."""
-        with self._connect() as conn:
-            total = conn.execute("SELECT COUNT(*) FROM companies;").fetchone()[0]
-            checked = conn.execute(
-                "SELECT COUNT(*) FROM companies WHERE website_checked_at IS NOT NULL;"
-            ).fetchone()[0]
-            by_status = conn.execute(
-                "SELECT website_status, COUNT(*) as cnt "
-                "FROM companies WHERE website_checked_at IS NOT NULL "
-                "GROUP BY website_status ORDER BY cnt DESC;"
-            ).fetchall()
-        return {
-            "total_companies": total,
-            "checked": checked,
-            "pending": total - checked,
-            "by_status": {row[0]: row[1] for row in by_status},
-        }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM companies;")
+            total = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM companies WHERE website_checked_at IS NOT NULL;")
+            checked = cur.fetchone()[0]
+            cur.execute("""
+                SELECT website_status, COUNT(*) as cnt 
+                FROM companies WHERE website_checked_at IS NOT NULL 
+                GROUP BY website_status ORDER BY cnt DESC;
+            """)
+            by_status = cur.fetchall()
+            cur.close()
+            return {
+                "total_companies": total,
+                "checked": checked,
+                "pending": total - checked,
+                "by_status": {row[0]: row[1] for row in by_status},
+            }
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

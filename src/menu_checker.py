@@ -28,7 +28,8 @@ from __future__ import annotations
 import json
 import os
 import re
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import time
 import random
 import urllib.parse
@@ -55,6 +56,7 @@ from playwright.sync_api import (
 
 load_dotenv()
 
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 _DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
 _HEADLESS: bool = os.getenv("PLAYWRIGHT_HEADLESS", "true").lower() == "true"
 _TIMEOUT_MS: int = int(os.getenv("PLAYWRIGHT_TIMEOUT_MS", "30000"))
@@ -94,14 +96,14 @@ _MENU_COLUMNS: list[tuple[str, str]] = [
 
 _SAVE_MENU_SQL = """
 UPDATE companies SET
-    menu_google      = :menu_google,
-    menu_instagram   = :menu_instagram,
-    menu_apps        = :menu_apps,
-    menu_site        = :menu_site,
-    menu_status      = :menu_status,
-    menu_score       = :menu_score,
-    menu_checked_at  = :menu_checked_at
-WHERE id = :id;
+    menu_google      = %(menu_google)s,
+    menu_instagram   = %(menu_instagram)s,
+    menu_apps        = %(menu_apps)s,
+    menu_site        = %(menu_site)s,
+    menu_status      = %(menu_status)s,
+    menu_score       = %(menu_score)s,
+    menu_checked_at  = %(menu_checked_at)s
+WHERE id = %(id)s;
 """
 
 # Seleciona empresas de alimentação pendentes
@@ -111,12 +113,12 @@ FROM companies
 WHERE menu_checked_at IS NULL
   AND (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
 ORDER BY id
-LIMIT :limit;
+LIMIT %(limit)s;
 """
 
 _SELECT_BY_ID_SQL = """
 SELECT id, name, website, city, state, niche, category, instagram_username, instagram_bio, maps_url
-FROM companies WHERE id = ?;
+FROM companies WHERE id = %s;
 """
 
 
@@ -126,63 +128,68 @@ FROM companies WHERE id = ?;
 
 class MenuDatabase:
     """
-    Gerencia a persistência de dados de verificação de cardápios.
+    Gerencia a persistência de dados de verificação de cardápios no PostgreSQL.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            raise FileNotFoundError(
-                f"Banco de dados não encontrado: {self.db_path}\n"
-                "Execute primeiro o google_maps.py para popular o banco."
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
             )
         self._migrate()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+    def _connect(self):
+        return psycopg2.connect(_DATABASE_URL)
 
     def _migrate(self) -> None:
         """Adiciona as colunas de cardápio na tabela de empresas se necessário."""
-        with self._connect() as conn:
-            existing = {
-                row[1]
-                for row in conn.execute("PRAGMA table_info(companies);").fetchall()
-            }
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
             added = []
             for col_name, col_type in _MENU_COLUMNS:
-                if col_name not in existing:
+                cur.execute("""
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'companies' AND column_name = %s;
+                """, (col_name,))
+                if not cur.fetchone():
                     try:
-                        conn.execute(
+                        cur.execute(
                             f"ALTER TABLE companies ADD COLUMN {col_name} {col_type};"
                         )
                         added.append(col_name)
-                    except sqlite3.OperationalError as exc:
-                        logger.warning(f"[DB] Coluna {col_name!r} não adicionada: {exc}")
+                    except Exception as exc:
+                        logger.warning(f"[DB] Não adicionou coluna {col_name!r}: {exc}")
             if added:
                 conn.commit()
-                logger.info(f"[DB] Migração Menu: {len(added)} colunas adicionadas → {added}")
-            else:
-                logger.debug("[DB] Schema Menu já atualizado.")
+                logger.info(f"[DB] Migração Cardápio: {len(added)} colunas → {added}")
+            cur.close()
+        finally:
+            conn.close()
 
     def get_pending(self, limit: int = 100) -> list[dict[str, Any]]:
-        """Retorna empresas que se enquadram em nichos de alimentação."""
-        with self._connect() as conn:
-            rows = conn.execute(_SELECT_PENDING_SQL, {"limit": limit * 3}).fetchall()
-            candidates = [dict(row) for row in rows]
+        """
+        Retorna empresas do nicho de alimentação pendentes de verificação de cardápio.
+        """
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_PENDING_SQL, {"limit": limit * 3})
+            companies = cur.fetchall()
+            cur.close()
             
-            # Filtra na aplicação com base nas palavras-chave de alimentação
+            # Filtra apenas empresas do nicho de alimentação
             filtered = []
-            for c in candidates:
+            for c in companies:
                 cat = (c.get("category") or "").lower()
                 niche = (c.get("niche") or "").lower()
                 name = (c.get("name") or "").lower()
                 
                 # Verifica se alguma palavra-chave de comida bate com a categoria, nicho ou nome
                 if any(x in cat or x in niche or x in name for x in _FOOD_CATEGORIES):
-                    filtered.append(c)
+                    filtered.append(dict(c))
                 else:
                     # Se não for de alimentação, marca como 'nao_aplicavel' para não processar mais
                     self.mark_non_food(c["id"])
@@ -190,59 +197,83 @@ class MenuDatabase:
                 if len(filtered) >= limit:
                     break
             return filtered
+        finally:
+            conn.close()
 
     def mark_non_food(self, company_id: int) -> None:
         """Marca empresas que não são do nicho de alimentação de forma amigável."""
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                conn.execute(
-                    "UPDATE companies SET menu_status = 'nao_aplicavel', menu_score = 0, "
-                    "menu_checked_at = ? WHERE id = ?",
-                    (datetime.now().isoformat(), company_id)
-                )
-                conn.commit()
-        except sqlite3.Error:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE companies SET menu_status = 'nao_aplicavel', menu_score = 0, "
+                "menu_checked_at = %s WHERE id = %s",
+                (datetime.now().isoformat(), company_id)
+            )
+            conn.commit()
+            cur.close()
+        except Exception:
             pass
+        finally:
+            conn.close()
 
     def get_by_id(self, company_id: int) -> dict[str, Any] | None:
         """Retorna uma empresa pelo ID."""
-        with self._connect() as conn:
-            row = conn.execute(_SELECT_BY_ID_SQL, (company_id,)).fetchone()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_SELECT_BY_ID_SQL, (company_id,))
+            row = cur.fetchone()
+            cur.close()
             return dict(row) if row else None
+        finally:
+            conn.close()
 
     def save_result(self, result: dict[str, Any]) -> None:
         """Salva a qualificação do cardápio digital."""
+        conn = self._connect()
         try:
-            with self._connect() as conn:
-                conn.execute(_SAVE_MENU_SQL, result)
-                conn.commit()
+            cur = conn.cursor()
+            cur.execute(_SAVE_MENU_SQL, result)
+            conn.commit()
+            cur.close()
             logger.debug(
                 f"[DB] Cardápio salvo: status={result['menu_status']!r} "
                 f"score={result['menu_score']} id={result['id']}"
             )
-        except sqlite3.Error as exc:
+        except Exception as exc:
             logger.error(f"[DB] Erro ao salvar cardápio id={result.get('id')}: {exc}")
+        finally:
+            conn.close()
 
     def get_stats(self) -> dict[str, Any]:
         """Retorna estatísticas do checker de cardápio."""
-        with self._connect() as conn:
-            total_food = conn.execute(
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
                 "SELECT COUNT(*) FROM companies WHERE menu_status != 'nao_aplicavel' OR menu_status IS NULL"
-            ).fetchone()[0]
-            checked = conn.execute(
+            )
+            total_food = cur.fetchone()[0]
+            cur.execute(
                 "SELECT COUNT(*) FROM companies WHERE menu_checked_at IS NOT NULL AND menu_status != 'nao_aplicavel'"
-            ).fetchone()[0]
-            by_status = conn.execute(
+            )
+            checked = cur.fetchone()[0]
+            cur.execute(
                 "SELECT menu_status, COUNT(*) as cnt FROM companies "
                 "WHERE menu_checked_at IS NOT NULL AND menu_status != 'nao_aplicavel' "
                 "GROUP BY menu_status ORDER BY cnt DESC;"
-            ).fetchall()
-        return {
-            "total_food": total_food,
-            "checked": checked,
-            "pending": total_food - checked,
-            "by_status": {row[0]: row[1] for row in by_status},
-        }
+            )
+            by_status = cur.fetchall()
+            cur.close()
+            return {
+                "total_food": total_food,
+                "checked": checked,
+                "pending": total_food - checked,
+                "by_status": {row[0]: row[1] for row in by_status},
+            }
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

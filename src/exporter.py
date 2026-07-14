@@ -46,7 +46,8 @@ import csv
 import json
 import os
 import re
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import unicodedata
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +62,7 @@ from loguru import logger
 
 load_dotenv()
 
+_DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 _DB_PATH: str = os.getenv("DATABASE_PATH", "data/leads.db")
 _EXPORT_DIR: str = os.getenv("EXPORT_DIR", "data/exports/")
 
@@ -89,19 +91,20 @@ _CSV_HEADERS = [
 
 class ExporterDatabase:
     """
-    Interface com o banco SQLite para leitura e migração de colunas do exportador.
+    Interface com o banco PostgreSQL para leitura e migração de colunas do exportador.
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
-        self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            raise FileNotFoundError(f"Banco de dados não encontrado em {self.db_path}")
+        # db_path mantido na assinatura para compatibilidade
+        if not _DATABASE_URL:
+            raise RuntimeError(
+                "DATABASE_URL não configurada no .env. "
+                "Defina a string de conexão PostgreSQL (ex: Supabase)."
+            )
         self._migrate()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _connect(self):
+        return psycopg2.connect(_DATABASE_URL)
 
     def _migrate(self) -> None:
         """
@@ -110,21 +113,25 @@ class ExporterDatabase:
         Esta coluna rastreia o andamento comercial do lead:
         'novo', 'contactado', 'convertido' ou 'descartado'.
         """
-        with self._connect() as conn:
-            existing = {
-                row[1]
-                for row in conn.execute("PRAGMA table_info(companies);").fetchall()
-            }
-            if "contact_status" not in existing:
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'companies' AND column_name = 'contact_status';
+            """)
+            if not cur.fetchone():
                 try:
-                    # Adiciona coluna contact_status com valor padrão 'novo'
-                    conn.execute(
+                    cur.execute(
                         "ALTER TABLE companies ADD COLUMN contact_status TEXT DEFAULT 'novo';"
                     )
                     conn.commit()
                     logger.info("[DB] Coluna 'contact_status' adicionada com sucesso.")
-                except sqlite3.OperationalError as exc:
+                except Exception as exc:
                     logger.warning(f"[DB] Falha ao adicionar contact_status: {exc}")
+            cur.close()
+        finally:
+            conn.close()
 
     def query_leads(self, filters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
@@ -143,32 +150,37 @@ class ExporterDatabase:
         
         if filters:
             if filters.get("lead_class"):
-                query += " AND lead_class = ?"
+                query += " AND lead_class = %s"
                 params.append(filters["lead_class"])
                 
             if filters.get("niche"):
-                query += " AND niche = ?"
+                query += " AND niche = %s"
                 params.append(filters["niche"])
                 
             if filters.get("city"):
-                query += " AND city = ?"
+                query += " AND city = %s"
                 params.append(filters["city"])
                 
             if filters.get("data_inicio"):
-                # Garante formato correto de data
-                query += " AND date(created_at) >= date(?)"
+                query += " AND created_at::date >= %s::date"
                 params.append(filters["data_inicio"])
                 
             if filters.get("data_fim"):
-                query += " AND date(created_at) <= date(?)"
+                query += " AND created_at::date <= %s::date"
                 params.append(filters["data_fim"])
                 
         # Ordena leads por maior score primeiro
         query += " ORDER BY lead_score DESC"
         
-        with self._connect() as conn:
-            rows = conn.execute(query, params).fetchall()
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            cur.close()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
 
 # ---------------------------------------------------------------------------

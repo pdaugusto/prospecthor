@@ -142,7 +142,7 @@ _MOCK_LEADS = [
         "website_status": "sem_site", "instagram_status": "tem_instagram",
         "instagram_username": "saborcaseiro_poa",
         "instagram_url": "https://www.instagram.com/saborcaseiro_poa/",
-        "instagram_has_link": 0, "lead_score": 55, "lead_class": "quente",
+        "instagram_has_link": 0, "lead_score": 55, "lead_class": "raio",
         "lead_priority": "alta",
         "lead_problems": json.dumps(["Sem site (+40)", "Instagram sem link na bio (+15)"], ensure_ascii=False),
         "lead_services": json.dumps(["Site profissional", "Conectar Instagram ao site"], ensure_ascii=False),
@@ -157,7 +157,7 @@ _MOCK_LEADS = [
         "website_status": "template_generico", "website_mobile": 0, "website_https": 0,
         "instagram_status": "tem_instagram", "instagram_username": "estiloreal_barber",
         "instagram_url": "https://www.instagram.com/estiloreal_barber/",
-        "instagram_has_link": 1, "lead_score": 30, "lead_class": "morno",
+        "instagram_has_link": 1, "lead_score": 30, "lead_class": "trovao",
         "lead_priority": "media",
         "lead_problems": json.dumps(["Site sem HTTPS (+15)", "Site não mobile-friendly (+15)"], ensure_ascii=False),
         "lead_services": json.dumps(["Certificado SSL", "Design responsivo"], ensure_ascii=False),
@@ -171,7 +171,7 @@ _MOCK_LEADS = [
         "maps_url": "", "website_status": "ok", "website_mobile": 1, "website_https": 1,
         "instagram_status": "tem_instagram", "instagram_username": "sorrisolindo_odonto",
         "instagram_url": "https://www.instagram.com/sorrisolindo_odonto/",
-        "instagram_has_link": 1, "lead_score": 0, "lead_class": "frio",
+        "instagram_has_link": 1, "lead_score": 0, "lead_class": "eco",
         "lead_priority": "baixa",
         "lead_problems": json.dumps([], ensure_ascii=False),
         "lead_services": json.dumps([], ensure_ascii=False),
@@ -185,7 +185,7 @@ _MOCK_LEADS = [
         "maps_url": "", "website_status": "ok", "website_mobile": 1, "website_https": 0,
         "instagram_status": "tem_instagram", "instagram_username": "pizzaria_da_mamma",
         "instagram_url": "https://www.instagram.com/pizzaria_da_mamma/",
-        "instagram_has_link": 0, "lead_score": 30, "lead_class": "morno",
+        "instagram_has_link": 0, "lead_score": 30, "lead_class": "trovao",
         "lead_priority": "media",
         "lead_problems": json.dumps(["Site sem HTTPS (+15)", "Instagram sem link (+15)"], ensure_ascii=False),
         "lead_services": json.dumps(["Certificado SSL", "Conectar Instagram ao site"], ensure_ascii=False),
@@ -304,9 +304,9 @@ def api_stats():
         nichos[n] = nichos.get(n, 0) + 1
     return jsonify({
         "total": len(leads),
-        "quentes": len([l for l in leads if l.get("lead_class") == "quente"]),
-        "mornos": len([l for l in leads if l.get("lead_class") == "morno"]),
-        "frios": len([l for l in leads if l.get("lead_class") == "frio"]),
+        "quentes": len([l for l in leads if l.get("lead_class") == "raio"]),
+        "mornos": len([l for l in leads if l.get("lead_class") == "trovao"]),
+        "frios": len([l for l in leads if l.get("lead_class") == "eco"]),
         "descartados": len([l for l in leads if l.get("notes") == "Descartado"]),
         "nichos": nichos
     })
@@ -339,9 +339,9 @@ def api_reports(period):
     convertidos = len([l for l in filtered if l.get("notes") == "Convertido"])
     return jsonify({
         "total": total,
-        "quentes": len([l for l in filtered if l.get("lead_class") == "quente"]),
-        "mornos": len([l for l in filtered if l.get("lead_class") == "morno"]),
-        "frios": len([l for l in filtered if l.get("lead_class") == "frio"]),
+        "quentes": len([l for l in filtered if l.get("lead_class") == "raio"]),
+        "mornos": len([l for l in filtered if l.get("lead_class") == "trovao"]),
+        "frios": len([l for l in filtered if l.get("lead_class") == "eco"]),
         "conversao_taxa": round((convertidos / max(contactados, 1)) * 100, 1),
         "problemas_comuns": problemas
     })

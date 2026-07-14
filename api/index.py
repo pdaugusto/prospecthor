@@ -114,9 +114,9 @@ def api_stats():
         nichos[n] = nichos.get(n, 0) + 1
     return jsonify({
         "total": len(leads),
-        "quentes": len([l for l in leads if l.get("lead_class") == "quente"]),
-        "mornos": len([l for l in leads if l.get("lead_class") == "morno"]),
-        "frios": len([l for l in leads if l.get("lead_class") == "frio"]),
+        "quentes": len([l for l in leads if l.get("lead_class") == "raio"]),
+        "mornos": len([l for l in leads if l.get("lead_class") == "trovao"]),
+        "frios": len([l for l in leads if l.get("lead_class") == "eco"]),
         "descartados": len([l for l in leads if l.get("notes") == "Descartado"]),
         "nichos": nichos
     })
@@ -148,9 +148,9 @@ def api_reports(period):
     convertidos = len([l for l in filtered if l.get("notes") == "Convertido"])
     return jsonify({
         "total": total,
-        "quentes": len([l for l in filtered if l.get("lead_class") == "quente"]),
-        "mornos": len([l for l in filtered if l.get("lead_class") == "morno"]),
-        "frios": len([l for l in filtered if l.get("lead_class") == "frio"]),
+        "quentes": len([l for l in filtered if l.get("lead_class") == "raio"]),
+        "mornos": len([l for l in filtered if l.get("lead_class") == "trovao"]),
+        "frios": len([l for l in filtered if l.get("lead_class") == "eco"]),
         "conversao_taxa": round((convertidos / max(contactados, 1)) * 100, 1),
         "problemas_comuns": problemas
     })
@@ -166,7 +166,7 @@ def api_export_csv():
     for l in leads:
         w.writerow([l.get("name",""),l.get("phone",""),l.get("city",""),l.get("niche",""),l.get("lead_score",0),l.get("lead_class",""),l.get("website",""),l.get("instagram_url",""),l.get("lead_problems","")])
     resp = make_response(output.getvalue())
-    resp.headers["Content-Disposition"] = f"attachment; filename=leads.csv"
+    resp.headers["Content-Disposition"] = "attachment; filename=leads.csv"
     resp.headers["Content-type"] = "text/csv; charset=utf-8"
     return resp
 
@@ -175,5 +175,4 @@ def api_export_csv():
 def api_settings():
     return jsonify({"niches": [], "cities": []})
 
-# Isso é pro Vercel reconhecer
 handler = app

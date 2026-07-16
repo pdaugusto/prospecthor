@@ -3,907 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProspecTHOR - Painel de Controle</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>ProspecTHOR — Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg-color: #060608;
-            --card-bg: #0c0c0e;
-            --border-color: #1e1e24;
-            --text-color: #f3f3f6;
-            --text-muted: #848492;
-            
-            /* Gold Accents */
-            --gold: #d4af37;
-            --gold-hover: #e5c04f;
-            --gold-glow: rgba(212, 175, 55, 0.15);
-            --gold-border: rgba(212, 175, 55, 0.25);
-            
-            --primary: var(--gold);
-            --warning: #facc15;
-            --info: #3b82f6;
-            --danger: #ef4444;
-            --orange: #f97316;
-            --sidebar-width: 250px;
+            --bg: #05070b;
+            --card: #0a0e17;
+            --card-hover: #0e1420;
+            --border: #1a2233;
+            --text: #e8eef7;
+            --muted: #7a8ba3;
+            --neon: #00d4ff;
+            --neon-soft: #3b9eff;
+            --neon-dim: rgba(0, 212, 255, 0.12);
+            --neon-glow: rgba(0, 212, 255, 0.25);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ff4d6a;
+            --info: #3b9eff;
+            --sidebar-w: 240px;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            background-image: radial-gradient(ellipse 70% 40% at 0% 0%, rgba(0, 212, 255, 0.05), transparent);
+        }
+        a { color: var(--neon); text-decoration: none; }
+        a:hover { text-decoration: underline; }
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Roboto', Arial, Helvetica, sans-serif; 
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            position: fixed; inset: 0 auto 0 0;
+            display: flex; flex-direction: column;
+            z-index: 100;
+            transition: transform .25s ease;
         }
-        
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-color); 
-            min-height: 100vh; 
-            display: flex; 
-            overflow-x: hidden;
-            font-family: 'Roboto', Arial, Helvetica, sans-serif;
+        .sidebar-brand {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
         }
+        .sidebar-brand h2 {
+            font-size: 20px; font-weight: 700; letter-spacing: 0.3px; color: var(--text);
+        }
+        .sidebar-brand h2 span { color: var(--neon); text-shadow: 0 0 16px var(--neon-glow); }
+        .sidebar-menu { list-style: none; padding: 16px 10px; flex: 1; }
+        .sidebar-menu a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 14px; margin-bottom: 4px;
+            color: var(--muted); border-radius: 8px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: .2s; text-decoration: none;
+        }
+        .sidebar-menu a:hover { background: var(--neon-dim); color: var(--neon); text-decoration: none; }
+        .sidebar-menu a.active {
+            background: var(--neon-dim); color: var(--neon);
+            border-left: 2px solid var(--neon);
+            border-radius: 0 8px 8px 0;
+        }
+        .sidebar-footer {
+            padding: 14px 18px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; color: var(--muted);
+        }
+        .btn-logout { color: var(--danger); font-weight: 600; text-decoration: none; }
+        .btn-logout:hover { opacity: .85; }
 
-        /* Ambient Noise Overlay */
-        .noise-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+        /* Main */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            padding: 24px 28px;
+            width: calc(100% - var(--sidebar-w));
+            min-height: 100vh;
+        }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; gap: 12px;
+        }
+        header h1 { font-size: 24px; font-weight: 700; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--neon); color: #031018;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px;
+            box-shadow: 0 0 12px var(--neon-glow);
+        }
+        .menu-toggle {
+            display: none; background: none; border: none;
+            color: var(--text); font-size: 22px; cursor: pointer;
+        }
+        .view { display: none; animation: fade .3s ease; }
+        .view.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat::after {
             content: "";
-            opacity: 0.025;
-            z-index: 9999;
-            pointer-events: none;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            opacity: .6;
+        }
+        .stat h3 {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .6px; color: var(--muted); margin-bottom: 8px;
+        }
+        .stat .value {
+            font-size: 28px; font-weight: 700; color: var(--text);
+        }
+        .stat.neon .value { color: var(--neon); text-shadow: 0 0 20px var(--neon-glow); }
+        .stat.ok .value { color: var(--success); }
+        .stat.warn .value { color: var(--warning); }
+        .stat.bad .value { color: var(--danger); }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .panel h3 {
+            font-size: 13px; font-weight: 700; margin-bottom: 14px; color: var(--text);
+        }
+        .chart-box { height: 260px; position: relative; }
+
+        /* Top leads */
+        .top-list { display: flex; flex-direction: column; gap: 8px; }
+        .top-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 14px; border-radius: 8px;
+            background: #070b12; border: 1px solid var(--border);
+            cursor: pointer; transition: .15s;
+        }
+        .top-item:hover { border-color: var(--neon); background: var(--card-hover); }
+        .top-item .name { font-weight: 600; font-size: 14px; }
+        .top-item .meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+        .top-item .score {
+            font-weight: 700; color: var(--neon); font-size: 15px;
+            min-width: 56px; text-align: right;
         }
 
-        h1, h2, h3, h4, .brand-title {
-            font-family: 'Roboto', Arial, Helvetica, sans-serif;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+        /* Filters */
+        .filters {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 16px; align-items: center;
         }
+        .filters input, .filters select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: Arial, Helvetica, sans-serif;
+            outline: none;
+        }
+        .filters input { min-width: 200px; flex: 1; }
+        .filters input:focus, .filters select:focus {
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px var(--neon-dim);
+        }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--card); color: var(--text);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            font-family: Arial, Helvetica, sans-serif;
+            transition: .15s; white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--neon); color: var(--neon); }
+        .btn-primary {
+            background: var(--neon); color: #031018; border-color: var(--neon);
+            box-shadow: 0 0 16px var(--neon-glow);
+        }
+        .btn-primary:hover { color: #031018; filter: brightness(1.05); }
+        .btn-wa { background: #128c7e; border-color: #128c7e; color: #fff; }
+        .btn-wa:hover { color: #fff; filter: brightness(1.08); }
+        .btn-call { background: var(--neon-dim); border-color: var(--neon); color: var(--neon); }
+        .btn-sm { padding: 6px 10px; font-size: 11px; }
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-success { border-color: var(--success); color: var(--success); }
 
-        /* Sidebar Styling */
-        .sidebar { 
-            width: var(--sidebar-width); 
-            background-color: var(--card-bg); 
-            border-right: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            position: fixed; 
-            top: 0; 
-            bottom: 0; 
-            left: 0; 
-            z-index: 100; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        /* Table */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: auto;
         }
-        .sidebar-brand { 
-            padding: 25px 20px; 
-            border-bottom: 1px solid var(--border-color); 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
+        table { width: 100%; border-collapse: collapse; min-width: 720px; }
+        th {
+            text-align: left; padding: 12px 14px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+            color: var(--muted); border-bottom: 1px solid var(--border);
+            background: #070b12; cursor: pointer; user-select: none;
+            white-space: nowrap;
         }
-        .sidebar-brand h2 { 
-            font-size: 28px; 
-            color: var(--text-color); 
+        th:hover { color: var(--neon); }
+        td {
+            padding: 12px 14px; font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
         }
-        .sidebar-brand h2 span { 
-            color: var(--gold); 
-            font-style: italic;
-            text-shadow: 0 0 10px var(--gold-glow); 
-        }
-        .sidebar-menu { 
-            list-style: none; 
-            padding: 20px 10px; 
-            flex-grow: 1; 
-        }
-        .sidebar-menu li { 
-            margin-bottom: 5px; 
-        }
-        .sidebar-menu a { 
-            display: flex; 
-            align-items: center; 
-            padding: 12px 15px; 
-            color: var(--text-muted); 
-            text-decoration: none; 
-            border-radius: 6px; 
-            font-size: 13px; 
-            font-weight: 400; 
-            transition: all 0.25s ease; 
-            cursor: pointer; 
-        }
-        .sidebar-menu a:hover, .sidebar-menu a.active { 
-            background-color: rgba(212, 175, 55, 0.04); 
-            color: var(--gold); 
-        }
-        .sidebar-menu a.active { 
-            border-left: 2px solid var(--gold); 
-            border-radius: 0 6px 6px 0; 
-            text-shadow: 0 0 6px var(--gold-glow); 
-            font-weight: 500;
-        }
-        .sidebar-footer { 
-            padding: 15px 20px; 
-            border-top: 1px solid var(--border-color); 
-            font-size: 12px; 
-            color: var(--text-muted); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        .btn-logout { 
-            color: var(--danger); 
-            text-decoration: none; 
-            font-weight: 500; 
-            transition: opacity 0.2s;
-        }
-        .btn-logout:hover {
-            opacity: 0.8;
-        }
+        tr:last-child td { border-bottom: none; }
+        tbody tr { cursor: pointer; transition: background .12s; }
+        tbody tr:hover { background: var(--card-hover); }
+        .phone-cell { font-variant-numeric: tabular-nums; color: var(--text); }
+        .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        /* Main Content */
-        .main-content { 
-            margin-left: var(--sidebar-width); 
-            flex-grow: 1; 
-            padding: 30px; 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            width: calc(100% - var(--sidebar-width)); 
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 999px;
+            font-size: 11px; font-weight: 700; letter-spacing: .3px;
         }
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 30px; 
+        .badge.raio {
+            background: var(--neon-dim); color: var(--neon);
+            border: 1px solid rgba(0, 212, 255, 0.35);
         }
-        header h1 { 
-            font-size: 36px; 
-            color: var(--text-color); 
+        .badge-status {
+            display: inline-block; padding: 3px 8px; border-radius: 999px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
         }
-        .user-profile { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
-        .user-avatar { 
-            width: 32px; 
-            height: 32px; 
-            background-color: var(--gold); 
-            box-shadow: 0 0 10px var(--gold-glow); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: #000; 
-            font-weight: 600; 
-            font-size: 13px; 
-        }
-        .menu-toggle { 
-            display: none; 
-            background: none; 
-            border: none; 
-            color: var(--text-color); 
-            font-size: 24px; 
-            cursor: pointer; 
-        }
+        .badge-status.novo { background: rgba(0, 212, 255, 0.1); color: var(--neon); }
+        .badge-status.contactado { background: rgba(245, 158, 11, 0.12); color: var(--warning); }
+        .badge-status.convertido { background: rgba(34, 197, 94, 0.12); color: var(--success); }
+        .badge-status.descartado { background: rgba(255, 77, 106, 0.12); color: var(--danger); }
 
-        .view-section { 
-            display: none; 
-            animation: fadeIn 0.4s ease; 
+        .pagination {
+            display: flex; gap: 10px; align-items: center; justify-content: center;
+            margin-top: 16px; color: var(--muted); font-size: 12px;
         }
-        .view-section.active { 
-            display: block; 
+        .pagination button {
+            background: var(--card); border: 1px solid var(--border); color: var(--text);
+            border-radius: 6px; padding: 6px 12px; cursor: pointer;
         }
+        .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+        .pagination button:not(:disabled):hover { border-color: var(--neon); color: var(--neon); }
 
-        /* Stat Cards */
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px; 
-            margin-bottom: 30px; 
+        /* Mobile cards */
+        .mobile-list { display: none; flex-direction: column; gap: 10px; }
+        .m-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px;
         }
-        .stat-card { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 20px; 
-            position: relative; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--gold-border);
-        }
-        .stat-card h3 { 
-            font-size: 18px; 
-            color: var(--text-muted); 
-            margin-bottom: 10px; 
-        }
-        .stat-card .value { 
-            font-size: 32px; 
-            font-weight: 500; 
-        }
-        .stat-card.quente .value { 
-            color: var(--gold); 
-            text-shadow: 0 0 8px var(--gold-glow); 
-        }
-        .stat-card.morno .value { 
-            color: var(--warning); 
-        }
-        .stat-card.frio .value { 
-            color: var(--text-muted); 
-        }
+        .m-card .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .m-card .name { font-weight: 700; font-size: 15px; }
+        .m-card .meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+        .m-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        /* Charts */
-        .charts-row { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 20px; 
-            margin-bottom: 30px; 
+        /* Detail */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 14px;
         }
-        @media (max-width: 900px) { 
-            .charts-row { grid-template-columns: 1fr; } 
+        .detail-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 12px; margin-bottom: 14px;
         }
-        .chart-container { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 20px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
-            height: 350px; 
-            position: relative; 
+        .detail-header h2 { font-size: 20px; }
+        .detail-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+        .meta-list { list-style: none; }
+        .meta-list li {
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+            font-size: 13px; display: flex; gap: 8px; flex-wrap: wrap;
         }
-        .chart-container canvas { 
-            max-height: 100%; 
+        .meta-list li:last-child { border-bottom: none; }
+        .meta-list strong { color: var(--muted); min-width: 90px; font-weight: 600; }
+        .section-title {
+            font-size: 12px; text-transform: uppercase; letter-spacing: .5px;
+            color: var(--muted); margin-bottom: 12px; font-weight: 700;
         }
-        .chart-container h3 { 
-            font-size: 22px; 
-            margin-bottom: 15px; 
-            font-weight: 400; 
-            color: var(--text-color);
+        .chip-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+        .chip-list li {
+            background: #070b12; border: 1px solid var(--border);
+            border-radius: 6px; padding: 8px 10px; font-size: 12px;
         }
+        .chip-list.problems li { border-left: 2px solid var(--danger); }
+        .chip-list.services li { border-left: 2px solid var(--neon); }
+        .action-stack { display: flex; flex-direction: column; gap: 8px; }
+        .action-stack .btn { width: 100%; justify-content: center; padding: 11px; }
+        textarea {
+            width: 100%; min-height: 100px; background: #070b12;
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); padding: 12px; font-size: 13px;
+            font-family: Arial, Helvetica, sans-serif; resize: vertical;
+            outline: none; margin-bottom: 10px;
+        }
+        textarea:focus { border-color: var(--neon); box-shadow: 0 0 0 3px var(--neon-dim); }
+        .timeline { display: flex; flex-direction: column; gap: 12px; }
+        .timeline-item { border-left: 2px solid var(--neon); padding-left: 12px; }
+        .timeline-date { font-size: 11px; color: var(--muted); }
+        .timeline-desc { font-size: 13px; margin-top: 2px; }
 
-        /* Top Leads */
-        .top-leads-box { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 20px; 
-            margin-bottom: 30px; 
+        /* Modal */
+        .modal-bg {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.65); z-index: 200;
+            align-items: center; justify-content: center; padding: 16px;
         }
-        .top-leads-box h3 { 
-            margin-bottom: 15px; 
-            font-size: 24px; 
+        .modal-bg.active { display: flex; }
+        .modal {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; width: 100%; max-width: 520px;
+            max-height: 90vh; overflow: auto;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.08);
         }
-        .top-leads-list { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 15px; 
+        .modal-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 18px; border-bottom: 1px solid var(--border);
         }
-        .top-lead-card { 
-            background-color: rgba(255,255,255,0.01); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 15px; 
-            border-left: 3px solid var(--gold); 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            min-height: 120px; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        .modal-head h3 { font-size: 15px; }
+        .modal-body { padding: 18px; }
+        .form-g { margin-bottom: 14px; }
+        .form-g label {
+            display: block; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .4px;
+            color: var(--muted); margin-bottom: 6px;
         }
-        .top-lead-card:hover { 
-            transform: translateY(-2px); 
-            background-color: rgba(212, 175, 55, 0.03); 
-            border-color: var(--gold-border);
-            box-shadow: 0 6px 15px var(--gold-glow); 
+        .form-g input, .form-g select {
+            width: 100%; padding: 10px 12px; background: #070b12;
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); font-size: 13px;
+            font-family: Arial, Helvetica, sans-serif;
         }
-        .top-lead-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-        }
-        .top-lead-name { 
-            font-weight: 500; 
-            font-size: 14px; 
-            max-width: 80%; 
-            color: var(--text-color);
-        }
-        .top-lead-score { 
-            font-size: 11px; 
-            font-weight: 500; 
-            background-color: rgba(212, 175, 55, 0.1); 
-            color: var(--gold); 
-            padding: 3px 6px; 
-            border-radius: 4px; 
-            border: 1px solid var(--gold-border);
-        }
-        .top-lead-meta { 
-            font-size: 11px; 
-            color: var(--text-muted); 
-            margin-top: 10px; 
-        }
+        .empty { color: var(--muted); text-align: center; padding: 28px; font-size: 13px; }
 
-        /* Filter Bar */
-        .filter-bar { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 15px; 
-            margin-bottom: 20px; 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 15px; 
-            align-items: center; 
+        /* Overlay mobile sidebar */
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.5); z-index: 90;
         }
-        .search-input-wrapper { 
-            flex-grow: 1; 
-            min-width: 200px; 
-        }
-        .filter-select, .search-input { 
-            width: 100%; 
-            padding: 10px 14px; 
-            background-color: #0f0f12; 
-            border: 1px solid var(--border-color); 
-            border-radius: 6px; 
-            color: var(--text-color); 
-            outline: none; 
-            font-size: 13px; 
-            transition: all 0.2s; 
-        }
-        .filter-select:focus, .search-input:focus { 
-            border-color: var(--gold); 
-            box-shadow: 0 0 8px var(--gold-glow); 
-        }
+        .sidebar-overlay.active { display: block; }
 
-        /* Table Responsive */
-        .table-responsive { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
+        @media (max-width: 1024px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .charts, .detail-grid { grid-template-columns: 1fr; }
         }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            text-align: left; 
-            font-size: 13px; 
-        }
-        th, td { 
-            padding: 15px; 
-            border-bottom: 1px solid var(--border-color); 
-        }
-        th { 
-            background-color: rgba(255,255,255,0.01); 
-            font-weight: 500; 
-            color: var(--text-muted); 
-            cursor: pointer; 
-            user-select: none; 
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: color 0.2s;
-        }
-        th:hover { 
-            color: var(--text-color); 
-        }
-        tr:hover td { 
-            background-color: rgba(212,175,55,0.01); 
-            cursor: pointer; 
-        }
-
-        /* Badges */
-        .badge { 
-            display: inline-block; 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            font-size: 10px; 
-            font-weight: 500; 
-            text-transform: uppercase; 
-            border: 1px solid transparent;
-        }
-        .badge.raio { 
-            background-color: rgba(212, 175, 55, 0.1); 
-            color: var(--gold); 
-            border-color: var(--gold-border);
-        }
-        .badge.trovao { 
-            background-color: rgba(234, 179, 8, 0.08); 
-            color: var(--warning); 
-            border-color: rgba(234, 179, 8, 0.15);
-        }
-        .badge.eco { 
-            background-color: rgba(113, 113, 122, 0.1); 
-            color: var(--text-muted); 
-            border-color: rgba(113, 113, 122, 0.2);
-        }
-
-        .badge-status { 
-            padding: 3px 8px; 
-            border-radius: 12px; 
-            font-size: 10px; 
-            font-weight: 500; 
-            text-transform: uppercase;
-        }
-        .badge-status.novo { 
-            background-color: #27272a; 
-            color: #f4f4f5; 
-        }
-        .badge-status.contactado { 
-            background-color: rgba(59, 130, 246, 0.15); 
-            color: #60a5fa; 
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-        .badge-status.convertido { 
-            background-color: rgba(212, 175, 55, 0.15); 
-            color: var(--gold); 
-            border: 1px solid var(--gold-border);
-        }
-        .badge-status.descartado { 
-            background-color: rgba(239, 68, 68, 0.1); 
-            color: #f87171; 
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        /* Pagination */
-        .pagination { 
-            display: flex; 
-            justify-content: flex-end; 
-            gap: 5px; 
-            padding: 15px; 
-            background-color: rgba(255,255,255,0.005); 
-            border-top: 1px solid var(--border-color); 
-        }
-        .pagination button { 
-            background-color: #0f0f12; 
-            border: 1px solid var(--border-color); 
-            color: var(--text-color); 
-            padding: 8px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 11px; 
-            transition: all 0.2s; 
-        }
-        .pagination button:hover:not(:disabled) { 
-            background-color: var(--gold); 
-            color: #000; 
-            box-shadow: 0 0 8px var(--gold-glow); 
-        }
-        .pagination button:disabled { 
-            opacity: 0.3; 
-            cursor: not-allowed; 
-        }
-
-        .btn-export { 
-            background-color: #0f0f12; 
-            color: var(--text-color); 
-            border: 1px solid var(--border-color); 
-            padding: 10px 16px; 
-            border-radius: 6px; 
-            font-size: 13px; 
-            cursor: pointer; 
-            font-weight: 500; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            transition: all 0.2s; 
-        }
-        .btn-export:hover { 
-            background-color: rgba(212,175,55,0.05); 
-            border-color: var(--gold); 
-            color: var(--gold);
-        }
-
-        /* Lead Details */
-        .detail-grid { 
-            display: grid; 
-            grid-template-columns: 1.6fr 1fr; 
-            gap: 20px; 
-            margin-bottom: 30px; 
-        }
-        @media (max-width: 900px) { 
-            .detail-grid { grid-template-columns: 1fr; } 
-        }
-        .card-detail { 
-            background-color: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 25px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
-            margin-bottom: 20px; 
-        }
-        .detail-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            border-bottom: 1px solid var(--border-color); 
-            padding-bottom: 20px; 
-            margin-bottom: 20px; 
-        }
-        .detail-title h2 { 
-            font-size: 32px; 
-            margin-bottom: 5px; 
-        }
-        .detail-title p { 
-            color: var(--text-muted); 
-            font-size: 13px; 
-        }
-        .detail-meta-list { 
-            list-style: none; 
-            margin-bottom: 20px; 
-        }
-        .detail-meta-list li { 
-            margin-bottom: 12px; 
-            display: flex; 
-            font-size: 13px; 
-        }
-        .detail-meta-list li strong { 
-            width: 140px; 
-            color: var(--text-muted); 
-        }
-        .detail-meta-list a { 
-            color: var(--gold); 
-            text-decoration: none; 
-            transition: opacity 0.2s;
-        }
-        .detail-meta-list a:hover { 
-            text-decoration: underline; 
-            text-shadow: 0 0 6px var(--gold-glow); 
-        }
-
-        .detail-section-title { 
-            font-size: 22px; 
-            font-weight: 400; 
-            margin-bottom: 15px; 
-            border-bottom: 1px solid var(--border-color); 
-            padding-bottom: 8px; 
-            color: var(--text-color);
-        }
-        .problems-list, .services-list { 
-            list-style: none; 
-            margin-bottom: 20px; 
-        }
-        .problems-list li, .services-list li { 
-            padding: 10px 12px; 
-            border-radius: 6px; 
-            margin-bottom: 8px; 
-            font-size: 12px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
-        .problems-list li { 
-            background-color: rgba(239, 68, 68, 0.05); 
-            border-left: 2px solid var(--danger); 
-            color: #fca5a5;
-        }
-        .services-list li { 
-            background-color: rgba(212, 175, 55, 0.04); 
-            border-left: 2px solid var(--gold); 
-            color: var(--gold);
-        }
-
-        .textarea-notes { 
-            width: 100%; 
-            height: 120px; 
-            background-color: #0f0f12; 
-            border: 1px solid var(--border-color); 
-            border-radius: 6px; 
-            color: var(--text-color); 
-            padding: 12px; 
-            outline: none; 
-            font-size: 13px; 
-            resize: none; 
-            margin-bottom: 15px; 
-            transition: border-color 0.2s; 
-        }
-        .textarea-notes:focus { 
-            border-color: var(--gold); 
-        }
-
-        .actions-btn-group { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-        }
-        .btn-action { 
-            flex-grow: 1; 
-            padding: 12px 18px; 
-            border: none; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            font-weight: 500; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px; 
-        }
-        .btn-action:active { 
-            transform: scale(0.98); 
-        }
-        .btn-action.primary { 
-            background-color: var(--gold); 
-            color: #000; 
-            box-shadow: 0 0 10px var(--gold-glow); 
-        }
-        .btn-action.primary:hover { 
-            background-color: var(--gold-hover); 
-            box-shadow: 0 0 15px rgba(212,175,55,0.4); 
-        }
-        .btn-action.info { 
-            background-color: #1e293b; 
-            color: #fff; 
-            border: 1px solid var(--border-color);
-        }
-        .btn-action.info:hover { 
-            background-color: #334155; 
-        }
-        .btn-action.danger { 
-            background-color: rgba(239,68,68,0.1); 
-            color: #f87171; 
-            border: 1px solid rgba(239,68,68,0.2);
-        }
-        .btn-action.danger:hover { 
-            background-color: rgba(239,68,68,0.2); 
-        }
-        .btn-action.secondary { 
-            background-color: #0f0f12; 
-            color: #fff; 
-            border: 1px solid var(--border-color); 
-        }
-        .btn-action.secondary:hover { 
-            background-color: rgba(255,255,255,0.03); 
-        }
-        .btn-action.success { 
-            background-color: transparent; 
-            color: var(--gold); 
-            border: 1px solid var(--gold-border); 
-        }
-        .btn-action.success:hover { 
-            background-color: rgba(212,175,55,0.05); 
-            border-color: var(--gold); 
-        }
-
-        /* Timeline */
-        .timeline { 
-            position: relative; 
-            padding-left: 20px; 
-            border-left: 1px dashed var(--border-color); 
-            margin-top: 15px; 
-        }
-        .timeline-item { 
-            margin-bottom: 20px; 
-            position: relative; 
-        }
-        .timeline-item::before { 
-            content: ''; 
-            width: 8px; 
-            height: 8px; 
-            background-color: var(--gold); 
-            border-radius: 50%; 
-            position: absolute; 
-            left: -25px; 
-            top: 4px; 
-            box-shadow: 0 0 6px var(--gold); 
-        }
-        .timeline-date { 
-            font-size: 10px; 
-            color: var(--text-muted); 
-            margin-bottom: 4px; 
-        }
-        .timeline-desc { 
-            font-size: 12px; 
-        }
-
-        .settings-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 20px; 
-        }
-        @media (max-width: 900px) { 
-            .settings-grid { grid-template-columns: 1fr; } 
-        }
-        .settings-list { 
-            max-height: 250px; 
-            overflow-y: auto; 
-            border: 1px solid var(--border-color); 
-            border-radius: 6px; 
-            padding: 10px; 
-            background-color: #08080a; 
-        }
-        .settings-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            padding: 8px 5px; 
-            font-size: 13px; 
-            border-bottom: 1px solid var(--border-color); 
-        }
-        .settings-item:last-child { 
-            border-bottom: none; 
-        }
-        .settings-item input[type="checkbox"] { 
-            width: 16px; 
-            height: 16px; 
-            accent-color: var(--gold); 
-        }
-        .input-text-settings { 
-            width: 100%; 
-            padding: 12px; 
-            background-color: #0f0f12; 
-            border: 1px solid var(--border-color); 
-            border-radius: 6px; 
-            color: var(--text-color); 
-            outline: none; 
-            font-size: 13px; 
-            margin-bottom: 15px; 
-            transition: border-color 0.2s; 
-        }
-        .input-text-settings:focus { 
-            border-color: var(--gold); 
-        }
-
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(5px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
-            .sidebar.active { transform: translateX(0); }
-            .main-content { margin-left: 0; width: 100%; padding: 15px; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; width: 100%; padding: 16px; }
             .menu-toggle { display: block; }
-            .mobile-table-card { 
-                background-color: var(--card-bg); 
-                border: 1px solid var(--border-color); 
-                border-radius: 8px; 
-                padding: 15px; 
-                margin-bottom: 15px; 
-                box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
-            }
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(4px);
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.active {
-            display: flex;
-        }
-        .modal-content {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 90%;
-            max-width: 550px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            animation: modalFadeIn 0.3s ease;
-        }
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h3 {
-            font-size: 20px;
-            font-weight: 500;
-            color: var(--gold);
-        }
-        .close-modal {
-            color: var(--text-muted);
-            font-size: 24px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .close-modal:hover {
-            color: var(--text-color);
-        }
-        .modal-body {
-            padding: 20px;
-        }
-        .form-group-modal {
-            margin-bottom: 15px;
-        }
-        .form-group-modal label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-        .form-group-modal input, .form-group-modal select {
-            width: 100%;
-            padding: 10px 14px;
-            background-color: #0f0f11;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-color);
-            outline: none;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        .form-group-modal input:focus, .form-group-modal select:focus {
-            border-color: var(--gold);
-        }
-        .prompt-preview-container {
-            margin-top: 15px;
-        }
-        .prompt-preview-container label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-        .prompt-preview-container textarea {
-            width: 100%;
-            height: 220px;
-            background-color: #050507;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-color);
-            padding: 12px;
-            outline: none;
-            font-size: 13px;
-            resize: none;
-            line-height: 1.5;
-        }
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Table Button Action styling */
-        .btn-prompt-table {
-            background-color: transparent;
-            color: var(--gold);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-prompt-table:hover {
-            background-color: rgba(212, 175, 55, 0.1);
-            border-color: var(--gold);
-            box-shadow: 0 0 8px var(--gold-glow);
+            .stats { grid-template-columns: 1fr 1fr; }
+            .table-wrap { display: none; }
+            .mobile-list { display: flex; }
+            header h1 { font-size: 18px; }
+            .filters input { min-width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="noise-overlay"></div>
-
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <h2>⚡<span>ProspecTHOR</span></h2>
-            <button class="menu-toggle" id="btn-close-menu">✕</button>
+            <h2>Prospec<span>THOR</span></h2>
+            <button class="menu-toggle" id="btn-close-menu" aria-label="Fechar">✕</button>
         </div>
         <ul class="sidebar-menu">
-            <li><a onclick="navigateTo('/')" class="active" id="nav-home">🏠 Home</a></li>
-            <li><a onclick="navigateTo('/leads')" id="nav-leads">📋 Leads</a></li>
-            <li><a onclick="navigateTo('/reports')" id="nav-reports">📊 Relatórios</a></li>
-            <li><a onclick="navigateTo('/settings')" id="nav-settings">⚙️ Configurações</a></li>
-            <li><a href="/api/export/csv" class="nav-download">📥 Exportar CSV</a></li>
+            <li><a onclick="navigateTo('/')" class="active" id="nav-home">Home</a></li>
+            <li><a onclick="navigateTo('/leads')" id="nav-leads">Leads</a></li>
+            <li><a onclick="navigateTo('/reports')" id="nav-reports">Relatórios</a></li>
+            <li><a href="/api/export/csv" class="nav-download">Exportar CSV</a></li>
         </ul>
         <div class="sidebar-footer">
             <span>admin</span>
@@ -911,963 +398,724 @@
         </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main">
         <header>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button class="menu-toggle" id="btn-open-menu">☰</button>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="menu-toggle" id="btn-open-menu" aria-label="Menu">☰</button>
                 <h1 id="page-title">Home</h1>
             </div>
-            <div class="user-profile">
-                <div class="user-avatar">A</div>
-                <span>Administrador</span>
+            <div class="header-right">
+                <div class="avatar">A</div>
             </div>
         </header>
 
         <!-- HOME -->
-        <section id="view-home" class="view-section active">
-            <div class="stats-grid" id="home-stats-grid">
-                <div class="stat-card quente"><h3>⚡ Leads Raio (sem site)</h3><div class="value" id="home-total-leads">--</div></div>
-                <div class="stat-card"><h3>Prontos p/ abordar</h3><div class="value" id="home-quentes-leads">--</div></div>
-                <div class="stat-card morno"><h3>Contactados</h3><div class="value" id="home-mornos-leads">--</div></div>
-                <div class="stat-card frio"><h3>Descartados</h3><div class="value" id="home-frios-leads">--</div></div>
+        <section id="view-home" class="view active">
+            <div class="stats">
+                <div class="stat neon"><h3>Leads sem site</h3><div class="value" id="home-total">--</div></div>
+                <div class="stat"><h3>Novos</h3><div class="value" id="home-novos">--</div></div>
+                <div class="stat warn"><h3>Contactados</h3><div class="value" id="home-contactados">--</div></div>
+                <div class="stat bad"><h3>Descartados</h3><div class="value" id="home-descartados">--</div></div>
             </div>
-            <div class="charts-row">
-                <div class="chart-container"><h3>Status dos Raios</h3><canvas id="chart-pie-class"></canvas></div>
-                <div class="chart-container"><h3>Leads Raio por Nicho</h3><canvas id="chart-bar-niche"></canvas></div>
+            <div class="charts">
+                <div class="panel">
+                    <h3>Status dos leads</h3>
+                    <div class="chart-box"><canvas id="chart-status"></canvas></div>
+                </div>
+                <div class="panel">
+                    <h3>Por nicho</h3>
+                    <div class="chart-box"><canvas id="chart-niche"></canvas></div>
+                </div>
             </div>
-            <div class="top-leads-box">
-                <h3>⚡ Top 5 Leads Raio (sem site) para Abordar</h3>
-                <div class="top-leads-list" id="home-top-leads-list"></div>
+            <div class="panel">
+                <h3>Prioridade — top 5 para abordar</h3>
+                <div class="top-list" id="home-top"></div>
             </div>
         </section>
 
         <!-- LEADS -->
-        <section id="view-leads" class="view-section">
-            <div class="filter-bar">
-                <div class="search-input-wrapper">
-                    <input type="text" class="search-input" id="filter-search" placeholder="Buscar por nome da empresa...">
-                </div>
-                <div>
-                    <select class="filter-select" id="filter-class">
-                        <option value="raio" selected>⚡ Raio (sem site)</option>
-                    </select>
-                </div>
-                <div>
-                    <select class="filter-select" id="filter-niche">
-                        <option value="">Todos os Nichos</option>
-                    </select>
-                </div>
-                <div>
-                    <select class="filter-select" id="filter-status">
-                        <option value="">Todos os Status</option>
-                        <option value="novo">Novo</option>
-                        <option value="contactado">Contactado</option>
-                    </select>
-                </div>
-                <button class="btn-export" onclick="window.location.href='/api/export/csv'">📥 CSV</button>
+        <section id="view-leads" class="view">
+            <div class="filters">
+                <input type="search" id="filter-search" placeholder="Buscar empresa...">
+                <select id="filter-niche"><option value="">Todos os nichos</option></select>
+                <select id="filter-status">
+                    <option value="">Todos os status</option>
+                    <option value="novo">Novo</option>
+                    <option value="contactado">Contactado</option>
+                    <option value="convertido">Convertido</option>
+                    <option value="descartado">Descartado</option>
+                </select>
+                <a class="btn btn-primary" href="/api/export/csv">CSV</a>
             </div>
-            <div class="table-responsive" id="leads-table-container">
-                <table id="leads-table">
+            <div class="table-wrap" id="leads-table-wrap">
+                <table>
                     <thead>
                         <tr>
-                            <th onclick="sortTable(0)">Nome</th>
-                            <th onclick="sortTable(1)">Cidade</th>
-                            <th onclick="sortTable(2)">Nicho</th>
-                            <th onclick="sortTable(3)">Score</th>
-                            <th onclick="sortTable(4)">Classificação</th>
-                            <th onclick="sortTable(5)">Problemas</th>
-                            <th onclick="sortTable(6)">Status</th>
-                            <th onclick="sortTable(7)">Data Coleta</th>
-                            <th onclick="event.stopPropagation()">Ações</th>
+                            <th onclick="sortBy('name')">Empresa</th>
+                            <th onclick="sortBy('city')">Cidade</th>
+                            <th onclick="sortBy('phone')">Telefone</th>
+                            <th onclick="sortBy('lead_score')">Score</th>
+                            <th onclick="sortBy('status')">Status</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="leads-table-body"></tbody>
+                    <tbody id="leads-tbody"></tbody>
                 </table>
-                <div class="pagination" id="leads-pagination"></div>
             </div>
-            <div id="leads-mobile-container" style="display: none;"></div>
+            <div class="mobile-list" id="leads-mobile"></div>
+            <div class="pagination" id="leads-pagination"></div>
         </section>
 
-        <!-- DETALHE DO LEAD -->
-        <section id="view-lead-detail" class="view-section">
-            <div class="detail-grid" id="lead-detail-wrapper"></div>
+        <!-- DETAIL -->
+        <section id="view-lead-detail" class="view">
+            <div style="margin-bottom:14px;">
+                <button class="btn" onclick="navigateTo('/leads')">← Voltar</button>
+            </div>
+            <div id="lead-detail-wrapper" class="detail-grid"></div>
         </section>
 
-        <!-- RELATÓRIOS -->
-        <section id="view-reports" class="view-section">
-            <div class="filter-bar">
-                <div>
-                    <select class="filter-select" id="report-period" onchange="loadReports()">
-                        <option value="weekly">Última Semana</option>
-                        <option value="daily">Hoje</option>
-                        <option value="monthly">Último Mês</option>
-                    </select>
+        <!-- REPORTS -->
+        <section id="view-reports" class="view">
+            <div class="filters">
+                <select id="report-period" onchange="loadReports()">
+                    <option value="daily">Hoje</option>
+                    <option value="weekly" selected>7 dias</option>
+                    <option value="monthly">30 dias</option>
+                </select>
+            </div>
+            <div class="stats">
+                <div class="stat neon"><h3>Leads no período</h3><div class="value" id="report-total">--</div></div>
+                <div class="stat"><h3>% novos / total</h3><div class="value" id="report-rate">--</div></div>
+                <div class="stat ok"><h3>Conversão</h3><div class="value" id="report-conv">--</div></div>
+                <div class="stat warn"><h3>Contactados</h3><div class="value" id="report-contact">--</div></div>
+            </div>
+            <div class="charts">
+                <div class="panel">
+                    <h3>Distribuição</h3>
+                    <div class="chart-box"><canvas id="chart-report"></canvas></div>
                 </div>
-                <button class="btn-export" onclick="window.location.href='/api/export/csv'">📥 Exportar Relatório</button>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card"><h3>Leads Coletados</h3><div class="value" id="report-total">--</div></div>
-                <div class="stat-card quente"><h3>Taxa de Raios</h3><div class="value" id="report-rate-quentes">--</div></div>
-                <div class="stat-card"><h3>Taxa de Conversão</h3><div class="value" id="report-rate-conversion" style="color: var(--gold);">--</div></div>
-            </div>
-            <div class="charts-row">
-                <div class="chart-container"><h3>Problemas Mais Comuns</h3><canvas id="chart-report-problems"></canvas></div>
-                <div class="chart-container"><h3>Distribuição por Qualificação</h3><canvas id="chart-report-pie"></canvas></div>
-            </div>
-        </section>
-
-        <!-- CONFIGURAÇÕES -->
-        <section id="view-settings" class="view-section">
-            <div class="card-detail">
-                <h3 class="detail-section-title">Parâmetros do Robô de Busca</h3>
-                <div class="settings-grid">
-                    <div>
-                        <h4 style="margin-bottom:10px;font-size:14px;color:var(--text-muted);">Nichos Habilitados</h4>
-                        <div class="settings-list" id="settings-niches-list"></div>
-                    </div>
-                    <div>
-                        <h4 style="margin-bottom:10px;font-size:14px;color:var(--text-muted);">Cidades Cadastradas</h4>
-                        <div class="settings-list" id="settings-cities-list"></div>
-                    </div>
+                <div class="panel">
+                    <h3>Problemas comuns</h3>
+                    <div class="chart-box"><canvas id="chart-problems"></canvas></div>
                 </div>
-            </div>
-            <div class="card-detail">
-                <h3 class="detail-section-title">Chaves de API & Integrações</h3>
-                <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px;">Google Maps Places API Key</label>
-                <input type="password" class="input-text-settings" id="settings-api-key" placeholder="••••••••••••••••••••••••••••••••" disabled>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:-10px;margin-bottom:20px;">Configurada via variável GOOGLE_MAPS_API_KEY no arquivo .env</p>
-                <button class="btn-action primary" id="btn-save-settings" onclick="saveSettings()">💾 Salvar Configurações</button>
             </div>
         </section>
     </main>
 
-    <!-- Modal Gerador de Prompt de Vendas -->
-    <div id="sales-prompt-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Gerador de Prompt de Vendas</h3>
-                <span class="close-modal" onclick="closeSalesPromptModal()">&times;</span>
+    <!-- Prompt modal -->
+    <div class="modal-bg" id="prompt-modal">
+        <div class="modal">
+            <div class="modal-head">
+                <h3>Mensagem de abordagem</h3>
+                <button class="btn btn-sm" onclick="closePrompt()">Fechar</button>
             </div>
             <div class="modal-body">
-                <div class="form-group-modal">
-                    <label for="seller-name">Seu Nome (Vendedor)</label>
-                    <input type="text" id="seller-name" placeholder="Digite seu nome" oninput="saveSellerName(this.value)">
+                <div class="form-g">
+                    <label>Seu nome</label>
+                    <input type="text" id="seller-name" placeholder="Nome do vendedor" oninput="saveSellerName(this.value)">
                 </div>
-                
-                <div class="form-group-modal">
-                    <label for="prompt-channel">Canal de Abordagem</label>
-                    <select id="prompt-channel" onchange="generateSalesPrompt()">
-                        <option value="whatsapp">WhatsApp (Direto, com Emojis & Negritos)</option>
-                        <option value="instagram">Instagram Direct (Conciso & Amigável)</option>
-                        <option value="email">E-mail Comercial (Estruturado)</option>
+                <div class="form-g">
+                    <label>Canal</label>
+                    <select id="prompt-channel" onchange="generatePrompt()">
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="email">E-mail</option>
                     </select>
                 </div>
-                
-                <div class="prompt-preview-container">
-                    <label>Mensagem Gerada</label>
-                    <textarea id="prompt-preview-text" readonly></textarea>
+                <div class="form-g">
+                    <label>Mensagem</label>
+                    <textarea id="prompt-text" readonly style="min-height:180px;"></textarea>
                 </div>
-                
-                <button class="btn-action primary" onclick="copySalesPromptToClipboard()" style="width: 100%; margin-top: 15px;">
-                    📋 Copiar Mensagem
-                </button>
+                <button class="btn btn-primary" style="width:100%;" onclick="copyPrompt()">Copiar mensagem</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Customização global dos gráficos Chart.js para combinar com o tema dark/gold
-        Chart.defaults.color = '#848492';
-        Chart.defaults.font.family = "'Roboto', Arial, Helvetica, sans-serif";
+        Chart.defaults.color = '#7a8ba3';
+        Chart.defaults.font.family = 'Arial, Helvetica, sans-serif';
         Chart.defaults.font.size = 11;
+        Chart.defaults.borderColor = '#1a2233';
 
         let allLeads = [];
         let filteredLeads = [];
         let currentPage = 1;
-        const itemsPerPage = 20;
+        const PAGE_SIZE = 25;
+        let sortKey = 'lead_score';
+        let sortAsc = false;
+        let chartStatus, chartNiche, chartReport, chartProblems;
+        let activePromptLead = null;
+        let leadsCacheAt = 0;
+        const CACHE_MS = 45000;
 
-        let chartPieClassInstance = null;
-        let chartBarNicheInstance = null;
-        let chartReportProblemsInstance = null;
-        let chartReportPieInstance = null;
-
-        // ──────────────────────────────────────────────────────────
-        // FUNÇÃO: Deriva o status a partir de contacted_at
-        // contacted_at = null  →  "novo"
-        // contacted_at = data  →  "contactado"
-        // ──────────────────────────────────────────────────────────
-        function getStatus(lead) {
-            return lead.contacted_at ? "contactado" : "novo";
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[c]));
         }
 
-        function getStatusLabel(lead) {
-            const s = getStatus(lead);
-            return s === "contactado" ? "CONTACTADO" : "NOVO";
+        function getStatus(l) {
+            const notes = (l.notes || '').toLowerCase();
+            const cs = (l.contact_status || '').toLowerCase();
+            if (notes === 'descartado' || cs === 'descartado') return 'descartado';
+            if (notes === 'convertido' || cs === 'convertido') return 'convertido';
+            if (l.contacted_at || cs === 'contactado') return 'contactado';
+            return 'novo';
         }
 
-        // Roteador SPA
+        function statusLabel(s) {
+            return ({ novo:'Novo', contactado:'Contactado', convertido:'Convertido', descartado:'Descartado' })[s] || s;
+        }
+
+        function phoneDigits(p) {
+            return String(p || '').replace(/\D/g, '');
+        }
+
+        function waLink(phone) {
+            const d = phoneDigits(phone);
+            if (!d) return null;
+            const full = d.length <= 11 ? '55' + d : d;
+            return `https://wa.me/${full}`;
+        }
+
         function navigateTo(path) {
-            window.history.pushState({}, "", path);
+            history.pushState({}, '', path);
             handleRouting();
+            closeSidebar();
         }
 
         function handleRouting() {
-            const path = window.location.pathname;
-            document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
-            document.querySelectorAll(".sidebar-menu a").forEach(a => a.classList.remove("active"));
-            const titleEl = document.getElementById("page-title");
+            const path = location.pathname;
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            const title = document.getElementById('page-title');
 
-            if (path === "/" || path === "") {
-                document.getElementById("view-home").classList.add("active");
-                document.getElementById("nav-home").classList.add("active");
-                titleEl.textContent = "Visão Geral";
-                loadHomeData();
-            } else if (path === "/leads") {
-                document.getElementById("view-leads").classList.add("active");
-                document.getElementById("nav-leads").classList.add("active");
-                titleEl.textContent = "Lista de Leads";
-                loadLeadsData();
-            } else if (path.startsWith("/lead/")) {
-                document.getElementById("view-lead-detail").classList.add("active");
-                titleEl.textContent = "Detalhes do Lead";
-                const leadId = parseInt(path.split("/")[2]);
-                loadLeadDetail(leadId);
-            } else if (path === "/reports") {
-                document.getElementById("view-reports").classList.add("active");
-                document.getElementById("nav-reports").classList.add("active");
-                titleEl.textContent = "Relatórios de Vendas";
+            if (path === '/' || path === '') {
+                document.getElementById('view-home').classList.add('active');
+                document.getElementById('nav-home').classList.add('active');
+                title.textContent = 'Home';
+                loadHome();
+            } else if (path === '/leads') {
+                document.getElementById('view-leads').classList.add('active');
+                document.getElementById('nav-leads').classList.add('active');
+                title.textContent = 'Leads';
+                loadLeads();
+            } else if (path.startsWith('/lead/')) {
+                document.getElementById('view-lead-detail').classList.add('active');
+                title.textContent = 'Detalhe';
+                loadDetail(parseInt(path.split('/')[2], 10));
+            } else if (path === '/reports') {
+                document.getElementById('view-reports').classList.add('active');
+                document.getElementById('nav-reports').classList.add('active');
+                title.textContent = 'Relatórios';
                 loadReports();
-            } else if (path === "/settings") {
-                document.getElementById("view-settings").classList.add("active");
-                document.getElementById("nav-settings").classList.add("active");
-                titleEl.textContent = "Configurações";
-                loadSettings();
+            } else {
+                navigateTo('/');
             }
         }
 
-        // ──────────────────────────────────────────────────────────
-        // HOME
-        // ──────────────────────────────────────────────────────────
-        async function loadHomeData() {
+        async function fetchLeads(force) {
+            const now = Date.now();
+            if (!force && allLeads.length && (now - leadsCacheAt) < CACHE_MS) {
+                return allLeads;
+            }
+            const res = await fetch('/api/leads');
+            allLeads = await res.json();
+            leadsCacheAt = now;
+            return allLeads;
+        }
+
+        async function loadHome() {
             try {
-                const statsRes = await fetch("/api/stats");
-                const stats = await statsRes.json();
+                const [stats, leads] = await Promise.all([
+                    fetch('/api/stats').then(r => r.json()),
+                    fetchLeads()
+                ]);
 
-                // Painel focado em Raio (sem site): total = quentes
-                document.getElementById("home-total-leads").textContent = stats.total;
-                document.getElementById("home-quentes-leads").textContent = stats.quentes;
-                document.getElementById("home-mornos-leads").textContent = stats.mornos; // contactados
-                document.getElementById("home-frios-leads").textContent = stats.frios;   // descartados
-
-                const canvasPie = document.getElementById("chart-pie-class");
-                canvasPie.parentElement.style.height = "350px";
-                const ctxPie = canvasPie.getContext("2d");
-                if (chartPieClassInstance) chartPieClassInstance.destroy();
-                const contactados = stats.mornos || 0;
+                const total = stats.total || 0;
+                const contactados = stats.mornos || stats.contactados || 0;
                 const descartados = stats.descartados || stats.frios || 0;
-                const novos = Math.max((stats.total || 0) - contactados, 0);
-                chartPieClassInstance = new Chart(ctxPie, {
-                    type: "pie",
+                const novos = Math.max(total - contactados, 0);
+
+                document.getElementById('home-total').textContent = total;
+                document.getElementById('home-novos').textContent = novos;
+                document.getElementById('home-contactados').textContent = contactados;
+                document.getElementById('home-descartados').textContent = descartados;
+
+                const pieCtx = document.getElementById('chart-status').getContext('2d');
+                if (chartStatus) chartStatus.destroy();
+                chartStatus = new Chart(pieCtx, {
+                    type: 'doughnut',
                     data: {
-                        labels: ["Novos", "Contactados", "Descartados"],
+                        labels: ['Novos', 'Contactados', 'Descartados'],
                         datasets: [{
                             data: [novos, contactados, descartados],
-                            backgroundColor: ["#d4af37", "#facc15", "#ef4444"],
-                            borderWidth: 1,
-                            borderColor: "#1e1e24"
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: "bottom" } } 
-                    }
-                });
-
-                const canvasBar = document.getElementById("chart-bar-niche");
-                canvasBar.parentElement.style.height = "350px";
-                const ctxBar = canvasBar.getContext("2d");
-                if (chartBarNicheInstance) chartBarNicheInstance.destroy();
-                const labelsNiche = Object.keys(stats.nichos || {});
-                const dataNiche = Object.values(stats.nichos || {});
-                chartBarNicheInstance = new Chart(ctxBar, {
-                    type: "bar",
-                    data: {
-                        labels: labelsNiche.map(l => l.toUpperCase()),
-                        datasets: [{ 
-                            label: "Leads Raio (sem site)", 
-                            data: dataNiche, 
-                            backgroundColor: "#d4af37",
+                            backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
                             borderWidth: 0
                         }]
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        cutout: '62%'
+                    }
+                });
+
+                const labels = Object.keys(stats.nichos || {});
+                const values = Object.values(stats.nichos || {});
+                const barCtx = document.getElementById('chart-niche').getContext('2d');
+                if (chartNiche) chartNiche.destroy();
+                chartNiche = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels.map(l => l.toUpperCase()),
+                        datasets: [{
+                            data: values,
+                            backgroundColor: '#00d4ff',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { grid: { display: false } },
-                            y: { grid: { color: "#1e1e24" } }
+                            y: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } }
                         }
                     }
                 });
 
-                const leadsRes = await fetch("/api/leads");
-                const leads = await leadsRes.json();
-
-                const top5 = leads.sort((a, b) => b.lead_score - a.lead_score).slice(0, 5);
-                const topListEl = document.getElementById("home-top-leads-list");
-                topListEl.innerHTML = "";
-
-                if (top5.length === 0) {
-                    topListEl.innerHTML = "<p style='color:var(--text-muted);'>Nenhum lead ⚡ Raio (sem site) no momento.</p>";
+                const top = [...leads]
+                    .filter(l => getStatus(l) === 'novo')
+                    .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
+                    .slice(0, 5);
+                const box = document.getElementById('home-top');
+                if (!top.length) {
+                    box.innerHTML = '<p class="empty">Nenhum lead novo sem site no momento.</p>';
                     return;
                 }
-
-                top5.forEach(l => {
-                    const card = document.createElement("div");
-                    card.className = "top-lead-card";
-                    card.onclick = () => navigateTo(`/lead/${l.id}`);
-                    card.innerHTML = `
-                        <div class="top-lead-header">
-                            <span class="top-lead-name">${l.name}</span>
-                            <span class="top-lead-score">${l.lead_score} pts</span>
+                box.innerHTML = top.map(l => `
+                    <div class="top-item" onclick="navigateTo('/lead/${l.id}')">
+                        <div>
+                            <div class="name">${esc(l.name)}</div>
+                            <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
                         </div>
-                        <div class="top-lead-meta">
-                            📍 ${l.city || ''} - ${l.state || ''} | 📱 ${(l.niche || '').toUpperCase()}
-                        </div>
-                    `;
-                    topListEl.appendChild(card);
-                });
-
-            } catch (err) {
-                console.error("Erro ao carregar Home:", err);
+                        <div class="score">${l.lead_score || 0}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        // ──────────────────────────────────────────────────────────
-        // LEADS - LISTA
-        // ──────────────────────────────────────────────────────────
-        async function loadLeadsData() {
+        async function loadLeads() {
             try {
-                const res = await fetch("/api/leads");
-                allLeads = await res.json();
-
-                const niches = [...new Set(allLeads.map(l => l.niche).filter(Boolean))];
-                const filterNicheEl = document.getElementById("filter-niche");
-                filterNicheEl.innerHTML = "<option value=''>Todos os Nichos</option>";
-                niches.forEach(n => {
-                    const opt = document.createElement("option");
-                    opt.value = n;
-                    opt.textContent = n.toUpperCase();
-                    filterNicheEl.appendChild(opt);
-                });
-
+                await fetchLeads();
+                const niches = [...new Set(allLeads.map(l => l.niche).filter(Boolean))].sort();
+                const sel = document.getElementById('filter-niche');
+                const cur = sel.value;
+                sel.innerHTML = '<option value="">Todos os nichos</option>' +
+                    niches.map(n => `<option value="${esc(n)}">${esc(n.toUpperCase())}</option>`).join('');
+                sel.value = cur;
                 applyFilters();
-            } catch (err) {
-                console.error("Erro ao buscar leads:", err);
+            } catch (e) {
+                console.error(e);
             }
         }
 
         function applyFilters() {
-            const query = document.getElementById("filter-search").value.toLowerCase();
-            const classVal = document.getElementById("filter-class").value;
-            const nicheVal = document.getElementById("filter-niche").value;
-            const statusVal = document.getElementById("filter-status").value;
+            const q = document.getElementById('filter-search').value.toLowerCase().trim();
+            const niche = document.getElementById('filter-niche').value;
+            const status = document.getElementById('filter-status').value;
 
             filteredLeads = allLeads.filter(l => {
-                const matchesSearch = (l.name || '').toLowerCase().includes(query);
-                const matchesClass = !classVal || l.lead_class === classVal;
-                const matchesNiche = !nicheVal || l.niche === nicheVal;
-                // CORRIGIDO: compara status derivado, não a data
-                const matchesStatus = !statusVal || getStatus(l) === statusVal;
-                return matchesSearch && matchesClass && matchesNiche && matchesStatus;
+                const hay = `${l.name || ''} ${l.city || ''} ${l.phone || ''}`.toLowerCase();
+                const okQ = !q || hay.includes(q);
+                const okN = !niche || l.niche === niche;
+                const okS = !status || getStatus(l) === status;
+                return okQ && okN && okS;
+            });
+
+            filteredLeads.sort((a, b) => {
+                let va, vb;
+                if (sortKey === 'status') {
+                    va = getStatus(a); vb = getStatus(b);
+                } else if (sortKey === 'lead_score') {
+                    va = a.lead_score || 0; vb = b.lead_score || 0;
+                    return sortAsc ? va - vb : vb - va;
+                } else {
+                    va = (a[sortKey] || '').toString().toLowerCase();
+                    vb = (b[sortKey] || '').toString().toLowerCase();
+                }
+                if (va < vb) return sortAsc ? -1 : 1;
+                if (va > vb) return sortAsc ? 1 : -1;
+                return 0;
             });
 
             currentPage = 1;
-            renderLeadsTable();
+            renderTable();
         }
 
-        function renderLeadsTable() {
-            const tableBody = document.getElementById("leads-table-body");
-            const mobileContainer = document.getElementById("leads-mobile-container");
-            tableBody.innerHTML = "";
-            mobileContainer.innerHTML = "";
+        function sortBy(key) {
+            if (sortKey === key) sortAsc = !sortAsc;
+            else { sortKey = key; sortAsc = key !== 'lead_score'; }
+            applyFilters();
+        }
 
-            const isMobile = window.innerWidth <= 768;
+        function actionButtons(l, stopProp) {
+            const wa = waLink(l.phone);
+            const tel = phoneDigits(l.phone);
+            const stop = stopProp ? 'event.stopPropagation();' : '';
+            return `
+                ${wa ? `<a class="btn btn-sm btn-wa" href="${wa}" target="_blank" rel="noopener" onclick="${stop}">WhatsApp</a>` : ''}
+                ${tel ? `<a class="btn btn-sm btn-call" href="tel:${tel}" onclick="${stop}">Ligar</a>` : ''}
+                <button class="btn btn-sm" onclick="${stop}openPrompt(${l.id})">Mensagem</button>
+            `;
+        }
 
-            if (filteredLeads.length === 0) {
-                tableBody.innerHTML = "<tr><td colspan='9' style='text-align:center;color:var(--text-muted);'>Nenhum lead encontrado com os filtros aplicados.</td></tr>";
-                mobileContainer.innerHTML = "<p style='color:var(--text-muted);text-align:center;padding:20px;'>Nenhum lead encontrado.</p>";
+        function renderTable() {
+            const tbody = document.getElementById('leads-tbody');
+            const mobile = document.getElementById('leads-mobile');
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const page = filteredLeads.slice(start, start + PAGE_SIZE);
+
+            if (!filteredLeads.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum lead encontrado.</td></tr>';
+                mobile.innerHTML = '<p class="empty">Nenhum lead encontrado.</p>';
                 renderPagination();
                 return;
             }
 
-            const startIdx = (currentPage - 1) * itemsPerPage;
-            const paginated = filteredLeads.slice(startIdx, startIdx + itemsPerPage);
-
-            paginated.forEach(l => {
-                // Problemas
-                let problems = [];
-                try {
-                    problems = JSON.parse(l.lead_problems || "[]").map(p => p.split(" (")[0]);
-                } catch(e) {}
-                const problemsStr = problems.length > 0
-                    ? problems.slice(0, 2).join(", ") + (problems.length > 2 ? "..." : "")
-                    : "Nenhum";
-
-                // Data
-                const dateStr = l.created_at ? l.created_at.split(" ")[0].split("T")[0] : "--";
-
-                // CORRIGIDO: status derivado
-                const status = getStatus(l);
-                const statusLabel = getStatusLabel(l);
-
-                // Classe badge & ícones
-                const leadClass = l.lead_class || 'eco';
-                const classLabel = leadClass.toUpperCase();
-                let badgeIcon = '🔊';
-                if (leadClass === 'raio') badgeIcon = '⚡';
-                else if (leadClass === 'trovao') badgeIcon = '☁️';
-
-                // ── Desktop: Linha da tabela ──
-                const tr = document.createElement("tr");
-                tr.onclick = () => navigateTo(`/lead/${l.id}`);
-                tr.innerHTML = `
-                    <td><strong>${l.name || ''}</strong></td>
-                    <td>${l.city || ''}</td>
-                    <td>${(l.niche || '').toUpperCase()}</td>
-                    <td><strong>${l.lead_score || 0}</strong></td>
-                    <td><span class="badge ${leadClass}">${badgeIcon} ${classLabel}</span></td>
-                    <td style="color:var(--text-muted);font-size:12px;">${problemsStr}</td>
-                    <td><span class="badge-status ${status}">${statusLabel}</span></td>
-                    <td>${dateStr}</td>
-                    <td onclick="event.stopPropagation()">
-                        <button class="btn-prompt-table" onclick="openSalesPromptModal(${l.id})">💬 Prompt</button>
-                    </td>
+            tbody.innerHTML = page.map(l => {
+                const st = getStatus(l);
+                return `
+                    <tr onclick="navigateTo('/lead/${l.id}')">
+                        <td><strong>${esc(l.name)}</strong><div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc((l.niche || '').toUpperCase())}</div></td>
+                        <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
+                        <td class="phone-cell">${esc(l.phone || '—')}</td>
+                        <td><span class="badge raio">${l.lead_score || 0}</span></td>
+                        <td><span class="badge-status ${st}">${statusLabel(st)}</span></td>
+                        <td onclick="event.stopPropagation()"><div class="actions-cell">${actionButtons(l, true)}</div></td>
+                    </tr>
                 `;
-                tableBody.appendChild(tr);
+            }).join('');
 
-                // ── Mobile: Card ──
-                const mCard = document.createElement("div");
-                mCard.className = "mobile-table-card";
-                mCard.onclick = () => navigateTo(`/lead/${l.id}`);
-                mCard.innerHTML = `
-                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                        <strong>${l.name || ''}</strong>
-                        <span class="badge ${leadClass}">${badgeIcon} ${l.lead_score || 0} pts</span>
-                    </div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">
-                        📍 ${l.city || ''} | Nicho: ${(l.niche || '').toUpperCase()}
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span class="badge-status ${status}">${statusLabel}</span>
-                        <span style="font-size:11px;color:var(--text-muted);">${dateStr}</span>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;" onclick="event.stopPropagation()">
-                        <button class="btn-prompt-table" onclick="openSalesPromptModal(${l.id})">💬 Prompt de Vendas</button>
+            mobile.innerHTML = page.map(l => {
+                const st = getStatus(l);
+                return `
+                    <div class="m-card">
+                        <div class="row">
+                            <div class="name" onclick="navigateTo('/lead/${l.id}')">${esc(l.name)}</div>
+                            <span class="badge raio">${l.lead_score || 0}</span>
+                        </div>
+                        <div class="meta">${esc(l.city || '')} · ${esc(l.phone || 'Sem telefone')} · ${statusLabel(st)}</div>
+                        <div class="actions">${actionButtons(l, false)}
+                            <button class="btn btn-sm" onclick="navigateTo('/lead/${l.id}')">Abrir</button>
+                        </div>
                     </div>
                 `;
-                mobileContainer.appendChild(mCard);
-            });
-
-            if (isMobile) {
-                document.getElementById("leads-table-container").style.display = "none";
-                mobileContainer.style.display = "block";
-            } else {
-                document.getElementById("leads-table-container").style.display = "block";
-                mobileContainer.style.display = "none";
-            }
+            }).join('');
 
             renderPagination();
         }
 
         function renderPagination() {
-            const container = document.getElementById("leads-pagination");
-            container.innerHTML = "";
-            const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
-            if (totalPages <= 1) return;
-
-            const prevBtn = document.createElement("button");
-            prevBtn.textContent = "◀";
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => { currentPage--; renderLeadsTable(); };
-            container.appendChild(prevBtn);
-
-            const span = document.createElement("span");
-            span.textContent = `Página ${currentPage} de ${totalPages}`;
-            span.style.alignSelf = "center";
-            span.style.fontSize = "12px";
-            span.style.color = "var(--text-muted)";
-            container.appendChild(span);
-
-            const nextBtn = document.createElement("button");
-            nextBtn.textContent = "▶";
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => { currentPage++; renderLeadsTable(); };
-            container.appendChild(nextBtn);
+            const el = document.getElementById('leads-pagination');
+            const total = Math.ceil(filteredLeads.length / PAGE_SIZE) || 1;
+            if (total <= 1) { el.innerHTML = `<span>${filteredLeads.length} leads</span>`; return; }
+            el.innerHTML = `
+                <button ${currentPage === 1 ? 'disabled' : ''} onclick="currentPage--;renderTable()">Anterior</button>
+                <span>Página ${currentPage} de ${total} · ${filteredLeads.length} leads</span>
+                <button ${currentPage === total ? 'disabled' : ''} onclick="currentPage++;renderTable()">Próxima</button>
+            `;
         }
 
-        // ──────────────────────────────────────────────────────────
-        // DETALHE DO LEAD
-        // ──────────────────────────────────────────────────────────
-        async function loadLeadDetail(leadId) {
-            const wrapper = document.getElementById("lead-detail-wrapper");
-            wrapper.innerHTML = "<p style='color:var(--text-muted);'>Carregando detalhes do lead...</p>";
-
+        async function loadDetail(id) {
+            const wrap = document.getElementById('lead-detail-wrapper');
+            wrap.innerHTML = '<p class="empty">Carregando...</p>';
             try {
-                const res = await fetch(`/api/leads/${leadId}`);
+                const res = await fetch(`/api/leads/${id}`);
                 if (!res.ok) {
-                    wrapper.innerHTML = "<p style='color:var(--danger);'>Erro: Lead não encontrado.</p>";
+                    wrap.innerHTML = '<p class="empty">Lead não encontrado.</p>';
                     return;
                 }
                 const lead = await res.json();
+                // refresh cache entry
+                const idx = allLeads.findIndex(x => x.id === id);
+                if (idx >= 0) allLeads[idx] = lead;
 
-                let problems = [];
-                try { problems = JSON.parse(lead.lead_problems || "[]"); } catch(e) {}
+                let problems = [], services = [];
+                try { problems = JSON.parse(lead.lead_problems || '[]'); } catch (_) {}
+                try { services = JSON.parse(lead.lead_services || '[]'); } catch (_) {}
+                const st = getStatus(lead);
+                const wa = waLink(lead.phone);
+                const tel = phoneDigits(lead.phone);
 
-                let services = [];
-                try { services = JSON.parse(lead.lead_services || "[]"); } catch(e) {}
-
-                // CORRIGIDO: usa instagram_url em vez de instagram
-                const siteLink = lead.website
-                     ? `<a href="${lead.website}" target="_blank">${lead.website}</a>`
-                     : "Nenhum cadastrado";
-
-                const instaLink = lead.instagram_url
-                     ? `<a href="${lead.instagram_url}" target="_blank">@${lead.instagram_username || lead.instagram_url.split("/").filter(Boolean).pop()}</a>`
-                     : "Nenhum cadastrado";
-
-                // CORRIGIDO: status derivado
-                const status = getStatus(lead);
-                const statusLabel = getStatusLabel(lead);
-
-                // Classe badge & ícones
-                const leadClass = lead.lead_class || 'eco';
-                const classLabel = leadClass.toUpperCase();
-                let badgeIcon = '🔊';
-                if (leadClass === 'raio') badgeIcon = '⚡';
-                else if (leadClass === 'trovao') badgeIcon = '☁️';
-
-                // Timeline
-                let timelineItems = `
+                let timeline = `
                     <div class="timeline-item">
-                        <div class="timeline-date">${lead.created_at ? lead.created_at.replace("T", " ").slice(0, 16) : "--"}</div>
-                        <div class="timeline-desc">Lead importado pelo Prospector Bot</div>
-                    </div>
-                `;
-
+                        <div class="timeline-date">${esc((lead.created_at || '').replace('T',' ').slice(0,16) || '—')}</div>
+                        <div class="timeline-desc">Lead capturado (sem site)</div>
+                    </div>`;
                 if (lead.contacted_at) {
-                    timelineItems += `
-                        <div class="timeline-item">
-                            <div class="timeline-date">${String(lead.contacted_at).replace("T", " ").slice(0, 16)}</div>
-                            <div class="timeline-desc">Lead abordado comercialmente</div>
-                        </div>
-                    `;
+                    timeline += `
+                    <div class="timeline-item">
+                        <div class="timeline-date">${esc(String(lead.contacted_at).replace('T',' ').slice(0,16))}</div>
+                        <div class="timeline-desc">Contactado</div>
+                    </div>`;
                 }
 
-                wrapper.innerHTML = `
+                wrap.innerHTML = `
                     <div>
-                        <div class="card-detail">
+                        <div class="panel" style="margin-bottom:14px;">
                             <div class="detail-header">
-                                <div class="detail-title">
-                                    <h2>${lead.name || ''}</h2>
-                                    <p>📍 ${lead.address || 'Endereço não informado'}</p>
+                                <div>
+                                    <h2>${esc(lead.name)}</h2>
+                                    <p>${esc(lead.address || 'Endereço não informado')}</p>
                                 </div>
-                                <span class="badge ${leadClass}" style="font-size:14px;padding:6px 12px;">${badgeIcon} ${lead.lead_score || 0} PONTOS</span>
+                                <span class="badge raio">${lead.lead_score || 0} pts</span>
                             </div>
-                            <ul class="detail-meta-list">
-                                <li><strong>📞 Telefone:</strong> <a href="tel:${lead.phone}">${lead.phone || "Não cadastrado"}</a></li>
-                                <li><strong>🌐 Website:</strong> ${siteLink}</li>
-                                <li><strong>📸 Instagram:</strong> ${instaLink}</li>
-                                <li><strong>⭐ Nota Google:</strong> ${lead.rating || "N/A"} (${lead.review_count || 0} avaliações)</li>
-                                <li><strong>📋 Nicho:</strong> ${(lead.niche || '').toUpperCase()} (${lead.category || "Geral"})</li>
+                            <ul class="meta-list">
+                                <li><strong>Telefone</strong> ${lead.phone ? `<a href="tel:${tel}">${esc(lead.phone)}</a>` : '—'}</li>
+                                <li><strong>Cidade</strong> ${esc(lead.city || '—')}${lead.state ? ' / ' + esc(lead.state) : ''}</li>
+                                <li><strong>Nicho</strong> ${esc((lead.niche || '—').toUpperCase())}</li>
+                                <li><strong>Google</strong> ${lead.rating != null ? esc(lead.rating) + ' (' + (lead.review_count || 0) + ' avaliações)' : '—'}</li>
+                                <li><strong>Instagram</strong> ${lead.instagram_url ? `<a href="${esc(lead.instagram_url)}" target="_blank" rel="noopener">@${esc(lead.instagram_username || 'perfil')}</a>` : 'Não encontrado'}</li>
+                                <li><strong>Site</strong> <span style="color:var(--danger);">Sem site próprio</span></li>
+                                <li><strong>Maps</strong> ${lead.maps_url ? `<a href="${esc(lead.maps_url)}" target="_blank" rel="noopener">Abrir no Maps</a>` : '—'}</li>
                             </ul>
                         </div>
-
-                        <div class="card-detail">
-                            <h3 class="detail-section-title">❌ Problemas de Presença Digital Encontrados</h3>
-                            <ul class="problems-list">
-                                ${problems.map(p => `<li>${p}</li>`).join("") || "<li style='background-color:rgba(212,175,55,0.04);border-left:2px solid var(--gold);color:var(--gold);'>Nenhum problema grave detectado</li>"}
+                        <div class="panel" style="margin-bottom:14px;">
+                            <div class="section-title">Problemas</div>
+                            <ul class="chip-list problems">
+                                ${problems.length ? problems.map(p => `<li>${esc(p)}</li>`).join('') : '<li>Sem site profissional</li>'}
                             </ul>
                         </div>
-
-                        <div class="card-detail">
-                            <h3 class="detail-section-title">💡 Serviços Sugeridos para Oferta</h3>
-                            <ul class="services-list">
-                                ${services.map(s => `<li>${s}</li>`).join("") || "<li>Nenhum serviço sugerido</li>"}
+                        <div class="panel">
+                            <div class="section-title">Serviços para oferecer</div>
+                            <ul class="chip-list services">
+                                ${services.length ? services.map(s => `<li>${esc(s)}</li>`).join('') : '<li>Site profissional</li>'}
                             </ul>
                         </div>
                     </div>
-
                     <div>
-                        <div class="card-detail">
-                            <h3 class="detail-section-title">Ações do Lead</h3>
-                            <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
-                                <span>Status Atual:</span>
-                                <span class="badge-status ${status}">${statusLabel}</span>
+                        <div class="panel" style="margin-bottom:14px;">
+                            <div class="section-title">Ações</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <span style="font-size:13px;color:var(--muted);">Status</span>
+                                <span class="badge-status ${st}">${statusLabel(st)}</span>
                             </div>
-                            <div class="actions-btn-group" style="flex-direction:column;">
-                                <button class="btn-action primary" onclick="updateLeadStatus(${lead.id}, 'contactado')">📞 Marcar como Contactado</button>
-                                <button class="btn-action info" onclick="updateLeadStatus(${lead.id}, 'convertido')">✅ Marcar como Convertido</button>
-                                <button class="btn-action danger" onclick="updateLeadStatus(${lead.id}, 'descartado')">❌ Descartar Lead</button>
-                                <button class="btn-action success" onclick="openSalesPromptModal(${lead.id})">💬 Gerar Prompt de Vendas</button>
-                                <button class="btn-action secondary" onclick="copyLeadClipboard(${lead.id})">📋 Copiar Resumo Técnico</button>
+                            <div class="action-stack">
+                                ${wa ? `<a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ''}
+                                ${tel ? `<a class="btn btn-call" href="tel:${tel}">Ligar agora</a>` : ''}
+                                <button class="btn btn-primary" onclick="openPrompt(${lead.id})">Gerar mensagem</button>
+                                <button class="btn" onclick="updateStatus(${lead.id}, 'contactado')">Marcar contactado</button>
+                                <button class="btn btn-success" onclick="updateStatus(${lead.id}, 'convertido')">Marcar convertido</button>
+                                <button class="btn btn-danger" onclick="updateStatus(${lead.id}, 'descartado')">Descartar</button>
+                                <button class="btn" onclick="copySummary(${lead.id})">Copiar resumo</button>
                             </div>
                         </div>
-
-                        <div class="card-detail">
-                            <h3 class="detail-section-title">Bloco de Notas (Observações)</h3>
-                            <textarea class="textarea-notes" id="detail-notes" placeholder="Adicione observações da conversa com o lead...">${lead.notes || ""}</textarea>
-                            <button class="btn-action secondary" onclick="saveLeadNotes(${lead.id})" style="width:100%;">💾 Salvar Notas</button>
+                        <div class="panel" style="margin-bottom:14px;">
+                            <div class="section-title">Notas</div>
+                            <textarea id="detail-notes" placeholder="Anotações da conversa...">${esc(lead.notes || '')}</textarea>
+                            <button class="btn" style="width:100%;" onclick="saveNotes(${lead.id})">Salvar notas</button>
                         </div>
-
-                        <div class="card-detail">
-                            <h3 class="detail-section-title">Histórico / Timeline</h3>
-                            <div class="timeline">
-                                ${timelineItems}
-                            </div>
+                        <div class="panel">
+                            <div class="section-title">Histórico</div>
+                            <div class="timeline">${timeline}</div>
                         </div>
                     </div>
                 `;
-
-            } catch (err) {
-                console.error("Erro ao buscar detalhes:", err);
-                wrapper.innerHTML = "<p style='color:var(--danger);'>Erro ao carregar detalhes.</p>";
+            } catch (e) {
+                console.error(e);
+                wrap.innerHTML = '<p class="empty">Erro ao carregar lead.</p>';
             }
         }
 
-        async function updateLeadStatus(leadId, newStatus) {
+        async function updateStatus(id, status) {
             try {
-                const res = await fetch(`/api/leads/${leadId}/status`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: newStatus })
+                await fetch(`/api/leads/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, notes: status === 'convertido' || status === 'descartado' ? status.charAt(0).toUpperCase() + status.slice(1) : undefined })
+                });
+                leadsCacheAt = 0;
+                loadDetail(id);
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveNotes(id) {
+            const notes = document.getElementById('detail-notes').value;
+            try {
+                const res = await fetch(`/api/leads/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes })
                 });
                 if (res.ok) {
-                    loadLeadDetail(leadId);
+                    leadsCacheAt = 0;
+                    alert('Notas salvas.');
+                    loadDetail(id);
                 }
-            } catch(e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        async function saveLeadNotes(leadId) {
-            const notes = document.getElementById("detail-notes").value;
+        async function copySummary(id) {
             try {
-                const res = await fetch(`/api/leads/${leadId}/status`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ notes: notes })
-                });
-                if (res.ok) {
-                    alert("Anotações salvas com sucesso!");
-                    loadLeadDetail(leadId);
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        async function copyLeadClipboard(leadId) {
-            try {
-                const res = await fetch(`/api/leads/${leadId}`);
+                const res = await fetch(`/api/leads/${id}`);
                 const lead = await res.json();
+                let problems = [], services = [];
+                try { problems = JSON.parse(lead.lead_problems || '[]'); } catch (_) {}
+                try { services = JSON.parse(lead.lead_services || '[]'); } catch (_) {}
+                const text = `ProspecTHOR — ${lead.name}
+Score: ${lead.lead_score || 0}
+Cidade: ${lead.city || ''} / ${lead.state || ''}
+Telefone: ${lead.phone || 'N/A'}
+Site: SEM SITE
+Google: ${lead.rating || 'N/A'} (${lead.review_count || 0} reviews)
 
-                let problems = [];
-                try { problems = JSON.parse(lead.lead_problems || "[]"); } catch(e) {}
-                let services = [];
-                try { services = JSON.parse(lead.lead_services || "[]"); } catch(e) {}
+Problemas:
+${problems.map(p => `- ${p}`).join('\n') || '- Sem site'}
 
-                const text = `PROSPECTHOR LEAD: ${lead.name}
------------------------------------------------
-Score Oportunidade: ${lead.lead_score}/100
-Classificação: ${(lead.lead_class || '').toUpperCase()}
-📍 Endereço: ${lead.address || 'N/A'}
-📞 Telefone: ${lead.phone || "N/A"}
-🌐 Site: ${lead.website || "Sem site"}
-⭐ Avaliações Google: ${lead.rating || "N/A"} (${lead.review_count || 0} reviews)
-
-PROBLEMAS ENCONTRADOS:
-${problems.map(p => ` - ${p}`).join("\n")}
-
-SERVIÇOS SUGERIDOS:
-${services.map(s => ` - ${s}`).join("\n")}
------------------------------------------------`;
-
-                navigator.clipboard.writeText(text.trim());
-                alert("Dados copiados para a área de transferência!");
-            } catch(e) {
-                console.error(e);
-            }
+Serviços:
+${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
+                await navigator.clipboard.writeText(text);
+                alert('Resumo copiado.');
+            } catch (e) { console.error(e); }
         }
 
-        // ──────────────────────────────────────────────────────────
-        // RELATÓRIOS
-        // ──────────────────────────────────────────────────────────
         async function loadReports() {
-            const period = document.getElementById("report-period").value;
+            const period = document.getElementById('report-period').value;
             try {
                 const res = await fetch(`/api/reports/${period}`);
                 const data = await res.json();
+                document.getElementById('report-total').textContent = data.total || 0;
+                document.getElementById('report-rate').textContent = data.total > 0
+                    ? Math.round(((data.quentes || data.total) / data.total) * 100) + '%'
+                    : '0%';
+                document.getElementById('report-conv').textContent = (data.conversao_taxa || 0) + '%';
+                document.getElementById('report-contact').textContent = data.contactados || data.mornos || 0;
 
-                document.getElementById("report-total").textContent = data.total;
-                document.getElementById("report-rate-quentes").textContent = data.total > 0 ? Math.round((data.quentes / data.total) * 100) + "%" : "0%";
-                document.getElementById("report-rate-conversion").textContent = (data.conversao_taxa || 0) + "%";
-
-                const canvasPie = document.getElementById("chart-report-pie");
-                canvasPie.parentElement.style.height = "350px";
-                const ctxPie = canvasPie.getContext("2d");
-                if (chartReportPieInstance) chartReportPieInstance.destroy();
-                chartReportPieInstance = new Chart(ctxPie, {
-                    type: "pie",
+                const ctx = document.getElementById('chart-report').getContext('2d');
+                if (chartReport) chartReport.destroy();
+                chartReport = new Chart(ctx, {
+                    type: 'doughnut',
                     data: {
-                        labels: ["Raios", "Trovões", "Ecos"],
-                        datasets: [{ 
-                            data: [data.quentes, data.mornos, data.frios], 
-                            backgroundColor: ["#d4af37", "#facc15", "#71717a"],
-                            borderWidth: 1,
-                            borderColor: "#1e1e24"
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: "bottom" } } 
-                    }
-                });
-
-                const canvasProb = document.getElementById("chart-report-problems");
-                canvasProb.parentElement.style.height = "350px";
-                const ctxProb = canvasProb.getContext("2d");
-                if (chartReportProblemsInstance) chartReportProblemsInstance.destroy();
-                const labelsProb = Object.keys(data.problemas_comuns || {});
-                const dataProb = Object.values(data.problemas_comuns || {});
-
-                chartReportProblemsInstance = new Chart(ctxProb, {
-                    type: "bar",
-                    data: {
-                        labels: labelsProb,
-                        datasets: [{ 
-                            label: "Ocorrências", 
-                            data: dataProb, 
-                            backgroundColor: "#ef4444",
+                        labels: ['Novos / ativos', 'Contactados', 'Outros'],
+                        datasets: [{
+                            data: [data.quentes || data.total || 0, data.mornos || 0, data.frios || 0],
+                            backgroundColor: ['#00d4ff', '#f59e0b', '#3b4a63'],
                             borderWidth: 0
                         }]
                     },
-                    options: { 
-                        indexAxis: 'y', 
-                        responsive: true, 
-                        maintainAspectRatio: false,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        cutout: '60%'
+                    }
+                });
+
+                const labels = Object.keys(data.problemas_comuns || {});
+                const values = Object.values(data.problemas_comuns || {});
+                const ctx2 = document.getElementById('chart-problems').getContext('2d');
+                if (chartProblems) chartProblems.destroy();
+                chartProblems = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ data: values, backgroundColor: '#ff4d6a', borderRadius: 4 }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { grid: { color: "#1e1e24" } },
+                            x: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } },
                             y: { grid: { display: false } }
                         }
                     }
                 });
-
-            } catch(e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // ──────────────────────────────────────────────────────────
-        // CONFIGURAÇÕES
-        // ──────────────────────────────────────────────────────────
-        async function loadSettings() {
-            try {
-                const res = await fetch("/api/settings");
-                const data = await res.json();
-
-                const nicheContainer = document.getElementById("settings-niches-list");
-                nicheContainer.innerHTML = "";
-                (data.niches || []).forEach(n => {
-                    const item = document.createElement("div");
-                    item.className = "settings-item";
-                    item.innerHTML = `
-                        <input type="checkbox" id="niche-${n.id}" checked>
-                        <label for="niche-${n.id}"><strong>${n.label}</strong> (${n.query_term})</label>
-                    `;
-                    nicheContainer.appendChild(item);
-                });
-
-                const cityContainer = document.getElementById("settings-cities-list");
-                cityContainer.innerHTML = "";
-                (data.cities || []).forEach(c => {
-                    const item = document.createElement("div");
-                    item.className = "settings-item";
-                    item.innerHTML = `
-                        <input type="checkbox" id="city-${c.id}" ${c.ativo ? 'checked' : ''}>
-                        <label for="city-${c.id}">${c.nome} - ${c.estado}</label>
-                    `;
-                    cityContainer.appendChild(item);
-                });
-
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        async function saveSettings() {
-            alert("Configurações salvas com sucesso!");
-        }
-
-        // ──────────────────────────────────────────────────────────
-        // GERADOR DE PROMPT DE VENDAS
-        // ──────────────────────────────────────────────────────────
-        let activeLeadForPrompt = null;
-
-        function openSalesPromptModal(leadId) {
-            const lead = allLeads.find(l => l.id === leadId);
+        function openPrompt(id) {
+            const lead = allLeads.find(l => l.id === id);
             if (lead) {
-                activeLeadForPrompt = lead;
-                setupSalesPromptModal();
-            } else {
-                fetch(`/api/leads/${leadId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        activeLeadForPrompt = data;
-                        setupSalesPromptModal();
-                    })
-                    .catch(err => console.error("Erro ao carregar lead para prompt:", err));
+                activePromptLead = lead;
+                setupPrompt();
+                return;
             }
+            fetch(`/api/leads/${id}`).then(r => r.json()).then(data => {
+                activePromptLead = data;
+                setupPrompt();
+            });
         }
 
-        function setupSalesPromptModal() {
-            if (!activeLeadForPrompt) return;
-            
-            // Carrega nome do vendedor do localStorage
-            const savedName = localStorage.getItem("prospecthor_seller_name") || "";
-            document.getElementById("seller-name").value = savedName;
-            
-            // Abre o modal
-            document.getElementById("sales-prompt-modal").classList.add("active");
-            
-            // Gera a mensagem
-            generateSalesPrompt();
+        function setupPrompt() {
+            document.getElementById('seller-name').value = localStorage.getItem('prospecthor_seller_name') || '';
+            document.getElementById('prompt-modal').classList.add('active');
+            generatePrompt();
         }
 
-        function closeSalesPromptModal() {
-            document.getElementById("sales-prompt-modal").classList.remove("active");
-            activeLeadForPrompt = null;
+        function closePrompt() {
+            document.getElementById('prompt-modal').classList.remove('active');
+            activePromptLead = null;
         }
 
         function saveSellerName(name) {
-            localStorage.setItem("prospecthor_seller_name", name);
-            generateSalesPrompt();
+            localStorage.setItem('prospecthor_seller_name', name);
+            generatePrompt();
         }
 
-        function generateSalesPrompt() {
-            if (!activeLeadForPrompt) return;
-            
-            const sellerName = document.getElementById("seller-name").value.trim() || "[Seu Nome]";
-            const channel = document.getElementById("prompt-channel").value;
-            const lead = activeLeadForPrompt;
-            
-            let problems = [];
-            try { problems = JSON.parse(lead.lead_problems || "[]"); } catch(e) {}
-            
-            let services = [];
-            try { services = JSON.parse(lead.lead_services || "[]"); } catch(e) {}
-            
-            // Mapeamentos de problema para frases amigáveis
-            const problemTexts = {
-                "Sem site": "não possui um site profissional para atrair clientes diretamente pelo Google",
-                "Site sem HTTPS": "possui um site que não é seguro (sem HTTPS), o que assusta clientes e faz o Google ocultar a página",
-                "Site lento": "tem um site que demora para carregar, fazendo muitas pessoas desistirem no meio do caminho",
-                "Site não mobile-friendly": "tem um site que não se adapta bem a celulares, dificultando o uso por quem navega pelo smartphone",
-                "Tem Instagram mas sem link na bio": "tem uma boa presença no Instagram, mas não possui um link na bio direcionando os clientes para o contato ou site"
-            };
+        function generatePrompt() {
+            if (!activePromptLead) return;
+            const seller = document.getElementById('seller-name').value.trim() || '[Seu Nome]';
+            const channel = document.getElementById('prompt-channel').value;
+            const lead = activePromptLead;
+            const city = lead.city || 'sua região';
+            const niche = lead.niche || 'negócio';
+            const name = lead.name || 'empresa';
+            let message = '';
 
-            let selectedProblems = [];
-            problems.forEach(p => {
-                for (let key in problemTexts) {
-                    if (p.includes(key)) {
-                        selectedProblems.push(problemTexts[key]);
-                    }
-                }
-            });
-
-            // Fallback se não tiver problemas mapeados
-            if (selectedProblems.length === 0) {
-                if (!lead.website) {
-                    selectedProblems.push(problemTexts["Sem site"]);
-                } else {
-                    selectedProblems.push("precisa otimizar alguns pontos da sua presença digital para atrair mais clientes na internet");
-                }
+            if (channel === 'whatsapp') {
+                message = `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos empresas de ${niche} a terem site profissional e captarem mais clientes. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
+            } else if (channel === 'instagram') {
+                message = `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem site próprio — muita oportunidade perdida no Google. Trabalho com presença digital para ${niche}. Topa um papo rápido de 5 min?`;
+            } else {
+                message = `Assunto: Site profissional para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e identifiquei que ainda não há um site próprio — o que limita a descoberta de novos clientes.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples de site e presença digital.\n\nAtenciosamente,\n${seller}`;
             }
+            document.getElementById('prompt-text').value = message;
+        }
 
-            const city = lead.city || "sua região";
-            const niche = lead.niche || "negócio";
-            const companyName = lead.name || "empresa";
-
-            let message = "";
-
-            if (channel === "whatsapp") {
-                message = `Olá! Tudo bem? Me chamo *${sellerName}*.\n\nEstava analisando a presença digital da *${companyName}* aqui em ${city} e notei alguns pontos importantes que podem estar fazendo vocês perderem clientes para os concorrentes:\n\n`;
-                selectedProblems.forEach(p => {
-                    message += `• *${p.charAt(0).toUpperCase() + p.slice(1)}*;\n`;
-                });
-                message += `\nNós ajudamos empresas de ${niche} a resolverem exatamente isso. Podemos agendar uma conversa rápida de 5 minutos esta semana para eu te mostrar como corrigir isso e aumentar as suas vendas?\n\nAguardo seu retorno!`;
-            } 
-            else if (channel === "instagram") {
-                message = `Olá, tudo bem? Me chamo ${sellerName}. Estava analisando a presença online da ${companyName} e notei que vocês ${selectedProblems.slice(0, 2).join(" e ")}.\n\nTrabalhamos ajudando negócios de ${niche} a estruturarem sua presença digital para atrair mais clientes.\n\nPodemos marcar um papo rápido de 5 minutos para eu te mostrar como resolver isso de forma simples? Abs!`;
-            } 
-            else if (channel === "email") {
-                const subject = `Oportunidade de Melhoria Digital: ${companyName}`;
-                message = `Assunto: ${subject}\n\nOlá, equipe da ${companyName},\n\nEspero que este e-mail os encontre bem.\n\nMeu nome é ${sellerName} e atuo como especialista em presença digital. Ao analisar a presença da ${companyName} na internet, notei algumas oportunidades cruciais que podem impactar diretamente a conversão de novos clientes:\n\n`;
-                selectedProblems.forEach(p => {
-                    message += `- A empresa ${p};\n`;
-                });
-                
-                if (services.length > 0) {
-                    message += `\nPodemos ajudar implementando soluções como:\n`;
-                    services.forEach(s => {
-                        message += `  * ${s}\n`;
-                    });
-                }
-                
-                message += `\nGostaria de agendar uma breve conversa de 5 minutos esta semana para apresentar como podemos corrigir esses pontos e impulsionar suas vendas online.\n\nQual seria o melhor dia e horário para conversarmos?\n\nAtenciosamente,\n${sellerName}`;
+        async function copyPrompt() {
+            const t = document.getElementById('prompt-text');
+            try {
+                await navigator.clipboard.writeText(t.value);
+                alert('Mensagem copiada.');
+            } catch (_) {
+                t.select();
+                document.execCommand('copy');
+                alert('Mensagem copiada.');
             }
-
-            document.getElementById("prompt-preview-text").value = message;
         }
 
-        function copySalesPromptToClipboard() {
-            const textarea = document.getElementById("prompt-preview-text");
-            textarea.select();
-            document.execCommand("copy");
-            alert("Mensagem copiada para a área de transferência!");
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('active');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('active');
         }
 
-        // ──────────────────────────────────────────────────────────
-        // SETUP GERAL
-        // ──────────────────────────────────────────────────────────
-        document.getElementById("btn-open-menu").onclick = () => document.getElementById("sidebar").classList.add("active");
-        document.getElementById("btn-close-menu").onclick = () => document.getElementById("sidebar").classList.remove("active");
-
-        document.getElementById("filter-search").oninput = applyFilters;
-        document.getElementById("filter-class").onchange = applyFilters;
-        document.getElementById("filter-niche").onchange = applyFilters;
-        document.getElementById("filter-status").onchange = applyFilters;
-
-        let sortDirection = false;
-        function sortTable(colIndex) {
-            sortDirection = !sortDirection;
-            filteredLeads.sort((a, b) => {
-                let valA = "", valB = "";
-                if (colIndex === 0) { valA = a.name || ''; valB = b.name || ''; }
-                else if (colIndex === 1) { valA = a.city || ''; valB = b.city || ''; }
-                else if (colIndex === 2) { valA = a.niche || ''; valB = b.niche || ''; }
-                else if (colIndex === 3) { return sortDirection ? (a.lead_score||0) - (b.lead_score||0) : (b.lead_score||0) - (a.lead_score||0); }
-                else if (colIndex === 4) { valA = a.lead_class || ''; valB = b.lead_class || ''; }
-                else if (colIndex === 6) { valA = getStatus(a); valB = getStatus(b); }
-                else if (colIndex === 7) { valA = a.created_at || ''; valB = b.created_at || ''; }
-                return sortDirection ? valA.localeCompare(valB) : valB.localeCompare(valA);
-            });
-            renderLeadsTable();
-        }
+        document.getElementById('btn-open-menu').onclick = openSidebar;
+        document.getElementById('btn-close-menu').onclick = closeSidebar;
+        document.getElementById('sidebar-overlay').onclick = closeSidebar;
+        document.getElementById('filter-search').oninput = applyFilters;
+        document.getElementById('filter-niche').onchange = applyFilters;
+        document.getElementById('filter-status').onchange = applyFilters;
+        document.getElementById('prompt-modal').addEventListener('click', e => {
+            if (e.target.id === 'prompt-modal') closePrompt();
+        });
 
         window.onpopstate = handleRouting;
         handleRouting();

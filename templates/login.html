@@ -3,206 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar - ProspecTHOR</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <title>Entrar — ProspecTHOR</title>
     <style>
         :root {
-            --bg-color: #060608;
-            --card-bg: #0c0c0e;
-            --primary: #d4af37;
-            --primary-hover: #e5c04f;
-            --text-color: #f3f3f6;
-            --text-muted: #848492;
-            --border-color: #1e1e24;
-            --gold-glow: rgba(212, 175, 55, 0.15);
-            --danger: #ef4444;
+            --bg: #05070b;
+            --card: #0a0e17;
+            --border: #1a2233;
+            --text: #e8eef7;
+            --muted: #7a8ba3;
+            --neon: #00d4ff;
+            --neon-dim: rgba(0, 212, 255, 0.12);
+            --danger: #ff4d6a;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'DM Mono', monospace;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            position: relative;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 100, 200, 0.06), transparent);
         }
-
-        /* Ambient Noise Overlay */
-        .noise-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+        .wrap { width: 100%; max-width: 400px; padding: 24px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 32px;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.04), 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .card::before {
             content: "";
-            opacity: 0.025;
-            z-index: 9999;
-            pointer-events: none;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            z-index: 10;
-        }
-
-        .login-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-        }
-        
-        .login-card::before {
-            content: '';
             position: absolute;
-            top: -1px;
-            left: 20px;
-            right: 20px;
+            top: 0; left: 24px; right: 24px;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            box-shadow: 0 0 12px var(--neon);
         }
-
-        .logo-section {
+        .brand {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 32px;
         }
-
-        .logo-section h1 {
-            font-family: 'Instrument Serif', Georgia, serif;
-            font-size: 38px;
-            font-weight: 400;
-            color: var(--text-color);
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text);
+        }
+        .brand h1 span { color: var(--neon); text-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+        .brand p {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
             letter-spacing: 0.5px;
         }
-
-        .logo-section h1 span {
-            color: var(--primary);
-            font-style: italic;
-            text-shadow: 0 0 10px var(--gold-glow);
-        }
-
-        .logo-section p {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .form-group {
-            margin-bottom: 22px;
-        }
-
-        .form-group label {
+        label {
             display: block;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
+            letter-spacing: 0.6px;
+            color: var(--muted);
             margin-bottom: 8px;
         }
-
-        .form-group input {
+        .field { margin-bottom: 20px; }
+        input {
             width: 100%;
-            padding: 12px 16px;
-            background-color: #0f0f12;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-color);
+            padding: 12px 14px;
+            background: #070b12;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
             font-size: 14px;
+            font-family: Arial, Helvetica, sans-serif;
             outline: none;
-            transition: all 0.3s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-
-        .form-group input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 8px var(--gold-glow);
+        input:focus {
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px var(--neon-dim);
         }
-
-        .btn-login {
+        .btn {
             width: 100%;
-            padding: 14px;
-            background-color: var(--primary);
-            color: #000;
+            margin-top: 8px;
+            padding: 13px;
+            background: var(--neon);
+            color: #031018;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 700;
+            font-family: Arial, Helvetica, sans-serif;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            box-shadow: 0 4px 12px var(--gold-glow);
+            transition: box-shadow 0.2s, transform 0.15s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
         }
-
-        .btn-login:hover {
-            background-color: var(--primary-hover);
-            box-shadow: 0 6px 15px rgba(212, 175, 55, 0.3);
-        }
-
-        .btn-login:active {
-            transform: scale(0.99);
-        }
-
-        .error-message {
-            background-color: rgba(239, 68, 68, 0.05);
+        .btn:hover { box-shadow: 0 0 28px rgba(0, 212, 255, 0.4); }
+        .btn:active { transform: scale(0.99); }
+        .error {
+            background: rgba(255, 77, 106, 0.08);
             border: 1px solid var(--danger);
             color: var(--danger);
             padding: 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 13px;
             text-align: center;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="noise-overlay"></div>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="logo-section">
-                <h1>⚡<span>ProspecTHOR</span></h1>
-                <p>Qualificação Inteligente de Leads</p>
+    <div class="wrap">
+        <div class="card">
+            <div class="brand">
+                <h1>Prospec<span>THOR</span></h1>
+                <p>Painel de prospecção de leads</p>
             </div>
-            
             {% if error %}
-            <div class="error-message">
-                {{ error }}
-            </div>
+            <div class="error">{{ error }}</div>
             {% endif %}
-
             <form action="/login" method="POST">
-                <div class="form-group">
+                <div class="field">
                     <label for="username">Usuário</label>
-                    <input type="text" id="username" name="username" placeholder="Digite seu usuário" required autocomplete="username">
+                    <input type="text" id="username" name="username" placeholder="Seu usuário" required autocomplete="username">
                 </div>
-                
-                <div class="form-group">
+                <div class="field">
                     <label for="password">Senha</label>
-                    <input type="password" id="password" name="password" placeholder="Digite sua senha" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" placeholder="Sua senha" required autocomplete="current-password">
                 </div>
-                
-                <button type="submit" class="btn-login">Entrar</button>
+                <button type="submit" class="btn">Entrar</button>
             </form>
         </div>
     </div>

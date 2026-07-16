@@ -8,6 +8,7 @@ import csv
 import io
 import json
 import os
+import time as _time
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
@@ -42,6 +43,7 @@ app.secret_key = _SECRET_KEY
 _DASHBOARD_COLUMNS = [
     ("notes", "TEXT"),
     ("contacted_at", "TEXT"),
+    ("contact_status", "TEXT"),
 ]
 
 
@@ -203,10 +205,18 @@ _SOCIAL_MARKERS = (
     "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
 )
 
-# Pré-filtro SQL: candidatos a Raio (sem site / só social / classificados raio).
-# O corte final (sem site próprio) é feito em _is_raio_lead.
-_SQL_RAIO_LEADS = """
-SELECT * FROM companies
+# Colunas leves + pré-filtro Raio (sem site). Corte final em _is_raio_lead.
+_LIST_COLS = """
+    id, name, phone, city, state, niche, category, address,
+    website, website_status, maps_url, rating, review_count,
+    instagram_url, instagram_username, lead_score, lead_class,
+    lead_problems, lead_services, lead_priority,
+    contacted_at, notes, created_at, scraped_at
+"""
+
+_SQL_RAIO_LEADS = f"""
+SELECT {_LIST_COLS}
+FROM companies
 WHERE website_status IN ('sem_site', 'so_social')
    OR website IS NULL
    OR TRIM(COALESCE(website, '')) = ''
@@ -216,6 +226,16 @@ WHERE website_status IN ('sem_site', 'so_social')
    OR website ILIKE '%%linktr.ee%%'
 ORDER BY lead_score DESC NULLS LAST;
 """
+
+_SQL_LEAD_BY_ID = f"""
+SELECT {_LIST_COLS}
+FROM companies
+WHERE id = %s
+LIMIT 1;
+"""
+
+_cache: dict[str, Any] = {"leads": None, "leads_at": 0.0, "stats": None, "stats_at": 0.0}
+_CACHE_TTL = 45
 
 
 def _is_raio_lead(lead: dict[str, Any]) -> bool:
@@ -232,10 +252,24 @@ def _is_raio_lead(lead: dict[str, Any]) -> bool:
     return False
 
 
-def _get_all_leads():
-    """Retorna apenas leads ⚡ Raio — empresas sem site próprio."""
+def _invalidate_cache() -> None:
+    _cache["leads"] = None
+    _cache["leads_at"] = 0.0
+    _cache["stats"] = None
+    _cache["stats_at"] = 0.0
+
+
+def _get_all_leads(use_cache: bool = True) -> list[dict[str, Any]]:
+    """Retorna apenas leads Raio — empresas sem site próprio."""
+    now = _time.time()
+    if use_cache and _cache["leads"] is not None and (now - _cache["leads_at"]) < _CACHE_TTL:
+        return _cache["leads"]
+
     if not _DATABASE_URL:
-        return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
+        leads = [l for l in _MOCK_LEADS if _is_raio_lead(l)]
+        _cache["leads"] = leads
+        _cache["leads_at"] = now
+        return leads
     try:
         conn = _get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -244,10 +278,34 @@ def _get_all_leads():
         cur.close()
         conn.close()
         if not rows:
-            return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
-        return [dict(row) for row in rows if _is_raio_lead(dict(row))]
+            leads = [l for l in _MOCK_LEADS if _is_raio_lead(l)]
+        else:
+            leads = [dict(row) for row in rows if _is_raio_lead(dict(row))]
+        _cache["leads"] = leads
+        _cache["leads_at"] = now
+        return leads
     except Exception:
+        if _cache["leads"] is not None:
+            return _cache["leads"]
         return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
+
+
+def _get_lead_by_id(lead_id: int) -> dict[str, Any] | None:
+    if not _DATABASE_URL:
+        return next((l for l in _MOCK_LEADS if l["id"] == lead_id), None)
+    try:
+        conn = _get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(_SQL_LEAD_BY_ID, (lead_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        return dict(row) if row else None
+    except Exception:
+        for l in (_cache["leads"] or []):
+            if l.get("id") == lead_id:
+                return l
+        return None
 
 
 def login_required(f):
@@ -300,8 +358,7 @@ def api_leads():
 @app.route("/api/leads/<int:lead_id>")
 @login_required
 def api_lead_detail(lead_id):
-    leads = _get_all_leads()
-    lead = next((l for l in leads if l["id"] == lead_id), None)
+    lead = _get_lead_by_id(lead_id)
     if not lead:
         return jsonify({"error": "Not found"}), 404
     return jsonify(lead)
@@ -316,44 +373,69 @@ def api_update_status(lead_id):
             conn = _get_db_connection()
             cur = conn.cursor()
             now = datetime.now().isoformat()
-            if "status" in data:
-                cur.execute("UPDATE companies SET contacted_at = %s WHERE id = %s", (now, lead_id))
-            if "notes" in data:
+            status = (data.get("status") or "").lower()
+            if status:
+                if status == "contactado":
+                    cur.execute(
+                        "UPDATE companies SET contacted_at = %s WHERE id = %s",
+                        (now, lead_id),
+                    )
+                elif status in ("convertido", "descartado"):
+                    cur.execute(
+                        "UPDATE companies SET contacted_at = COALESCE(contacted_at, %s), notes = %s WHERE id = %s",
+                        (now, status.capitalize(), lead_id),
+                    )
+            if "notes" in data and data["notes"] is not None:
                 cur.execute("UPDATE companies SET notes = %s WHERE id = %s", (data["notes"], lead_id))
             conn.commit()
             cur.close()
             conn.close()
+            _invalidate_cache()
             return jsonify({"success": True})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+    _invalidate_cache()
     return jsonify({"success": True})
 
 
 @app.route("/api/stats")
 @login_required
 def api_stats():
-    # Já vem filtrado: só ⚡ Raio (sem site)
+    now = _time.time()
+    if _cache["stats"] is not None and (now - _cache["stats_at"]) < _CACHE_TTL:
+        return jsonify(_cache["stats"])
+
     leads = _get_all_leads()
-    nichos = {}
+    nichos: dict[str, int] = {}
+    contactados = 0
+    descartados = 0
+    convertidos = 0
     for l in leads:
         n = l.get("niche") or "outro"
         nichos[n] = nichos.get(n, 0) + 1
-    contactados = len([l for l in leads if l.get("contacted_at")])
-    descartados = len([
-        l for l in leads
-        if (l.get("notes") or "").lower() == "descartado"
-        or (l.get("contact_status") or "").lower() == "descartado"
-    ])
-    novos = len(leads) - contactados  # aproximação: não contactados
-    return jsonify({
+        notes = (l.get("notes") or "").lower()
+        cs = (l.get("contact_status") or "").lower()
+        if notes == "descartado" or cs == "descartado":
+            descartados += 1
+        elif notes == "convertido" or cs == "convertido":
+            convertidos += 1
+        if l.get("contacted_at") or cs == "contactado":
+            contactados += 1
+
+    payload = {
         "total": len(leads),
-        "quentes": len(leads),  # todos listados são Raio
-        "mornos": contactados,  # reutilizado no UI como "Contactados"
-        "frios": descartados,   # reutilizado no UI como "Descartados"
-        "novos": max(novos, 0),
+        "quentes": len(leads),
+        "mornos": contactados,
+        "frios": descartados,
+        "contactados": contactados,
+        "convertidos": convertidos,
         "descartados": descartados,
-        "nichos": nichos
-    })
+        "novos": max(len(leads) - contactados, 0),
+        "nichos": nichos,
+    }
+    _cache["stats"] = payload
+    _cache["stats_at"] = now
+    return jsonify(payload)
 
 
 @app.route("/api/reports/<period>")

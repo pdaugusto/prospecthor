@@ -327,39 +327,43 @@ class LeadExporter:
     # ------------------------------------------------------------------
 
     def exportar_todos(self) -> str:
-        """Exporta todos os leads qualificados do banco para CSV."""
-        leads = self.db.query_leads()
-        filepath = self._get_filepath("todos", "todas", "todos", "csv")
+        """Exporta leads ⚡ Raio (sem site) — padrão comercial do bot."""
+        leads = self.db.query_leads({"lead_class": "raio"})
+        filepath = self._get_filepath("raios", "todas", "todos", "csv")
         return self._write_csv_file(leads, filepath)
 
     def exportar_quentes(self) -> str:
-        """Exporta apenas leads classificados como 'raio' (55+ pts) para CSV."""
+        """Exporta apenas leads classificados como 'raio' (sem site) para CSV."""
         leads = self.db.query_leads({"lead_class": "raio"})
         filepath = self._get_filepath("raios", "todas", "todos", "csv")
         return self._write_csv_file(leads, filepath)
 
     def exportar_por_nicho(self, nicho: str) -> str:
-        """Exporta leads pertencentes a um nicho específico para CSV."""
-        leads = self.db.query_leads({"niche": nicho})
-        filepath = self._get_filepath("todos", "todas", nicho, "csv")
+        """Exporta leads Raio de um nicho específico para CSV."""
+        leads = self.db.query_leads({"lead_class": "raio", "niche": nicho})
+        filepath = self._get_filepath("raios", "todas", nicho, "csv")
         return self._write_csv_file(leads, filepath)
 
     def exportar_por_cidade(self, cidade: str) -> str:
-        """Exporta leads pertencentes a uma cidade específica para CSV."""
-        leads = self.db.query_leads({"city": cidade})
-        filepath = self._get_filepath("todos", cidade, "todos", "csv")
+        """Exporta leads Raio de uma cidade específica para CSV."""
+        leads = self.db.query_leads({"lead_class": "raio", "city": cidade})
+        filepath = self._get_filepath("raios", cidade, "todos", "csv")
         return self._write_csv_file(leads, filepath)
 
     def exportar_por_periodo(self, data_inicio: str, data_fim: str) -> str:
         """
-        Exporta leads coletados em um intervalo de datas.
+        Exporta leads Raio coletados em um intervalo de datas.
         
         Args:
             data_inicio: Data de corte inicial (formato YYYY-MM-DD).
             data_fim:    Data de corte final (formato YYYY-MM-DD).
         """
-        leads = self.db.query_leads({"data_inicio": data_inicio, "data_fim": data_fim})
-        filepath = self._get_filepath("periodo", "todas", "todos", "csv")
+        leads = self.db.query_leads({
+            "lead_class": "raio",
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+        })
+        filepath = self._get_filepath("raios", "todas", "todos", "csv")
         return self._write_csv_file(leads, filepath)
 
     def exportar_para_api(self) -> str:

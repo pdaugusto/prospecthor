@@ -926,17 +926,17 @@
         <!-- HOME -->
         <section id="view-home" class="view-section active">
             <div class="stats-grid" id="home-stats-grid">
-                <div class="stat-card"><h3>Total de Leads</h3><div class="value" id="home-total-leads">--</div></div>
-                <div class="stat-card quente"><h3>Leads Raio</h3><div class="value" id="home-quentes-leads">--</div></div>
-                <div class="stat-card morno"><h3>Leads Trovão</h3><div class="value" id="home-mornos-leads">--</div></div>
-                <div class="stat-card frio"><h3>Leads Eco</h3><div class="value" id="home-frios-leads">--</div></div>
+                <div class="stat-card quente"><h3>⚡ Leads Raio (sem site)</h3><div class="value" id="home-total-leads">--</div></div>
+                <div class="stat-card"><h3>Prontos p/ abordar</h3><div class="value" id="home-quentes-leads">--</div></div>
+                <div class="stat-card morno"><h3>Contactados</h3><div class="value" id="home-mornos-leads">--</div></div>
+                <div class="stat-card frio"><h3>Descartados</h3><div class="value" id="home-frios-leads">--</div></div>
             </div>
             <div class="charts-row">
-                <div class="chart-container"><h3>Distribuição por Classificação</h3><canvas id="chart-pie-class"></canvas></div>
-                <div class="chart-container"><h3>Leads por Nicho</h3><canvas id="chart-bar-niche"></canvas></div>
+                <div class="chart-container"><h3>Status dos Raios</h3><canvas id="chart-pie-class"></canvas></div>
+                <div class="chart-container"><h3>Leads Raio por Nicho</h3><canvas id="chart-bar-niche"></canvas></div>
             </div>
             <div class="top-leads-box">
-                <h3>⚡ Top 5 Leads Raio para Abordar</h3>
+                <h3>⚡ Top 5 Leads Raio (sem site) para Abordar</h3>
                 <div class="top-leads-list" id="home-top-leads-list"></div>
             </div>
         </section>
@@ -949,10 +949,7 @@
                 </div>
                 <div>
                     <select class="filter-select" id="filter-class">
-                        <option value="">Todas as Classificações</option>
-                        <option value="raio">⚡ Raio</option>
-                        <option value="trovao">☁️ Trovão</option>
-                        <option value="eco">🔊 Eco</option>
+                        <option value="raio" selected>⚡ Raio (sem site)</option>
                     </select>
                 </div>
                 <div>
@@ -1156,22 +1153,26 @@
                 const statsRes = await fetch("/api/stats");
                 const stats = await statsRes.json();
 
+                // Painel focado em Raio (sem site): total = quentes
                 document.getElementById("home-total-leads").textContent = stats.total;
                 document.getElementById("home-quentes-leads").textContent = stats.quentes;
-                document.getElementById("home-mornos-leads").textContent = stats.mornos;
-                document.getElementById("home-frios-leads").textContent = stats.frios;
+                document.getElementById("home-mornos-leads").textContent = stats.mornos; // contactados
+                document.getElementById("home-frios-leads").textContent = stats.frios;   // descartados
 
                 const canvasPie = document.getElementById("chart-pie-class");
                 canvasPie.parentElement.style.height = "350px";
                 const ctxPie = canvasPie.getContext("2d");
                 if (chartPieClassInstance) chartPieClassInstance.destroy();
+                const contactados = stats.mornos || 0;
+                const descartados = stats.descartados || stats.frios || 0;
+                const novos = Math.max((stats.total || 0) - contactados, 0);
                 chartPieClassInstance = new Chart(ctxPie, {
                     type: "pie",
                     data: {
-                        labels: ["Raios", "Trovões", "Ecos", "Descartados"],
+                        labels: ["Novos", "Contactados", "Descartados"],
                         datasets: [{
-                            data: [stats.quentes, stats.mornos, stats.frios, stats.descartados || 0],
-                            backgroundColor: ["#d4af37", "#facc15", "#71717a", "#ef4444"],
+                            data: [novos, contactados, descartados],
+                            backgroundColor: ["#d4af37", "#facc15", "#ef4444"],
                             borderWidth: 1,
                             borderColor: "#1e1e24"
                         }]
@@ -1194,7 +1195,7 @@
                     data: {
                         labels: labelsNiche.map(l => l.toUpperCase()),
                         datasets: [{ 
-                            label: "Total de Leads", 
+                            label: "Leads Raio (sem site)", 
                             data: dataNiche, 
                             backgroundColor: "#d4af37",
                             borderWidth: 0
@@ -1219,7 +1220,7 @@
                 topListEl.innerHTML = "";
 
                 if (top5.length === 0) {
-                    topListEl.innerHTML = "<p style='color:var(--text-muted);'>Nenhum lead encontrado no momento.</p>";
+                    topListEl.innerHTML = "<p style='color:var(--text-muted);'>Nenhum lead ⚡ Raio (sem site) no momento.</p>";
                     return;
                 }
 

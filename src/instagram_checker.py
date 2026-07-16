@@ -640,14 +640,11 @@ class InstagramFinder:
             logger.debug(f"[Finder] Instagram via DuckDuckGo: {ig_ddg}")
             return ig_ddg
 
-        # Método 4: Heurística por username
-        ig_heuristic = self._try_username_heuristics(company_name, city)
-        if ig_heuristic:
-            logger.debug(f"[Finder] Instagram via heurística: {ig_heuristic}")
-            return ig_heuristic
-
-        logger.debug(f"[Finder] Instagram não encontrado para: {company_name!r}")
-        return None
+        # Método 4: Heurística por username (DESABILITADO - acha perfis errados de outras cidades)
+        #ig_heuristic = self._try_username_heuristics(company_name, city)
+        #if ig_heuristic:
+        #    logger.debug(f"[Finder] Instagram via heurística: {ig_heuristic}")
+        #    return ig_heuristic
 
     # ------------------------------------------------------------------
     # Método 2 — Busca no Google

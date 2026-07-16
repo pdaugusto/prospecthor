@@ -142,9 +142,9 @@ _MOCK_LEADS = [
         "website_status": "sem_site", "instagram_status": "tem_instagram",
         "instagram_username": "saborcaseiro_poa",
         "instagram_url": "https://www.instagram.com/saborcaseiro_poa/",
-        "instagram_has_link": 0, "lead_score": 55, "lead_class": "raio",
+        "instagram_has_link": 0, "lead_score": 70, "lead_class": "raio",
         "lead_priority": "alta",
-        "lead_problems": json.dumps(["Sem site (+40)", "Instagram sem link na bio (+15)"], ensure_ascii=False),
+        "lead_problems": json.dumps(["Sem site (+55)", "Instagram sem link na bio (+15)"], ensure_ascii=False),
         "lead_services": json.dumps(["Site profissional", "Conectar Instagram ao site"], ensure_ascii=False),
         "contacted_at": None, "notes": "", "created_at": (datetime.now() - timedelta(hours=3)).isoformat()
     },
@@ -198,21 +198,56 @@ def _get_db_connection():
     return psycopg2.connect(_DATABASE_URL)
 
 
+_SOCIAL_MARKERS = (
+    "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+    "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+)
+
+# Pré-filtro SQL: candidatos a Raio (sem site / só social / classificados raio).
+# O corte final (sem site próprio) é feito em _is_raio_lead.
+_SQL_RAIO_LEADS = """
+SELECT * FROM companies
+WHERE website_status IN ('sem_site', 'so_social')
+   OR website IS NULL
+   OR TRIM(COALESCE(website, '')) = ''
+   OR lead_class = 'raio'
+   OR website ILIKE '%%instagram.com%%'
+   OR website ILIKE '%%facebook.com%%'
+   OR website ILIKE '%%linktr.ee%%'
+ORDER BY lead_score DESC NULLS LAST;
+"""
+
+
+def _is_raio_lead(lead: dict[str, Any]) -> bool:
+    """True se a empresa não tem site próprio (oportunidade Raio)."""
+    status = (lead.get("website_status") or "").strip().lower()
+    if status in ("sem_site", "so_social"):
+        return True
+    website = (lead.get("website") or "").strip()
+    if not website:
+        return True
+    lower = website.lower()
+    if any(m in lower for m in _SOCIAL_MARKERS):
+        return True
+    return False
+
+
 def _get_all_leads():
+    """Retorna apenas leads ⚡ Raio — empresas sem site próprio."""
     if not _DATABASE_URL:
-        return _MOCK_LEADS
+        return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
     try:
         conn = _get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM companies ORDER BY lead_score DESC;")
+        cur.execute(_SQL_RAIO_LEADS)
         rows = cur.fetchall()
         cur.close()
         conn.close()
         if not rows:
-            return _MOCK_LEADS
-        return [dict(row) for row in rows]
+            return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
+        return [dict(row) for row in rows if _is_raio_lead(dict(row))]
     except Exception:
-        return _MOCK_LEADS
+        return [l for l in _MOCK_LEADS if _is_raio_lead(l)]
 
 
 def login_required(f):
@@ -297,17 +332,26 @@ def api_update_status(lead_id):
 @app.route("/api/stats")
 @login_required
 def api_stats():
+    # Já vem filtrado: só ⚡ Raio (sem site)
     leads = _get_all_leads()
     nichos = {}
     for l in leads:
         n = l.get("niche") or "outro"
         nichos[n] = nichos.get(n, 0) + 1
+    contactados = len([l for l in leads if l.get("contacted_at")])
+    descartados = len([
+        l for l in leads
+        if (l.get("notes") or "").lower() == "descartado"
+        or (l.get("contact_status") or "").lower() == "descartado"
+    ])
+    novos = len(leads) - contactados  # aproximação: não contactados
     return jsonify({
         "total": len(leads),
-        "quentes": len([l for l in leads if l.get("lead_class") == "raio"]),
-        "mornos": len([l for l in leads if l.get("lead_class") == "trovao"]),
-        "frios": len([l for l in leads if l.get("lead_class") == "eco"]),
-        "descartados": len([l for l in leads if l.get("notes") == "Descartado"]),
+        "quentes": len(leads),  # todos listados são Raio
+        "mornos": contactados,  # reutilizado no UI como "Contactados"
+        "frios": descartados,   # reutilizado no UI como "Descartados"
+        "novos": max(novos, 0),
+        "descartados": descartados,
         "nichos": nichos
     })
 

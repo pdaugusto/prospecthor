@@ -180,9 +180,36 @@ class LeadScorer:
     def __init__(self, db_path: str = _DB_PATH) -> None:
         self.db = ScorerDatabase(db_path)
 
+    @staticmethod
+    def _has_no_website(company: dict[str, Any]) -> bool:
+        """
+        True quando a empresa não tem site próprio (oportunidade Raio).
+
+        Conta como sem site: URL vazia, status sem_site/so_social, ou
+        o campo website apontando só para rede social.
+        """
+        web_status = (company.get("website_status") or "").strip().lower()
+        if web_status in ("sem_site", "so_social"):
+            return True
+
+        website = (company.get("website") or "").strip()
+        if not website:
+            return True
+
+        social_markers = (
+            "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+            "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+        )
+        lower = website.lower()
+        return any(m in lower for m in social_markers)
+
     def calculate_score(self, company: dict[str, Any]) -> dict[str, Any]:
         """
         Aplica as regras da tabela de pontuação sobre os dados da empresa.
+
+        Regra de negócio (foco comercial):
+            ⚡ RAIO  = SEM site próprio  → único tipo listado no dashboard
+            ☁️ TROVÃO / 🔊 ECO = tem site (com ou sem problemas) → não listados
 
         Args:
             company: Registro da tabela de empresas com dados enriquecidos.
@@ -193,48 +220,48 @@ class LeadScorer:
         score = 0
         problems = []
         services = []
+        no_website = self._has_no_website(company)
 
         # ── 1. Critérios de Site ──────────────────────────────────────────
-        web_status = company.get("website_status")
         web_flags = (company.get("website_flags") or "").split(",")
 
-        # Se NÃO tem site:
-        if not company.get("website") or web_status == "sem_site":
-            score += 40
-            problems.append("Sem site (+40)")
+        if no_website:
+            # Lead Raio: sem site é o critério principal de oportunidade
+            score += 55
+            problems.append("Sem site (+55)")
             services.append("Site profissional")
         else:
-            # Se TEM site, avalia os problemas do site:
-            # 1. SSL/HTTPS (+15)
+            # Tem site: pontua problemas de qualidade (nunca vira Raio)
             if "sem_https" in web_flags or company.get("website_https") == 0:
                 score += 15
                 problems.append("Site sem HTTPS (+15)")
                 services.append("Certificado SSL")
-            
-            # 2. Velocidade / Lentidão (>5s) (+15)
+
             speed = company.get("website_speed_s")
             if speed is not None and speed > 5.0:
                 score += 15
                 problems.append(f"Site lento ({speed:.1f}s) (+15)")
                 services.append("Otimização de velocidade")
-            
-            # 3. Responsividade / Mobile-friendly (+15)
+
             if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
                 score += 15
                 problems.append("Site não mobile-friendly (+15)")
                 services.append("Design responsivo")
 
         # ── 2. Critérios de Instagram ─────────────────────────────────────
-        # Tem Instagram mas sem link na bio (+15)
-        # Verifica se a empresa tem uma URL de Instagram ou username
-        has_ig = company.get("instagram_status") == "tem_instagram" or bool(company.get("instagram_url")) or bool(company.get("instagram_username"))
+        has_ig = (
+            company.get("instagram_status") == "tem_instagram"
+            or bool(company.get("instagram_url"))
+            or bool(company.get("instagram_username"))
+        )
         if has_ig and company.get("instagram_has_link") == 0:
             score += 15
             problems.append("Tem Instagram mas sem link na bio (+15)")
             services.append("Conectar Instagram ao site")
 
-        # ── 3. Classificação do Lead (Escala de 100 pontos) ────────────────
-        if score >= 55:
+        # ── 3. Classificação ──────────────────────────────────────────────
+        # Raio = exclusivamente empresas sem site próprio
+        if no_website:
             lead_class = "raio"
             priority = "alta"
         elif score >= 30:
@@ -244,7 +271,6 @@ class LeadScorer:
             lead_class = "eco"
             priority = "baixa"
 
-        # Dedup de serviços sugeridos
         dedup_services = []
         for s in services:
             if s not in dedup_services:
@@ -273,38 +299,44 @@ class LeadScorer:
         logger.info(f"[LeadScorer] Iniciando qualificação de {len(companies)} empresas...")
 
         scored_leads = []
+        raio_count = 0
         for company in companies:
             result = self.calculate_score(company)
             self.db.save_lead_score(result)
-            
+
             # Mescla dados originais com resultado para exibição e ordenação
             company.update(result)
             scored_leads.append(company)
+            if result["lead_class"] == "raio":
+                raio_count += 1
 
         # Ordena leads por score decrescente (maior pontuação = prioridade máxima)
         scored_leads.sort(key=lambda x: x["lead_score"], reverse=True)
 
-        logger.info(f"[LeadScorer] {len(scored_leads)} leads qualificados e ordenados com sucesso.")
+        logger.info(
+            f"[LeadScorer] {len(scored_leads)} empresas pontuadas | "
+            f"{raio_count} ⚡ Raio (sem site) listáveis no dashboard."
+        )
         return scored_leads
 
     def print_resumos(self, limit: int = 10) -> None:
         """
-        Gera e exibe um resumo textual formatado em box ASCII dos principais leads quentes/mornos.
+        Gera e exibe um resumo textual dos leads Raio (sem site).
         """
         leads = self.score_all()
-        # Filtra apenas leads raio ou trovão
-        qualificados = [l for l in leads if l["lead_class"] in ("raio", "trovao")][:limit]
+        # Dashboard/comercial: apenas empresas sem site
+        qualificados = [l for l in leads if l["lead_class"] == "raio"][:limit]
 
         if not qualificados:
-            print("\nNenhum lead raio ou trovão qualificado para exibição no momento.\n")
+            print("\nNenhum lead ⚡ Raio (sem site) qualificado no momento.\n")
             return
 
         print(f"\n{'═' * 60}")
-        print(f"      RESUMO DOS MELHORES LEADS ENCONTRADOS ({len(qualificados)} principais)")
+        print(f"      ⚡ LEADS RAIO — SEM SITE ({len(qualificados)} principais)")
         print(f"{'═' * 60}\n")
 
         for lead in qualificados:
-            title_tag = "⚡ LEAD RAIO" if lead["lead_class"] == "raio" else "☁️ LEAD TROVÃO"
+            title_tag = "⚡ LEAD RAIO"
             score = lead["lead_score"]
             name = lead.get("name", "Sem Nome")
             address = lead.get("address", "Sem Endereço")

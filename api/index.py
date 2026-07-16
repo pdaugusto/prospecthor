@@ -20,18 +20,50 @@ DASHBOARD_PASS = os.getenv("DASHBOARD_PASS", "senha123")
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
+_SOCIAL_MARKERS = (
+    "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+    "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+)
+
+# Pré-filtro SQL: candidatos a Raio. Corte final em _is_raio_lead (sem site próprio).
+_SQL_RAIO_LEADS = """
+SELECT * FROM companies
+WHERE website_status IN ('sem_site', 'so_social')
+   OR website IS NULL
+   OR TRIM(COALESCE(website, '')) = ''
+   OR lead_class = 'raio'
+   OR website ILIKE '%%instagram.com%%'
+   OR website ILIKE '%%facebook.com%%'
+   OR website ILIKE '%%linktr.ee%%'
+ORDER BY lead_score DESC NULLS LAST;
+"""
+
+
+def _is_raio_lead(lead):
+    """True se a empresa não tem site próprio."""
+    status = (lead.get("website_status") or "").strip().lower()
+    if status in ("sem_site", "so_social"):
+        return True
+    website = (lead.get("website") or "").strip()
+    if not website:
+        return True
+    lower = website.lower()
+    return any(m in lower for m in _SOCIAL_MARKERS)
+
+
 def get_all_leads():
+    """Lista só leads ⚡ Raio (sem site) — foco comercial do dashboard."""
     if not DATABASE_URL:
         return []
     try:
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM companies ORDER BY lead_score DESC;")
+        cur.execute(_SQL_RAIO_LEADS)
         rows = cur.fetchall()
         cur.close()
         conn.close()
-        return [dict(r) for r in rows]
-    except:
+        return [dict(r) for r in rows if _is_raio_lead(dict(r))]
+    except Exception:
         return []
 
 def login_required(f):
@@ -107,17 +139,24 @@ def api_update_status(lead_id):
 @app.route("/api/stats")
 @login_required
 def api_stats():
+    # Já vem filtrado: só ⚡ Raio (sem site)
     leads = get_all_leads()
     nichos = {}
     for l in leads:
         n = l.get("niche") or "outro"
         nichos[n] = nichos.get(n, 0) + 1
+    contactados = len([l for l in leads if l.get("contacted_at")])
+    descartados = len([
+        l for l in leads
+        if (l.get("notes") or "").lower() == "descartado"
+        or (l.get("contact_status") or "").lower() == "descartado"
+    ])
     return jsonify({
         "total": len(leads),
-        "quentes": len([l for l in leads if l.get("lead_class") == "raio"]),
-        "mornos": len([l for l in leads if l.get("lead_class") == "trovao"]),
-        "frios": len([l for l in leads if l.get("lead_class") == "eco"]),
-        "descartados": len([l for l in leads if l.get("notes") == "Descartado"]),
+        "quentes": len(leads),
+        "mornos": contactados,
+        "frios": descartados,
+        "descartados": descartados,
         "nichos": nichos
     })
 

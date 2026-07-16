@@ -126,28 +126,72 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None) -> None:
             logger.warning("Nenhuma cidade ou nicho ativo para processamento automático.")
             return
 
+        # Prioridade: alta → media → baixa; evita ficar em praça já saturada
+        prio = {"alta": 0, "media": 1, "baixa": 2, "pausada": 9}
+        active_cities.sort(key=lambda c: (prio.get(c.get("priority", "media"), 5), c.get("nome", "")))
+
         from src.scheduler import LeadGenerationPipeline
         pipeline = LeadGenerationPipeline()
 
+        # Contagem no banco: pula cidade+nicho já bem varridos (ex: SP/RJ antigos)
+        coverage: dict[tuple[str, str], int] = {}
+        try:
+            import os
+            import psycopg2
+            db_url = os.getenv("DATABASE_URL", "")
+            if db_url:
+                conn = psycopg2.connect(db_url)
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    SELECT lower(city), lower(niche), COUNT(*)
+                    FROM companies
+                    GROUP BY lower(city), lower(niche)
+                    """
+                )
+                for city_l, niche_l, n in cur.fetchall():
+                    coverage[(city_l or "", niche_l or "")] = int(n)
+                cur.close()
+                conn.close()
+        except Exception as exc:
+            logger.warning(f"Não foi possível ler cobertura do banco: {exc}")
+
+        MAX_PER_CITY_NICHE = 40  # se já tem 40+ no banco, vai pra outra praça
+
         total_pairs = len(active_cities) * len(niches_data)
         logger.info(
-            f"Lote Brasil: {len(active_cities)} cidades × {len(niches_data)} nichos "
-            f"= {total_pairs} buscas | checkpoint=empresa | só grava SEM site."
+            f"Lote Brasil: {len(active_cities)} cidades ativas × {len(niches_data)} nichos "
+            f"| SP/RJ/Goiânia pausados no cities.json | bairros nas queries | "
+            f"skip se ≥{MAX_PER_CITY_NICHE} no banco."
         )
 
         ran = 0
+        skipped_sat = 0
         idx = 0
         for city in active_cities:
             c_name = city["nome"]
             c_state = city["estado"]
+            bairros = city.get("bairros") or []
             for n in niches_data:
                 n_id = n["id"]
                 q_term = n.get("query_term") or n_id
                 idx += 1
+
+                key = (c_name.lower(), n_id.lower())
+                # também tenta sem acento simples (Goiania vs Goiânia)
+                already = coverage.get(key, 0)
+                if already >= MAX_PER_CITY_NICHE:
+                    skipped_sat += 1
+                    logger.info(
+                        f"[{idx}/{total_pairs}] ⏭ Saturado: {n_id} em {c_name}-{c_state} "
+                        f"({already} no banco ≥ {MAX_PER_CITY_NICHE}) — próxima praça"
+                    )
+                    continue
+
                 try:
                     logger.info(
                         f"[{idx}/{total_pairs}] ▶ {n_id} em {c_name} - {c_state} "
-                        f"(query: {q_term})"
+                        f"| bairros={len(bairros)} | já no DB={already} | query: {q_term}"
                     )
                     pipeline.execute_flow(
                         niche=n_id,
@@ -155,6 +199,7 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None) -> None:
                         state=c_state,
                         query_term=q_term,
                         max_results=25,
+                        bairros=bairros,
                     )
                     ran += 1
                 except Exception as exc:
@@ -162,7 +207,10 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None) -> None:
                         f"Falha ao rodar pipeline para {n_id} em {c_name}: {exc}"
                     )
 
-        logger.info(f"Lote Brasil finalizado: {ran}/{total_pairs} combinações executadas.")
+        logger.info(
+            f"Lote Brasil finalizado: {ran} executados | "
+            f"{skipped_sat} pulados (praça saturada)."
+        )
     else:
         state_val = estado or "RS"
         from src.scheduler import LeadGenerationPipeline
@@ -180,12 +228,26 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None) -> None:
                 except Exception:
                     pass
 
+            # Bairros opcionais se a cidade estiver no cities.json
+            bairros: list = []
+            cities_path = Path("config/cities.json")
+            if cities_path.exists():
+                try:
+                    with open(cities_path, "r", encoding="utf-8") as f:
+                        for c in json.load(f).get("cidades", []):
+                            if (c.get("nome") or "").lower() == (cidade or "").lower():
+                                bairros = c.get("bairros") or []
+                                break
+                except Exception:
+                    pass
+
             pipeline.execute_flow(
                 niche=niche,
                 city=cidade,
                 state=state_val,
                 query_term=query_term,
                 max_results=25,
+                bairros=bairros,
             )
         except Exception as exc:
             logger.error(f"Erro ao processar busca manual: {exc}")

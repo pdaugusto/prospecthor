@@ -303,10 +303,11 @@ class LeadGenerationPipeline:
         state: str,
         query_term: str | None = None,
         max_results: int = 25,
+        bairros: list[str] | None = None,
     ) -> int:
         """
         Roda o ciclo do pipeline completo:
-            1. google_maps.py      → Busca locais
+            1. google_maps.py      → Busca locais (bairros/variações)
             2. Skip em massa quem já tem site
             3. website_checker.py  → só pendentes sem site
             4. instagram_checker.py → só sem site
@@ -318,23 +319,26 @@ class LeadGenerationPipeline:
             state:       Estado (ex: "PR")
             query_term:  Texto de busca no Maps (opcional)
             max_results: Meta de empresas NOVAS sem site (já no banco não contam)
+            bairros:     Bairros para variar a busca (cities.json)
 
         Returns:
             Quantidade de leads novos sem site salvos nesta rodada.
         """
         search_query = (query_term or niche).strip()
+        bairros = bairros or []
         logger.info(
             f"[Pipeline] Iniciando fluxo: {niche} ({search_query}) em {city} - {state} "
-            f"| meta {max_results} NOVAS sem site"
+            f"| meta {max_results} NOVAS | bairros={len(bairros)}"
         )
 
-        # 1. Busca Google Maps (cota = só novas sem site)
+        # 1. Busca Google Maps (cota = só novas sem site; bairros primeiro)
         companies = self.maps.search(
             niche=niche,
             city=city,
             state=state,
             max_results=max_results,
             query_term=search_query,
+            bairros=bairros,
         )
         total_found = len(companies)
 

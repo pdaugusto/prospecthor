@@ -1194,23 +1194,36 @@ class GoogleMapsSearcher:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_query_variants(term: str, city: str, state: str) -> list[str]:
+    def _build_query_variants(
+        term: str,
+        city: str,
+        state: str,
+        bairros: list[str] | None = None,
+    ) -> list[str]:
         """
-        Variações de busca na mesma região para achar empresas diferentes
-        (não só o topo repetido do Google Maps).
+        Variações de busca: bairros da cidade primeiro (mais inovação),
+        depois zonas genéricas.
         """
         term = term.strip()
-        base = [
-            f"{term} em {city} {state}",
-            f"{term} {city} centro",
-            f"{term} perto de {city} {state}",
-            f"{term} {city} zona sul",
-            f"{term} {city} zona norte",
-            f"{term} {city} zona leste",
-            f"{term} {city} zona oeste",
-            f"clínica {term} {city}" if "clínica" not in term.lower() else f"{term} bairro {city}",
-        ]
-        # únicos preservando ordem
+        base: list[str] = [f"{term} em {city} {state}"]
+
+        # Bairros específicos (config/cities.json) — prioridade
+        for b in (bairros or [])[:8]:
+            b = (b or "").strip()
+            if b:
+                base.append(f"{term} {b} {city}")
+                base.append(f"{term} em {b} {state}")
+
+        base.extend(
+            [
+                f"{term} {city} centro",
+                f"{term} perto de {city} {state}",
+                f"{term} {city} zona sul",
+                f"{term} {city} zona norte",
+                f"{term} {city} zona leste",
+                f"{term} {city} zona oeste",
+            ]
+        )
         seen: set[str] = set()
         out: list[str] = []
         for q in base:
@@ -1226,16 +1239,17 @@ class GoogleMapsSearcher:
         state: str,
         max_results: int = 60,
         query_term: str | None = None,
+        bairros: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Busca empresas NOVAS sem site no Google Maps.
 
         max_results = meta de leads novos (não contam: já no banco, com site).
-        Se a 1ª query não encher a cota, tenta variações na mesma cidade.
+        Usa bairros do cities.json para não repetir o mesmo topo da cidade.
         """
         term = (query_term or niche).strip()
         target_new = max(1, max_results)
-        variants = self._build_query_variants(term, city, state)
+        variants = self._build_query_variants(term, city, state, bairros=bairros)
 
         logger.info(
             f"[GoogleMapsSearcher] Meta: {target_new} empresas NOVAS sem site | "

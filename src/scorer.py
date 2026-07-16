@@ -63,12 +63,21 @@ UPDATE companies SET
 WHERE id = %(id)s;
 """
 
-# Só pontua quem ainda não foi pontuado (empresas com site já saem marcadas no pipeline)
+# Só pontua quem ainda não foi pontuado.
+# Inclui: já checados OU sem site (website vazio / social) — mesmo se o bot parou no meio.
 _SELECT_ALL_COLLECTED_SQL = """
 SELECT * FROM companies
 WHERE (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
-  AND website_checked_at IS NOT NULL
   AND scored_at IS NULL
+  AND (
+      website_checked_at IS NOT NULL
+      OR website IS NULL
+      OR TRIM(COALESCE(website, '')) = ''
+      OR website_status IN ('sem_site', 'so_social')
+      OR website ILIKE '%%instagram.com%%'
+      OR website ILIKE '%%facebook.com%%'
+      OR website ILIKE '%%linktr.ee%%'
+  )
 ORDER BY id;
 """
 
@@ -358,34 +367,38 @@ class LeadScorer:
 
     def score_all(self) -> list[dict[str, Any]]:
         """
-        Carrega as empresas recolhidas, calcula o lead score definitivo,
-        salva no banco SQLite e retorna os dados ordenados por score decrescente.
+        Pontua todas as empresas ainda sem score no banco.
+
+        Útil se o bot parou no meio: roda só o score sem rebuscar no Maps.
         """
         companies = self.db.get_collected_companies()
         if not companies:
-            logger.info("[LeadScorer] Nenhuma empresa com dados analisados encontrada no banco.")
+            logger.info("[LeadScorer] Nenhuma empresa pendente de score.")
             return []
 
-        logger.info(f"[LeadScorer] Iniciando qualificação de {len(companies)} empresas...")
+        logger.info(f"[LeadScorer] Qualificando {len(companies)} empresas sem score...")
 
         scored_leads = []
         raio_count = 0
         for company in companies:
+            cid = company.get("id")
+            if cid and self._has_no_website(company):
+                self.db.ensure_sem_site_flags(int(cid))
+                company = self.db.get_company_by_id(int(cid)) or company
+
             result = self.calculate_score(company)
             self.db.save_lead_score(result)
 
-            # Mescla dados originais com resultado para exibição e ordenação
             company.update(result)
             scored_leads.append(company)
             if result["lead_class"] == "raio":
                 raio_count += 1
 
-        # Ordena leads por score decrescente (maior pontuação = prioridade máxima)
         scored_leads.sort(key=lambda x: x["lead_score"], reverse=True)
 
         logger.info(
-            f"[LeadScorer] {len(scored_leads)} empresas pontuadas | "
-            f"{raio_count} ⚡ Raio (sem site) listáveis no dashboard."
+            f"[LeadScorer] {len(scored_leads)} pontuadas | "
+            f"{raio_count} Raio (sem site) no dashboard."
         )
         return scored_leads
 

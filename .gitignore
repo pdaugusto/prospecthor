@@ -41,9 +41,6 @@ data/leads.db-shm
 *.sqlite3
 *.db
 
-# Checkpoint local do lote (não versionar progresso de máquina)
-data/pipeline_checkpoint.json
-
 # Exports gerados
 data/exports/*.csv
 data/exports/*.xlsx

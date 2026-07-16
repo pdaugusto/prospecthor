@@ -695,6 +695,7 @@ class PlaywrightScraper:
         city: str,
         state: str,
         max_results: int = 60,
+        known_place_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Realiza o scraping completo do Google Maps para uma consulta.
@@ -703,21 +704,24 @@ class PlaywrightScraper:
             1. Abre o Google Maps com a query na URL
             2. Aguarda o painel de resultados (feed) carregar
             3. Faz scroll no feed para carregar mais resultados
-            4. Para cada resultado, abre o painel de detalhes e extrai dados
-            5. Aplica delay aleatório entre extrações
-            6. Detecta e trata bloqueios do Google
+            4. Para cada resultado, se place_id já conhecido → pula (checkpoint empresa)
+            5. Senão abre o painel de detalhes e extrai dados
+            6. Aplica delay aleatório entre extrações
+            7. Detecta e trata bloqueios do Google
 
         Args:
-            query:       Texto da busca (ex: "restaurante Porto Alegre RS")
-            niche:       Nicho para gravar no banco
-            city:        Cidade para gravar no banco
-            state:       Estado para gravar no banco
-            max_results: Número máximo de resultados a coletar
+            query:            Texto da busca (ex: "restaurante Porto Alegre RS")
+            niche:            Nicho para gravar no banco
+            city:             Cidade para gravar no banco
+            state:            Estado para gravar no banco
+            max_results:      Número máximo de resultados a coletar
+            known_place_ids:  place_ids já no banco (não reabre painel)
 
         Returns:
             Lista de dicionários com os dados extraídos.
         """
         companies: list[dict[str, Any]] = []
+        self._known_place_ids = set(known_place_ids or [])
         encoded_query = urllib.parse.quote_plus(query)
         maps_url = f"https://www.google.com/maps/search/{encoded_query}"
 
@@ -758,8 +762,21 @@ class PlaywrightScraper:
                 logger.warning("[Playwright] Nenhuma URL de resultado encontrada.")
                 return companies
 
-            # Para cada URL, extrai os detalhes
+            # Checkpoint por empresa: place_ids já no banco → não abre o painel
+            known_ids = getattr(self, "_known_place_ids", None) or set()
+            skipped_known = 0
+
+            # Para cada URL, extrai os detalhes (pula se já vimos a empresa)
             for idx, result_url in enumerate(result_urls, start=1):
+                place_guess = _extract_place_id_from_url(result_url)
+                if place_guess and place_guess in known_ids:
+                    skipped_known += 1
+                    logger.info(
+                        f"[Playwright] ⏭ {idx}/{len(result_urls)} já no banco "
+                        f"({place_guess[:40]}...) — pula painel"
+                    )
+                    continue
+
                 logger.info(
                     f"[Playwright] Extraindo {idx}/{len(result_urls)}: {result_url[:80]}..."
                 )
@@ -768,7 +785,16 @@ class PlaywrightScraper:
                         page, result_url, niche, city, state
                     )
                     if company and company.get("name"):
+                        pid = company.get("place_id") or place_guess
+                        if pid and pid in known_ids:
+                            skipped_known += 1
+                            logger.info(
+                                f"[Playwright] ⏭ {company['name']!r} já processada — pula"
+                            )
+                            continue
                         companies.append(company)
+                        if pid:
+                            known_ids.add(pid)
                         logger.debug(
                             f"[Playwright] ✓ {company['name']} | "
                             f"⭐ {company['rating']} | 📞 {company['phone']}"
@@ -787,6 +813,12 @@ class PlaywrightScraper:
 
                 # Delay aleatório entre cada empresa
                 _random_delay(_DELAY_MIN, _DELAY_MAX)
+
+            if skipped_known:
+                logger.info(
+                    f"[Playwright] Checkpoint empresa: {skipped_known} já vistas, "
+                    f"painel não reaberto."
+                )
 
                 # Verifica bloqueio periodicamente (a cada 10 resultados)
                 if idx % 10 == 0 and _is_blocked(page):
@@ -1275,6 +1307,17 @@ class GoogleMapsSearcher:
             merged = {**raw, **details}  # Mescla dados básicos + detalhes
 
             company = self._api_client.normalize_place(merged, niche, city, state)
+            # Só interessa lead sem site próprio
+            website = (company.get("website") or "").strip().lower()
+            social = (
+                "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+                "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+            )
+            if website and not any(m in website for m in social):
+                logger.debug(
+                    f"[Places API] Skip (tem site): {company.get('name')!r}"
+                )
+                continue
             companies.append(company)
 
             # Delay entre chamadas à API
@@ -1298,8 +1341,17 @@ class GoogleMapsSearcher:
         """Executa a busca usando o scraper Playwright."""
         logger.info("[Playwright] Executando busca via scraping...")
         try:
+            from src.checkpoint import CompanyCheckpoint
+            known = CompanyCheckpoint.load()
             with PlaywrightScraper() as scraper:
-                return scraper.scrape(query, niche, city, state, max_results)
+                return scraper.scrape(
+                    query,
+                    niche,
+                    city,
+                    state,
+                    max_results,
+                    known_place_ids=known.as_set(),
+                )
         except Exception as exc:
             logger.error(f"[Playwright] Falha crítica no scraping: {exc}")
             return []

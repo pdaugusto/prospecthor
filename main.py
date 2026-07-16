@@ -87,18 +87,19 @@ def cli() -> None:
 @click.option("--niche", "-n", default=None, help="Nicho de negócio específico (ex: restaurante).")
 @click.option("--cidade", "-c", default=None, help="Cidade para a busca (ex: 'Porto Alegre').")
 @click.option("--estado", "-e", default=None, help="Estado da cidade (ex: RS).")
-@click.option(
-    "--force",
-    is_flag=True,
-    default=False,
-    help="Ignora checkpoint e refaz cidade+nicho já concluídos.",
-)
-def run_now(niche: str | None, cidade: str | None, estado: str | None, force: bool) -> None:
-    """Executa o pipeline completo de prospecção agora."""
+def run_now(niche: str | None, cidade: str | None, estado: str | None) -> None:
+    """Executa o pipeline completo de prospecção agora.
+
+    Checkpoint é por EMPRESA (place_id no Supabase), não por cidade:
+    empresas já salvas não reabrem o painel no Maps; quem tem site não grava.
+    """
     logger.info("Bot iniciado com sucesso.")
 
-    from src.checkpoint import is_done, mark_done, seed_defaults, list_completed
-    seed_defaults()
+    from src.checkpoint import CompanyCheckpoint
+    known = CompanyCheckpoint.load()
+    logger.info(
+        f"Checkpoint por empresa: {len(known)} place_ids já processados no banco."
+    )
 
     # Se não forem informados nicho/cidade específicos, roda para os ativos dos arquivos config
     if not niche or not cidade:
@@ -129,15 +130,12 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None, force: bo
         pipeline = LeadGenerationPipeline()
 
         total_pairs = len(active_cities) * len(niches_data)
-        already = list_completed()
         logger.info(
             f"Lote Brasil: {len(active_cities)} cidades × {len(niches_data)} nichos "
-            f"= {total_pairs} buscas | checkpoint: {len(already)} já feitos "
-            f"| force={force} | só salva SEM site."
+            f"= {total_pairs} buscas | checkpoint=empresa | só grava SEM site."
         )
 
         ran = 0
-        skipped_cp = 0
         idx = 0
         for city in active_cities:
             c_name = city["nome"]
@@ -146,39 +144,25 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None, force: bo
                 n_id = n["id"]
                 q_term = n.get("query_term") or n_id
                 idx += 1
-
-                if not force and is_done(n_id, c_name, c_state):
-                    skipped_cp += 1
-                    logger.info(
-                        f"[{idx}/{total_pairs}] ⏭ Checkpoint — pulando {n_id} em "
-                        f"{c_name}-{c_state} (já concluído)"
-                    )
-                    continue
-
                 try:
                     logger.info(
                         f"[{idx}/{total_pairs}] ▶ {n_id} em {c_name} - {c_state} "
                         f"(query: {q_term})"
                     )
-                    found = pipeline.execute_flow(
+                    pipeline.execute_flow(
                         niche=n_id,
                         city=c_name,
                         state=c_state,
                         query_term=q_term,
                         max_results=25,
                     )
-                    mark_done(n_id, c_name, c_state, items_found=found)
                     ran += 1
                 except Exception as exc:
                     logger.error(
                         f"Falha ao rodar pipeline para {n_id} em {c_name}: {exc}"
                     )
-                    # Não marca checkpoint em falha — retoma na próxima execução
 
-        logger.info(
-            f"Lote Brasil finalizado: {ran} executados | "
-            f"{skipped_cp} pulados (checkpoint) | {total_pairs} total."
-        )
+        logger.info(f"Lote Brasil finalizado: {ran}/{total_pairs} combinações executadas.")
     else:
         state_val = estado or "RS"
         from src.scheduler import LeadGenerationPipeline
@@ -196,21 +180,13 @@ def run_now(niche: str | None, cidade: str | None, estado: str | None, force: bo
                 except Exception:
                     pass
 
-            if not force and is_done(niche, cidade, state_val):
-                logger.info(
-                    f"Checkpoint: {niche} em {cidade}-{state_val} já concluído. "
-                    f"Use --force para refazer."
-                )
-                return
-
-            found = pipeline.execute_flow(
+            pipeline.execute_flow(
                 niche=niche,
                 city=cidade,
                 state=state_val,
                 query_term=query_term,
                 max_results=25,
             )
-            mark_done(niche, cidade, state_val, items_found=found)
         except Exception as exc:
             logger.error(f"Erro ao processar busca manual: {exc}")
             sys.exit(1)

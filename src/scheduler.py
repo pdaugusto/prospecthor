@@ -361,8 +361,16 @@ class LeadGenerationPipeline:
         logger.info("[Pipeline] Instagram apenas em leads sem site...")
         self.insta.check_all(limit=max(no_site * 2, 30), delay_between_s=0.8)
 
-        # 5. Score (Raio só sem site)
-        logger.info("[Pipeline] Qualificação final de leads...")
+        # 5. Re-score (score já foi dado na hora do save; aqui atualiza com Instagram)
+        logger.info("[Pipeline] Re-score com dados de Instagram (se houver)...")
+        for c in companies:
+            cid = c.get("id")
+            if cid:
+                try:
+                    self.scorer.score_one(int(cid))
+                except Exception as exc:
+                    logger.debug(f"[Pipeline] Re-score id={cid}: {exc}")
+        # Pendentes antigos sem score (fallback)
         self.scorer.score_all()
 
         logger.info(f"[Pipeline] Fluxo completo para {niche} em {city} finalizado.")

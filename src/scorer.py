@@ -134,6 +134,47 @@ class ScorerDatabase:
         finally:
             conn.close()
 
+    def get_company_by_id(self, company_id: int) -> dict[str, Any] | None:
+        """Carrega um registro completo por id."""
+        conn = self._connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT * FROM companies WHERE id = %s LIMIT 1;", (company_id,))
+            row = cur.fetchone()
+            cur.close()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def ensure_sem_site_flags(self, company_id: int) -> None:
+        """Marca website_status=sem_site para o lead já aparecer no dashboard."""
+        now = datetime.now().isoformat()
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE companies SET
+                    website_status = COALESCE(NULLIF(website_status, ''), 'sem_site'),
+                    website_checked_at = COALESCE(website_checked_at, %s),
+                    website_score = COALESCE(website_score, 55)
+                WHERE id = %s
+                  AND (
+                      website IS NULL
+                      OR TRIM(COALESCE(website, '')) = ''
+                      OR website_status IN ('sem_site', 'so_social')
+                      OR website ILIKE '%%instagram.com%%'
+                      OR website ILIKE '%%facebook.com%%'
+                      OR website ILIKE '%%linktr.ee%%'
+                  );
+                """,
+                (now, company_id),
+            )
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+
     def save_lead_score(self, result: dict[str, Any]) -> None:
         """Persiste os resultados da pontuação de lead."""
         conn = self._connect()
@@ -287,6 +328,33 @@ class LeadScorer:
             "lead_priority": priority,
             "scored_at": datetime.now().isoformat(),
         }
+
+    def score_one(self, company_id: int) -> dict[str, Any] | None:
+        """
+        Pontua UMA empresa na hora (pra aparecer no dashboard sem esperar o lote).
+
+        Usado assim que o Maps acha um lead sem site — se o bot parar no meio,
+        o que já entrou já está classificado como Raio.
+        """
+        company = self.db.get_company_by_id(company_id)
+        if not company:
+            logger.warning(f"[LeadScorer] score_one: id={company_id} não encontrado.")
+            return None
+
+        if self._has_no_website(company):
+            self.db.ensure_sem_site_flags(company_id)
+            company = self.db.get_company_by_id(company_id) or company
+            if not company.get("website_status"):
+                company["website_status"] = "sem_site"
+
+        result = self.calculate_score(company)
+        self.db.save_lead_score(result)
+        logger.info(
+            f"[LeadScorer] Score imediato id={company_id} "
+            f"→ {result['lead_class']} ({result['lead_score']} pts) | "
+            f"{company.get('name', '')!r}"
+        )
+        return result
 
     def score_all(self) -> list[dict[str, Any]]:
         """

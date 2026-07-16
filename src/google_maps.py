@@ -1312,7 +1312,8 @@ class GoogleMapsSearcher:
                         known_ids.add(place_id)
                     continue
                 try:
-                    self.db.upsert_company(company)
+                    row_id = self.db.upsert_company(company)
+                    company["id"] = row_id
                     saved_total += 1
                     kept.append(company)
                     if place_id:
@@ -1321,6 +1322,8 @@ class GoogleMapsSearcher:
                         f"[GoogleMapsSearcher] Salva NOVA "
                         f"[{saved_total}/{target_new}]: {company.get('name')!r}"
                     )
+                    # Score na hora → se parar o bot, lead já aparece no dashboard
+                    self._score_immediately(row_id)
                 except Exception as exc:
                     logger.error(
                         f"[DB] Erro ao salvar {company.get('name', '?')!r}: {exc}"
@@ -1335,6 +1338,20 @@ class GoogleMapsSearcher:
     # ------------------------------------------------------------------
     # Busca via Places API
     # ------------------------------------------------------------------
+
+    def _score_immediately(self, company_id: int) -> None:
+        """Classifica o lead assim que é salvo (sem esperar o fim do lote)."""
+        if not company_id:
+            return
+        try:
+            if not hasattr(self, "_scorer") or self._scorer is None:
+                from src.scorer import LeadScorer
+                self._scorer = LeadScorer()
+            self._scorer.score_one(company_id)
+        except Exception as exc:
+            logger.warning(
+                f"[GoogleMapsSearcher] Score imediato falhou id={company_id}: {exc}"
+            )
 
     def _search_via_api(
         self,

@@ -41,6 +41,9 @@ data/leads.db-shm
 *.sqlite3
 *.db
 
+# Cobertura local de bairros (não versionar progresso da máquina)
+data/search_coverage.json
+
 # Exports gerados
 data/exports/*.csv
 data/exports/*.xlsx

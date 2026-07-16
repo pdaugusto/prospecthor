@@ -1,0 +1,190 @@
+"""
+coverage.py — Cobertura de busca por ÁREA (bairro/cidade), não só empresa.
+
+Evita rebuscar o mesmo bairro em SP/RJ. Persistido em data/search_coverage.json.
+Unidade: niche | city | state | area
+  area = nome do bairro ou "_cidade" (busca genérica da cidade)
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from loguru import logger
+
+_BASE = Path(__file__).resolve().parent.parent
+_PATH = _BASE / "data" / "search_coverage.json"
+
+
+def _norm(s: str) -> str:
+    return " ".join((s or "").strip().lower().split())
+
+
+def _key(niche: str, city: str, state: str, area: str) -> str:
+    return "|".join(
+        [
+            _norm(niche),
+            _norm(city),
+            (state or "").strip().upper(),
+            _norm(area) or "_cidade",
+        ]
+    )
+
+
+def load() -> dict[str, Any]:
+    if not _PATH.exists():
+        return {"done": {}, "updated_at": None}
+    try:
+        with open(_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data.setdefault("done", {})
+        return data
+    except Exception as exc:
+        logger.warning(f"[Coverage] Falha ao ler: {exc}")
+        return {"done": {}, "updated_at": None}
+
+
+def save(data: dict[str, Any]) -> None:
+    _PATH.parent.mkdir(parents=True, exist_ok=True)
+    data["updated_at"] = datetime.now().isoformat()
+    with open(_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def is_done(niche: str, city: str, state: str, area: str) -> bool:
+    data = load()
+    return _key(niche, city, state, area) in data.get("done", {})
+
+
+def mark_done(
+    niche: str,
+    city: str,
+    state: str,
+    area: str,
+    leads_found: int = 0,
+    note: str = "",
+) -> None:
+    data = load()
+    data.setdefault("done", {})[_key(niche, city, state, area)] = {
+        "niche": niche,
+        "city": city,
+        "state": state,
+        "area": area or "_cidade",
+        "leads_found": leads_found,
+        "completed_at": datetime.now().isoformat(),
+        "note": note,
+    }
+    save(data)
+    logger.info(
+        f"[Coverage] ✓ Área concluída: {niche} | {city}-{state} | {area or '_cidade'} "
+        f"({leads_found} leads)"
+    )
+
+
+def seed_from_cities_config(cities: list[dict[str, Any]], niches: list[dict[str, Any]]) -> int:
+    """
+    Marca ja_varridos do cities.json como feitos (sem sobrescrever timestamps existentes).
+    """
+    data = load()
+    added = 0
+    niche_ids = [n.get("id") for n in niches if n.get("id")]
+    for city in cities:
+        nome = city.get("nome") or ""
+        estado = city.get("estado") or ""
+        ja = city.get("ja_varridos") or {}
+        # ja_varridos: { "odontologia": ["centro", "zona sul"], "advocacia": ["_cidade"] }
+        # ou lista global aplicada a todos nichos
+        if isinstance(ja, list):
+            ja = {nid: ja for nid in niche_ids}
+        if not isinstance(ja, dict):
+            continue
+        for niche_id, areas in ja.items():
+            if niche_id not in niche_ids and niche_ids:
+                # se key é "*" aplica a todos
+                if niche_id != "*":
+                    continue
+            targets = niche_ids if niche_id == "*" else [niche_id]
+            for nid in targets:
+                for area in areas or []:
+                    k = _key(nid, nome, estado, area)
+                    if k not in data["done"]:
+                        data["done"][k] = {
+                            "niche": nid,
+                            "city": nome,
+                            "state": estado,
+                            "area": area,
+                            "leads_found": 0,
+                            "completed_at": datetime.now().isoformat(),
+                            "seeded": True,
+                            "note": "seed cities.json ja_varridos",
+                        }
+                        added += 1
+    if added:
+        save(data)
+        logger.info(f"[Coverage] Seed: {added} áreas marcadas como já varridas.")
+    return added
+
+
+def list_pending_jobs(
+    cities: list[dict[str, Any]],
+    niches: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Expande cidade × nicho × bairro em jobs pendentes.
+    Ordena: prioridade da cidade, depois áreas virgens.
+    """
+    seed_from_cities_config(cities, niches)
+    prio_rank = {"alta": 0, "media": 1, "baixa": 2, "pausada": 9}
+    jobs: list[dict[str, Any]] = []
+
+    for city in cities:
+        if not city.get("ativo"):
+            continue
+        c_name = city["nome"]
+        c_state = city["estado"]
+        bairros = list(city.get("bairros") or [])
+        # Se tem bairros, cada bairro é um job. Busca genérica "_cidade" só se allow_citywide
+        allow_citywide = city.get("allow_citywide", len(bairros) == 0)
+        areas: list[str] = list(bairros)
+        if allow_citywide or not bairros:
+            if "_cidade" not in areas:
+                areas.append("_cidade")
+
+        for niche in niches:
+            n_id = niche["id"]
+            q_term = niche.get("query_term") or n_id
+            for area in areas:
+                if is_done(n_id, c_name, c_state, area):
+                    continue
+                jobs.append(
+                    {
+                        "niche": n_id,
+                        "query_term": q_term,
+                        "city": c_name,
+                        "state": c_state,
+                        "area": area,
+                        "priority": city.get("priority", "media"),
+                        "max_results": int(
+                            city.get("max_results_bairro", 12)
+                            if area != "_cidade"
+                            else city.get("max_results_cidade", 20)
+                        ),
+                    }
+                )
+
+    # Mantém ordem do cities.json dentro da mesma prioridade
+    city_order = {
+        c.get("nome"): i for i, c in enumerate(cities) if c.get("ativo")
+    }
+    jobs.sort(
+        key=lambda j: (
+            prio_rank.get(j.get("priority", "media"), 5),
+            city_order.get(j["city"], 999),
+            j["niche"],
+            j["area"],
+        )
+    )
+    return jobs

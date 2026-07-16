@@ -304,80 +304,76 @@ class LeadGenerationPipeline:
         query_term: str | None = None,
         max_results: int = 25,
         bairros: list[str] | None = None,
+        focus_area: str | None = None,
+        skip_instagram: bool | None = None,
     ) -> int:
         """
-        Roda o ciclo do pipeline completo:
-            1. google_maps.py      → Busca locais (bairros/variações)
-            2. Skip em massa quem já tem site
-            3. website_checker.py  → só pendentes sem site
-            4. instagram_checker.py → só sem site
-            5. scorer.py           → score (Raio = sem site)
+        Pipeline enxuto por área (bairro):
+            1. Maps (foco no bairro) — salva + score na hora
+            2. website_checker rápido (sem site)
+            3. Instagram opcional (SKIP_INSTAGRAM=true por padrão = mais leads/dia)
+            4. re-score leve
 
-        Args:
-            niche:       ID do nicho salvo no banco (ex: "odontologia")
-            city:        Cidade (ex: "Curitiba")
-            state:       Estado (ex: "PR")
-            query_term:  Texto de busca no Maps (opcional)
-            max_results: Meta de empresas NOVAS sem site (já no banco não contam)
-            bairros:     Bairros para variar a busca (cities.json)
-
-        Returns:
-            Quantidade de leads novos sem site salvos nesta rodada.
+        focus_area: bairro atual. Já varridos ficam no coverage (main).
         """
         search_query = (query_term or niche).strip()
         bairros = bairros or []
+        area = (focus_area or "").strip() or None
+        if skip_instagram is None:
+            skip_instagram = os.getenv("SKIP_INSTAGRAM", "true").lower() in (
+                "1", "true", "yes", "sim",
+            )
+
         logger.info(
-            f"[Pipeline] Iniciando fluxo: {niche} ({search_query}) em {city} - {state} "
-            f"| meta {max_results} NOVAS | bairros={len(bairros)}"
+            f"[Pipeline] {niche} | {city}-{state} | área={area or 'cidade'} "
+            f"| meta {max_results} NOVAS | instagram={'off' if skip_instagram else 'on'}"
         )
 
-        # 1. Busca Google Maps (cota = só novas sem site; bairros primeiro)
         companies = self.maps.search(
             niche=niche,
             city=city,
             state=state,
             max_results=max_results,
             query_term=search_query,
-            bairros=bairros,
+            bairros=bairros if not area or area == "_cidade" else None,
+            focus_area=area,
         )
         total_found = len(companies)
 
         if total_found == 0:
             logger.info(
-                f"[Pipeline] Nenhuma empresa NOVA sem site para {niche} em {city} "
-                f"(as do topo do Maps já estavam no banco ou tinham site)."
+                f"[Pipeline] 0 novas sem site em {city}/{area or 'cidade'}/{niche}."
             )
             return 0
 
-        no_site = total_found  # search() já filtra: só novas sem site
-        logger.info(
-            f"[Pipeline] {city}/{niche}: {no_site} leads NOVOS sem site para analisar"
-        )
+        logger.info(f"[Pipeline] {total_found} NOVAS sem site — pós-processamento rápido")
 
-        # 2. Descarta quem já tem site — zero tempo extra
         self._skip_companies_with_website()
+        self.web.check_all(limit=max(total_found * 2, 20), delay_between_s=0.2)
 
-        # 3. Sites: só pendentes (sem site / social)
-        logger.info("[Pipeline] Marcando empresas sem site...")
-        self.web.check_all(limit=max(no_site * 2, 30), delay_between_s=0.3)
+        if not skip_instagram:
+            logger.info("[Pipeline] Instagram (enriquecimento)...")
+            self.insta.check_all(limit=max(total_found * 2, 20), delay_between_s=0.8)
+            for c in companies:
+                cid = c.get("id")
+                if cid:
+                    try:
+                        self.scorer.score_one(int(cid))
+                    except Exception:
+                        pass
+        else:
+            # Score já veio no save; garante pendentes do lote
+            for c in companies:
+                cid = c.get("id")
+                if cid:
+                    try:
+                        self.scorer.score_one(int(cid))
+                    except Exception:
+                        pass
 
-        # 4. Instagram: só leads sem site (oportunidade Raio)
-        logger.info("[Pipeline] Instagram apenas em leads sem site...")
-        self.insta.check_all(limit=max(no_site * 2, 30), delay_between_s=0.8)
-
-        # 5. Re-score (score já foi dado na hora do save; aqui atualiza com Instagram)
-        logger.info("[Pipeline] Re-score com dados de Instagram (se houver)...")
-        for c in companies:
-            cid = c.get("id")
-            if cid:
-                try:
-                    self.scorer.score_one(int(cid))
-                except Exception as exc:
-                    logger.debug(f"[Pipeline] Re-score id={cid}: {exc}")
-        # Pendentes antigos sem score (fallback)
-        self.scorer.score_all()
-
-        logger.info(f"[Pipeline] Fluxo completo para {niche} em {city} finalizado.")
+        logger.info(
+            f"[Pipeline] OK {niche} | {city} | {area or 'cidade'} → {total_found} leads"
+        )
         return total_found
 
 

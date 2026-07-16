@@ -1198,32 +1198,36 @@ class GoogleMapsSearcher:
         term: str,
         city: str,
         state: str,
+        focus_area: str | None = None,
         bairros: list[str] | None = None,
     ) -> list[str]:
         """
-        Variações de busca: bairros da cidade primeiro (mais inovação),
-        depois zonas genéricas.
+        Variações enxutas:
+        - Com focus_area (bairro): 2 queries focadas (rápido, sem repetir cidade inteira)
+        - Sem foco: bairros da lista + poucas genéricas
         """
         term = term.strip()
-        base: list[str] = [f"{term} em {city} {state}"]
-
-        # Bairros específicos (config/cities.json) — prioridade
-        for b in (bairros or [])[:8]:
-            b = (b or "").strip()
-            if b:
-                base.append(f"{term} {b} {city}")
-                base.append(f"{term} em {b} {state}")
-
-        base.extend(
-            [
-                f"{term} {city} centro",
-                f"{term} perto de {city} {state}",
-                f"{term} {city} zona sul",
-                f"{term} {city} zona norte",
-                f"{term} {city} zona leste",
-                f"{term} {city} zona oeste",
+        base: list[str] = []
+        area = (focus_area or "").strip()
+        if area and area != "_cidade":
+            base = [
+                f"{term} {area} {city}",
+                f"{term} em {area} {city} {state}",
+                f"{term} {area} {state}",
             ]
-        )
+        else:
+            base = [f"{term} em {city} {state}"]
+            for b in (bairros or [])[:6]:
+                b = (b or "").strip()
+                if b:
+                    base.append(f"{term} {b} {city}")
+            base.extend(
+                [
+                    f"{term} {city} centro",
+                    f"{term} perto de {city} {state}",
+                ]
+            )
+
         seen: set[str] = set()
         out: list[str] = []
         for q in base:
@@ -1240,20 +1244,24 @@ class GoogleMapsSearcher:
         max_results: int = 60,
         query_term: str | None = None,
         bairros: list[str] | None = None,
+        focus_area: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Busca empresas NOVAS sem site no Google Maps.
 
         max_results = meta de leads novos (não contam: já no banco, com site).
-        Usa bairros do cities.json para não repetir o mesmo topo da cidade.
+        focus_area = bairro atual (job unitário) — evita rebuscar a cidade inteira.
         """
         term = (query_term or niche).strip()
         target_new = max(1, max_results)
-        variants = self._build_query_variants(term, city, state, bairros=bairros)
+        variants = self._build_query_variants(
+            term, city, state, focus_area=focus_area, bairros=bairros
+        )
 
+        area_label = focus_area if focus_area and focus_area != "_cidade" else "cidade"
         logger.info(
-            f"[GoogleMapsSearcher] Meta: {target_new} empresas NOVAS sem site | "
-            f"{niche} / {city}-{state} | {len(variants)} variações de busca"
+            f"[GoogleMapsSearcher] Meta: {target_new} NOVAS sem site | "
+            f"{niche} / {city}-{state} / {area_label} | {len(variants)} queries"
         )
 
         from src.checkpoint import CompanyCheckpoint

@@ -1,472 +1,329 @@
 {
-  "_comentario": "Rotação de cidades. SP/RJ/Goiânia já varridos — inativos por enquanto. Foque em praças novas.",
-  "_instrucoes": "ativo=true entra no lote. bairros=opcional: varia a busca no Maps. Ordem = prioridade (topo primeiro).",
+  "_comentario": "Plano de busca por BAIRRO. SP/RJ ativos só em bairros NOVOS (ja_varridos = já feitos).",
+  "_instrucoes": "ativo=true entra no lote. bairros=áreas a varrer. ja_varridos marca o que não repetir. allow_citywide=false evita busca genérica da cidade.",
   "cidades": [
     {
       "id": "campinas_sp",
       "nome": "Campinas",
       "estado": "SP",
-      "lat": -22.9056,
-      "lon": -47.0608,
-      "radius_meters": 11000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Cambuí", "Centro", "Barão Geraldo", "Taquaral", "Nova Campinas"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Cambuí", "Centro", "Barão Geraldo", "Taquaral", "Nova Campinas", "Guanabara"]
     },
     {
       "id": "santos_sp",
       "nome": "Santos",
       "estado": "SP",
-      "lat": -23.9608,
-      "lon": -46.3336,
-      "radius_meters": 9000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Gonzaga", "Boqueirão", "Ponta da Praia", "Centro"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Gonzaga", "Boqueirão", "Ponta da Praia", "Centro", "Embaré"]
     },
     {
       "id": "ribeirao_preto_sp",
       "nome": "Ribeirão Preto",
       "estado": "SP",
-      "lat": -21.1704,
-      "lon": -47.8103,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Centro", "Jardim Irajá", "Vila Tibério", "Nova Aliança"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Jardim Irajá", "Vila Tibério", "Nova Aliança", "Campos Elíseos"]
     },
     {
       "id": "sao_jose_dos_campos_sp",
       "nome": "São José dos Campos",
       "estado": "SP",
-      "lat": -23.2237,
-      "lon": -45.9009,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Centro", "Jardim Aquarius", "Urbanova", "Vila Adyana"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Jardim Aquarius", "Urbanova", "Vila Adyana", "Bosque dos Eucaliptos"]
     },
     {
       "id": "sorocaba_sp",
       "nome": "Sorocaba",
       "estado": "SP",
-      "lat": -23.5015,
-      "lon": -47.4526,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Centro", "Campolim", "Éden", "Beyond"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Campolim", "Éden", "Beyond", "Wanel Ville"]
     },
     {
       "id": "niteroi_rj",
       "nome": "Niterói",
       "estado": "RJ",
-      "lat": -22.8832,
-      "lon": -43.1034,
-      "radius_meters": 9000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Icaraí", "Centro", "Santa Rosa", "São Francisco"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Icaraí", "Centro", "Santa Rosa", "São Francisco", "Ingá"]
     },
     {
       "id": "nova_iguacu_rj",
       "nome": "Nova Iguaçu",
       "estado": "RJ",
-      "lat": -22.7556,
-      "lon": -43.4603,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Centro", "Austin", "Posse"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Austin", "Posse", "Cabuçu"]
     },
     {
       "id": "duque_de_caxias_rj",
       "nome": "Duque de Caxias",
       "estado": "RJ",
-      "lat": -22.7858,
-      "lon": -43.3055,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 10,
       "bairros": ["Centro", "Jardim 25 de Agosto", "Saracuruna"]
+    },
+    {
+      "id": "anapolis_go",
+      "nome": "Anápolis",
+      "estado": "GO",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Jundiaí", "Vila Jaiara", "Cidade Jardim"]
     },
     {
       "id": "juiz_de_fora_mg",
       "nome": "Juiz de Fora",
       "estado": "MG",
-      "lat": -21.7642,
-      "lon": -43.3503,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "São Mateus", "Cascatinha", "Santa Helena"]
     },
     {
       "id": "uberlandia_mg",
       "nome": "Uberlândia",
       "estado": "MG",
-      "lat": -18.9128,
-      "lon": -48.2755,
-      "radius_meters": 11000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "Santa Mônica", "Tibery", "Umuarama"]
-    },
-    {
-      "id": "contagem_mg",
-      "nome": "Contagem",
-      "estado": "MG",
-      "lat": -19.9321,
-      "lon": -44.0539,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Eldorado", "Industrial"]
     },
     {
       "id": "londrina_pr",
       "nome": "Londrina",
       "estado": "PR",
-      "lat": -23.3045,
-      "lon": -51.1696,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "Gleba Palhano", "Zona Norte", "Higienópolis"]
     },
     {
       "id": "maringa_pr",
       "nome": "Maringá",
       "estado": "PR",
-      "lat": -23.4273,
-      "lon": -51.9375,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "Zona 7", "Jardim Alvorada"]
     },
     {
       "id": "joinville_sc",
       "nome": "Joinville",
       "estado": "SC",
-      "lat": -26.3045,
-      "lon": -48.8487,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "América", "Anita Garibaldi", "Glória"]
     },
     {
       "id": "blumenau_sc",
       "nome": "Blumenau",
       "estado": "SC",
-      "lat": -26.9194,
-      "lon": -49.0661,
-      "radius_meters": 9000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "Vorstadt", "Velha", "Garcia"]
     },
     {
       "id": "caxias_do_sul_rs",
       "nome": "Caxias do Sul",
       "estado": "RS",
-      "lat": -29.1681,
-      "lon": -51.1794,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Centro", "São Pelegrino", "Exposição", "Panazzolo"]
-    },
-    {
-      "id": "pelotas_rs",
-      "nome": "Pelotas",
-      "estado": "RS",
-      "lat": -31.7654,
-      "lon": -52.3376,
-      "radius_meters": 9000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Areal", "Três Vendas"]
-    },
-    {
-      "id": "feira_de_santana_ba",
-      "nome": "Feira de Santana",
-      "estado": "BA",
-      "lat": -12.2664,
-      "lon": -38.9663,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "alta",
-      "bairros": ["Centro", "Kalilândia", "Tomba", "Cidade Nova"]
-    },
-    {
-      "id": "vitoria_da_conquista_ba",
-      "nome": "Vitória da Conquista",
-      "estado": "BA",
-      "lat": -14.8615,
-      "lon": -40.8442,
-      "radius_meters": 9000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Candeias", "Brasil"]
     },
     {
       "id": "joao_pessoa_pb",
       "nome": "João Pessoa",
       "estado": "PB",
-      "lat": -7.1195,
-      "lon": -34.845,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Manaíra", "Tambaú", "Centro", "Bessa", "Cabo Branco"]
     },
     {
       "id": "maceio_al",
       "nome": "Maceió",
       "estado": "AL",
-      "lat": -9.6498,
-      "lon": -35.7089,
-      "radius_meters": 10000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Pajuçara", "Ponta Verde", "Jatiúca", "Centro"]
     },
     {
-      "id": "aracaju_se",
-      "nome": "Aracaju",
-      "estado": "SE",
-      "lat": -10.9472,
-      "lon": -37.0731,
-      "radius_meters": 9000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Atalaia", "Grageru", "Jardins"]
-    },
-    {
-      "id": "teresina_pi",
-      "nome": "Teresina",
-      "estado": "PI",
-      "lat": -5.0892,
-      "lon": -42.8016,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Jóquei", "Fátima", "Ilhotas"]
-    },
-    {
-      "id": "sao_luis_ma",
-      "nome": "São Luís",
-      "estado": "MA",
-      "lat": -2.5391,
-      "lon": -44.2829,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Centro", "Renascença", "Cohama", "Calhau"]
-    },
-    {
-      "id": "anapolis_go",
-      "nome": "Anápolis",
-      "estado": "GO",
-      "lat": -16.3281,
-      "lon": -48.953,
-      "radius_meters": 9000,
+      "id": "feira_de_santana_ba",
+      "nome": "Feira de Santana",
+      "estado": "BA",
       "ativo": true,
       "priority": "alta",
-      "bairros": ["Centro", "Jundiaí", "Vila Jaiara"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Centro", "Kalilândia", "Tomba", "Cidade Nova"]
     },
     {
       "id": "brasilia_df",
       "nome": "Brasília",
       "estado": "DF",
-      "lat": -15.7801,
-      "lon": -47.9292,
-      "radius_meters": 14000,
       "ativo": true,
       "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
       "bairros": ["Asa Sul", "Asa Norte", "Taguatinga", "Ceilândia", "Águas Claras", "Guará"]
     },
     {
       "id": "belo_horizonte_mg",
       "nome": "Belo Horizonte",
       "estado": "MG",
-      "lat": -19.9167,
-      "lon": -43.9345,
-      "radius_meters": 14000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Savassi", "Funcionários", "Buritis", "Pampulha", "Centro"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Savassi", "Funcionários", "Buritis", "Pampulha", "Lourdes"]
     },
     {
       "id": "curitiba_pr",
       "nome": "Curitiba",
       "estado": "PR",
-      "lat": -25.429,
-      "lon": -49.2671,
-      "radius_meters": 12000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Batel", "Centro", "Água Verde", "Portão", "Santa Felicidade"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Batel", "Água Verde", "Portão", "Santa Felicidade", "Centro Cívico"]
     },
     {
       "id": "porto_alegre_rs",
       "nome": "Porto Alegre",
       "estado": "RS",
-      "lat": -30.0346,
-      "lon": -51.2177,
-      "radius_meters": 12000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Moinhos de Vento", "Centro Histórico", "Petrópolis", "Cidade Baixa", "Menino Deus"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Moinhos de Vento", "Petrópolis", "Cidade Baixa", "Menino Deus", "Bela Vista"]
     },
     {
       "id": "salvador_ba",
       "nome": "Salvador",
       "estado": "BA",
-      "lat": -12.9714,
-      "lon": -38.5014,
-      "radius_meters": 13000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Pituba", "Barra", "Caminho das Árvores", "Itaigara", "Centro"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Pituba", "Barra", "Caminho das Árvores", "Itaigara", "Rio Vermelho"]
     },
     {
       "id": "fortaleza_ce",
       "nome": "Fortaleza",
       "estado": "CE",
-      "lat": -3.7172,
-      "lon": -38.5434,
-      "radius_meters": 13000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Meireles", "Aldeota", "Cocó", "Centro", "Dionísio Torres"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Meireles", "Aldeota", "Cocó", "Dionísio Torres"]
     },
     {
       "id": "recife_pe",
       "nome": "Recife",
       "estado": "PE",
-      "lat": -8.0539,
-      "lon": -34.8811,
-      "radius_meters": 12000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Boa Viagem", "Pina", "Casa Forte", "Espinheiro", "Centro"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Boa Viagem", "Pina", "Casa Forte", "Espinheiro"]
     },
     {
       "id": "florianopolis_sc",
       "nome": "Florianópolis",
       "estado": "SC",
-      "lat": -27.5954,
-      "lon": -48.548,
-      "radius_meters": 11000,
       "ativo": true,
       "priority": "media",
-      "bairros": ["Centro", "Trindade", "Coqueiros", "Lagoa da Conceição", "Jurerê"]
-    },
-    {
-      "id": "vitoria_es",
-      "nome": "Vitória",
-      "estado": "ES",
-      "lat": -20.3155,
-      "lon": -40.3128,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "media",
-      "bairros": ["Praia do Canto", "Jardim da Penha", "Centro", "Goiabeiras"]
-    },
-    {
-      "id": "manaus_am",
-      "nome": "Manaus",
-      "estado": "AM",
-      "lat": -3.1019,
-      "lon": -60.025,
-      "radius_meters": 12000,
-      "ativo": true,
-      "priority": "baixa",
-      "bairros": ["Adrianópolis", "Centro", "Ponta Negra", "Vieiralves"]
-    },
-    {
-      "id": "belem_pa",
-      "nome": "Belém",
-      "estado": "PA",
-      "lat": -1.4558,
-      "lon": -48.4902,
-      "radius_meters": 11000,
-      "ativo": true,
-      "priority": "baixa",
-      "bairros": ["Nazaré", "Batista Campos", "Umarizal", "Centro"]
-    },
-    {
-      "id": "natal_rn",
-      "nome": "Natal",
-      "estado": "RN",
-      "lat": -5.7945,
-      "lon": -35.211,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "baixa",
-      "bairros": ["Ponta Negra", "Tirol", "Petrópolis", "Centro"]
-    },
-    {
-      "id": "campo_grande_ms",
-      "nome": "Campo Grande",
-      "estado": "MS",
-      "lat": -20.4697,
-      "lon": -54.6201,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "baixa",
-      "bairros": ["Centro", "Jardim dos Estados", "Chácara Cachoeira"]
-    },
-    {
-      "id": "cuiaba_mt",
-      "nome": "Cuiabá",
-      "estado": "MT",
-      "lat": -15.601,
-      "lon": -56.0974,
-      "radius_meters": 10000,
-      "ativo": true,
-      "priority": "baixa",
-      "bairros": ["Centro", "Goiabeiras", "Jardim Europa", "Bosque da Saúde"]
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Trindade", "Coqueiros", "Lagoa da Conceição", "Jurerê"]
     },
 
     {
       "id": "sao_paulo_sp",
       "nome": "São Paulo",
       "estado": "SP",
-      "lat": -23.5505,
-      "lon": -46.6333,
-      "radius_meters": 18000,
-      "ativo": false,
-      "priority": "pausada",
-      "_motivo": "Já varrida (odonto+adv). Reative só se quiser bairros novos.",
-      "bairros": ["Moema", "Pinheiros", "Tatuapé", "Santana", "Santo Amaro", "Lapa", "Ipiranga"]
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 15,
+      "bairros": [
+        "Moema", "Pinheiros", "Vila Madalena", "Tatuapé", "Santana",
+        "Santo Amaro", "Lapa", "Ipiranga", "Brooklin", "Perdizes",
+        "Vila Mariana", "Saúde", "Jabaquara", "Penha", "Casa Verde",
+        "Tucuruvi", "Freguesia do Ó", "Pirituba", "Campo Limpo", "Capão Redondo",
+        "Itaquera", "São Mateus", "Guaianases", "Cidade Tiradentes"
+      ],
+      "ja_varridos": {
+        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"],
+        "advocacia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
+      }
     },
     {
       "id": "rio_de_janeiro_rj",
       "nome": "Rio de Janeiro",
       "estado": "RJ",
-      "lat": -22.9068,
-      "lon": -43.1729,
-      "radius_meters": 16000,
-      "ativo": false,
-      "priority": "pausada",
-      "_motivo": "Já varrida (odonto). Reative só se quiser bairros novos.",
-      "bairros": ["Tijuca", "Botafogo", "Barra da Tijuca", "Méier", "Campo Grande", "Recreio"]
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 15,
+      "bairros": [
+        "Tijuca", "Botafogo", "Barra da Tijuca", "Méier", "Campo Grande",
+        "Recreio dos Bandeirantes", "Madureira", "Bangu", "Jacarepaguá",
+        "Ilha do Governador", "Realengo", "Santa Cruz", "Penha", "Ramos",
+        "Copacabana", "Ipanema", "Leblon", "Flamengo", "Laranjeiras"
+      ],
+      "ja_varridos": {
+        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"],
+        "advocacia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
+      }
     },
     {
       "id": "goiania_go",
       "nome": "Goiânia",
       "estado": "GO",
-      "lat": -16.6864,
-      "lon": -49.2643,
-      "radius_meters": 12000,
-      "ativo": false,
-      "priority": "pausada",
-      "_motivo": "Já varrida (odonto). Use Anápolis ou reative com bairros novos.",
-      "bairros": ["Setor Bueno", "Setor Marista", "Campinas", "Jardim Goiás"]
+      "ativo": true,
+      "priority": "baixa",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": ["Setor Bueno", "Setor Marista", "Setor Oeste", "Jardim Goiás", "Campinas", "Nova Suíça"],
+      "ja_varridos": {
+        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
+      }
     }
   ]
 }

@@ -224,6 +224,20 @@ def _parse_rating(raw: str) -> float | None:
     return None
 
 
+_SOCIAL_SITE_MARKERS = (
+    "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+    "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+)
+
+
+def _has_own_website(url: str | None) -> bool:
+    """True se a URL é site próprio (não só rede social / vazio)."""
+    w = (url or "").strip().lower()
+    if not w:
+        return False
+    return not any(m in w for m in _SOCIAL_SITE_MARKERS)
+
+
 def _extract_place_id_from_url(url: str) -> str | None:
     """
     Extrai o place_id ou constrói um ID único a partir da URL do Google Maps.
@@ -698,43 +712,36 @@ class PlaywrightScraper:
         known_place_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         """
-        Realiza o scraping completo do Google Maps para uma consulta.
+        Scraping com cota de empresas NOVAS (sem site).
 
-        Fluxo:
-            1. Abre o Google Maps com a query na URL
-            2. Aguarda o painel de resultados (feed) carregar
-            3. Faz scroll no feed para carregar mais resultados
-            4. Para cada resultado, se place_id já conhecido → pula (checkpoint empresa)
-            5. Senão abre o painel de detalhes e extrai dados
-            6. Aplica delay aleatório entre extrações
-            7. Detecta e trata bloqueios do Google
-
-        Args:
-            query:            Texto da busca (ex: "restaurante Porto Alegre RS")
-            niche:            Nicho para gravar no banco
-            city:             Cidade para gravar no banco
-            state:            Estado para gravar no banco
-            max_results:      Número máximo de resultados a coletar
-            known_place_ids:  place_ids já no banco (não reabre painel)
-
-        Returns:
-            Lista de dicionários com os dados extraídos.
+        max_results = quantas empresas NOVAS sem site queremos, NÃO quantos
+        resultados do Maps abrir. Já no banco / com site NÃO contam na cota;
+        o bot continua o feed até encher a cota ou acabar a lista.
         """
+        # Cota = leads novos sem site
+        target_new = max(1, max_results)
+        # Pool de URLs maior que a cota (muitas serão skip)
+        url_pool_target = min(max(target_new * 5, 60), 120)
+
         companies: list[dict[str, Any]] = []
-        self._known_place_ids = set(known_place_ids or [])
+        known_ids: set[str] = set(known_place_ids or [])
+        skipped_known = 0
+        skipped_has_site = 0
+        inspected = 0
+
         encoded_query = urllib.parse.quote_plus(query)
         maps_url = f"https://www.google.com/maps/search/{encoded_query}"
 
         page = self._new_page()
         try:
-            logger.info(f"[Playwright] Abrindo: {maps_url}")
+            logger.info(
+                f"[Playwright] Abrindo: {maps_url} "
+                f"(meta: {target_new} NOVAS sem site)"
+            )
             page.goto(maps_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
             _random_delay(1.5, 3.0)
-
-            # Aceitar cookies / LGPD se aparecer o banner
             self._dismiss_consent(page)
 
-            # Aguarda o feed de resultados aparecer
             try:
                 page.wait_for_selector(_SEL_RESULTS_FEED, timeout=_TIMEOUT_MS)
             except PlaywrightTimeout:
@@ -747,86 +754,99 @@ class PlaywrightScraper:
             if _is_blocked(page):
                 logger.error(
                     "[Playwright] Google detectou tráfego automatizado. "
-                    "Aguardando 60s antes de tentar novamente..."
+                    "Aguardando 60s..."
                 )
                 time.sleep(60)
                 return companies
 
-            # Coleta URLs das empresas fazendo scroll
-            result_urls = self._collect_result_urls(page, max_results)
+            # Coleta um pool amplo (já no banco não contam na cota depois)
+            result_urls = self._collect_result_urls(page, url_pool_target)
             logger.info(
-                f"[Playwright] {len(result_urls)} URLs de resultados coletadas."
+                f"[Playwright] Pool de {len(result_urls)} URLs "
+                f"(meta {target_new} novas sem site)."
             )
 
             if not result_urls:
                 logger.warning("[Playwright] Nenhuma URL de resultado encontrada.")
                 return companies
 
-            # Checkpoint por empresa: place_ids já no banco → não abre o painel
-            known_ids = getattr(self, "_known_place_ids", None) or set()
-            skipped_known = 0
-
-            # Para cada URL, extrai os detalhes (pula se já vimos a empresa)
             for idx, result_url in enumerate(result_urls, start=1):
+                if len(companies) >= target_new:
+                    break
+
                 place_guess = _extract_place_id_from_url(result_url)
                 if place_guess and place_guess in known_ids:
                     skipped_known += 1
                     logger.info(
-                        f"[Playwright] ⏭ {idx}/{len(result_urls)} já no banco "
-                        f"({place_guess[:40]}...) — pula painel"
+                        f"[Playwright] ⏭ já no banco "
+                        f"({len(companies)}/{target_new} novas) — pula painel"
                     )
                     continue
 
                 logger.info(
-                    f"[Playwright] Extraindo {idx}/{len(result_urls)}: {result_url[:80]}..."
+                    f"[Playwright] Extraindo candidata "
+                    f"({len(companies)}/{target_new} novas | "
+                    f"url {idx}/{len(result_urls)}): {result_url[:70]}..."
                 )
                 try:
                     company = self._extract_details(
                         page, result_url, niche, city, state
                     )
-                    if company and company.get("name"):
-                        pid = company.get("place_id") or place_guess
-                        if pid and pid in known_ids:
-                            skipped_known += 1
-                            logger.info(
-                                f"[Playwright] ⏭ {company['name']!r} já processada — pula"
-                            )
-                            continue
-                        companies.append(company)
-                        if pid:
-                            known_ids.add(pid)
-                        logger.debug(
-                            f"[Playwright] ✓ {company['name']} | "
-                            f"⭐ {company['rating']} | 📞 {company['phone']}"
-                        )
                 except PlaywrightTimeout:
-                    logger.warning(
-                        f"[Playwright] Timeout ao extrair resultado {idx}. Pulando."
-                    )
+                    logger.warning("[Playwright] Timeout ao extrair. Pulando.")
                     _random_delay(1.0, 2.0)
                     continue
                 except Exception as exc:
-                    logger.error(
-                        f"[Playwright] Erro inesperado no resultado {idx}: {exc}"
+                    logger.error(f"[Playwright] Erro no resultado {idx}: {exc}")
+                    continue
+
+                inspected += 1
+                if not company or not company.get("name"):
+                    continue
+
+                pid = company.get("place_id") or place_guess
+                if pid and pid in known_ids:
+                    skipped_known += 1
+                    logger.info(
+                        f"[Playwright] ⏭ {company['name']!r} já processada "
+                        f"({len(companies)}/{target_new} novas)"
                     )
                     continue
 
-                # Delay aleatório entre cada empresa
-                _random_delay(_DELAY_MIN, _DELAY_MAX)
+                # Tem site próprio → não conta na cota de leads
+                if _has_own_website(company.get("website")):
+                    skipped_has_site += 1
+                    if pid:
+                        known_ids.add(pid)  # não reabrir se aparecer de novo
+                    logger.info(
+                        f"[Playwright] ⏭ {company['name']!r} tem site — "
+                        f"não conta ({len(companies)}/{target_new} novas)"
+                    )
+                    _random_delay(0.4, 1.0)
+                    continue
 
-            if skipped_known:
+                # NOVA sem site → conta na cota
+                companies.append(company)
+                if pid:
+                    known_ids.add(pid)
                 logger.info(
-                    f"[Playwright] Checkpoint empresa: {skipped_known} já vistas, "
-                    f"painel não reaberto."
+                    f"[Playwright] ✓ NOVA sem site "
+                    f"[{len(companies)}/{target_new}]: {company['name']!r}"
                 )
 
-                # Verifica bloqueio periodicamente (a cada 10 resultados)
                 if idx % 10 == 0 and _is_blocked(page):
                     logger.error(
-                        "[Playwright] Bloqueio detectado após "
-                        f"{idx} extrações. Aguardando 60s..."
+                        f"[Playwright] Bloqueio após {idx} extrações. Aguardando 60s..."
                     )
                     time.sleep(60)
+
+                _random_delay(_DELAY_MIN, _DELAY_MAX)
+
+            logger.info(
+                f"[Playwright] Fim da query: {len(companies)}/{target_new} novas sem site | "
+                f"{skipped_known} já no banco | {skipped_has_site} com site | "
+                f"{inspected} painéis abertos"
+            )
 
         except Exception as exc:
             logger.error(f"[Playwright] Erro crítico durante o scraping: {exc}")
@@ -1173,6 +1193,32 @@ class GoogleMapsSearcher:
     # Método principal
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _build_query_variants(term: str, city: str, state: str) -> list[str]:
+        """
+        Variações de busca na mesma região para achar empresas diferentes
+        (não só o topo repetido do Google Maps).
+        """
+        term = term.strip()
+        base = [
+            f"{term} em {city} {state}",
+            f"{term} {city} centro",
+            f"{term} perto de {city} {state}",
+            f"{term} {city} zona sul",
+            f"{term} {city} zona norte",
+            f"{term} {city} zona leste",
+            f"{term} {city} zona oeste",
+            f"clínica {term} {city}" if "clínica" not in term.lower() else f"{term} bairro {city}",
+        ]
+        # únicos preservando ordem
+        seen: set[str] = set()
+        out: list[str] = []
+        for q in base:
+            if q not in seen:
+                seen.add(q)
+                out.append(q)
+        return out
+
     def search(
         self,
         niche: str,
@@ -1182,93 +1228,107 @@ class GoogleMapsSearcher:
         query_term: str | None = None,
     ) -> list[dict[str, Any]]:
         """
-        Busca empresas no Google Maps por nicho e cidade.
+        Busca empresas NOVAS sem site no Google Maps.
 
-        Tenta primeiro a Google Places API (mais rápida e estável).
-        Se a API não estiver configurada ou retornar 0 resultados,
-        usa o scraping com Playwright como fallback.
-
-        Args:
-            niche:       Nicho salvo no banco (ex: "odontologia")
-            city:        Nome da cidade (ex: "Porto Alegre")
-            state:       Sigla do estado (ex: "RS")
-            max_results: Quantidade máxima de empresas a retornar
-            query_term:  Texto da busca no Maps (ex: "dentista clínica odontológica")
-
-        Returns:
-            Lista de dicionários com os dados de cada empresa encontrada.
-            Cada dicionário contém: name, address, phone, website, rating,
-            review_count, category, opening_hours, latitude, longitude,
-            is_open_now, maps_url, place_id, source, scraped_at.
+        max_results = meta de leads novos (não contam: já no banco, com site).
+        Se a 1ª query não encher a cota, tenta variações na mesma cidade.
         """
         term = (query_term or niche).strip()
-        query = f"{term} em {city} {state}"
+        target_new = max(1, max_results)
+        variants = self._build_query_variants(term, city, state)
+
         logger.info(
-            f"[GoogleMapsSearcher] Iniciando busca: {query!r} "
-            f"(máx: {max_results} resultados)"
+            f"[GoogleMapsSearcher] Meta: {target_new} empresas NOVAS sem site | "
+            f"{niche} / {city}-{state} | {len(variants)} variações de busca"
         )
 
-        companies: list[dict[str, Any]] = []
+        from src.checkpoint import CompanyCheckpoint
+        known = CompanyCheckpoint.load()
+        known_ids = known.as_set()
 
-        # ── Estratégia 1: Google Places API ─────────────────────────────
-        if self._api_client:
-            companies = self._search_via_api(query, niche, city, state, max_results)
-
-        # ── Estratégia 2: Playwright (primário ou fallback) ──────────────
-        if not companies:
-            if self._api_client:
-                logger.warning(
-                    "[GoogleMapsSearcher] API retornou 0 resultados. "
-                    "Ativando fallback Playwright..."
-                )
-            companies = self._search_via_playwright(
-                query, niche, city, state, max_results
-            )
-
-        # ── Persistência: só SEM site próprio (acelera o resto do pipeline) ──
-        social = (
-            "instagram.com", "facebook.com", "fb.com", "linktr.ee",
-            "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
-        )
-
-        def _has_own_site(url: str | None) -> bool:
-            w = (url or "").strip().lower()
-            if not w:
-                return False
-            return not any(m in w for m in social)
-
-        saved = 0
+        kept: list[dict[str, Any]] = []
+        saved_total = 0
         skipped_exists = 0
         skipped_has_site = 0
-        kept: list[dict[str, Any]] = []
 
-        for company in companies:
-            place_id = company.get("place_id", "")
-            if place_id and self.db.place_id_exists(place_id):
-                skipped_exists += 1
-                continue
+        for v_idx, query in enumerate(variants, start=1):
+            if saved_total >= target_new:
+                break
 
-            # Quem já tem site: não grava, não gasta checker/scorer
-            if _has_own_site(company.get("website")):
-                skipped_has_site += 1
-                logger.debug(
-                    f"[GoogleMapsSearcher] Skip (tem site): {company.get('name')!r}"
+            remaining = target_new - saved_total
+            logger.info(
+                f"[GoogleMapsSearcher] Variação {v_idx}/{len(variants)}: {query!r} "
+                f"(faltam {remaining} novas)"
+            )
+
+            batch: list[dict[str, Any]] = []
+
+            # API se disponível
+            if self._api_client:
+                batch = self._search_via_api(
+                    query, niche, city, state, remaining, known_ids=known_ids
                 )
-                continue
 
-            try:
-                self.db.upsert_company(company)
-                saved += 1
-                kept.append(company)
-            except Exception as exc:
-                logger.error(
-                    f"[DB] Erro ao salvar {company.get('name', '?')!r}: {exc}"
+            # Playwright (primário ou se API não encheu)
+            if len(batch) < remaining:
+                if self._api_client and batch:
+                    logger.info(
+                        f"[GoogleMapsSearcher] API trouxe {len(batch)}; "
+                        f"completando com Playwright..."
+                    )
+                elif self._api_client and not batch:
+                    logger.warning(
+                        "[GoogleMapsSearcher] API vazia — Playwright..."
+                    )
+                pw_batch = self._search_via_playwright(
+                    query,
+                    niche,
+                    city,
+                    state,
+                    remaining - len(batch),
+                    known_place_ids=known_ids,
                 )
+                # evita duplicar place_id no batch
+                seen_batch = {c.get("place_id") for c in batch if c.get("place_id")}
+                for c in pw_batch:
+                    pid = c.get("place_id")
+                    if pid and pid in seen_batch:
+                        continue
+                    batch.append(c)
+                    if pid:
+                        seen_batch.add(pid)
+
+            for company in batch:
+                if saved_total >= target_new:
+                    break
+                place_id = company.get("place_id", "")
+                if place_id and (place_id in known_ids or self.db.place_id_exists(place_id)):
+                    skipped_exists += 1
+                    known_ids.add(place_id)
+                    continue
+                if _has_own_website(company.get("website")):
+                    skipped_has_site += 1
+                    if place_id:
+                        known_ids.add(place_id)
+                    continue
+                try:
+                    self.db.upsert_company(company)
+                    saved_total += 1
+                    kept.append(company)
+                    if place_id:
+                        known_ids.add(place_id)
+                    logger.info(
+                        f"[GoogleMapsSearcher] Salva NOVA "
+                        f"[{saved_total}/{target_new}]: {company.get('name')!r}"
+                    )
+                except Exception as exc:
+                    logger.error(
+                        f"[DB] Erro ao salvar {company.get('name', '?')!r}: {exc}"
+                    )
 
         logger.info(
-            f"[GoogleMapsSearcher] Busca concluída: "
-            f"{len(companies)} no Maps | {saved} SEM site salvas | "
-            f"{skipped_has_site} com site (puladas) | {skipped_exists} já no banco"
+            f"[GoogleMapsSearcher] Concluído: {saved_total}/{target_new} NOVAS sem site | "
+            f"{skipped_has_site} com site | {skipped_exists} já no banco"
         )
         return kept
 
@@ -1283,47 +1343,51 @@ class GoogleMapsSearcher:
         city: str,
         state: str,
         max_results: int,
+        known_place_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Executa a busca usando a Google Places API."""
+        """API: busca até max_results NOVAS sem site (já no banco não contam)."""
         logger.info("[Places API] Executando busca via API...")
+        known = set(known_place_ids or [])
         try:
-            raw_results = self._api_client.text_search(query, max_results)
+            # pede mais resultados brutos — muitos serão skip
+            raw_results = self._api_client.text_search(
+                query, min(max_results * 4, 60)
+            )
         except Exception as exc:
             logger.error(f"[Places API] Falha na busca: {exc}")
             return []
 
         companies: list[dict[str, Any]] = []
         for idx, raw in enumerate(raw_results, start=1):
+            if len(companies) >= max_results:
+                break
             place_id = raw.get("place_id", "")
 
-            # Se o place_id já existe no banco, pula (evita re-fetch de detalhes)
-            if place_id and self.db.place_id_exists(place_id):
-                logger.debug(f"[Places API] {idx}: {raw.get('name')} já existe. Pulando.")
+            if place_id and (place_id in known or self.db.place_id_exists(place_id)):
+                logger.debug(f"[Places API] {idx}: já no banco — não conta na cota.")
+                if place_id:
+                    known.add(place_id)
                 continue
 
-            # Busca detalhes completos para cada lugar
-            logger.debug(f"[Places API] Buscando detalhes: {raw.get('name')} ({place_id})")
+            logger.debug(f"[Places API] Detalhes: {raw.get('name')} ({place_id})")
             details = self._api_client.get_place_details(place_id) if place_id else raw
-            merged = {**raw, **details}  # Mescla dados básicos + detalhes
+            merged = {**raw, **details}
 
             company = self._api_client.normalize_place(merged, niche, city, state)
-            # Só interessa lead sem site próprio
-            website = (company.get("website") or "").strip().lower()
-            social = (
-                "instagram.com", "facebook.com", "fb.com", "linktr.ee",
-                "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
-            )
-            if website and not any(m in website for m in social):
-                logger.debug(
-                    f"[Places API] Skip (tem site): {company.get('name')!r}"
-                )
+            if _has_own_website(company.get("website")):
+                logger.debug(f"[Places API] Skip (tem site): {company.get('name')!r}")
+                if place_id:
+                    known.add(place_id)
                 continue
-            companies.append(company)
 
-            # Delay entre chamadas à API
+            companies.append(company)
+            if place_id:
+                known.add(place_id)
             _random_delay(0.5, 1.5)
 
-        logger.info(f"[Places API] {len(companies)} empresas normalizadas.")
+        logger.info(
+            f"[Places API] {len(companies)} NOVAS sem site (cota {max_results})."
+        )
         return companies
 
     # ------------------------------------------------------------------
@@ -1337,12 +1401,14 @@ class GoogleMapsSearcher:
         city: str,
         state: str,
         max_results: int,
+        known_place_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Executa a busca usando o scraper Playwright."""
+        """Playwright: max_results = meta de NOVAS sem site."""
         logger.info("[Playwright] Executando busca via scraping...")
         try:
-            from src.checkpoint import CompanyCheckpoint
-            known = CompanyCheckpoint.load()
+            if known_place_ids is None:
+                from src.checkpoint import CompanyCheckpoint
+                known_place_ids = CompanyCheckpoint.load().as_set()
             with PlaywrightScraper() as scraper:
                 return scraper.scrape(
                     query,
@@ -1350,7 +1416,7 @@ class GoogleMapsSearcher:
                     city,
                     state,
                     max_results,
-                    known_place_ids=known.as_set(),
+                    known_place_ids=known_place_ids,
                 )
         except Exception as exc:
             logger.error(f"[Playwright] Falha crítica no scraping: {exc}")

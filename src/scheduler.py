@@ -317,17 +317,18 @@ class LeadGenerationPipeline:
             city:        Cidade (ex: "Curitiba")
             state:       Estado (ex: "PR")
             query_term:  Texto de busca no Maps (opcional)
-            max_results: Limite por cidade/nicho (padrão 25 para cobrir o Brasil)
+            max_results: Meta de empresas NOVAS sem site (já no banco não contam)
 
         Returns:
-            Quantidade de empresas encontradas no Maps (com e sem site).
+            Quantidade de leads novos sem site salvos nesta rodada.
         """
         search_query = (query_term or niche).strip()
         logger.info(
-            f"[Pipeline] Iniciando fluxo: {niche} ({search_query}) em {city} - {state}"
+            f"[Pipeline] Iniciando fluxo: {niche} ({search_query}) em {city} - {state} "
+            f"| meta {max_results} NOVAS sem site"
         )
 
-        # 1. Busca Google Maps
+        # 1. Busca Google Maps (cota = só novas sem site)
         companies = self.maps.search(
             niche=niche,
             city=city,
@@ -338,14 +339,15 @@ class LeadGenerationPipeline:
         total_found = len(companies)
 
         if total_found == 0:
-            logger.info(f"[Pipeline] Nenhuma empresa localizada para {niche} em {city}.")
+            logger.info(
+                f"[Pipeline] Nenhuma empresa NOVA sem site para {niche} em {city} "
+                f"(as do topo do Maps já estavam no banco ou tinham site)."
+            )
             return 0
 
-        with_site = sum(1 for c in companies if _has_real_website(c.get("website")))
-        no_site = total_found - with_site
+        no_site = total_found  # search() já filtra: só novas sem site
         logger.info(
-            f"[Pipeline] {city}/{niche}: {total_found} no Maps | "
-            f"{with_site} com site (pular) | {no_site} sem site (analisar)"
+            f"[Pipeline] {city}/{niche}: {no_site} leads NOVOS sem site para analisar"
         )
 
         # 2. Descarta quem já tem site — zero tempo extra

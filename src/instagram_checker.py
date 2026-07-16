@@ -181,11 +181,20 @@ UPDATE companies SET
 WHERE id = %(id)s;
 """
 
+# Instagram só em empresas sem site (foco Raio — não gasta tempo em quem já tem site)
 _SELECT_PENDING_SQL = """
 SELECT id, name, website, city, state, niche
 FROM companies
 WHERE instagram_checked_at IS NULL
   AND (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
+  AND (
+      website IS NULL
+      OR TRIM(website) = ''
+      OR website ILIKE '%%instagram.com%%'
+      OR website ILIKE '%%facebook.com%%'
+      OR website ILIKE '%%linktr.ee%%'
+      OR website_status IN ('sem_site', 'so_social')
+  )
 ORDER BY id
 LIMIT %(limit)s;
 """

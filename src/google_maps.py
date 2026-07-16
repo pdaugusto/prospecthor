@@ -1147,6 +1147,7 @@ class GoogleMapsSearcher:
         city: str,
         state: str,
         max_results: int = 60,
+        query_term: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Busca empresas no Google Maps por nicho e cidade.
@@ -1156,10 +1157,11 @@ class GoogleMapsSearcher:
         usa o scraping com Playwright como fallback.
 
         Args:
-            niche:       Nicho de negócio (ex: "restaurante", "barbearia")
+            niche:       Nicho salvo no banco (ex: "odontologia")
             city:        Nome da cidade (ex: "Porto Alegre")
             state:       Sigla do estado (ex: "RS")
             max_results: Quantidade máxima de empresas a retornar
+            query_term:  Texto da busca no Maps (ex: "dentista clínica odontológica")
 
         Returns:
             Lista de dicionários com os dados de cada empresa encontrada.
@@ -1167,7 +1169,8 @@ class GoogleMapsSearcher:
             review_count, category, opening_hours, latitude, longitude,
             is_open_now, maps_url, place_id, source, scraped_at.
         """
-        query = f"{niche} em {city} {state}"
+        term = (query_term or niche).strip()
+        query = f"{term} em {city} {state}"
         logger.info(
             f"[GoogleMapsSearcher] Iniciando busca: {query!r} "
             f"(máx: {max_results} resultados)"
@@ -1190,17 +1193,41 @@ class GoogleMapsSearcher:
                 query, niche, city, state, max_results
             )
 
-        # ── Persistência no banco de dados ──────────────────────────────
+        # ── Persistência: só SEM site próprio (acelera o resto do pipeline) ──
+        social = (
+            "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+            "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+        )
+
+        def _has_own_site(url: str | None) -> bool:
+            w = (url or "").strip().lower()
+            if not w:
+                return False
+            return not any(m in w for m in social)
+
         saved = 0
-        skipped = 0
+        skipped_exists = 0
+        skipped_has_site = 0
+        kept: list[dict[str, Any]] = []
+
         for company in companies:
             place_id = company.get("place_id", "")
             if place_id and self.db.place_id_exists(place_id):
-                skipped += 1
+                skipped_exists += 1
                 continue
+
+            # Quem já tem site: não grava, não gasta checker/scorer
+            if _has_own_site(company.get("website")):
+                skipped_has_site += 1
+                logger.debug(
+                    f"[GoogleMapsSearcher] Skip (tem site): {company.get('name')!r}"
+                )
+                continue
+
             try:
                 self.db.upsert_company(company)
                 saved += 1
+                kept.append(company)
             except Exception as exc:
                 logger.error(
                     f"[DB] Erro ao salvar {company.get('name', '?')!r}: {exc}"
@@ -1208,9 +1235,10 @@ class GoogleMapsSearcher:
 
         logger.info(
             f"[GoogleMapsSearcher] Busca concluída: "
-            f"{len(companies)} encontradas | {saved} salvas | {skipped} já existiam"
+            f"{len(companies)} no Maps | {saved} SEM site salvas | "
+            f"{skipped_has_site} com site (puladas) | {skipped_exists} já no banco"
         )
-        return companies
+        return kept
 
     # ------------------------------------------------------------------
     # Busca via Places API

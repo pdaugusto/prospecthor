@@ -1,116 +1,24 @@
 {
-  "_comentario": "Cidades-alvo para prospecção. Adicione ou remova cidades conforme necessário.",
-  "_instrucoes": "O campo 'radius_meters' define o raio de busca no Google Maps a partir do centro da cidade.",
+  "_comentario": "Principais capitais/regiões do Brasil — equilíbrio cobertura x carga.",
+  "_instrucoes": "ativo=true entra no python main.py run. radius_meters = raio aproximado no Maps.",
   "cidades": [
-    {
-      "id": "sao_paulo_sp",
-      "nome": "São Paulo",
-      "estado": "SP",
-      "lat": -23.5505,
-      "lon": -46.6333,
-      "radius_meters": 20000,
-      "populacao": 12396372,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "rio_de_janeiro_rj",
-      "nome": "Rio de Janeiro",
-      "estado": "RJ",
-      "lat": -22.9068,
-      "lon": -43.1729,
-      "radius_meters": 20000,
-      "populacao": 6775561,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "belo_horizonte_mg",
-      "nome": "Belo Horizonte",
-      "estado": "MG",
-      "lat": -19.9167,
-      "lon": -43.9345,
-      "radius_meters": 15000,
-      "populacao": 2530701,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "curitiba_pr",
-      "nome": "Curitiba",
-      "estado": "PR",
-      "lat": -25.4290,
-      "lon": -49.2671,
-      "radius_meters": 12000,
-      "populacao": 1948626,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "porto_alegre_rs",
-      "nome": "Porto Alegre",
-      "estado": "RS",
-      "lat": -30.0346,
-      "lon": -51.2177,
-      "radius_meters": 12000,
-      "populacao": 1492530,
-      "ativo": false,
-      "priority": "media"
-    },
-    {
-      "id": "salvador_ba",
-      "nome": "Salvador",
-      "estado": "BA",
-      "lat": -12.9714,
-      "lon": -38.5014,
-      "radius_meters": 15000,
-      "populacao": 2900319,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "fortaleza_ce",
-      "nome": "Fortaleza",
-      "estado": "CE",
-      "lat": -3.7172,
-      "lon": -38.5434,
-      "radius_meters": 15000,
-      "populacao": 2703391,
-      "ativo": false,
-      "priority": "alta"
-    },
-    {
-      "id": "recife_pe",
-      "nome": "Recife",
-      "estado": "PE",
-      "lat": -8.0539,
-      "lon": -34.8811,
-      "radius_meters": 12000,
-      "populacao": 1653461,
-      "ativo": false,
-      "priority": "media"
-    },
-    {
-      "id": "goiania_go",
-      "nome": "Goiânia",
-      "estado": "GO",
-      "lat": -16.6864,
-      "lon": -49.2643,
-      "radius_meters": 12000,
-      "populacao": 1536097,
-      "ativo": true,
-      "priority": "alta"
-    },
-    {
-      "id": "manaus_am",
-      "nome": "Manaus",
-      "estado": "AM",
-      "lat": -3.1019,
-      "lon": -60.025,
-      "radius_meters": 12000,
-      "populacao": 2219580,
-      "ativo": false,
-      "priority": "media"
-    }
+    {"id": "sao_paulo_sp", "nome": "São Paulo", "estado": "SP", "lat": -23.5505, "lon": -46.6333, "radius_meters": 18000, "populacao": 12396372, "ativo": true, "priority": "alta"},
+    {"id": "rio_de_janeiro_rj", "nome": "Rio de Janeiro", "estado": "RJ", "lat": -22.9068, "lon": -43.1729, "radius_meters": 16000, "populacao": 6775561, "ativo": true, "priority": "alta"},
+    {"id": "brasilia_df", "nome": "Brasília", "estado": "DF", "lat": -15.7801, "lon": -47.9292, "radius_meters": 14000, "populacao": 3094325, "ativo": true, "priority": "alta"},
+    {"id": "belo_horizonte_mg", "nome": "Belo Horizonte", "estado": "MG", "lat": -19.9167, "lon": -43.9345, "radius_meters": 14000, "populacao": 2530701, "ativo": true, "priority": "alta"},
+    {"id": "curitiba_pr", "nome": "Curitiba", "estado": "PR", "lat": -25.4290, "lon": -49.2671, "radius_meters": 12000, "populacao": 1948626, "ativo": true, "priority": "alta"},
+    {"id": "porto_alegre_rs", "nome": "Porto Alegre", "estado": "RS", "lat": -30.0346, "lon": -51.2177, "radius_meters": 12000, "populacao": 1492530, "ativo": true, "priority": "alta"},
+    {"id": "salvador_ba", "nome": "Salvador", "estado": "BA", "lat": -12.9714, "lon": -38.5014, "radius_meters": 13000, "populacao": 2900319, "ativo": true, "priority": "alta"},
+    {"id": "fortaleza_ce", "nome": "Fortaleza", "estado": "CE", "lat": -3.7172, "lon": -38.5434, "radius_meters": 13000, "populacao": 2703391, "ativo": true, "priority": "alta"},
+    {"id": "recife_pe", "nome": "Recife", "estado": "PE", "lat": -8.0539, "lon": -34.8811, "radius_meters": 12000, "populacao": 1653461, "ativo": true, "priority": "alta"},
+    {"id": "goiania_go", "nome": "Goiânia", "estado": "GO", "lat": -16.6864, "lon": -49.2643, "radius_meters": 12000, "populacao": 1536097, "ativo": true, "priority": "alta"},
+    {"id": "manaus_am", "nome": "Manaus", "estado": "AM", "lat": -3.1019, "lon": -60.025, "radius_meters": 12000, "populacao": 2219580, "ativo": true, "priority": "media"},
+    {"id": "belem_pa", "nome": "Belém", "estado": "PA", "lat": -1.4558, "lon": -48.4902, "radius_meters": 11000, "populacao": 1499641, "ativo": true, "priority": "media"},
+    {"id": "florianopolis_sc", "nome": "Florianópolis", "estado": "SC", "lat": -27.5954, "lon": -48.5480, "radius_meters": 11000, "populacao": 537211, "ativo": true, "priority": "media"},
+    {"id": "campinas_sp", "nome": "Campinas", "estado": "SP", "lat": -22.9056, "lon": -47.0608, "radius_meters": 11000, "populacao": 1213792, "ativo": true, "priority": "media"},
+    {"id": "vitoria_es", "nome": "Vitória", "estado": "ES", "lat": -20.3155, "lon": -40.3128, "radius_meters": 10000, "populacao": 369534, "ativo": true, "priority": "media"},
+    {"id": "natal_rn", "nome": "Natal", "estado": "RN", "lat": -5.7945, "lon": -35.211, "radius_meters": 10000, "populacao": 896708, "ativo": true, "priority": "media"},
+    {"id": "campo_grande_ms", "nome": "Campo Grande", "estado": "MS", "lat": -20.4697, "lon": -54.6201, "radius_meters": 10000, "populacao": 916001, "ativo": true, "priority": "media"},
+    {"id": "cuiaba_mt", "nome": "Cuiabá", "estado": "MT", "lat": -15.6010, "lon": -56.0974, "radius_meters": 10000, "populacao": 650912, "ativo": true, "priority": "media"}
   ]
 }

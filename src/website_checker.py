@@ -211,11 +211,19 @@ UPDATE companies SET
 WHERE id = %(id)s;
 """
 
+# Só pendentes SEM site próprio (quem tem site já foi/deve ser pulado no pipeline)
 _SELECT_PENDING_SQL = """
 SELECT id, name, website, city, state, niche
 FROM companies
 WHERE website_checked_at IS NULL
   AND (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
+  AND (
+      website IS NULL
+      OR TRIM(website) = ''
+      OR website ILIKE '%%instagram.com%%'
+      OR website ILIKE '%%facebook.com%%'
+      OR website ILIKE '%%linktr.ee%%'
+  )
 ORDER BY id
 LIMIT %(limit)s;
 """

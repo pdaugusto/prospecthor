@@ -63,10 +63,12 @@ UPDATE companies SET
 WHERE id = %(id)s;
 """
 
+# Só pontua quem ainda não foi pontuado (empresas com site já saem marcadas no pipeline)
 _SELECT_ALL_COLLECTED_SQL = """
 SELECT * FROM companies
 WHERE (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
-  AND (website_checked_at IS NOT NULL OR instagram_checked_at IS NOT NULL)
+  AND website_checked_at IS NOT NULL
+  AND scored_at IS NULL
 ORDER BY id;
 """
 

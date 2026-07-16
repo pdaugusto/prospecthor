@@ -1,14 +1,22 @@
 {
-  "_comentario": "Nichos de negócios suportados pelo Prospector Bot.",
-  "_instrucoes": "Cada nicho possui um 'query_term' usado na busca do Google Maps e flags de comportamento.",
+  "_comentario": "Nichos ativos do Prospector Bot — foco comercial atual.",
+  "_instrucoes": "query_term é o texto buscado no Google Maps. id é salvo no banco (niche).",
   "nichos": [
     {
       "id": "odontologia",
       "label": "Odontologia",
-      "query_term": "dentista consultório odontológico clínica odontológica",
+      "query_term": "dentista clínica odontológica",
       "check_menu": false,
       "priority_multiplier": 1.5,
-      "description": "Odontologia — alto ticket médio e grande oportunidade de sites profissionais e agendamento online"
+      "description": "Consultórios e clínicas odontológicas — alto ticket para site e agenda online"
+    },
+    {
+      "id": "advocacia",
+      "label": "Advocacia",
+      "query_term": "escritório de advocacia advogado",
+      "check_menu": false,
+      "priority_multiplier": 1.4,
+      "description": "Escritórios de advocacia — forte demanda por site profissional e presença local"
     }
   ]
 }

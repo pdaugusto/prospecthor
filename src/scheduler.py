@@ -214,9 +214,27 @@ class SchedulerDatabase:
 # Pipeline e Orquestração do Robô
 # ---------------------------------------------------------------------------
 
+_SOCIAL_URL_MARKERS = (
+    "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+    "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+)
+
+
+def _has_real_website(website: str | None) -> bool:
+    """True se o campo website aponta para site próprio (não só rede social)."""
+    url = (website or "").strip()
+    if not url:
+        return False
+    lower = url.lower()
+    return not any(m in lower for m in _SOCIAL_URL_MARKERS)
+
+
 class LeadGenerationPipeline:
     """
     Executa o fluxo unificado de busca e qualificação de leads.
+
+    Foco comercial: só aprofunda análise em empresas SEM site próprio.
+    Quem já tem site é marcado e ignorado (sem HTTP/Instagram).
     """
 
     def __init__(self, db_path: str = _DB_PATH) -> None:
@@ -227,52 +245,124 @@ class LeadGenerationPipeline:
         self.menu = MenuChecker(db_path)
         self.scorer = LeadScorer(db_path)
 
-    def execute_flow(self, niche: str, city: str, state: str) -> int:
+    def _skip_companies_with_website(self) -> int:
+        """
+        Marca em massa empresas que já têm site próprio.
+
+        Evita gastar tempo em website_checker HTTP e Instagram.
+        Retorna quantas foram descartadas nesta rodada.
+        """
+        if not _DATABASE_URL:
+            return 0
+        now = datetime.now().isoformat()
+        sql = """
+        UPDATE companies SET
+            website_status = 'tem_site',
+            website_checked_at = %s,
+            instagram_checked_at = COALESCE(instagram_checked_at, %s),
+            lead_class = 'eco',
+            lead_score = 0,
+            lead_priority = 'baixa',
+            lead_problems = '[]',
+            lead_services = '[]',
+            scored_at = %s
+        WHERE website_checked_at IS NULL
+          AND website IS NOT NULL
+          AND TRIM(website) <> ''
+          AND website NOT ILIKE '%%instagram.com%%'
+          AND website NOT ILIKE '%%facebook.com%%'
+          AND website NOT ILIKE '%%fb.com%%'
+          AND website NOT ILIKE '%%linktr.ee%%'
+          AND website NOT ILIKE '%%bio.link%%'
+          AND website NOT ILIKE '%%tiktok.com%%'
+          AND website NOT ILIKE '%%whatsapp.com%%'
+          AND website NOT ILIKE '%%wa.me%%'
+        """
+        try:
+            conn = psycopg2.connect(_DATABASE_URL)
+            cur = conn.cursor()
+            cur.execute(sql, (now, now, now))
+            skipped = cur.rowcount
+            conn.commit()
+            cur.close()
+            conn.close()
+            if skipped:
+                logger.info(
+                    f"[Pipeline] {skipped} empresas COM site próprio ignoradas "
+                    f"(sem análise extra)."
+                )
+            return skipped
+        except Exception as exc:
+            logger.warning(f"[Pipeline] Falha ao pular empresas com site: {exc}")
+            return 0
+
+    def execute_flow(
+        self,
+        niche: str,
+        city: str,
+        state: str,
+        query_term: str | None = None,
+        max_results: int = 25,
+    ) -> int:
         """
         Roda o ciclo do pipeline completo:
             1. google_maps.py      → Busca locais
-            2. website_checker.py  → Qualifica sites
-            3. instagram_checker.py → Qualifica Instagram
-            4. menu_checker.py     → Se alimentação, qualifica cardápio
-            5. scorer.py           → Qualifica e gera o score definitivo
-        
+            2. Skip em massa quem já tem site
+            3. website_checker.py  → só pendentes sem site
+            4. instagram_checker.py → só sem site
+            5. scorer.py           → score (Raio = sem site)
+
         Args:
-            niche: Nicho a buscar (ex: "restaurante")
-            city:  Cidade (ex: "Curitiba")
-            state: Estado (ex: "PR")
-            
+            niche:       ID do nicho salvo no banco (ex: "odontologia")
+            city:        Cidade (ex: "Curitiba")
+            state:       Estado (ex: "PR")
+            query_term:  Texto de busca no Maps (opcional)
+            max_results: Limite por cidade/nicho (padrão 25 para cobrir o Brasil)
+
         Returns:
-            Quantidade de empresas encontradas e processadas.
+            Quantidade de empresas encontradas no Maps (com e sem site).
         """
-        logger.info(f"[Pipeline] Iniciando fluxo: {niche} em {city} - {state}")
-        
+        search_query = (query_term or niche).strip()
+        logger.info(
+            f"[Pipeline] Iniciando fluxo: {niche} ({search_query}) em {city} - {state}"
+        )
+
         # 1. Busca Google Maps
-        companies = self.maps.search(niche=niche, city=city, state=state, max_results=30)
+        companies = self.maps.search(
+            niche=niche,
+            city=city,
+            state=state,
+            max_results=max_results,
+            query_term=search_query,
+        )
         total_found = len(companies)
-        
+
         if total_found == 0:
             logger.info(f"[Pipeline] Nenhuma empresa localizada para {niche} em {city}.")
             return 0
-            
-        # 2. Roda checagem de Sites pendentes
-        logger.info("[Pipeline] Processando analise de websites...")
-        self.web.check_all(limit=total_found)
-        
-        # 3. Roda checagem de Instagram pendentes
-        logger.info("[Pipeline] Processando analise de perfis do Instagram...")
-        self.insta.check_all(limit=total_found)
-        
-        # 4. Roda checagem de cardápios (se nicho alimentício)
-        # Verifica se o termo está na lista de alimentação do menu_checker
-        from src.menu_checker import _FOOD_CATEGORIES
-        if any(x in niche.lower() for x in _FOOD_CATEGORIES):
-            logger.info("[Pipeline] Nicho de alimentacao detectado. Iniciando analise de cardapios...")
-            self.menu.check_all(limit=total_found)
-            
-        # 5. Consolida Score definitivo e salva classificação
-        logger.info("[Pipeline] Processando calculo e qualificacao final de leads...")
+
+        with_site = sum(1 for c in companies if _has_real_website(c.get("website")))
+        no_site = total_found - with_site
+        logger.info(
+            f"[Pipeline] {city}/{niche}: {total_found} no Maps | "
+            f"{with_site} com site (pular) | {no_site} sem site (analisar)"
+        )
+
+        # 2. Descarta quem já tem site — zero tempo extra
+        self._skip_companies_with_website()
+
+        # 3. Sites: só pendentes (sem site / social)
+        logger.info("[Pipeline] Marcando empresas sem site...")
+        self.web.check_all(limit=max(no_site * 2, 30), delay_between_s=0.3)
+
+        # 4. Instagram: só leads sem site (oportunidade Raio)
+        logger.info("[Pipeline] Instagram apenas em leads sem site...")
+        self.insta.check_all(limit=max(no_site * 2, 30), delay_between_s=0.8)
+
+        # 5. Score (Raio só sem site)
+        logger.info("[Pipeline] Qualificação final de leads...")
         self.scorer.score_all()
-        
+
         logger.info(f"[Pipeline] Fluxo completo para {niche} em {city} finalizado.")
         return total_found
 

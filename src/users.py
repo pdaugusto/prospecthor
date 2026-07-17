@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Any
@@ -17,9 +18,9 @@ from typing import Any
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
-from loguru import logger
 
 load_dotenv()
+logger = logging.getLogger("users")
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "")
 _ENV_ADMIN_USER = os.getenv("DASHBOARD_USER", "admin")
@@ -87,7 +88,7 @@ def ensure_schema() -> None:
                 """,
                 (_ENV_ADMIN_USER, _hash_password(_ENV_ADMIN_PASS)),
             )
-            logger.info(f"[Users] Admin criado: {_ENV_ADMIN_USER}")
+            logger.warning("[Users] Admin criado: %s", _ENV_ADMIN_USER)
         conn.commit()
         cur.close()
     finally:
@@ -146,7 +147,7 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
         user["niches"] = _parse_json_list(user.get("niches"))
         return user
     except Exception as exc:
-        logger.warning(f"[Users] auth falhou: {exc}")
+        logger.warning("[Users] auth falhou: %s", exc)
         return None
 
 
@@ -300,8 +301,11 @@ def create_user(
         row["cities"] = cities or []
         row["niches"] = niches or []
         row["assigned_this_month"] = 0
-        logger.info(f"[Users] Criado: {username} quota={monthly_quota}")
+        logger.warning("[Users] Criado: %s quota=%s", username, monthly_quota)
         return row
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -422,7 +426,7 @@ def assign_raio_lead(company_id: int) -> int | None:
         conn.close()
 
         if not clients:
-            logger.debug("[Users] Nenhum client ativo para receber lead.")
+            logger.warning("[Users] Nenhum client ativo para receber lead.")
             return None
 
         candidates: list[tuple[int, int, str]] = []  # (assigned_count, user_id, username)
@@ -438,8 +442,9 @@ def assign_raio_lead(company_id: int) -> int | None:
             candidates.append((used, int(u["id"]), u["username"]))
 
         if not candidates:
-            logger.info(
-                f"[Users] Lead {company_id} sem dono: cotas cheias ou filtro cidade/nicho."
+            logger.warning(
+                "[Users] Lead %s sem dono: cotas cheias ou filtro cidade/nicho.",
+                company_id,
             )
             return None
 
@@ -461,12 +466,16 @@ def assign_raio_lead(company_id: int) -> int | None:
         cur.close()
         conn.close()
 
-        logger.info(
-            f"[Users] Lead {company_id} ({company.get('name')!r}) → {uname} (id={user_id})"
+        logger.warning(
+            "[Users] Lead %s (%r) → %s (id=%s)",
+            company_id,
+            company.get("name"),
+            uname,
+            user_id,
         )
         return user_id
     except Exception as exc:
-        logger.warning(f"[Users] assign_raio_lead falhou: {exc}")
+        logger.warning("[Users] assign_raio_lead falhou: %s", exc)
         return None
 
 
@@ -494,7 +503,7 @@ def manual_assign(company_id: int, user_id: int | None) -> bool:
         cur.close()
         return True
     except Exception as exc:
-        logger.warning(f"[Users] manual_assign: {exc}")
+        logger.warning("[Users] manual_assign: %s", exc)
         return False
     finally:
         conn.close()

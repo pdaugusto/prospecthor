@@ -75,7 +75,17 @@ def _session_user():
 
 
 def _is_admin() -> bool:
-    return (_session_user().get("role") or "") == "admin"
+    # Admin se role=admin OU se for o usuário do .env (sessões antigas sem role)
+    role = (_session_user().get("role") or "").lower()
+    if role == "admin":
+        return True
+    uname = (_session_user().get("username") or "").lower()
+    if uname and uname == (DASHBOARD_USER or "admin").lower():
+        return True
+    # login legado só com logged_in
+    if session.get("logged_in") and not session.get("role") and not session.get("user_id"):
+        return True
+    return False
 
 
 def get_all_leads(use_cache=True):
@@ -455,9 +465,10 @@ def api_users_list():
 @login_required
 @admin_required
 def api_users_create():
-    from src.users import create_user
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     try:
+        from src.users import create_user, ensure_schema
+        ensure_schema()
         user = create_user(
             username=data.get("username", ""),
             password=data.get("password", ""),

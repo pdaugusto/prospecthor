@@ -715,17 +715,27 @@
             const monthly_quota = parseInt(document.getElementById('new-user-quota').value || '50', 10);
             const label = document.getElementById('new-user-label').value.trim();
             if (!username || !password) { alert('Usuário e senha obrigatórios'); return; }
-            const res = await fetch('/api/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, monthly_quota, label, role: 'client' })
-            });
-            const data = await res.json();
-            if (!res.ok) { alert(data.error || 'Erro'); return; }
-            document.getElementById('new-user-name').value = '';
-            document.getElementById('new-user-pass').value = '';
-            alert('Usuário criado: ' + username);
-            loadUsers();
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, monthly_quota, label, role: 'client' })
+                });
+                const text = await res.text();
+                let data = {};
+                try { data = JSON.parse(text); } catch (_) { data = { error: text || res.statusText }; }
+                if (!res.ok) {
+                    alert('Erro ' + res.status + ': ' + (data.error || text || 'falha ao criar'));
+                    return;
+                }
+                document.getElementById('new-user-name').value = '';
+                document.getElementById('new-user-pass').value = '';
+                document.getElementById('new-user-label').value = '';
+                alert('Usuário criado: ' + username + '\\nPode logar com essa senha.');
+                loadUsers();
+            } catch (e) {
+                alert('Falha de rede ao criar usuário: ' + e);
+            }
         }
 
         async function saveUserQuota(id) {

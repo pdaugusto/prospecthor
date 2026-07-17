@@ -437,21 +437,24 @@
 
         <!-- USERS (Patrão only) -->
         <section id="view-users" class="view">
-            <div class="panel" style="margin-bottom:14px;">
-                <h3 style="margin-bottom:12px;">Novo cliente</h3>
+            <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
+                <h3 style="margin-bottom:8px;color:var(--neon);">Controle de usuários (Patrão)</h3>
+                <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
+                    <strong style="color:var(--text);">Você sempre vê TODOS os leads</strong> (Home / Leads), mesmo os do amigo.<br>
+                    <strong>Cota 0</strong> = ele para de receber leads <em>novos</em> do bot (os que já tem continuam com ele e com você).<br>
+                    <strong>Zerar mês</strong> = contagem do mês volta a 0 (pode receber de novo até a cota); leads não somem.<br>
+                    <strong>Remover</strong> = apaga a conta; leads ficam livres (você continua vendo).
+                </p>
+                <h3 style="margin-bottom:12px;font-size:14px;">Novo cliente</h3>
                 <div class="filters" style="margin:0;flex-wrap:wrap;">
                     <input type="text" id="new-user-name" placeholder="login" style="min-width:120px;">
                     <input type="password" id="new-user-pass" placeholder="senha" style="min-width:120px;">
                     <input type="text" id="new-user-label" placeholder="nome exibido" style="min-width:140px;">
                     <input type="number" id="new-user-quota" placeholder="cota/mês" value="50" style="width:100px;">
-                    <button class="btn btn-primary" onclick="createUser()">Criar</button>
+                    <button class="btn btn-primary" type="button" onclick="createUser()">Criar cliente</button>
                 </div>
-                <p style="font-size:12px;color:var(--muted);margin-top:10px;">
-                    Você (Patrão) vê todos os leads. Cliente só vê o que for atribuído a ele.
-                    Cota = quantos Raios o bot pode mandar pra ele no mês.
-                </p>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap" style="overflow-x:auto;">
                 <table>
                     <thead>
                         <tr>
@@ -461,12 +464,13 @@
                             <th>Cota/mês</th>
                             <th>Recebidos</th>
                             <th>Ativo</th>
-                            <th>Ações</th>
+                            <th style="min-width:280px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="users-tbody"></tbody>
                 </table>
             </div>
+            <p id="users-hint" style="font-size:12px;color:var(--muted);margin-top:10px;"></p>
         </section>
 
         <!-- Edit user modal -->
@@ -739,38 +743,71 @@
 
         async function loadUsers() {
             const tbody = document.getElementById('users-tbody');
+            const hint = document.getElementById('users-hint');
             tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando...</td></tr>';
+            if (hint) hint.textContent = '';
             try {
-                const res = await fetch('/api/users');
-                if (!res.ok) throw new Error('sem permissão');
+                const res = await fetch('/api/users?_=' + Date.now());
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error('HTTP ' + res.status + ' ' + err);
+                }
                 usersCache = await res.json();
-                if (!usersCache.length) {
+                if (!Array.isArray(usersCache) || !usersCache.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum usuário.</td></tr>';
                     return;
                 }
+                // Mostra ativos primeiro, depois inativos
+                usersCache.sort((a, b) => (b.active|0) - (a.active|0) || String(a.username).localeCompare(String(b.username)));
                 tbody.innerHTML = usersCache.map(u => {
-                    const isPatrao = (u.username || '').toLowerCase() === 'patrao';
-                    const roleLabel = isPatrao ? 'Patrão' : (u.role === 'admin' ? 'Admin' : 'Cliente');
-                    return `
-                    <tr>
-                        <td><strong>${esc(u.username)}</strong></td>
+                    const uname = String(u.username || '');
+                    const isPatrao = uname.toLowerCase() === 'patrao';
+                    const roleLabel = isPatrao ? 'Patrão' : 'Cliente';
+                    const uid = Number(u.id);
+                    let actions = '';
+                    if (isPatrao) {
+                        actions = `<button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar (você)</button>`;
+                    } else {
+                        actions = `
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                <button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar</button>
+                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="quota0" style="border-color:var(--warning);color:var(--warning);">Cota 0</button>
+                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="reset" style="border-color:var(--neon);color:var(--neon);">Zerar mês</button>
+                                <button type="button" class="btn btn-sm btn-danger" data-uid="${uid}" data-uname="${esc(uname)}" data-act="del">Remover</button>
+                            </div>`;
+                    }
+                    return `<tr>
+                        <td><strong>${esc(uname)}</strong></td>
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${u.monthly_quota ?? 0}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${u.active ? 'Sim' : 'Não'}</td>
-                        <td>
-                            <button class="btn btn-sm" onclick="openUserEdit(${u.id})">Editar</button>
-                            ${isPatrao ? '' : `
-                            <button class="btn btn-sm" onclick="quickZeroQuota(${u.id})">Cota 0</button>
-                            <button class="btn btn-sm" onclick="quickResetMonth(${u.id})">Zerar mês</button>
-                            <button class="btn btn-sm btn-danger" onclick="quickDeleteUser(${u.id}, '${esc(u.username)}')">Remover</button>
-                            `}
-                        </td>
+                        <td>${actions}</td>
                     </tr>`;
                 }).join('');
+
+                // Eventos (evita problema de onclick inline)
+                tbody.querySelectorAll('button[data-act]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = parseInt(btn.getAttribute('data-uid'), 10);
+                        const act = btn.getAttribute('data-act');
+                        if (act === 'edit') openUserEdit(id);
+                        else if (act === 'quota0') quickZeroQuota(id);
+                        else if (act === 'reset') quickResetMonth(id);
+                        else if (act === 'del') quickDeleteUser(id, btn.getAttribute('data-uname') || '');
+                    });
+                });
+
+                if (hint) {
+                    const clients = usersCache.filter(u => (u.username || '').toLowerCase() !== 'patrao');
+                    hint.textContent = clients.length
+                        ? `Na linha do cliente (ex.: admin) use: Editar · Cota 0 · Zerar mês · Remover. Versão UI v2.`
+                        : 'Só existe a conta Patrão. Crie um cliente acima.';
+                }
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar usuários.</td></tr>';
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
             }
         }
 

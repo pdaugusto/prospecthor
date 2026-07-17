@@ -435,30 +435,31 @@
             </div>
         </section>
 
-        <!-- USERS (admin) -->
+        <!-- USERS (Patrão only) -->
         <section id="view-users" class="view">
             <div class="panel" style="margin-bottom:14px;">
-                <h3 style="margin-bottom:12px;">Novo usuário (cliente)</h3>
-                <div class="filters" style="margin:0;">
-                    <input type="text" id="new-user-name" placeholder="usuário (login)" style="min-width:140px;">
+                <h3 style="margin-bottom:12px;">Novo cliente</h3>
+                <div class="filters" style="margin:0;flex-wrap:wrap;">
+                    <input type="text" id="new-user-name" placeholder="login" style="min-width:120px;">
                     <input type="password" id="new-user-pass" placeholder="senha" style="min-width:120px;">
-                    <input type="number" id="new-user-quota" placeholder="cota/mês" value="50" style="width:100px;">
                     <input type="text" id="new-user-label" placeholder="nome exibido" style="min-width:140px;">
+                    <input type="number" id="new-user-quota" placeholder="cota/mês" value="50" style="width:100px;">
                     <button class="btn btn-primary" onclick="createUser()">Criar</button>
                 </div>
                 <p style="font-size:12px;color:var(--muted);margin-top:10px;">
-                    Cota = quantos leads Raio ele recebe por mês. O bot distribui automaticamente (quem tem menos no mês e ainda tem vaga).
-                    Opcional: filtre cidades/nichos editando o usuário depois (API).
+                    Você (Patrão) vê todos os leads. Cliente só vê o que for atribuído a ele.
+                    Cota = quantos Raios o bot pode mandar pra ele no mês.
                 </p>
             </div>
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Usuário</th>
+                            <th>Login</th>
+                            <th>Nome</th>
                             <th>Papel</th>
                             <th>Cota/mês</th>
-                            <th>Recebidos no mês</th>
+                            <th>Recebidos</th>
                             <th>Ativo</th>
                             <th>Ações</th>
                         </tr>
@@ -467,6 +468,55 @@
                 </table>
             </div>
         </section>
+
+        <!-- Edit user modal -->
+        <div class="modal-bg" id="user-edit-modal">
+            <div class="modal">
+                <div class="modal-head">
+                    <h3>Editar usuário</h3>
+                    <button class="btn btn-sm" onclick="closeUserEdit()">Fechar</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-user-id">
+                    <div class="form-g">
+                        <label>Login</label>
+                        <input type="text" id="edit-user-username">
+                    </div>
+                    <div class="form-g">
+                        <label>Nome exibido</label>
+                        <input type="text" id="edit-user-label">
+                    </div>
+                    <div class="form-g">
+                        <label>Papel</label>
+                        <select id="edit-user-role">
+                            <option value="client">Cliente (só leads dele)</option>
+                            <option value="admin" disabled>Admin (só Patrão)</option>
+                        </select>
+                    </div>
+                    <div class="form-g">
+                        <label>Cota mensal (0 = não recebe mais do bot)</label>
+                        <input type="number" id="edit-user-quota" min="0">
+                    </div>
+                    <div class="form-g">
+                        <label>Nova senha (deixe vazio para não mudar)</label>
+                        <input type="password" id="edit-user-pass" placeholder="••••••••">
+                    </div>
+                    <div class="form-g">
+                        <label>Ativo</label>
+                        <select id="edit-user-active">
+                            <option value="1">Sim</option>
+                            <option value="0">Não</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+                        <button class="btn btn-primary" onclick="saveUserEdit()">Salvar</button>
+                        <button class="btn" onclick="zeroUserQuota()">Zerar cota (0)</button>
+                        <button class="btn" onclick="resetUserMonth()">Zerar uso do mês</button>
+                        <button class="btn btn-danger" onclick="deleteUserFromEdit()">Remover usuário</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- LEADS -->
         <section id="view-leads" class="view">
@@ -685,36 +735,145 @@
             }
         }
 
+        let usersCache = [];
+
         async function loadUsers() {
             const tbody = document.getElementById('users-tbody');
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando...</td></tr>';
             try {
                 const res = await fetch('/api/users');
                 if (!res.ok) throw new Error('sem permissão');
-                const users = await res.json();
-                if (!users.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum usuário.</td></tr>';
+                usersCache = await res.json();
+                if (!usersCache.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum usuário.</td></tr>';
                     return;
                 }
-                tbody.innerHTML = users.map(u => `
+                tbody.innerHTML = usersCache.map(u => {
+                    const isPatrao = (u.username || '').toLowerCase() === 'patrao';
+                    const roleLabel = isPatrao ? 'Patrão' : (u.role === 'admin' ? 'Admin' : 'Cliente');
+                    return `
                     <tr>
-                        <td><strong>${esc(u.username)}</strong><div style="font-size:11px;color:var(--muted);">${esc(u.label || '')}</div></td>
-                        <td>${esc(u.role)}</td>
-                        <td>
-                            <input type="number" value="${u.monthly_quota || 0}" style="width:80px;background:#070b12;border:1px solid var(--border);color:var(--text);padding:6px;border-radius:6px;"
-                                id="quota-${u.id}">
-                        </td>
+                        <td><strong>${esc(u.username)}</strong></td>
+                        <td>${esc(u.label || '—')}</td>
+                        <td>${roleLabel}</td>
+                        <td>${u.monthly_quota ?? 0}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${u.active ? 'Sim' : 'Não'}</td>
                         <td>
-                            <button class="btn btn-sm" onclick="saveUserQuota(${u.id})">Salvar cota</button>
-                            <button class="btn btn-sm" onclick="toggleUserActive(${u.id}, ${u.active ? 0 : 1})">${u.active ? 'Desativar' : 'Ativar'}</button>
+                            <button class="btn btn-sm" onclick="openUserEdit(${u.id})">Editar</button>
+                            ${isPatrao ? '' : `
+                            <button class="btn btn-sm" onclick="quickZeroQuota(${u.id})">Cota 0</button>
+                            <button class="btn btn-sm" onclick="quickResetMonth(${u.id})">Zerar mês</button>
+                            <button class="btn btn-sm btn-danger" onclick="quickDeleteUser(${u.id}, '${esc(u.username)}')">Remover</button>
+                            `}
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                }).join('');
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty">Erro ao carregar usuários.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar usuários.</td></tr>';
             }
+        }
+
+        function openUserEdit(id) {
+            const u = usersCache.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('edit-user-id').value = u.id;
+            document.getElementById('edit-user-username').value = u.username || '';
+            document.getElementById('edit-user-username').disabled = (u.username || '').toLowerCase() === 'patrao';
+            document.getElementById('edit-user-label').value = u.label || '';
+            document.getElementById('edit-user-role').value = (u.username || '').toLowerCase() === 'patrao' ? 'admin' : 'client';
+            document.getElementById('edit-user-role').disabled = (u.username || '').toLowerCase() === 'patrao';
+            document.getElementById('edit-user-quota').value = u.monthly_quota ?? 0;
+            document.getElementById('edit-user-pass').value = '';
+            document.getElementById('edit-user-active').value = u.active ? '1' : '0';
+            document.getElementById('edit-user-active').disabled = (u.username || '').toLowerCase() === 'patrao';
+            document.getElementById('user-edit-modal').classList.add('active');
+        }
+
+        function closeUserEdit() {
+            document.getElementById('user-edit-modal').classList.remove('active');
+        }
+
+        async function saveUserEdit() {
+            const id = parseInt(document.getElementById('edit-user-id').value, 10);
+            const body = {
+                username: document.getElementById('edit-user-username').value.trim(),
+                label: document.getElementById('edit-user-label').value.trim(),
+                role: document.getElementById('edit-user-role').value,
+                monthly_quota: parseInt(document.getElementById('edit-user-quota').value || '0', 10),
+                active: document.getElementById('edit-user-active').value === '1' ? 1 : 0,
+            };
+            const pass = document.getElementById('edit-user-pass').value;
+            if (pass) body.password = pass;
+            try {
+                const res = await fetch('/api/users/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Erro ao salvar'); return; }
+                closeUserEdit();
+                loadUsers();
+                alert('Usuário atualizado.');
+            } catch (e) {
+                alert('Falha: ' + e);
+            }
+        }
+
+        async function zeroUserQuota() {
+            document.getElementById('edit-user-quota').value = 0;
+            await saveUserEdit();
+        }
+
+        async function resetUserMonth() {
+            const id = parseInt(document.getElementById('edit-user-id').value, 10);
+            if (!confirm('Zerar contagem de leads recebidos neste mês? (ele mantém os leads, mas a cota conta do zero)')) return;
+            const res = await fetch('/api/users/' + id + '/reset-month', { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(data.error || 'Erro'); return; }
+            closeUserEdit();
+            loadUsers();
+            alert('Uso do mês zerado.');
+        }
+
+        async function deleteUserFromEdit() {
+            const id = parseInt(document.getElementById('edit-user-id').value, 10);
+            const u = usersCache.find(x => x.id === id);
+            if (!u) return;
+            await quickDeleteUser(id, u.username);
+            closeUserEdit();
+        }
+
+        async function quickZeroQuota(id) {
+            if (!confirm('Definir cota mensal = 0? (para de receber leads novos do bot)')) return;
+            const res = await fetch('/api/users/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ monthly_quota: 0 })
+            });
+            if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Erro'); return; }
+            loadUsers();
+        }
+
+        async function quickResetMonth(id) {
+            if (!confirm('Zerar uso do mês desta pessoa?')) return;
+            const res = await fetch('/api/users/' + id + '/reset-month', { method: 'POST' });
+            if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Erro'); return; }
+            loadUsers();
+        }
+
+        async function quickDeleteUser(id, username) {
+            if ((username || '').toLowerCase() === 'patrao') {
+                alert('Não pode remover a conta Patrão.');
+                return;
+            }
+            if (!confirm('Remover usuário "' + username + '"?\nOs leads dele ficam livres (você continua vendo como Patrão).')) return;
+            const res = await fetch('/api/users/' + id, { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(data.error || 'Erro ao remover'); return; }
+            loadUsers();
+            alert('Usuário removido.');
         }
 
         async function createUser() {
@@ -722,7 +881,7 @@
             const password = document.getElementById('new-user-pass').value;
             const monthly_quota = parseInt(document.getElementById('new-user-quota').value || '50', 10);
             const label = document.getElementById('new-user-label').value.trim();
-            if (!username || !password) { alert('Usuário e senha obrigatórios'); return; }
+            if (!username || !password) { alert('Login e senha obrigatórios'); return; }
             try {
                 const res = await fetch('/api/users', {
                     method: 'POST',
@@ -739,32 +898,16 @@
                 document.getElementById('new-user-name').value = '';
                 document.getElementById('new-user-pass').value = '';
                 document.getElementById('new-user-label').value = '';
-                alert('Usuário criado: ' + username + '\\nPode logar com essa senha.');
+                alert('Cliente criado: ' + username);
                 loadUsers();
             } catch (e) {
                 alert('Falha de rede ao criar usuário: ' + e);
             }
         }
 
-        async function saveUserQuota(id) {
-            const el = document.getElementById('quota-' + id);
-            const monthly_quota = parseInt(el.value || '0', 10);
-            await fetch('/api/users/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ monthly_quota })
-            });
-            loadUsers();
-        }
-
-        async function toggleUserActive(id, active) {
-            await fetch('/api/users/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active })
-            });
-            loadUsers();
-        }
+        document.getElementById('user-edit-modal')?.addEventListener('click', e => {
+            if (e.target.id === 'user-edit-modal') closeUserEdit();
+        });
 
         async function fetchLeads(force) {
             const now = Date.now();

@@ -519,11 +519,40 @@ def api_users_create():
 @admin_required
 def api_users_update(user_id):
     from src.users import update_user
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     try:
         user = update_user(user_id, **data)
         _invalidate_cache()
         return jsonify(user or {})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/users/<int:user_id>/reset-month", methods=["POST"])
+@login_required
+@admin_required
+def api_users_reset_month(user_id):
+    """Zera contagem de leads recebidos no mês (cota volta a contar do zero)."""
+    from src.users import reset_month_usage, get_user_by_id
+    try:
+        n = reset_month_usage(int(user_id))
+        _invalidate_cache()
+        u = get_user_by_id(int(user_id))
+        return jsonify({"success": True, "reset_rows": n, "user": u})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/users/<int:user_id>", methods=["DELETE"])
+@login_required
+@admin_required
+def api_users_delete(user_id):
+    """Remove usuário; leads dele ficam livres (Patrão continua vendo)."""
+    from src.users import delete_user
+    try:
+        ok = delete_user(int(user_id), reassign_leads_to=None)
+        _invalidate_cache()
+        return jsonify({"success": ok})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

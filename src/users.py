@@ -342,6 +342,16 @@ def create_user(
 
 def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
     ensure_schema()
+    # não deixa demotar/apagar o dono principal por engano via role
+    target = get_user_by_id(user_id)
+    if not target:
+        return None
+    if (target.get("username") or "").lower() == "patrao":
+        # Patrão: só permite trocar senha/label, não role nem active=0
+        fields.pop("role", None)
+        if fields.get("active") in (False, 0, "0", "false"):
+            fields.pop("active", None)
+
     allowed = {
         "monthly_quota",
         "active",
@@ -350,6 +360,7 @@ def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
         "cities",
         "niches",
         "password",
+        "username",
     }
     sets = []
     params: list[Any] = []
@@ -357,8 +368,18 @@ def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
         if k not in allowed or v is None:
             continue
         if k == "password":
+            if str(v).strip() == "":
+                continue
             sets.append("password_hash = %s")
             params.append(_hash_password(str(v)))
+        elif k == "username":
+            new_u = str(v).strip().lower()
+            if not new_u or new_u == "patrao":
+                continue
+            if (target.get("username") or "").lower() == "patrao":
+                continue
+            sets.append("username = %s")
+            params.append(new_u)
         elif k in ("cities", "niches"):
             sets.append(f"{k} = %s")
             params.append(json.dumps(v if isinstance(v, list) else [], ensure_ascii=False))
@@ -367,7 +388,17 @@ def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
             params.append(1 if v in (True, 1, "1", "true") else 0)
         elif k == "monthly_quota":
             sets.append("monthly_quota = %s")
-            params.append(int(v))
+            params.append(max(0, int(v)))
+        elif k == "role":
+            role = str(v).lower()
+            if role not in ("admin", "client"):
+                role = "client"
+            # só pode haver um admin "operacional"; clients não viram patrao
+            if role == "admin" and (target.get("username") or "").lower() != "patrao":
+                # admin secundário opcional — por enquanto força client
+                role = "client"
+            sets.append("role = %s")
+            params.append(role)
         else:
             sets.append(f"{k} = %s")
             params.append(v)
@@ -386,6 +417,86 @@ def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
     finally:
         conn.close()
     return get_user_by_id(user_id)
+
+
+def reset_month_usage(user_id: int) -> int:
+    """
+    Zera a contagem de leads 'recebidos este mês' (mantém os leads com o cliente).
+    Assim a cota mensal volta a contar do zero.
+    """
+    ensure_schema()
+    month_prefix = datetime.now().strftime("%Y-%m")
+    # marca assigned_at no mês passado para não contar no mês atual
+    fake_at = datetime.now().replace(day=1).isoformat()
+    # usa dia 1 do mês anterior de forma simples
+    y, m = datetime.now().year, datetime.now().month
+    if m == 1:
+        y, m = y - 1, 12
+    else:
+        m -= 1
+    fake_at = f"{y:04d}-{m:02d}-01T00:00:00"
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE companies
+            SET assigned_at = %s
+            WHERE assigned_to = %s
+              AND assigned_at IS NOT NULL
+              AND assigned_at LIKE %s;
+            """,
+            (fake_at, user_id, f"{month_prefix}%"),
+        )
+        n = cur.rowcount
+        conn.commit()
+        cur.close()
+        logger.warning("[Users] Uso do mês zerado user_id=%s rows=%s", user_id, n)
+        return int(n or 0)
+    finally:
+        conn.close()
+
+
+def delete_user(user_id: int, reassign_leads_to: int | None = None) -> bool:
+    """
+    Remove usuário. Leads dele ficam sem dono (Patrão vê) ou vão para reassign_leads_to.
+    Não remove a conta patrao.
+    """
+    ensure_schema()
+    u = get_user_by_id(user_id)
+    if not u:
+        return False
+    if (u.get("username") or "").lower() == "patrao":
+        raise ValueError("Não é permitido remover a conta Patrão.")
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        if reassign_leads_to:
+            cur.execute(
+                """
+                UPDATE companies SET assigned_to = %s, assigned_at = %s
+                WHERE assigned_to = %s;
+                """,
+                (reassign_leads_to, datetime.now().isoformat(), user_id),
+            )
+        else:
+            cur.execute(
+                """
+                UPDATE companies SET assigned_to = NULL, assigned_at = NULL
+                WHERE assigned_to = %s;
+                """,
+                (user_id,),
+            )
+        cur.execute("DELETE FROM app_users WHERE id = %s;", (user_id,))
+        conn.commit()
+        cur.close()
+        logger.warning("[Users] Removido user_id=%s (%s)", user_id, u.get("username"))
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def _user_accepts_lead(user: dict[str, Any], company: dict[str, Any]) -> bool:

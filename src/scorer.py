@@ -363,6 +363,13 @@ class LeadScorer:
             f"→ {result['lead_class']} ({result['lead_score']} pts) | "
             f"{company.get('name', '')!r}"
         )
+        # Distribui Raio pro cliente com cota disponível
+        if result.get("lead_class") == "raio":
+            try:
+                from src.users import assign_raio_lead
+                assign_raio_lead(int(company_id))
+            except Exception as exc:
+                logger.debug(f"[LeadScorer] assign: {exc}")
         return result
 
     def score_all(self) -> list[dict[str, Any]]:

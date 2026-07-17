@@ -390,10 +390,11 @@
             <li><a onclick="navigateTo('/')" class="active" id="nav-home">Home</a></li>
             <li><a onclick="navigateTo('/leads')" id="nav-leads">Leads</a></li>
             <li><a onclick="navigateTo('/reports')" id="nav-reports">Relatórios</a></li>
+            <li id="nav-users-wrap" style="display:none;"><a onclick="navigateTo('/users')" id="nav-users">Usuários</a></li>
             <li><a href="/api/export/csv" class="nav-download">Exportar CSV</a></li>
         </ul>
         <div class="sidebar-footer">
-            <span>admin</span>
+            <span id="sidebar-user">—</span>
             <a href="/logout" class="btn-logout">Sair</a>
         </div>
     </aside>
@@ -405,7 +406,8 @@
                 <h1 id="page-title">Home</h1>
             </div>
             <div class="header-right">
-                <div class="avatar">A</div>
+                <span id="quota-badge" style="font-size:12px;color:var(--muted);margin-right:8px;"></span>
+                <div class="avatar" id="user-avatar">A</div>
             </div>
         </header>
 
@@ -430,6 +432,39 @@
             <div class="panel">
                 <h3>Prioridade — top 5 para abordar</h3>
                 <div class="top-list" id="home-top"></div>
+            </div>
+        </section>
+
+        <!-- USERS (admin) -->
+        <section id="view-users" class="view">
+            <div class="panel" style="margin-bottom:14px;">
+                <h3 style="margin-bottom:12px;">Novo usuário (cliente)</h3>
+                <div class="filters" style="margin:0;">
+                    <input type="text" id="new-user-name" placeholder="usuário (login)" style="min-width:140px;">
+                    <input type="password" id="new-user-pass" placeholder="senha" style="min-width:120px;">
+                    <input type="number" id="new-user-quota" placeholder="cota/mês" value="50" style="width:100px;">
+                    <input type="text" id="new-user-label" placeholder="nome exibido" style="min-width:140px;">
+                    <button class="btn btn-primary" onclick="createUser()">Criar</button>
+                </div>
+                <p style="font-size:12px;color:var(--muted);margin-top:10px;">
+                    Cota = quantos leads Raio ele recebe por mês. O bot distribui automaticamente (quem tem menos no mês e ainda tem vaga).
+                    Opcional: filtre cidades/nichos editando o usuário depois (API).
+                </p>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Papel</th>
+                            <th>Cota/mês</th>
+                            <th>Recebidos no mês</th>
+                            <th>Ativo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody"></tbody>
+                </table>
             </div>
         </section>
 
@@ -547,6 +582,7 @@
         let activePromptLead = null;
         let leadsCacheAt = 0;
         const CACHE_MS = 45000;
+        let currentUser = { username: 'admin', role: 'admin', is_admin: true };
 
         function esc(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -584,6 +620,27 @@
             closeSidebar();
         }
 
+        async function loadMe() {
+            try {
+                const res = await fetch('/api/me');
+                currentUser = await res.json();
+                const name = currentUser.username || 'user';
+                document.getElementById('sidebar-user').textContent = name;
+                document.getElementById('user-avatar').textContent = (name[0] || 'U').toUpperCase();
+                if (currentUser.is_admin) {
+                    document.getElementById('nav-users-wrap').style.display = '';
+                    document.getElementById('quota-badge').textContent = 'Admin';
+                } else {
+                    document.getElementById('nav-users-wrap').style.display = 'none';
+                    const used = currentUser.assigned_this_month || 0;
+                    const q = currentUser.monthly_quota || 0;
+                    document.getElementById('quota-badge').textContent = `Cota: ${used}/${q} este mês`;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         function handleRouting() {
             const path = location.pathname;
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -609,9 +666,86 @@
                 document.getElementById('nav-reports').classList.add('active');
                 title.textContent = 'Relatórios';
                 loadReports();
+            } else if (path === '/users') {
+                if (!currentUser.is_admin) { navigateTo('/'); return; }
+                document.getElementById('view-users').classList.add('active');
+                document.getElementById('nav-users').classList.add('active');
+                title.textContent = 'Usuários';
+                loadUsers();
             } else {
                 navigateTo('/');
             }
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando...</td></tr>';
+            try {
+                const res = await fetch('/api/users');
+                if (!res.ok) throw new Error('sem permissão');
+                const users = await res.json();
+                if (!users.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum usuário.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td><strong>${esc(u.username)}</strong><div style="font-size:11px;color:var(--muted);">${esc(u.label || '')}</div></td>
+                        <td>${esc(u.role)}</td>
+                        <td>
+                            <input type="number" value="${u.monthly_quota || 0}" style="width:80px;background:#070b12;border:1px solid var(--border);color:var(--text);padding:6px;border-radius:6px;"
+                                id="quota-${u.id}">
+                        </td>
+                        <td>${u.assigned_this_month || 0}</td>
+                        <td>${u.active ? 'Sim' : 'Não'}</td>
+                        <td>
+                            <button class="btn btn-sm" onclick="saveUserQuota(${u.id})">Salvar cota</button>
+                            <button class="btn btn-sm" onclick="toggleUserActive(${u.id}, ${u.active ? 0 : 1})">${u.active ? 'Desativar' : 'Ativar'}</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">Erro ao carregar usuários.</td></tr>';
+            }
+        }
+
+        async function createUser() {
+            const username = document.getElementById('new-user-name').value.trim();
+            const password = document.getElementById('new-user-pass').value;
+            const monthly_quota = parseInt(document.getElementById('new-user-quota').value || '50', 10);
+            const label = document.getElementById('new-user-label').value.trim();
+            if (!username || !password) { alert('Usuário e senha obrigatórios'); return; }
+            const res = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, monthly_quota, label, role: 'client' })
+            });
+            const data = await res.json();
+            if (!res.ok) { alert(data.error || 'Erro'); return; }
+            document.getElementById('new-user-name').value = '';
+            document.getElementById('new-user-pass').value = '';
+            alert('Usuário criado: ' + username);
+            loadUsers();
+        }
+
+        async function saveUserQuota(id) {
+            const el = document.getElementById('quota-' + id);
+            const monthly_quota = parseInt(el.value || '0', 10);
+            await fetch('/api/users/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ monthly_quota })
+            });
+            loadUsers();
+        }
+
+        async function toggleUserActive(id, active) {
+            await fetch('/api/users/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active })
+            });
+            loadUsers();
         }
 
         async function fetchLeads(force) {
@@ -1118,7 +1252,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         });
 
         window.onpopstate = handleRouting;
-        handleRouting();
+        loadMe().then(() => handleRouting());
     </script>
 </body>
 </html>

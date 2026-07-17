@@ -514,16 +514,38 @@ def api_users_create():
         return jsonify({"error": str(e)}), 400
 
 
-@app.route("/api/users/<int:user_id>", methods=["PUT"])
+@app.route("/api/users/<int:user_id>", methods=["PUT", "POST"])
 @login_required
 @admin_required
 def api_users_update(user_id):
-    from src.users import update_user
+    """
+    Atualiza usuário.
+    Aceita PUT e POST (Vercel às vezes só repassa POST de forma confiável).
+    POST com {"action":"delete"} remove; {"action":"reset-month"} zera uso do mês.
+    """
+    from src.users import update_user, delete_user, reset_month_usage, get_user_by_id
     data = request.get_json(silent=True) or {}
+    action = (data.get("action") or "").lower().strip()
+
     try:
-        user = update_user(user_id, **data)
+        if action == "delete" or (request.method == "POST" and data.get("_method") == "DELETE"):
+            ok = delete_user(int(user_id), reassign_leads_to=None)
+            _invalidate_cache()
+            return jsonify({"success": ok})
+
+        if action == "reset-month":
+            n = reset_month_usage(int(user_id))
+            _invalidate_cache()
+            u = get_user_by_id(int(user_id))
+            return jsonify({"success": True, "reset_rows": n, "user": u})
+
+        # update normal — só campos enviados
+        payload = {k: v for k, v in data.items() if k not in ("action", "_method")}
+        user = update_user(user_id, **payload)
+        if not user:
+            return jsonify({"error": "Usuário não encontrado"}), 404
         _invalidate_cache()
-        return jsonify(user or {})
+        return jsonify({"success": True, "user": user})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

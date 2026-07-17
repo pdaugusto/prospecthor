@@ -487,8 +487,8 @@
                         <input type="text" id="edit-user-username">
                     </div>
                     <div class="form-g">
-                        <label>Nome exibido</label>
-                        <input type="text" id="edit-user-label">
+                        <label>Nome exibido (é isso que muda na coluna Nome)</label>
+                        <input type="text" id="edit-user-label" placeholder="Ex: João, Amigo, etc.">
                     </div>
                     <div class="form-g">
                         <label>Papel</label>
@@ -831,11 +831,25 @@
             document.getElementById('user-edit-modal').classList.remove('active');
         }
 
+        async function apiUserUpdate(id, body) {
+            // POST (mais confiável na Vercel que PUT/DELETE)
+            const res = await fetch('/api/users/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const text = await res.text();
+            let data = {};
+            try { data = JSON.parse(text); } catch (_) { data = { error: text || res.statusText }; }
+            return { res, data };
+        }
+
         async function saveUserEdit() {
             const id = parseInt(document.getElementById('edit-user-id').value, 10);
+            const label = document.getElementById('edit-user-label').value.trim();
             const body = {
+                label: label,
                 username: document.getElementById('edit-user-username').value.trim(),
-                label: document.getElementById('edit-user-label').value.trim(),
                 role: document.getElementById('edit-user-role').value,
                 monthly_quota: parseInt(document.getElementById('edit-user-quota').value || '0', 10),
                 active: document.getElementById('edit-user-active').value === '1' ? 1 : 0,
@@ -843,16 +857,15 @@
             const pass = document.getElementById('edit-user-pass').value;
             if (pass) body.password = pass;
             try {
-                const res = await fetch('/api/users/' + id, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) { alert(data.error || 'Erro ao salvar'); return; }
+                const { res, data } = await apiUserUpdate(id, body);
+                if (!res.ok) {
+                    alert('Erro ' + res.status + ': ' + (data.error || 'falha ao salvar'));
+                    return;
+                }
+                const u = data.user || data;
                 closeUserEdit();
-                loadUsers();
-                alert('Usuário atualizado.');
+                await loadUsers();
+                alert('Salvo!\nLogin: ' + (u.username || '') + '\nNome: ' + (u.label || label || '—'));
             } catch (e) {
                 alert('Falha: ' + e);
             }
@@ -866,12 +879,11 @@
         async function resetUserMonth() {
             const id = parseInt(document.getElementById('edit-user-id').value, 10);
             if (!confirm('Zerar contagem de leads recebidos neste mês? (ele mantém os leads, mas a cota conta do zero)')) return;
-            const res = await fetch('/api/users/' + id + '/reset-month', { method: 'POST' });
-            const data = await res.json().catch(() => ({}));
+            const { res, data } = await apiUserUpdate(id, { action: 'reset-month' });
             if (!res.ok) { alert(data.error || 'Erro'); return; }
             closeUserEdit();
-            loadUsers();
-            alert('Uso do mês zerado.');
+            await loadUsers();
+            alert('Uso do mês zerado. Leads dele continuam com ele (e você ainda vê todos).');
         }
 
         async function deleteUserFromEdit() {
@@ -883,21 +895,19 @@
         }
 
         async function quickZeroQuota(id) {
-            if (!confirm('Definir cota mensal = 0? (para de receber leads novos do bot)')) return;
-            const res = await fetch('/api/users/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ monthly_quota: 0 })
-            });
-            if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Erro'); return; }
-            loadUsers();
+            if (!confirm('Definir cota mensal = 0?\nEle para de receber leads NOVOS do bot.\nOs leads que já tem continuam com ele e você (Patrão) continua vendo todos.')) return;
+            const { res, data } = await apiUserUpdate(id, { monthly_quota: 0 });
+            if (!res.ok) { alert(data.error || 'Erro'); return; }
+            await loadUsers();
+            alert('Cota zerada. Leads dele NÃO foram apagados.');
         }
 
         async function quickResetMonth(id) {
-            if (!confirm('Zerar uso do mês desta pessoa?')) return;
-            const res = await fetch('/api/users/' + id + '/reset-month', { method: 'POST' });
-            if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Erro'); return; }
-            loadUsers();
+            if (!confirm('Zerar uso do mês desta pessoa?\nLeads permanecem com ele.')) return;
+            const { res, data } = await apiUserUpdate(id, { action: 'reset-month' });
+            if (!res.ok) { alert(data.error || 'Erro'); return; }
+            await loadUsers();
+            alert('Uso do mês zerado.');
         }
 
         async function quickDeleteUser(id, username) {
@@ -905,11 +915,10 @@
                 alert('Não pode remover a conta Patrão.');
                 return;
             }
-            if (!confirm('Remover usuário "' + username + '"?\nOs leads dele ficam livres (você continua vendo como Patrão).')) return;
-            const res = await fetch('/api/users/' + id, { method: 'DELETE' });
-            const data = await res.json().catch(() => ({}));
+            if (!confirm('Remover usuário "' + username + '"?\nOs leads dele ficam livres — você (Patrão) continua vendo todos.')) return;
+            const { res, data } = await apiUserUpdate(id, { action: 'delete' });
             if (!res.ok) { alert(data.error || 'Erro ao remover'); return; }
-            loadUsers();
+            await loadUsers();
             alert('Usuário removido.');
         }
 

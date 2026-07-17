@@ -341,79 +341,91 @@ def create_user(
 
 
 def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
-    ensure_schema()
-    # não deixa demotar/apagar o dono principal por engano via role
+    # Não chama ensure_schema aqui (evita side-effects em labels)
     target = get_user_by_id(user_id)
     if not target:
         return None
     if (target.get("username") or "").lower() == "patrao":
-        # Patrão: só permite trocar senha/label, não role nem active=0
-        fields.pop("role", None)
-        if fields.get("active") in (False, 0, "0", "false"):
-            fields.pop("active", None)
+        # Patrão: só senha/label
+        fields = {
+            k: v
+            for k, v in fields.items()
+            if k in ("password", "label")
+        }
 
-    allowed = {
-        "monthly_quota",
-        "active",
-        "role",
-        "label",
-        "cities",
-        "niches",
-        "password",
-        "username",
-    }
     sets = []
     params: list[Any] = []
-    for k, v in fields.items():
-        if k not in allowed or v is None:
-            continue
-        if k == "password":
-            if str(v).strip() == "":
-                continue
-            sets.append("password_hash = %s")
-            params.append(_hash_password(str(v)))
-        elif k == "username":
-            new_u = str(v).strip().lower()
-            if not new_u or new_u == "patrao":
-                continue
-            if (target.get("username") or "").lower() == "patrao":
-                continue
+
+    if "label" in fields and fields["label"] is not None:
+        sets.append("label = %s")
+        params.append(str(fields["label"]).strip())
+
+    if "password" in fields and str(fields.get("password") or "").strip():
+        sets.append("password_hash = %s")
+        params.append(_hash_password(str(fields["password"])))
+
+    if "username" in fields and fields["username"] is not None:
+        new_u = str(fields["username"]).strip().lower()
+        if (
+            new_u
+            and new_u != "patrao"
+            and (target.get("username") or "").lower() != "patrao"
+        ):
             sets.append("username = %s")
             params.append(new_u)
-        elif k in ("cities", "niches"):
-            sets.append(f"{k} = %s")
-            params.append(json.dumps(v if isinstance(v, list) else [], ensure_ascii=False))
-        elif k == "active":
-            sets.append("active = %s")
-            params.append(1 if v in (True, 1, "1", "true") else 0)
-        elif k == "monthly_quota":
+
+    if "monthly_quota" in fields and fields["monthly_quota"] is not None:
+        try:
             sets.append("monthly_quota = %s")
-            params.append(max(0, int(v)))
-        elif k == "role":
-            role = str(v).lower()
-            if role not in ("admin", "client"):
-                role = "client"
-            # só pode haver um admin "operacional"; clients não viram patrao
-            if role == "admin" and (target.get("username") or "").lower() != "patrao":
-                # admin secundário opcional — por enquanto força client
-                role = "client"
+            params.append(max(0, int(fields["monthly_quota"])))
+        except (TypeError, ValueError):
+            pass
+
+    if "active" in fields and fields["active"] is not None:
+        if (target.get("username") or "").lower() != "patrao":
+            sets.append("active = %s")
+            params.append(1 if fields["active"] in (True, 1, "1", "true") else 0)
+
+    if "role" in fields and fields["role"] is not None:
+        if (target.get("username") or "").lower() != "patrao":
+            role = str(fields["role"]).lower()
+            if role not in ("client",):
+                role = "client"  # não promove ninguém a admin por aqui
             sets.append("role = %s")
             params.append(role)
-        else:
-            sets.append(f"{k} = %s")
-            params.append(v)
+
+    if "cities" in fields and fields["cities"] is not None:
+        sets.append("cities = %s")
+        params.append(
+            json.dumps(
+                fields["cities"] if isinstance(fields["cities"], list) else [],
+                ensure_ascii=False,
+            )
+        )
+    if "niches" in fields and fields["niches"] is not None:
+        sets.append("niches = %s")
+        params.append(
+            json.dumps(
+                fields["niches"] if isinstance(fields["niches"], list) else [],
+                ensure_ascii=False,
+            )
+        )
+
     if not sets:
         return get_user_by_id(user_id)
+
     params.append(user_id)
     conn = _connect()
     try:
         cur = conn.cursor()
-        cur.execute(
-            f"UPDATE app_users SET {', '.join(sets)} WHERE id = %s;",
-            params,
-        )
+        sql = f"UPDATE app_users SET {', '.join(sets)} WHERE id = %s;"
+        cur.execute(sql, params)
         conn.commit()
         cur.close()
+        logger.warning("[Users] update id=%s fields=%s", user_id, list(fields.keys()))
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
     return get_user_by_id(user_id)

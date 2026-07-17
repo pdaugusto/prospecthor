@@ -443,11 +443,12 @@ def assign_raio_lead(company_id: int) -> int | None:
             conn.close()
             return None
 
+        # Só clientes ativos (ex.: amigo "admin") — nunca o patrao
         cur.execute(
             """
             SELECT id, username, monthly_quota, cities, niches, active
             FROM app_users
-            WHERE active = 1 AND role = 'client'
+            WHERE active = 1 AND role = 'client' AND lower(username) <> 'patrao'
             ORDER BY id;
             """
         )

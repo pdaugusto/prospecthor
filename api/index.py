@@ -92,10 +92,15 @@ def _is_admin() -> bool:
 
 
 def get_all_leads(use_cache=True):
-    """Leads Raio. Client só vê assigned_to = ele; admin vê todos."""
+    """
+    Leads Raio:
+    - Patrão (admin): TODOS os leads
+    - admin/amigo (client): SÓ assigned_to = ele
+    """
     uid = _session_user().get("id")
-    role = _session_user().get("role") or "admin"
-    cache_key = f"{role}:{uid}"
+    uname = (_session_user().get("username") or "").lower()
+    is_adm = _is_admin()
+    cache_key = f"{'adm' if is_adm else 'cli'}:{uid}:{uname}"
 
     now = time.time()
     if (
@@ -108,7 +113,6 @@ def get_all_leads(use_cache=True):
     if not DATABASE_URL:
         return []
     try:
-        # garante schema multi-user
         try:
             from src.users import ensure_schema
             ensure_schema()
@@ -119,14 +123,20 @@ def get_all_leads(use_cache=True):
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         sql = _SQL_RAIO_BASE
         params = []
-        if role != "admin" and uid:
-            sql += " AND assigned_to = %s"
-            params.append(int(uid))
+        # Cliente (amigo): só os que o Patrão mandou / bot atribuiu
+        if not is_adm:
+            if uid:
+                sql += " AND assigned_to = %s"
+                params.append(int(uid))
+            else:
+                # sem id = não vê leads de ninguém
+                cur.close()
+                conn.close()
+                return []
         sql += " ORDER BY lead_score DESC NULLS LAST;"
         try:
             cur.execute(sql, params)
         except Exception:
-            # fallback se colunas assigned_* ainda não existem
             cur.execute(
                 """
                 SELECT id, name, phone, city, state, niche, category, address,
@@ -135,19 +145,27 @@ def get_all_leads(use_cache=True):
                        lead_problems, lead_services, lead_priority,
                        contacted_at, notes, created_at, scraped_at
                 FROM companies
-                WHERE website_status IN ('sem_site', 'so_social')
+                WHERE lead_class = 'raio'
+                   OR website_status IN ('sem_site', 'so_social')
                    OR website IS NULL OR TRIM(COALESCE(website, '')) = ''
-                   OR lead_class = 'raio'
                 ORDER BY lead_score DESC NULLS LAST;
                 """
             )
+            # se fallback e cliente, filtra em Python se possível
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
+            if not is_adm:
+                leads = []  # sem coluna assigned, cliente não vê lista inteira
+            _cache["leads"][cache_key] = leads
+            _cache["leads_at"][cache_key] = now
+            return leads
+
         rows = cur.fetchall()
         cur.close()
         conn.close()
         leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
-        # client sem id não vê nada (força setup de users)
-        if role != "admin" and not uid:
-            leads = []
         _cache["leads"][cache_key] = leads
         _cache["leads_at"][cache_key] = now
         return leads

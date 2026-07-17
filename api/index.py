@@ -75,14 +75,14 @@ def _session_user():
 
 
 def _is_admin() -> bool:
-    # Só admin de verdade (Patrão) — não promove qualquer login legado
-    role = (_session_user().get("role") or "").lower()
-    if role == "admin":
-        return True
+    # SOMENTE a conta principal (patrao) com role admin.
+    # username "admin" (amigo) NUNCA vê menu Usuários, mesmo se role estiver errado no banco.
     uname = (_session_user().get("username") or "").lower()
-    if uname and uname == (DASHBOARD_USER or "patrao").lower():
-        return True
-    return False
+    role = (_session_user().get("role") or "").lower()
+    principal = (DASHBOARD_USER or "patrao").lower()
+    if uname in ("admin", "teste_amigo"):
+        return False
+    return role == "admin" and uname == principal
 
 
 def get_all_leads(use_cache=True):

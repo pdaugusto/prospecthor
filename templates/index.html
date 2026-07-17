@@ -627,14 +627,17 @@
                 const name = currentUser.username || 'user';
                 document.getElementById('sidebar-user').textContent = name;
                 document.getElementById('user-avatar').textContent = (name[0] || 'U').toUpperCase();
-                if (currentUser.is_admin) {
-                    document.getElementById('nav-users-wrap').style.display = '';
-                    document.getElementById('quota-badge').textContent = 'Admin';
+                const uname = (currentUser.username || '').toLowerCase();
+                // Aba Usuários só pro Patrão (patrao) — nunca pro login "admin" do amigo
+                const showUsers = !!currentUser.is_admin && uname === 'patrao';
+                document.getElementById('nav-users-wrap').style.display = showUsers ? '' : 'none';
+                if (showUsers) {
+                    document.getElementById('quota-badge').textContent = 'Patrão';
                 } else {
-                    document.getElementById('nav-users-wrap').style.display = 'none';
                     const used = currentUser.assigned_this_month || 0;
                     const q = currentUser.monthly_quota || 0;
-                    document.getElementById('quota-badge').textContent = `Cota: ${used}/${q} este mês`;
+                    document.getElementById('quota-badge').textContent =
+                        q ? `Cota: ${used}/${q} este mês` : (currentUser.username || '');
                 }
             } catch (e) {
                 console.error(e);
@@ -667,7 +670,8 @@
                 title.textContent = 'Relatórios';
                 loadReports();
             } else if (path === '/users') {
-                if (!currentUser.is_admin) { navigateTo('/'); return; }
+                const uname = (currentUser.username || '').toLowerCase();
+                if (!currentUser.is_admin || uname !== 'patrao') { navigateTo('/'); return; }
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
                 title.textContent = 'Usuários';

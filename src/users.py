@@ -76,10 +76,11 @@ def ensure_schema() -> None:
             if not cur.fetchone():
                 cur.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ};")
 
-        # seed admin principal (Patrão) se não existir
+        # seed / garante admin principal (patrao)
+        principal = (_ENV_ADMIN_USER or "patrao").lower()
         cur.execute(
-            "SELECT id FROM app_users WHERE lower(username) = lower(%s) LIMIT 1;",
-            (_ENV_ADMIN_USER,),
+            "SELECT id FROM app_users WHERE lower(username) = %s LIMIT 1;",
+            (principal,),
         )
         if not cur.fetchone():
             cur.execute(
@@ -87,20 +88,33 @@ def ensure_schema() -> None:
                 INSERT INTO app_users (username, password_hash, role, monthly_quota, active, label)
                 VALUES (%s, %s, 'admin', 9999, 1, 'Patrão')
                 """,
-                (_ENV_ADMIN_USER.lower(), _hash_password(_ENV_ADMIN_PASS)),
+                (principal, _hash_password(_ENV_ADMIN_PASS)),
             )
-            logger.warning("[Users] Admin principal criado: %s", _ENV_ADMIN_USER)
+            logger.warning("[Users] Admin principal criado: %s", principal)
         else:
-            # garante que o user do .env seja admin principal
             cur.execute(
                 """
                 UPDATE app_users
                 SET role = 'admin', active = 1, monthly_quota = 9999,
-                    label = CASE WHEN label IS NULL OR label = '' THEN 'Patrão' ELSE label END
-                WHERE lower(username) = lower(%s);
+                    label = 'Patrão'
+                WHERE lower(username) = %s;
                 """,
-                (_ENV_ADMIN_USER,),
+                (principal,),
             )
+        # Ninguém mais pode ser admin (ex.: conta "admin" do amigo)
+        cur.execute(
+            """
+            UPDATE app_users
+            SET role = 'client',
+                monthly_quota = CASE WHEN monthly_quota >= 9999 THEN 100 ELSE monthly_quota END,
+                label = CASE
+                    WHEN lower(username) = 'admin' AND (label IS NULL OR label IN ('', 'Administrador', 'Patrão'))
+                    THEN 'Amigo' ELSE COALESCE(label, username)
+                END
+            WHERE role = 'admin' AND lower(username) <> %s;
+            """,
+            (principal,),
+        )
         conn.commit()
         cur.close()
     finally:

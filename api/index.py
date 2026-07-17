@@ -16,8 +16,8 @@ app = Flask(__name__, template_folder="../templates")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "prospector_secret")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-DASHBOARD_USER = os.getenv("DASHBOARD_USER", "admin")
-DASHBOARD_PASS = os.getenv("DASHBOARD_PASS", "senha123")
+DASHBOARD_USER = os.getenv("DASHBOARD_USER", "patrao")
+DASHBOARD_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
 
 _SOCIAL_MARKERS = (
     "instagram.com", "facebook.com", "fb.com", "linktr.ee",
@@ -69,21 +69,18 @@ def _is_raio_lead(lead):
 def _session_user():
     return {
         "id": session.get("user_id"),
-        "username": session.get("username") or "admin",
-        "role": session.get("role") or "admin",
+        "username": session.get("username") or "",
+        "role": session.get("role") or "client",
     }
 
 
 def _is_admin() -> bool:
-    # Admin se role=admin OU se for o usuário do .env (sessões antigas sem role)
+    # Só admin de verdade (Patrão) — não promove qualquer login legado
     role = (_session_user().get("role") or "").lower()
     if role == "admin":
         return True
     uname = (_session_user().get("username") or "").lower()
-    if uname and uname == (DASHBOARD_USER or "admin").lower():
-        return True
-    # login legado só com logged_in
-    if session.get("logged_in") and not session.get("role") and not session.get("user_id"):
+    if uname and uname == (DASHBOARD_USER or "patrao").lower():
         return True
     return False
 
@@ -214,13 +211,14 @@ def login():
             from src.users import authenticate
             user = authenticate(username, password)
         except Exception:
-            # fallback env
-            if username == DASHBOARD_USER and password == DASHBOARD_PASS:
+            # fallback env = Patrão
+            if (username or "").lower() == (DASHBOARD_USER or "").lower() and password == DASHBOARD_PASS:
                 user = {
                     "id": 0,
-                    "username": username,
+                    "username": (DASHBOARD_USER or "patrao").lower(),
                     "role": "admin",
                     "monthly_quota": 9999,
+                    "label": "Patrão",
                 }
         if user:
             session["logged_in"] = True

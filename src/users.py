@@ -23,8 +23,9 @@ load_dotenv()
 logger = logging.getLogger("users")
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "")
-_ENV_ADMIN_USER = os.getenv("DASHBOARD_USER", "admin")
-_ENV_ADMIN_PASS = os.getenv("DASHBOARD_PASS", "senha123")
+# Admin principal do painel (Patrão). Pode sobrescrever no .env / Vercel.
+_ENV_ADMIN_USER = os.getenv("DASHBOARD_USER", "patrao")
+_ENV_ADMIN_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
 
 
 def _hash_password(password: str) -> str:
@@ -75,20 +76,31 @@ def ensure_schema() -> None:
             if not cur.fetchone():
                 cur.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ};")
 
-        # seed admin a partir do .env se não existir
+        # seed admin principal (Patrão) se não existir
         cur.execute(
-            "SELECT id FROM app_users WHERE username = %s LIMIT 1;",
+            "SELECT id FROM app_users WHERE lower(username) = lower(%s) LIMIT 1;",
             (_ENV_ADMIN_USER,),
         )
         if not cur.fetchone():
             cur.execute(
                 """
                 INSERT INTO app_users (username, password_hash, role, monthly_quota, active, label)
-                VALUES (%s, %s, 'admin', 9999, 1, 'Administrador')
+                VALUES (%s, %s, 'admin', 9999, 1, 'Patrão')
                 """,
-                (_ENV_ADMIN_USER, _hash_password(_ENV_ADMIN_PASS)),
+                (_ENV_ADMIN_USER.lower(), _hash_password(_ENV_ADMIN_PASS)),
             )
-            logger.warning("[Users] Admin criado: %s", _ENV_ADMIN_USER)
+            logger.warning("[Users] Admin principal criado: %s", _ENV_ADMIN_USER)
+        else:
+            # garante que o user do .env seja admin principal
+            cur.execute(
+                """
+                UPDATE app_users
+                SET role = 'admin', active = 1, monthly_quota = 9999,
+                    label = CASE WHEN label IS NULL OR label = '' THEN 'Patrão' ELSE label END
+                WHERE lower(username) = lower(%s);
+                """,
+                (_ENV_ADMIN_USER,),
+            )
         conn.commit()
         cur.close()
     finally:
@@ -96,28 +108,32 @@ def ensure_schema() -> None:
 
 
 def authenticate(username: str, password: str) -> dict[str, Any] | None:
-    """Valida login. Fallback: DASHBOARD_USER/PASS do .env como admin."""
+    """Valida login. Fallback: DASHBOARD_USER/PASS do .env como admin (Patrão)."""
     username = (username or "").strip()
     password = password or ""
     if not username:
         return None
 
-    # Fallback env (mesmo sem tabela / DB down)
-    if username == _ENV_ADMIN_USER and password == _ENV_ADMIN_PASS:
+    uname_l = username.lower()
+    env_admin_l = (_ENV_ADMIN_USER or "patrao").lower()
+
+    # Fallback env = Patrão (mesmo sem tabela / DB down)
+    if uname_l == env_admin_l and password == _ENV_ADMIN_PASS:
         try:
             ensure_schema()
-            u = get_user_by_username(username)
+            u = get_user_by_username(env_admin_l)
             if u:
+                u["role"] = "admin"
                 return u
         except Exception:
             pass
         return {
             "id": 0,
-            "username": username,
+            "username": env_admin_l,
             "role": "admin",
             "monthly_quota": 9999,
             "active": 1,
-            "label": "Administrador",
+            "label": "Patrão",
             "cities": [],
             "niches": [],
         }
@@ -130,7 +146,7 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
             """
             SELECT id, username, role, monthly_quota, active, cities, niches, label
             FROM app_users
-            WHERE username = %s AND password_hash = %s
+            WHERE lower(username) = lower(%s) AND password_hash = %s
             LIMIT 1;
             """,
             (username, _hash_password(password)),

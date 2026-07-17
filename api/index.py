@@ -75,14 +75,20 @@ def _session_user():
 
 
 def _is_admin() -> bool:
-    # SOMENTE a conta principal (patrao) com role admin.
-    # username "admin" (amigo) NUNCA vê menu Usuários, mesmo se role estiver errado no banco.
-    uname = (_session_user().get("username") or "").lower()
-    role = (_session_user().get("role") or "").lower()
-    principal = (DASHBOARD_USER or "patrao").lower()
+    """
+    Admin do painel = conta patrao (Patrão).
+    username "admin" (amigo) NUNCA é admin, mesmo se .env ainda tiver DASHBOARD_USER=admin.
+    """
+    uname = (_session_user().get("username") or "").lower().strip()
+    role = (_session_user().get("role") or "").lower().strip()
+    # bloqueio explícito das contas de cliente
     if uname in ("admin", "teste_amigo"):
         return False
-    return role == "admin" and uname == principal
+    # Patrão sempre admin se a sessão disser admin OU se o login for patrao
+    if uname in ("patrao", "patrão"):
+        return True
+    # fallback: role admin + não é conta bloqueada
+    return role == "admin"
 
 
 def get_all_leads(use_cache=True):
@@ -251,13 +257,19 @@ def dashboard(lead_id=None):
 @login_required
 def api_me():
     u = _session_user()
+    is_adm = _is_admin()
+    # reforço: se logou como patrao, força is_admin na resposta
+    uname = (u.get("username") or "").lower()
+    if uname in ("patrao", "patrão"):
+        is_adm = True
+        session["role"] = "admin"
     payload = {
         "id": u.get("id"),
         "username": u.get("username"),
-        "role": u.get("role"),
-        "is_admin": _is_admin(),
+        "role": "admin" if is_adm else (u.get("role") or "client"),
+        "is_admin": is_adm,
     }
-    if u.get("id") and not _is_admin():
+    if u.get("id") and not is_adm:
         try:
             from src.users import count_assigned_this_month, get_user_by_id
             full = get_user_by_id(int(u["id"])) or {}
@@ -266,6 +278,8 @@ def api_me():
             payload["label"] = full.get("label") or u.get("username")
         except Exception:
             pass
+    elif is_adm:
+        payload["label"] = "Patrão"
     return jsonify(payload)
 
 

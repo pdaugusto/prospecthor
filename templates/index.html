@@ -627,10 +627,12 @@
                 const name = currentUser.username || 'user';
                 document.getElementById('sidebar-user').textContent = name;
                 document.getElementById('user-avatar').textContent = (name[0] || 'U').toUpperCase();
-                const uname = (currentUser.username || '').toLowerCase();
-                // Aba Usuários só pro Patrão (patrao) — nunca pro login "admin" do amigo
-                const showUsers = !!currentUser.is_admin && uname === 'patrao';
-                document.getElementById('nav-users-wrap').style.display = showUsers ? '' : 'none';
+                const uname = (currentUser.username || '').toLowerCase().trim();
+                // Aba Usuários: API manda is_admin; reforço local pro patrao
+                const showUsers = !!(currentUser.is_admin || uname === 'patrao' || uname === 'patrão')
+                    && uname !== 'admin' && uname !== 'teste_amigo';
+                const navUsers = document.getElementById('nav-users-wrap');
+                if (navUsers) navUsers.style.display = showUsers ? '' : 'none';
                 if (showUsers) {
                     document.getElementById('quota-badge').textContent = 'Patrão';
                 } else {
@@ -670,8 +672,10 @@
                 title.textContent = 'Relatórios';
                 loadReports();
             } else if (path === '/users') {
-                const uname = (currentUser.username || '').toLowerCase();
-                if (!currentUser.is_admin || uname !== 'patrao') { navigateTo('/'); return; }
+                const uname = (currentUser.username || '').toLowerCase().trim();
+                const canUsers = !!(currentUser.is_admin || uname === 'patrao')
+                    && uname !== 'admin' && uname !== 'teste_amigo';
+                if (!canUsers) { navigateTo('/'); return; }
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
                 title.textContent = 'Usuários';

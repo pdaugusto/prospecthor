@@ -393,8 +393,7 @@ def api_impersonate_start():
         t_role = (target.get("role") or "").lower()
         if t_user == "patrao" or t_role == "admin":
             return jsonify({"error": "Não é permitido impersonate de admin/Patrão"}), 400
-        if not target.get("active"):
-            return jsonify({"error": "Usuário inativo"}), 400
+        # permite ver mesmo se ATIVO off (só não recebe leads do bot)
 
         # guarda sessão real
         session["impersonating"] = True

@@ -913,10 +913,10 @@
                     if (isPatrao) {
                         actions = `<button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar (você)</button>`;
                     } else {
-                        const canImp = !!u.active;
+                        // Ver como sempre visível (mesmo se ATIVO off — útil pra debug)
                         actions = `
                             <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                                ${canImp ? `<button type="button" class="btn btn-sm" data-uid="${uid}" data-label="${esc(u.label || uname)}" data-act="impersonate" style="border-color:#f59e0b;color:#f59e0b;">Ver como</button>` : ''}
+                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-label="${esc(u.label || uname)}" data-act="impersonate" style="border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.12);">Ver como</button>
                                 <button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="quota0" style="border-color:var(--warning);color:var(--warning);">Cota 0</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="reset" style="border-color:var(--neon);color:var(--neon);">Zerar mês</button>

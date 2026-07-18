@@ -23,7 +23,8 @@ load_dotenv()
 logger = logging.getLogger("users")
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "")
-# Admin principal do painel (Patrão). Pode sobrescrever no .env / Vercel.
+# Login do Patrão (fixo). Nunca use "admin" aqui — admin é a conta do amigo.
+_PRINCIPAL_USERNAME = "patrao"
 _ENV_ADMIN_USER = os.getenv("DASHBOARD_USER", "patrao")
 _ENV_ADMIN_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
 
@@ -76,8 +77,8 @@ def ensure_schema() -> None:
             if not cur.fetchone():
                 cur.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ};")
 
-        # seed / garante admin principal (patrao)
-        principal = (_ENV_ADMIN_USER or "patrao").lower()
+        # Admin principal FIXO = patrao (nunca o username "admin" do amigo)
+        principal = _PRINCIPAL_USERNAME
         cur.execute(
             "SELECT id FROM app_users WHERE lower(username) = %s LIMIT 1;",
             (principal,),
@@ -92,28 +93,41 @@ def ensure_schema() -> None:
             )
             logger.warning("[Users] Admin principal criado: %s", principal)
         else:
+            # Só garante role/admin do patrao — NÃO sobrescreve label se já customizado
             cur.execute(
                 """
                 UPDATE app_users
-                SET role = 'admin', active = 1, monthly_quota = 9999,
-                    label = 'Patrão'
+                SET role = 'admin', active = 1, monthly_quota = 9999
                 WHERE lower(username) = %s;
                 """,
                 (principal,),
             )
-        # Ninguém mais pode ser admin (ex.: conta "admin" do amigo)
+            cur.execute(
+                """
+                UPDATE app_users
+                SET label = 'Patrão'
+                WHERE lower(username) = %s
+                  AND (label IS NULL OR TRIM(label) = '' OR label IN ('Administrador'));
+                """,
+                (principal,),
+            )
+        # Conta "admin" e qualquer outro NÃO-patrao nunca é admin do sistema
         cur.execute(
             """
             UPDATE app_users
             SET role = 'client',
-                monthly_quota = CASE WHEN monthly_quota >= 9999 THEN 100 ELSE monthly_quota END,
-                label = CASE
-                    WHEN lower(username) = 'admin' AND (label IS NULL OR label IN ('', 'Administrador', 'Patrão'))
-                    THEN 'Amigo' ELSE COALESCE(label, username)
-                END
-            WHERE role = 'admin' AND lower(username) <> %s;
+                monthly_quota = CASE WHEN monthly_quota >= 9999 THEN 100 ELSE monthly_quota END
+            WHERE lower(username) <> %s AND role = 'admin';
             """,
             (principal,),
+        )
+        # Se o amigo "admin" ficou com label errado "Patrão", corrige uma vez
+        cur.execute(
+            """
+            UPDATE app_users
+            SET label = 'Amigo'
+            WHERE lower(username) = 'admin' AND label = 'Patrão';
+            """
         )
         conn.commit()
         cur.close()
@@ -122,20 +136,19 @@ def ensure_schema() -> None:
 
 
 def authenticate(username: str, password: str) -> dict[str, Any] | None:
-    """Valida login. Fallback: DASHBOARD_USER/PASS do .env como admin (Patrão)."""
+    """Valida login. Fallback env só para conta patrao (nunca para username admin)."""
     username = (username or "").strip()
     password = password or ""
     if not username:
         return None
 
     uname_l = username.lower()
-    env_admin_l = (_ENV_ADMIN_USER or "patrao").lower()
-
-    # Fallback env = Patrão (mesmo sem tabela / DB down)
-    if uname_l == env_admin_l and password == _ENV_ADMIN_PASS:
+    # Fallback env: apenas se o login for explicitamente "patrao"
+    # (ignora DASHBOARD_USER=admin antigo na Vercel)
+    if uname_l == _PRINCIPAL_USERNAME and password == _ENV_ADMIN_PASS:
         try:
             ensure_schema()
-            u = get_user_by_username(env_admin_l)
+            u = get_user_by_username(_PRINCIPAL_USERNAME)
             if u:
                 u["role"] = "admin"
                 return u
@@ -143,7 +156,7 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
             pass
         return {
             "id": 0,
-            "username": env_admin_l,
+            "username": _PRINCIPAL_USERNAME,
             "role": "admin",
             "monthly_quota": 9999,
             "active": 1,

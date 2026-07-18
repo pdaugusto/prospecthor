@@ -16,7 +16,8 @@ app = Flask(__name__, template_folder="../templates")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "prospector_secret")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-DASHBOARD_USER = os.getenv("DASHBOARD_USER", "patrao")
+# Patrão fixo — não usar "admin" (conta do amigo)
+DASHBOARD_USER = "patrao"
 DASHBOARD_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
 
 _SOCIAL_MARKERS = (

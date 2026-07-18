@@ -1205,6 +1205,37 @@
                     </div>`;
                 }
 
+                // Patrão: carrega usuários p/ seletor de dono do lead
+                let assignHtml = '';
+                const canAssign = !!(currentUser.is_admin || (currentUser.username || '').toLowerCase() === 'patrao');
+                if (canAssign) {
+                    if (!usersCache.length) {
+                        try {
+                            const ur = await fetch('/api/users?_=' + Date.now());
+                            if (ur.ok) usersCache = await ur.json();
+                        } catch (_) {}
+                    }
+                    const clients = (usersCache || []).filter(u =>
+                        u.active && (u.username || '').toLowerCase() !== 'patrao'
+                    );
+                    const curOwner = lead.assigned_to != null ? String(lead.assigned_to) : '';
+                    const opts = ['<option value="">— Livre (ninguém) —</option>']
+                        .concat(clients.map(u =>
+                            `<option value="${u.id}" ${curOwner === String(u.id) ? 'selected' : ''}>${esc(u.label || u.username)} (@${esc(u.username)})</option>`
+                        )).join('');
+                    assignHtml = `
+                        <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
+                            <div class="section-title" style="color:var(--neon);">Enviar lead para</div>
+                            <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+                                Escolha o cliente que vai ver este lead. Você (Patrão) continua vendo todos.
+                            </p>
+                            <select id="assign-user-select" class="filter-select" style="width:100%;margin-bottom:10px;background:#070b12;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;">
+                                ${opts}
+                            </select>
+                            <button type="button" class="btn btn-primary" style="width:100%;" onclick="assignLeadToUser(${lead.id})">Salvar dono do lead</button>
+                        </div>`;
+                }
+
                 wrap.innerHTML = `
                     <div>
                         <div class="panel" style="margin-bottom:14px;">
@@ -1219,6 +1250,7 @@
                                 <li><strong>Telefone</strong> ${lead.phone ? `<a href="tel:${tel}">${esc(lead.phone)}</a>` : '—'}</li>
                                 <li><strong>Cidade</strong> ${esc(lead.city || '—')}${lead.state ? ' / ' + esc(lead.state) : ''}</li>
                                 <li><strong>Nicho</strong> ${esc((lead.niche || '—').toUpperCase())}</li>
+                                <li><strong>Dono</strong> <span id="lead-owner-label">${lead.assigned_to ? ('ID ' + lead.assigned_to) : 'Livre'}</span></li>
                                 <li><strong>Google</strong> ${lead.rating != null ? esc(lead.rating) + ' (' + (lead.review_count || 0) + ' avaliações)' : '—'}</li>
                                 <li><strong>Instagram</strong> ${lead.instagram_url ? `<a href="${esc(lead.instagram_url)}" target="_blank" rel="noopener">@${esc(lead.instagram_username || 'perfil')}</a>` : 'Não encontrado'}</li>
                                 <li><strong>Site</strong> <span style="color:var(--danger);">Sem site próprio</span></li>
@@ -1239,6 +1271,7 @@
                         </div>
                     </div>
                     <div>
+                        ${assignHtml}
                         <div class="panel" style="margin-bottom:14px;">
                             <div class="section-title">Ações</div>
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -1272,10 +1305,39 @@
             }
         }
 
+        async function assignLeadToUser(leadId) {
+            const sel = document.getElementById('assign-user-select');
+            if (!sel) return;
+            const val = sel.value;
+            const assigned_to = val === '' ? null : parseInt(val, 10);
+            try {
+                const res = await fetch('/api/leads/' + leadId + '/assign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assigned_to })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Erro ao atribuir lead');
+                    return;
+                }
+                leadsCacheAt = 0;
+                const name = val
+                    ? (usersCache.find(u => String(u.id) === val)?.label
+                        || usersCache.find(u => String(u.id) === val)?.username
+                        || val)
+                    : 'Livre';
+                alert('Lead enviado para: ' + name + '\n\nO cliente só vê se estiver atribuído a ele. Você continua vendo todos.');
+                loadDetail(leadId);
+            } catch (e) {
+                alert('Falha: ' + e);
+            }
+        }
+
         async function updateStatus(id, status) {
             try {
                 await fetch(`/api/leads/${id}/status`, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status, notes: status === 'convertido' || status === 'descartado' ? status.charAt(0).toUpperCase() + status.slice(1) : undefined })
                 });

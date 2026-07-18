@@ -316,14 +316,14 @@ def api_lead_detail(lead_id):
     return jsonify(lead)
 
 
-@app.route("/api/leads/<int:lead_id>/status", methods=["PUT"])
+@app.route("/api/leads/<int:lead_id>/status", methods=["PUT", "POST"])
 @login_required
 def api_update_status(lead_id):
     # client só altera lead dele
     lead = get_lead_by_id(lead_id)
     if not lead:
         return jsonify({"error": "Not found"}), 404
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -346,7 +346,7 @@ def api_update_status(lead_id):
         if _is_admin() and "assigned_to" in data:
             from src.users import manual_assign
             aid = data.get("assigned_to")
-            manual_assign(lead_id, int(aid) if aid else None)
+            manual_assign(lead_id, int(aid) if aid not in (None, "", 0, "0") else None)
         conn.commit()
         cur.close()
         conn.close()
@@ -579,16 +579,20 @@ def api_users_delete(user_id):
         return jsonify({"error": str(e)}), 400
 
 
-@app.route("/api/leads/<int:lead_id>/assign", methods=["PUT"])
+@app.route("/api/leads/<int:lead_id>/assign", methods=["PUT", "POST"])
 @login_required
 @admin_required
 def api_lead_assign(lead_id):
+    """Patrão define dono do lead: assigned_to = user_id ou null (livre)."""
     from src.users import manual_assign
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     aid = data.get("assigned_to")
-    ok = manual_assign(lead_id, int(aid) if aid not in (None, "", 0, "0") else None)
+    if aid in (None, "", 0, "0", "null"):
+        ok = manual_assign(lead_id, None)
+    else:
+        ok = manual_assign(lead_id, int(aid))
     _invalidate_cache()
-    return jsonify({"success": ok})
+    return jsonify({"success": ok, "assigned_to": None if aid in (None, "", 0, "0", "null") else int(aid)})
 
 
 @app.route("/api/settings")

@@ -110,6 +110,7 @@ def run_now(
 
     from src.checkpoint import CompanyCheckpoint
     from src.coverage import list_pending_jobs, mark_done, is_done
+    from src.bot_status import set_status, add_log, increment_session_leads
 
     known = CompanyCheckpoint.load()
     logger.info(f"Empresas já no banco (place_id): {len(known)}")
@@ -138,6 +139,8 @@ def run_now(
 
         if not jobs:
             logger.warning("Nenhum job pendente. Todas as áreas ativas já foram varridas.")
+            set_status("parado", last_job="fila vazia", last_leads=0, session_leads=0)
+            add_log("Fila vazia — nada a processar")
             return
 
         from src.scheduler import LeadGenerationPipeline
@@ -148,48 +151,82 @@ def run_now(
             f"1º: {jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']} | "
             f"Instagram off por padrão"
         )
+        set_status(
+            "rodando",
+            last_job=f"{jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']}",
+            session_leads=0,
+        )
+        add_log(f"Sessão iniciada: {len(jobs)} jobs na fila")
 
         ran = 0
         total_leads = 0
-        for idx, job in enumerate(jobs, start=1):
-            n_id = job["niche"]
-            c_name = job["city"]
-            c_state = job["state"]
-            area = job["area"]
-            q_term = job["query_term"]
-            max_r = job.get("max_results", 12)
+        try:
+            for idx, job in enumerate(jobs, start=1):
+                n_id = job["niche"]
+                c_name = job["city"]
+                c_state = job["state"]
+                area = job["area"]
+                q_term = job["query_term"]
+                max_r = job.get("max_results", 12)
 
-            if is_done(n_id, c_name, c_state, area):
-                logger.info(f"[{idx}/{len(jobs)}] ⏭ já coberto: {c_name}/{area}/{n_id}")
-                continue
+                if is_done(n_id, c_name, c_state, area):
+                    logger.info(f"[{idx}/{len(jobs)}] ⏭ já coberto: {c_name}/{area}/{n_id}")
+                    continue
 
-            try:
-                logger.info(
-                    f"[{idx}/{len(jobs)}] ▶ {n_id} | {c_name}-{c_state} | "
-                    f"bairro={area} | meta={max_r}"
-                )
-                found = pipeline.execute_flow(
-                    niche=n_id,
-                    city=c_name,
-                    state=c_state,
-                    query_term=q_term,
-                    max_results=max_r,
-                    focus_area=area,
-                    skip_instagram=True,
-                )
-                mark_done(n_id, c_name, c_state, area, leads_found=found)
-                ran += 1
-                total_leads += found
-            except Exception as exc:
-                logger.error(
-                    f"Falha {n_id} | {c_name}/{area}: {exc} "
-                    f"(área NÃO marcada — retoma depois)"
-                )
+                job_label = f"{n_id} | {c_name}/{area}"
+                try:
+                    logger.info(
+                        f"[{idx}/{len(jobs)}] ▶ {n_id} | {c_name}-{c_state} | "
+                        f"bairro={area} | meta={max_r}"
+                    )
+                    set_status("rodando", last_job=job_label, session_leads=total_leads)
+                    add_log(f"[{idx}/{len(jobs)}] {job_label}")
+                    found = pipeline.execute_flow(
+                        niche=n_id,
+                        city=c_name,
+                        state=c_state,
+                        query_term=q_term,
+                        max_results=max_r,
+                        focus_area=area,
+                        skip_instagram=True,
+                    )
+                    mark_done(n_id, c_name, c_state, area, leads_found=found)
+                    ran += 1
+                    total_leads += found
+                    if found:
+                        increment_session_leads(found)
+                        add_log(f"+{found} leads em {job_label}")
+                except Exception as exc:
+                    logger.error(
+                        f"Falha {n_id} | {c_name}/{area}: {exc} "
+                        f"(área NÃO marcada — retoma depois)"
+                    )
+                    add_log(f"ERRO {job_label}: {exc}", level="ERROR")
 
-        logger.info(
-            f"Sessão ok: {ran} áreas | {total_leads} leads NOVOS sem site. "
-            f"Pode parar a qualquer momento; o que entrou já tem score."
-        )
+            set_status(
+                "parado",
+                last_leads=total_leads,
+                session_leads=total_leads,
+                last_job=f"ok: {ran} áreas, {total_leads} leads",
+            )
+            add_log(f"Sessão finalizada: {ran} áreas | {total_leads} leads novos")
+            logger.info(
+                f"Sessão ok: {ran} áreas | {total_leads} leads NOVOS sem site. "
+                f"Pode parar a qualquer momento; o que entrou já tem score."
+            )
+        except KeyboardInterrupt:
+            set_status(
+                "parado",
+                last_leads=total_leads,
+                session_leads=total_leads,
+                last_job=f"interrompido: {total_leads} leads",
+            )
+            add_log(f"Interrompido pelo usuário ({total_leads} leads na sessão)", level="WARN")
+            raise
+        except Exception as exc:
+            set_status("erro", last_error=str(exc), last_job="falha na sessão")
+            add_log(f"Falha da sessão: {exc}", level="ERROR")
+            raise
     else:
         state_val = estado or "RS"
         from src.scheduler import LeadGenerationPipeline
@@ -207,6 +244,8 @@ def run_now(
                 except Exception:
                     pass
 
+            set_status("rodando", last_job=f"{niche} {cidade}", session_leads=0)
+            add_log(f"Busca manual: {niche} em {cidade}-{state_val}")
             found = pipeline.execute_flow(
                 niche=niche,
                 city=cidade,
@@ -217,8 +256,19 @@ def run_now(
                 skip_instagram=True,
             )
             mark_done(niche, cidade, state_val, "_cidade", leads_found=found)
+            if found:
+                increment_session_leads(found)
+            set_status(
+                "parado",
+                last_leads=found,
+                session_leads=found,
+                last_job=f"manual {cidade}: {found} leads",
+            )
+            add_log(f"Manual ok: {found} leads em {cidade}")
         except Exception as exc:
             logger.error(f"Erro ao processar busca manual: {exc}")
+            set_status("erro", last_error=str(exc), last_job=f"manual {cidade}")
+            add_log(f"Erro manual: {exc}", level="ERROR")
             sys.exit(1)
 
 

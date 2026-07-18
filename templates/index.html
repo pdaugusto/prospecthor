@@ -391,6 +391,8 @@
             <li><a onclick="navigateTo('/leads')" id="nav-leads">Leads</a></li>
             <li><a onclick="navigateTo('/reports')" id="nav-reports">Relatórios</a></li>
             <li id="nav-users-wrap" style="display:none;"><a onclick="navigateTo('/users')" id="nav-users">Usuários</a></li>
+            <li id="nav-audit-wrap" style="display:none;"><a onclick="navigateTo('/audit')" id="nav-audit">Auditoria</a></li>
+            <li id="nav-bot-wrap" style="display:none;"><a onclick="navigateTo('/bot')" id="nav-bot">Status do Robô</a></li>
             <li><a href="/api/export/csv" class="nav-download">Exportar CSV</a></li>
         </ul>
         <div class="sidebar-footer">
@@ -458,12 +460,12 @@
                 <table>
                     <thead>
                         <tr>
+                            <th title="Marque quem recebe leads do bot">ATIVO</th>
                             <th>Login</th>
                             <th>Nome</th>
                             <th>Papel</th>
                             <th>Cota/mês</th>
                             <th>Recebidos</th>
-                            <th>Ativo</th>
                             <th style="min-width:280px;">Ações</th>
                         </tr>
                     </thead>
@@ -471,6 +473,52 @@
                 </table>
             </div>
             <p id="users-hint" style="font-size:12px;color:var(--muted);margin-top:10px;"></p>
+        </section>
+
+        <!-- AUDIT (Patrão) -->
+        <section id="view-audit" class="view">
+            <div class="panel" style="margin-bottom:14px;">
+                <h3 style="margin-bottom:10px;">Filtros</h3>
+                <div class="filters" style="margin:0;">
+                    <input type="text" id="audit-user" placeholder="Usuário" style="min-width:120px;">
+                    <input type="text" id="audit-action" placeholder="Ação (ex: status_contactado)" style="min-width:160px;">
+                    <input type="date" id="audit-since" style="min-width:140px;">
+                    <input type="date" id="audit-until" style="min-width:140px;">
+                    <button class="btn btn-primary" type="button" onclick="loadAudit()">Filtrar</button>
+                </div>
+            </div>
+            <div class="table-wrap" style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>Lead / Empresa</th>
+                            <th>Detalhes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- BOT STATUS (Patrão) -->
+        <section id="view-bot" class="view">
+            <div class="stats" style="margin-bottom:14px;">
+                <div class="stat neon"><h3>Status</h3><div class="value" id="bot-status-label" style="font-size:22px;">--</div></div>
+                <div class="stat"><h3>Última execução</h3><div class="value" id="bot-last-run" style="font-size:14px;">--</div></div>
+                <div class="stat"><h3>Leads última sessão</h3><div class="value" id="bot-last-leads">--</div></div>
+                <div class="stat"><h3>Job atual / último</h3><div class="value" id="bot-last-job" style="font-size:13px;">--</div></div>
+            </div>
+            <div class="panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3>Últimos logs</h3>
+                    <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar</button>
+                </div>
+                <div id="bot-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;"></div>
+                <div id="bot-logs" style="font-family:Consolas,monospace;font-size:12px;line-height:1.55;color:var(--muted);max-height:420px;overflow:auto;"></div>
+            </div>
         </section>
 
         <!-- Edit user modal -->
@@ -683,11 +731,13 @@
                 document.getElementById('user-avatar').textContent = (name[0] || 'U').toUpperCase();
                 const uname = (currentUser.username || '').toLowerCase().trim();
                 // Aba Usuários: API manda is_admin; reforço local pro patrao
-                const showUsers = !!(currentUser.is_admin || uname === 'patrao' || uname === 'patrão')
+                const showAdminNav = !!(currentUser.is_admin || uname === 'patrao' || uname === 'patrão')
                     && uname !== 'admin' && uname !== 'teste_amigo';
-                const navUsers = document.getElementById('nav-users-wrap');
-                if (navUsers) navUsers.style.display = showUsers ? '' : 'none';
-                if (showUsers) {
+                ['nav-users-wrap', 'nav-audit-wrap', 'nav-bot-wrap'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = showAdminNav ? '' : 'none';
+                });
+                if (showAdminNav) {
                     document.getElementById('quota-badge').textContent = 'Patrão';
                 } else {
                     const used = currentUser.assigned_this_month || 0;
@@ -726,17 +776,32 @@
                 title.textContent = 'Relatórios';
                 loadReports();
             } else if (path === '/users') {
-                const uname = (currentUser.username || '').toLowerCase().trim();
-                const canUsers = !!(currentUser.is_admin || uname === 'patrao')
-                    && uname !== 'admin' && uname !== 'teste_amigo';
-                if (!canUsers) { navigateTo('/'); return; }
+                if (!isPatraoSession()) { navigateTo('/'); return; }
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
                 title.textContent = 'Usuários';
                 loadUsers();
+            } else if (path === '/audit') {
+                if (!isPatraoSession()) { navigateTo('/'); return; }
+                document.getElementById('view-audit').classList.add('active');
+                document.getElementById('nav-audit').classList.add('active');
+                title.textContent = 'Auditoria';
+                loadAudit();
+            } else if (path === '/bot') {
+                if (!isPatraoSession()) { navigateTo('/'); return; }
+                document.getElementById('view-bot').classList.add('active');
+                document.getElementById('nav-bot').classList.add('active');
+                title.textContent = 'Status do Robô';
+                loadBotStatus();
             } else {
                 navigateTo('/');
             }
+        }
+
+        function isPatraoSession() {
+            const uname = (currentUser.username || '').toLowerCase().trim();
+            return !!(currentUser.is_admin || uname === 'patrao')
+                && uname !== 'admin' && uname !== 'teste_amigo';
         }
 
         let usersCache = [];
@@ -764,6 +829,14 @@
                     const isPatrao = uname.toLowerCase() === 'patrao';
                     const roleLabel = isPatrao ? 'Patrão' : 'Cliente';
                     const uid = Number(u.id);
+                    const active = !!u.active;
+                    const check = isPatrao
+                        ? '<span style="color:var(--muted);font-size:11px;">—</span>'
+                        : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Marque para receber leads do bot">
+                            <input type="checkbox" class="active-toggle" data-uid="${uid}" ${active ? 'checked' : ''}
+                                style="width:18px;height:18px;accent-color:#00d4ff;cursor:pointer;">
+                            <span style="font-size:11px;font-weight:700;color:${active ? 'var(--neon)' : 'var(--muted)'}">${active ? 'ATIVO' : 'OFF'}</span>
+                           </label>`;
                     let actions = '';
                     if (isPatrao) {
                         actions = `<button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar (você)</button>`;
@@ -776,18 +849,17 @@
                                 <button type="button" class="btn btn-sm btn-danger" data-uid="${uid}" data-uname="${esc(uname)}" data-act="del">Remover</button>
                             </div>`;
                     }
-                    return `<tr>
+                    return `<tr style="${!active && !isPatrao ? 'opacity:0.65;' : ''}">
+                        <td>${check}</td>
                         <td><strong>${esc(uname)}</strong></td>
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${u.monthly_quota ?? 0}</td>
                         <td>${u.assigned_this_month || 0}</td>
-                        <td>${u.active ? 'Sim' : 'Não'}</td>
                         <td>${actions}</td>
                     </tr>`;
                 }).join('');
 
-                // Eventos (evita problema de onclick inline)
                 tbody.querySelectorAll('button[data-act]').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const id = parseInt(btn.getAttribute('data-uid'), 10);
@@ -798,16 +870,102 @@
                         else if (act === 'del') quickDeleteUser(id, btn.getAttribute('data-uname') || '');
                     });
                 });
+                tbody.querySelectorAll('input.active-toggle').forEach(cb => {
+                    cb.addEventListener('change', async () => {
+                        const id = parseInt(cb.getAttribute('data-uid'), 10);
+                        const active = cb.checked ? 1 : 0;
+                        const { res, data } = await apiUserUpdate(id, { active });
+                        if (!res.ok) {
+                            alert(data.error || 'Erro ao mudar ATIVO');
+                            cb.checked = !cb.checked;
+                            return;
+                        }
+                        await loadUsers();
+                    });
+                });
 
                 if (hint) {
-                    const clients = usersCache.filter(u => (u.username || '').toLowerCase() !== 'patrao');
-                    hint.textContent = clients.length
-                        ? `Na linha do cliente (ex.: admin) use: Editar · Cota 0 · Zerar mês · Remover. Versão UI v2.`
-                        : 'Só existe a conta Patrão. Crie um cliente acima.';
+                    const activeClients = usersCache.filter(u =>
+                        (u.username || '').toLowerCase() !== 'patrao' && u.active
+                    );
+                    hint.textContent = activeClients.length
+                        ? `ATIVO marcado = recebe leads do bot. Agora ativo(s): ${activeClients.map(u => u.username).join(', ')}. UI v3`
+                        : 'Nenhum cliente ATIVO — o bot grava leads livres (só você vê) até você ativar alguém ou atribuir na mão.';
                 }
             } catch (e) {
                 console.error(e);
                 tbody.innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
+            }
+        }
+
+        async function loadAudit() {
+            const tbody = document.getElementById('audit-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">Carregando...</td></tr>';
+            const params = new URLSearchParams();
+            const user = document.getElementById('audit-user')?.value?.trim();
+            const action = document.getElementById('audit-action')?.value?.trim();
+            const since = document.getElementById('audit-since')?.value;
+            const until = document.getElementById('audit-until')?.value;
+            if (user) params.set('username', user);
+            if (action) params.set('action', action);
+            if (since) params.set('since', since + 'T00:00:00');
+            if (until) params.set('until', until + 'T23:59:59');
+            params.set('limit', '150');
+            try {
+                const res = await fetch('/api/audit?' + params.toString());
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const rows = await res.json();
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhum registro.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(r => `
+                    <tr>
+                        <td style="white-space:nowrap;">${esc((r.created_at || '').replace('T',' ').slice(0,19))}</td>
+                        <td>${esc(r.username || '—')}</td>
+                        <td><strong>${esc(r.action || '')}</strong></td>
+                        <td>${r.lead_id ? ('#' + r.lead_id + ' ') : ''}${esc(r.company_name || '—')}</td>
+                        <td style="font-size:11px;color:var(--muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;">${esc(r.details || '')}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">Erro: ' + esc(String(e.message || e)) + '</td></tr>';
+            }
+        }
+
+        async function loadBotStatus() {
+            try {
+                const res = await fetch('/api/bot-status?_=' + Date.now());
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const st = await res.json();
+                const status = (st.status || 'desconhecido').toLowerCase();
+                const el = document.getElementById('bot-status-label');
+                el.textContent = status.toUpperCase();
+                el.style.color = status === 'rodando' ? 'var(--neon)'
+                    : status === 'erro' ? 'var(--danger)' : 'var(--text)';
+                const last = st.last_finished_at || st.last_started_at || st.updated_at || '—';
+                document.getElementById('bot-last-run').textContent =
+                    String(last).replace('T', ' ').slice(0, 19);
+                document.getElementById('bot-last-leads').textContent =
+                    st.last_leads_count != null ? st.last_leads_count
+                        : (st.session_leads_count != null ? st.session_leads_count : '—');
+                document.getElementById('bot-last-job').textContent = st.last_job || '—';
+                document.getElementById('bot-error').textContent = st.last_error
+                    ? ('Erro: ' + st.last_error) : '';
+                const logs = st.logs || [];
+                document.getElementById('bot-logs').innerHTML = logs.length
+                    ? logs.map(l => {
+                        const c = (l.level || '') === 'ERROR' ? 'var(--danger)'
+                            : (l.level || '') === 'WARN' ? 'var(--warning)' : 'var(--muted)';
+                        return `<div style="color:${c};margin-bottom:6px;">
+                            <span style="opacity:.7">${esc((l.created_at || '').replace('T',' ').slice(0,19))}</span>
+                            [${esc(l.level || 'INFO')}] ${esc(l.message || '')}
+                        </div>`;
+                    }).join('')
+                    : '<div>Nenhum log ainda. Rode o bot no PowerShell para popular.</div>';
+            } catch (e) {
+                document.getElementById('bot-status-label').textContent = 'ERRO';
+                document.getElementById('bot-logs').textContent = String(e);
             }
         }
 

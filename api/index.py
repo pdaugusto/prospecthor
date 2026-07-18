@@ -266,6 +266,8 @@ def logout():
 @app.route("/reports")
 @app.route("/settings")
 @app.route("/users")
+@app.route("/audit")
+@app.route("/bot")
 @login_required
 def dashboard(lead_id=None):
     return render_template("index.html")
@@ -325,6 +327,8 @@ def api_update_status(lead_id):
         return jsonify({"error": "Not found"}), 404
     data = request.get_json(silent=True) or {}
     try:
+        from src.audit import log_action
+        su = _session_user()
         conn = get_db()
         cur = conn.cursor()
         now = datetime.now().isoformat()
@@ -340,13 +344,37 @@ def api_update_status(lead_id):
                     "UPDATE companies SET contacted_at = COALESCE(contacted_at, %s), notes = %s WHERE id = %s",
                     (now, status.capitalize(), lead_id),
                 )
+            log_action(
+                f"status_{status}",
+                user_id=su.get("id"),
+                username=su.get("username"),
+                lead_id=lead_id,
+                company_name=lead.get("name"),
+                details={"status": status},
+            )
         if "notes" in data and data["notes"] is not None:
             cur.execute("UPDATE companies SET notes = %s WHERE id = %s", (data["notes"], lead_id))
+            log_action(
+                "nota",
+                user_id=su.get("id"),
+                username=su.get("username"),
+                lead_id=lead_id,
+                company_name=lead.get("name"),
+                details={"notes_preview": str(data["notes"])[:200]},
+            )
         # admin: reatribuir
         if _is_admin() and "assigned_to" in data:
             from src.users import manual_assign
             aid = data.get("assigned_to")
             manual_assign(lead_id, int(aid) if aid not in (None, "", 0, "0") else None)
+            log_action(
+                "assign",
+                user_id=su.get("id"),
+                username=su.get("username"),
+                lead_id=lead_id,
+                company_name=lead.get("name"),
+                details={"assigned_to": aid},
+            )
         conn.commit()
         cur.close()
         conn.close()
@@ -499,6 +527,7 @@ def api_users_create():
     try:
         from src.users import create_user, ensure_schema
         ensure_schema()
+        from src.audit import log_action
         user = create_user(
             username=data.get("username", ""),
             password=data.get("password", ""),
@@ -507,6 +536,13 @@ def api_users_create():
             cities=data.get("cities") or [],
             niches=data.get("niches") or [],
             label=data.get("label") or "",
+        )
+        su = _session_user()
+        log_action(
+            "user_create",
+            user_id=su.get("id"),
+            username=su.get("username"),
+            details={"created": user.get("username"), "quota": user.get("monthly_quota")},
         )
         _invalidate_cache()
         return jsonify(user), 201
@@ -528,22 +564,50 @@ def api_users_update(user_id):
     action = (data.get("action") or "").lower().strip()
 
     try:
+        from src.audit import log_action
+        su = _session_user()
+
         if action == "delete" or (request.method == "POST" and data.get("_method") == "DELETE"):
+            u0 = get_user_by_id(int(user_id))
             ok = delete_user(int(user_id), reassign_leads_to=None)
+            log_action(
+                "user_delete",
+                user_id=su.get("id"),
+                username=su.get("username"),
+                details={"deleted": (u0 or {}).get("username"), "id": user_id},
+            )
             _invalidate_cache()
             return jsonify({"success": ok})
 
         if action == "reset-month":
             n = reset_month_usage(int(user_id))
-            _invalidate_cache()
             u = get_user_by_id(int(user_id))
+            log_action(
+                "user_reset_month",
+                user_id=su.get("id"),
+                username=su.get("username"),
+                details={"target": (u or {}).get("username"), "rows": n},
+            )
+            _invalidate_cache()
             return jsonify({"success": True, "reset_rows": n, "user": u})
 
         # update normal — só campos enviados
         payload = {k: v for k, v in data.items() if k not in ("action", "_method")}
+        before = get_user_by_id(int(user_id))
         user = update_user(user_id, **payload)
         if not user:
             return jsonify({"error": "Usuário não encontrado"}), 404
+        log_action(
+            "user_update",
+            user_id=su.get("id"),
+            username=su.get("username"),
+            details={
+                "target": user.get("username"),
+                "changes": {k: payload.get(k) for k in payload if k != "password"},
+                "before_active": (before or {}).get("active"),
+                "after_active": user.get("active"),
+            },
+        )
         _invalidate_cache()
         return jsonify({"success": True, "user": user})
     except Exception as e:
@@ -585,14 +649,53 @@ def api_users_delete(user_id):
 def api_lead_assign(lead_id):
     """Patrão define dono do lead: assigned_to = user_id ou null (livre)."""
     from src.users import manual_assign
+    from src.audit import log_action
     data = request.get_json(silent=True) or {}
     aid = data.get("assigned_to")
+    lead = get_lead_by_id(lead_id) or {}
     if aid in (None, "", 0, "0", "null"):
         ok = manual_assign(lead_id, None)
+        assigned = None
     else:
         ok = manual_assign(lead_id, int(aid))
+        assigned = int(aid)
+    su = _session_user()
+    log_action(
+        "assign",
+        user_id=su.get("id"),
+        username=su.get("username"),
+        lead_id=lead_id,
+        company_name=lead.get("name"),
+        details={"assigned_to": assigned},
+    )
     _invalidate_cache()
-    return jsonify({"success": ok, "assigned_to": None if aid in (None, "", 0, "0", "null") else int(aid)})
+    return jsonify({"success": ok, "assigned_to": assigned})
+
+
+@app.route("/api/audit")
+@login_required
+@admin_required
+def api_audit():
+    from src.audit import query_logs, ensure_schema
+    ensure_schema()
+    logs = query_logs(
+        username=request.args.get("username") or None,
+        lead_id=int(request.args["lead_id"]) if request.args.get("lead_id") else None,
+        action=request.args.get("action") or None,
+        since=request.args.get("since") or None,
+        until=request.args.get("until") or None,
+        limit=int(request.args.get("limit") or 150),
+    )
+    return jsonify(logs)
+
+
+@app.route("/api/bot-status")
+@login_required
+@admin_required
+def api_bot_status():
+    from src.bot_status import get_status, ensure_schema
+    ensure_schema()
+    return jsonify(get_status(log_limit=int(request.args.get("limit") or 15)))
 
 
 @app.route("/api/settings")

@@ -68,28 +68,60 @@ def _is_raio_lead(lead):
 
 
 def _session_user():
+    """Usuário efetivo (pode ser o cliente em modo impersonate)."""
     return {
         "id": session.get("user_id"),
         "username": session.get("username") or "",
         "role": session.get("role") or "client",
+        "label": session.get("label") or "",
     }
+
+
+def _real_session_user():
+    """Quem realmente logou (Patrão), mesmo em impersonate."""
+    if session.get("impersonating"):
+        return {
+            "id": session.get("real_user_id"),
+            "username": session.get("real_username") or "patrao",
+            "role": session.get("real_role") or "admin",
+        }
+    return _session_user()
+
+
+def _is_impersonating() -> bool:
+    return bool(session.get("impersonating"))
+
+
+def _is_real_admin() -> bool:
+    """Só o Patrão real (login patrao), nunca o cliente impersonado."""
+    ru = _real_session_user()
+    uname = (ru.get("username") or "").lower().strip()
+    if uname in ("admin", "teste_amigo"):
+        return False
+    if uname in ("patrao", "patrão"):
+        return True
+    return (ru.get("role") or "").lower() == "admin" and uname == "patrao"
 
 
 def _is_admin() -> bool:
     """
-    Admin do painel = conta patrao (Patrão).
-    username "admin" (amigo) NUNCA é admin, mesmo se .env ainda tiver DASHBOARD_USER=admin.
+    Poder de admin no painel (Usuários, Auditoria, Bot, assign).
+    Em impersonate = False (vê como cliente).
     """
-    uname = (_session_user().get("username") or "").lower().strip()
-    role = (_session_user().get("role") or "").lower().strip()
-    # bloqueio explícito das contas de cliente
-    if uname in ("admin", "teste_amigo"):
+    if _is_impersonating():
         return False
-    # Patrão sempre admin se a sessão disser admin OU se o login for patrao
-    if uname in ("patrao", "patrão"):
-        return True
-    # fallback: role admin + não é conta bloqueada
-    return role == "admin"
+    return _is_real_admin()
+
+
+def _audit_actor() -> tuple[int | None, str]:
+    """Username gravado no log: 'patrao (impersonate:admin)' se aplicável."""
+    if _is_impersonating():
+        real = _real_session_user()
+        eff = _session_user()
+        uname = f"{real.get('username') or 'patrao'} (impersonate:{eff.get('username') or '?'})"
+        return real.get("id"), uname
+    u = _session_user()
+    return u.get("id"), (u.get("username") or "sistema")
 
 
 def get_all_leads(use_cache=True):
@@ -213,12 +245,31 @@ def login_required(f):
 
 
 def admin_required(f):
+    """Rotas só do Patrão real (bloqueia durante impersonate)."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if not session.get("logged_in"):
             return jsonify({"error": "Unauthorized"}), 401
-        if not _is_admin():
+        if not _is_real_admin():
             return jsonify({"error": "Forbidden"}), 403
+        if _is_impersonating() and request.path.startswith("/api/"):
+            # impersonate: só bloqueia rotas admin (users/audit/bot)
+            blocked = (
+                request.path.startswith("/api/users")
+                or request.path.startswith("/api/audit")
+                or request.path.startswith("/api/bot-status")
+                or request.path.startswith("/api/impersonate")
+                and request.path.rstrip("/").endswith("/impersonate")
+            )
+            # allow stop impersonate
+            if request.path.rstrip("/").endswith("/impersonate/stop"):
+                return f(*args, **kwargs)
+            if (
+                request.path.startswith("/api/users")
+                or request.path.startswith("/api/audit")
+                or request.path.startswith("/api/bot-status")
+            ):
+                return jsonify({"error": "Indisponível em modo impersonate. Volte à sua conta."}), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -246,10 +297,12 @@ def login():
                     "label": "Patrão",
                 }
         if user:
+            session.clear()
             session["logged_in"] = True
             session["user_id"] = user.get("id")
             session["username"] = user.get("username")
             session["role"] = user.get("role") or "client"
+            session["label"] = user.get("label") or user.get("username")
             return redirect("/")
         error = "Usuário ou senha incorretos."
     return render_template("login.html", error=error)
@@ -278,30 +331,135 @@ def dashboard(lead_id=None):
 @login_required
 def api_me():
     u = _session_user()
-    is_adm = _is_admin()
-    # reforço: se logou como patrao, força is_admin na resposta
-    uname = (u.get("username") or "").lower()
-    if uname in ("patrao", "patrão"):
-        is_adm = True
-        session["role"] = "admin"
+    real = _real_session_user()
+    imp = _is_impersonating()
+    is_adm = _is_admin()  # False se impersonate
+    is_real_adm = _is_real_admin()
+
     payload = {
         "id": u.get("id"),
         "username": u.get("username"),
         "role": "admin" if is_adm else (u.get("role") or "client"),
         "is_admin": is_adm,
+        "is_real_admin": is_real_adm,
+        "impersonating": imp,
+        "label": u.get("label") or u.get("username"),
     }
-    if u.get("id") and not is_adm:
+    if imp:
+        payload["real_username"] = real.get("username")
+        payload["real_user_id"] = real.get("id")
+        payload["impersonate_label"] = (
+            session.get("impersonate_label")
+            or u.get("label")
+            or u.get("username")
+        )
+        # em impersonate: menu admin some, mas banner usa is_real_admin
+        payload["is_admin"] = False
+        payload["role"] = "client"
+
+    if u.get("id") and (not is_adm or imp):
         try:
             from src.users import count_assigned_this_month, get_user_by_id
             full = get_user_by_id(int(u["id"])) or {}
             payload["monthly_quota"] = full.get("monthly_quota", 0)
             payload["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
             payload["label"] = full.get("label") or u.get("username")
+            if imp:
+                payload["impersonate_label"] = payload["label"]
         except Exception:
             pass
-    elif is_adm:
+    elif is_adm and not imp:
         payload["label"] = "Patrão"
     return jsonify(payload)
+
+
+@app.route("/api/impersonate", methods=["POST"])
+@login_required
+def api_impersonate_start():
+    """Patrão assume visão de um cliente (não de outro admin)."""
+    if not _is_real_admin() or _is_impersonating():
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True) or {}
+    target_id = data.get("user_id")
+    if not target_id:
+        return jsonify({"error": "user_id obrigatório"}), 400
+    try:
+        from src.users import get_user_by_id
+        from src.audit import log_action
+        target = get_user_by_id(int(target_id))
+        if not target:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+        t_user = (target.get("username") or "").lower()
+        t_role = (target.get("role") or "").lower()
+        if t_user == "patrao" or t_role == "admin":
+            return jsonify({"error": "Não é permitido impersonate de admin/Patrão"}), 400
+        if not target.get("active"):
+            return jsonify({"error": "Usuário inativo"}), 400
+
+        # guarda sessão real
+        session["impersonating"] = True
+        session["real_user_id"] = session.get("user_id")
+        session["real_username"] = session.get("username")
+        session["real_role"] = session.get("role") or "admin"
+        # assume cliente
+        session["user_id"] = target.get("id")
+        session["username"] = target.get("username")
+        session["role"] = "client"
+        session["label"] = target.get("label") or target.get("username")
+        session["impersonate_label"] = session["label"]
+
+        log_action(
+            "impersonate_start",
+            user_id=session.get("real_user_id"),
+            username=f"{session.get('real_username')} (impersonate:{target.get('username')})",
+            details={"target_id": target.get("id"), "target": target.get("username")},
+        )
+        _invalidate_cache()
+        return jsonify({
+            "success": True,
+            "impersonating": True,
+            "username": target.get("username"),
+            "label": session["label"],
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/impersonate/stop", methods=["POST"])
+@login_required
+def api_impersonate_stop():
+    """Volta à conta do Patrão."""
+    if not _is_impersonating():
+        return jsonify({"success": True, "impersonating": False})
+    if not _is_real_admin():
+        return jsonify({"error": "Forbidden"}), 403
+    try:
+        from src.audit import log_action
+        target = session.get("username")
+        real_id = session.get("real_user_id")
+        real_user = session.get("real_username") or "patrao"
+        real_role = session.get("real_role") or "admin"
+
+        log_action(
+            "impersonate_stop",
+            user_id=real_id,
+            username=f"{real_user} (impersonate:{target})",
+            details={"was": target},
+        )
+
+        session["user_id"] = real_id
+        session["username"] = real_user
+        session["role"] = real_role
+        session["label"] = "Patrão"
+        session.pop("impersonating", None)
+        session.pop("real_user_id", None)
+        session.pop("real_username", None)
+        session.pop("real_role", None)
+        session.pop("impersonate_label", None)
+        _invalidate_cache()
+        return jsonify({"success": True, "impersonating": False, "username": real_user})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @app.route("/api/leads")
@@ -329,7 +487,7 @@ def api_update_status(lead_id):
     data = request.get_json(silent=True) or {}
     try:
         from src.audit import log_action
-        su = _session_user()
+        audit_uid, audit_uname = _audit_actor()
         conn = get_db()
         cur = conn.cursor()
         now = datetime.now().isoformat()
@@ -347,31 +505,31 @@ def api_update_status(lead_id):
                 )
             log_action(
                 f"status_{status}",
-                user_id=su.get("id"),
-                username=su.get("username"),
+                user_id=audit_uid,
+                username=audit_uname,
                 lead_id=lead_id,
                 company_name=lead.get("name"),
-                details={"status": status},
+                details={"status": status, "impersonating": _is_impersonating()},
             )
         if "notes" in data and data["notes"] is not None:
             cur.execute("UPDATE companies SET notes = %s WHERE id = %s", (data["notes"], lead_id))
             log_action(
                 "nota",
-                user_id=su.get("id"),
-                username=su.get("username"),
+                user_id=audit_uid,
+                username=audit_uname,
                 lead_id=lead_id,
                 company_name=lead.get("name"),
-                details={"notes_preview": str(data["notes"])[:200]},
+                details={"notes_preview": str(data["notes"])[:200], "impersonating": _is_impersonating()},
             )
-        # admin: reatribuir
+        # admin real (não em impersonate): reatribuir
         if _is_admin() and "assigned_to" in data:
             from src.users import manual_assign
             aid = data.get("assigned_to")
             manual_assign(lead_id, int(aid) if aid not in (None, "", 0, "0") else None)
             log_action(
                 "assign",
-                user_id=su.get("id"),
-                username=su.get("username"),
+                user_id=audit_uid,
+                username=audit_uname,
                 lead_id=lead_id,
                 company_name=lead.get("name"),
                 details={"assigned_to": aid},
@@ -660,11 +818,11 @@ def api_lead_assign(lead_id):
     else:
         ok = manual_assign(lead_id, int(aid))
         assigned = int(aid)
-    su = _session_user()
+    audit_uid, audit_uname = _audit_actor()
     log_action(
         "assign",
-        user_id=su.get("id"),
-        username=su.get("username"),
+        user_id=audit_uid,
+        username=audit_uname,
         lead_id=lead_id,
         company_name=lead.get("name"),
         details={"assigned_to": assigned},

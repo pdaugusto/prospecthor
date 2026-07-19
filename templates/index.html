@@ -512,26 +512,34 @@
             min-width: 56px; text-align: right;
             text-shadow: 0 0 12px var(--neon-dim);
         }
-        /* Ícone de fogo brilhando no top 5 */
+        /* Ícone de fogo brilhando no top 5 (SVG — não depende de emoji) */
         .fire-ico {
             flex-shrink: 0;
-            width: 28px; height: 28px;
-            display: grid; place-items: center;
-            font-size: 16px; line-height: 1;
+            width: 30px; height: 30px;
+            display: inline-flex; align-items: center; justify-content: center;
             border-radius: 50%;
-            background: radial-gradient(circle at 50% 70%, rgba(255, 160, 40, 0.35), rgba(255, 60, 0, 0.08) 60%, transparent 70%);
-            filter: drop-shadow(0 0 6px rgba(255, 120, 30, 0.75))
-                    drop-shadow(0 0 14px rgba(255, 80, 0, 0.45));
-            animation: fire-flicker 1.1s ease-in-out infinite;
+            background: radial-gradient(circle at 50% 75%,
+                rgba(255, 180, 50, 0.45) 0%,
+                rgba(255, 80, 0, 0.18) 45%,
+                transparent 70%);
+            box-shadow: 0 0 12px rgba(255, 120, 30, 0.55),
+                        0 0 24px rgba(255, 60, 0, 0.25);
+            animation: fire-flicker 1.05s ease-in-out infinite;
             user-select: none;
         }
-        .top-item.rank-1 .fire-ico {
-            font-size: 19px; width: 32px; height: 32px;
-            filter: drop-shadow(0 0 8px rgba(255, 150, 40, 0.95))
-                    drop-shadow(0 0 18px rgba(255, 90, 0, 0.65))
-                    drop-shadow(0 0 28px rgba(255, 60, 0, 0.35));
-            animation: fire-flicker-hot 0.85s ease-in-out infinite;
+        .fire-ico svg {
+            width: 18px; height: 18px;
+            display: block;
+            filter: drop-shadow(0 0 4px rgba(255, 160, 40, 0.9));
         }
+        .top-item.rank-1 .fire-ico {
+            width: 34px; height: 34px;
+            box-shadow: 0 0 16px rgba(255, 140, 40, 0.85),
+                        0 0 32px rgba(255, 80, 0, 0.45),
+                        0 0 48px rgba(255, 50, 0, 0.2);
+            animation: fire-flicker-hot 0.8s ease-in-out infinite;
+        }
+        .top-item.rank-1 .fire-ico svg { width: 21px; height: 21px; }
         .top-item.rank-1 {
             border-color: rgba(255, 120, 40, 0.28);
             background: linear-gradient(105deg, rgba(255, 90, 20, 0.1), rgba(7, 11, 18, 0.85) 55%);
@@ -542,41 +550,22 @@
         }
         @keyframes fire-flicker {
             0%, 100% {
-                transform: scale(1) translateY(0) rotate(-2deg);
-                filter: drop-shadow(0 0 5px rgba(255, 120, 30, 0.7))
-                        drop-shadow(0 0 12px rgba(255, 80, 0, 0.4));
-                opacity: 0.92;
+                transform: scale(1) translateY(0);
+                box-shadow: 0 0 10px rgba(255, 120, 30, 0.5), 0 0 20px rgba(255, 60, 0, 0.22);
             }
-            40% {
-                transform: scale(1.08) translateY(-1px) rotate(2deg);
-                filter: drop-shadow(0 0 10px rgba(255, 160, 50, 0.95))
-                        drop-shadow(0 0 20px rgba(255, 90, 0, 0.55));
-                opacity: 1;
-            }
-            70% {
-                transform: scale(0.96) translateY(0.5px) rotate(-1deg);
-                filter: drop-shadow(0 0 6px rgba(255, 100, 20, 0.75))
-                        drop-shadow(0 0 14px rgba(255, 70, 0, 0.4));
-                opacity: 0.88;
+            50% {
+                transform: scale(1.12) translateY(-1px);
+                box-shadow: 0 0 18px rgba(255, 170, 50, 0.85), 0 0 32px rgba(255, 90, 0, 0.4);
             }
         }
         @keyframes fire-flicker-hot {
             0%, 100% {
-                transform: scale(1) translateY(0) rotate(-3deg);
-                filter: drop-shadow(0 0 8px rgba(255, 160, 50, 0.95))
-                        drop-shadow(0 0 18px rgba(255, 90, 0, 0.7))
-                        drop-shadow(0 0 28px rgba(255, 50, 0, 0.35));
+                transform: scale(1) translateY(0);
+                box-shadow: 0 0 14px rgba(255, 150, 40, 0.75), 0 0 28px rgba(255, 80, 0, 0.4);
             }
-            35% {
-                transform: scale(1.14) translateY(-2px) rotate(3deg);
-                filter: drop-shadow(0 0 14px rgba(255, 200, 80, 1))
-                        drop-shadow(0 0 26px rgba(255, 120, 0, 0.85))
-                        drop-shadow(0 0 36px rgba(255, 60, 0, 0.45));
-            }
-            65% {
-                transform: scale(0.94) translateY(1px) rotate(-2deg);
-                filter: drop-shadow(0 0 7px rgba(255, 130, 30, 0.85))
-                        drop-shadow(0 0 16px rgba(255, 80, 0, 0.55));
+            50% {
+                transform: scale(1.16) translateY(-2px);
+                box-shadow: 0 0 22px rgba(255, 200, 70, 1), 0 0 40px rgba(255, 100, 0, 0.55);
             }
         }
 
@@ -2656,10 +2645,11 @@
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
                         : '<p class="empty">Nenhum lead novo sem site no momento.</p>';
                 } else {
+                    const fireSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff9f1a" d="M12 2c.4 2.2-.3 3.8-1.4 5.1C9.3 8.5 8.2 9.8 8.2 12c0 2.3 1.7 4 3.8 4 .6 0 1.1-.1 1.6-.4-.5 1.4-1.7 2.4-3.3 2.4-2.6 0-4.5-2.1-4.5-4.9 0-2.6 1.4-4.4 2.8-6C10 5.5 11 3.8 12 2z"/><path fill="#ff5a1f" d="M13.2 22c3.4 0 5.8-2.4 5.8-5.7 0-2.6-1.3-4.2-2.5-5.5-1-1.1-1.8-2.1-1.8-3.6 0-.4 0-.8.1-1.2-.1 2.1-1.2 3.4-2.3 4.6-1.3 1.4-2.5 2.8-2.5 5 0 3.3 2.3 6.4 3.2 6.4z"/><path fill="#ffe08a" d="M12.1 18.6c1.1 0 1.9-.9 1.9-2.1 0-1.1-.6-1.8-1.2-2.4-.5-.5-.9-1-.9-1.7 0 1.2-.5 1.9-1 2.5-.6.7-1.2 1.4-1.2 2.4 0 1.3 1.1 1.3 2.4 1.3z"/></svg>`;
                     topHtml = top.map((l, i) => `
                     <div class="top-item rank-${i + 1}" onclick="openLead(${Number(l.id)})">
                         <div class="top-left">
-                            <span class="fire-ico" title="Hot lead #${i + 1}" aria-hidden="true">🔥</span>
+                            <span class="fire-ico" title="Hot lead #${i + 1}">${fireSvg}</span>
                             <div class="top-text">
                                 <div class="name"><span class="rank-num">#${i + 1}</span> ${esc(l.name)}</div>
                                 <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
@@ -3069,7 +3059,9 @@
                                 <button class="btn btn-primary" onclick="openPrompt(${lead.id})">Gerar mensagem</button>
                                 <button class="btn" onclick="updateStatus(${lead.id}, 'contactado')">Marcar contactado</button>
                                 <button class="btn btn-success" onclick="updateStatus(${lead.id}, 'convertido')">Marcar convertido</button>
-                                <button class="btn btn-danger" onclick="updateStatus(${lead.id}, 'descartado')">Descartar</button>
+                                ${st === 'descartado'
+                                    ? `<button class="btn btn-success" id="btn-discard-toggle" onclick="updateStatus(${lead.id}, 'novo')">↩ Recuperar</button>`
+                                    : `<button class="btn btn-danger" id="btn-discard-toggle" onclick="updateStatus(${lead.id}, 'descartado')">Descartar</button>`}
                                 <button class="btn" onclick="copySummary(${lead.id})">Copiar resumo</button>
                             </div>
                         </div>
@@ -3121,14 +3113,31 @@
 
         async function updateStatus(id, status) {
             try {
-                await fetch(`/api/leads/${id}/status`, {
+                const btn = document.getElementById('btn-discard-toggle');
+                if (btn && (status === 'descartado' || status === 'novo' || status === 'recuperar')) {
+                    btn.disabled = true;
+                    btn.textContent = status === 'descartado' ? 'Descartando…' : 'Recuperando…';
+                }
+                const payload = { status };
+                if (status === 'convertido' || status === 'descartado') {
+                    payload.notes = status.charAt(0).toUpperCase() + status.slice(1);
+                }
+                const res = await fetch(`/api/leads/${id}/status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status, notes: status === 'convertido' || status === 'descartado' ? status.charAt(0).toUpperCase() + status.slice(1) : undefined })
+                    body: JSON.stringify(payload)
                 });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    alert(err.error || 'Não foi possível atualizar o status.');
+                }
                 leadsCacheAt = 0;
-                loadDetail(id);
-            } catch (e) { console.error(e); }
+                lastHomeSnapshot = null; // força top 5 / contagens frescos
+                await loadDetail(id);
+            } catch (e) {
+                console.error(e);
+                alert('Falha ao atualizar status.');
+            }
         }
 
         async function saveNotes(id) {

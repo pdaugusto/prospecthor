@@ -803,6 +803,21 @@ def api_update_status(lead_id):
                     "UPDATE companies SET contacted_at = COALESCE(contacted_at, %s), notes = %s WHERE id = %s",
                     (now, status.capitalize(), lead_id),
                 )
+            elif status in ("novo", "recuperar"):
+                # Volta pro funil: limpa marcador Descartado/Convertido e contacted_at
+                cur.execute(
+                    """
+                    UPDATE companies SET
+                        notes = CASE
+                            WHEN LOWER(TRIM(COALESCE(notes, ''))) IN ('descartado', 'convertido')
+                            THEN NULL
+                            ELSE notes
+                        END,
+                        contacted_at = NULL
+                    WHERE id = %s
+                    """,
+                    (lead_id,),
+                )
             log_action(
                 f"status_{status}",
                 user_id=audit_uid,
@@ -811,7 +826,8 @@ def api_update_status(lead_id):
                 company_name=lead.get("name"),
                 details={"status": status, "impersonating": _is_impersonating()},
             )
-        if "notes" in data and data["notes"] is not None:
+        # notas manuais: não sobrescreve se o body só veio com status (evita re-descartar no recover)
+        if "notes" in data and data["notes"] is not None and status not in ("novo", "recuperar"):
             cur.execute("UPDATE companies SET notes = %s WHERE id = %s", (data["notes"], lead_id))
             log_action(
                 "nota",

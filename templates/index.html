@@ -78,18 +78,35 @@
             backdrop-filter: blur(16px);
         }
         .sidebar-brand {
-            padding: 20px 16px 18px;
+            padding: 18px 14px 16px;
             border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
         }
-        .sidebar-brand h2 {
-            font-size: 17px; font-weight: 800; letter-spacing: -0.02em; color: var(--text);
+        .brand-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .brand-mark {
+            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
+            color: #031018; font-weight: 800; font-size: 16px;
+            display: grid; place-items: center;
+            box-shadow: 0 0 22px var(--neon-glow), inset 0 1px 0 rgba(255,255,255,0.3);
         }
-        .sidebar-brand h2 span {
+        .brand-text h2 {
+            font-size: 15px; font-weight: 800; letter-spacing: -0.02em; color: var(--text);
+            line-height: 1.2;
+        }
+        .brand-text h2 span {
             color: var(--neon);
             text-shadow: 0 0 18px var(--neon-glow);
         }
-        .sidebar-menu { list-style: none; padding: 14px 10px; flex: 1; overflow-y: auto; }
+        .brand-text small {
+            display: block; font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px;
+        }
+        .nav-label {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--muted-2);
+            padding: 14px 16px 6px;
+        }
+        .sidebar-menu { list-style: none; padding: 4px 10px 14px; flex: 1; overflow-y: auto; }
         .sidebar-menu a {
             display: flex; align-items: center; gap: 10px;
             padding: 11px 12px; margin-bottom: 3px;
@@ -97,6 +114,16 @@
             font-size: 13.5px; font-weight: 500; cursor: pointer;
             transition: all .2s var(--ease); text-decoration: none;
             border: 1px solid transparent;
+        }
+        .sidebar-menu a .nav-ico {
+            width: 18px; text-align: center; opacity: 0.85; font-size: 13px;
+        }
+        .sidebar-menu a .nav-badge {
+            margin-left: auto;
+            background: var(--neon); color: #031018;
+            font-size: 11px; font-weight: 700;
+            padding: 2px 8px; border-radius: 999px;
+            box-shadow: 0 0 12px var(--neon-glow);
         }
         .sidebar-menu a:hover {
             background: var(--card-2); color: var(--text); text-decoration: none;
@@ -109,12 +136,27 @@
             font-weight: 600;
         }
         .sidebar-footer {
-            padding: 14px 16px; border-top: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 12px; color: var(--muted); gap: 10px;
+            padding: 12px 12px 14px; border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 10px;
             background: rgba(0,0,0,0.15);
         }
-        .btn-logout { color: var(--danger); font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .user-chip {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px; border-radius: var(--radius-sm);
+            background: var(--card-2); border: 1px solid var(--border);
+        }
+        .user-chip .user-meta { min-width: 0; flex: 1; }
+        .user-chip .name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-chip .role { font-size: 11px; color: var(--muted); }
+        .user-chip .avatar { width: 36px; height: 36px; font-size: 12px; }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--success); box-shadow: 0 0 8px var(--success); flex-shrink: 0;
+        }
+        .btn-logout {
+            color: var(--danger); font-weight: 600; text-decoration: none;
+            font-size: 12px; text-align: center; padding: 6px;
+        }
         .btn-logout:hover { opacity: .9; text-decoration: none; }
 
         /* Main */
@@ -136,7 +178,92 @@
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .page-sub {
+            font-size: 13px; color: var(--muted); margin-top: 4px;
+            font-weight: 400; -webkit-text-fill-color: var(--muted);
+            background: none;
+        }
         .header-right { display: flex; align-items: center; gap: 12px; }
+        .leads-head-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            margin: -8px 0 14px; flex-wrap: wrap;
+        }
+        .chip-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .chip {
+            padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            border: 1px solid var(--border); background: var(--card); color: var(--muted);
+            cursor: pointer; font-family: var(--font); transition: all .2s;
+        }
+        .chip:hover, .chip.on {
+            border-color: var(--neon); color: var(--neon);
+            background: var(--neon-dim); box-shadow: 0 0 16px var(--neon-dim);
+        }
+        .leads-toolbar { margin-bottom: 14px; }
+        .search-wrap {
+            flex: 1; min-width: 200px; position: relative; display: flex; align-items: center;
+        }
+        .search-wrap .search-ico {
+            position: absolute; left: 12px; color: var(--muted); font-size: 14px; pointer-events: none;
+        }
+        .search-wrap input {
+            width: 100%; padding-left: 34px !important;
+        }
+        .btn-secondary {
+            background: var(--card); border-color: var(--border); color: var(--text);
+        }
+        .btn-secondary:hover {
+            border-color: var(--neon); color: var(--neon); background: var(--neon-dim);
+        }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 9px;
+            border: 1px solid var(--border); background: var(--card);
+            display: inline-grid; place-items: center; cursor: pointer;
+            color: var(--muted); font-size: 11px; font-weight: 700;
+            font-family: var(--font); text-decoration: none; transition: all .15s;
+        }
+        .icon-btn:hover {
+            border-color: var(--neon); color: var(--neon);
+            background: var(--neon-dim); text-decoration: none;
+        }
+        .icon-btn.wa:hover {
+            border-color: var(--success); color: var(--success);
+            background: rgba(34,197,94,0.12);
+        }
+        .badge.raio.high {
+            background: rgba(34, 197, 94, 0.12); color: var(--success);
+            border-color: rgba(34, 197, 94, 0.35);
+        }
+        td.company-cell strong { font-weight: 600; color: var(--text); }
+        td.company-cell small {
+            display: block; font-weight: 400; color: var(--muted);
+            font-size: 11.5px; margin-top: 3px;
+        }
+        .badge-status::before {
+            content: ""; width: 6px; height: 6px; border-radius: 50%;
+            background: currentColor; display: inline-block; margin-right: 2px;
+        }
+        .stat-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 4px;
+        }
+        .stat-ico {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: grid; place-items: center;
+            background: var(--neon-dim); border: 1px solid var(--border-glow);
+            color: var(--neon); font-size: 13px;
+        }
+        .stat-meta {
+            margin-top: 8px; font-size: 12px; color: var(--muted-2);
+        }
+        .quota-bar {
+            height: 6px; background: rgba(26, 34, 51, 0.9);
+            border-radius: 99px; overflow: hidden; margin-top: 12px;
+        }
+        .quota-bar span {
+            display: block; height: 100%;
+            background: linear-gradient(90deg, var(--neon-soft), var(--neon));
+            border-radius: 99px; box-shadow: 0 0 12px var(--neon-glow);
+        }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
             color: var(--muted) !important;
@@ -528,32 +655,49 @@
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <h2>Prospec<span>THOR</span></h2>
+            <div class="brand-row">
+                <div class="brand-mark">P</div>
+                <div class="brand-text">
+                    <h2>Prospec<span>THOR</span></h2>
+                    <small>Inteligência comercial</small>
+                </div>
+            </div>
             <button class="menu-toggle" id="btn-close-menu" aria-label="Fechar" type="button">✕</button>
         </div>
+        <div class="nav-label">Menu</div>
         <ul class="sidebar-menu">
-            <li><a onclick="navigateTo('/')" class="active" id="nav-home">Home</a></li>
-            <li><a onclick="navigateTo('/leads')" id="nav-leads">Leads</a></li>
-            <li><a onclick="navigateTo('/reports')" id="nav-reports">Relatórios</a></li>
-            <li id="nav-users-wrap" style="display:none;"><a onclick="navigateTo('/users')" id="nav-users">Usuários</a></li>
-            <li id="nav-audit-wrap" style="display:none;"><a onclick="navigateTo('/audit')" id="nav-audit">Auditoria</a></li>
-            <li id="nav-bot-wrap" style="display:none;"><a onclick="navigateTo('/bot')" id="nav-bot">Status do Robô</a></li>
-            <li><a href="/api/export/csv" class="nav-download">Exportar CSV</a></li>
+            <li><a onclick="navigateTo('/')" class="active" id="nav-home"><span class="nav-ico">⌂</span> Visão geral</a></li>
+            <li><a onclick="navigateTo('/leads')" id="nav-leads"><span class="nav-ico">☰</span> Leads <span class="nav-badge" id="nav-leads-badge" style="display:none;">0</span></a></li>
+            <li><a onclick="navigateTo('/reports')" id="nav-reports"><span class="nav-ico">▦</span> Relatórios</a></li>
+            <li id="nav-users-wrap" style="display:none;"><a onclick="navigateTo('/users')" id="nav-users"><span class="nav-ico">◎</span> Usuários</a></li>
+            <li id="nav-audit-wrap" style="display:none;"><a onclick="navigateTo('/audit')" id="nav-audit"><span class="nav-ico">◎</span> Auditoria</a></li>
+            <li id="nav-bot-wrap" style="display:none;"><a onclick="navigateTo('/bot')" id="nav-bot"><span class="nav-ico">⚙</span> Status do Robô</a></li>
+            <li><a href="/api/export/csv" class="nav-download" id="nav-export-csv"><span class="nav-ico">↓</span> Exportar CSV</a></li>
         </ul>
         <div class="sidebar-footer">
-            <span id="sidebar-user">—</span>
+            <div class="user-chip">
+                <div class="avatar" id="sidebar-avatar">P</div>
+                <div class="user-meta">
+                    <div class="name" id="sidebar-user">—</div>
+                    <div class="role" id="sidebar-user-role">—</div>
+                </div>
+                <span class="status-dot" title="Online"></span>
+            </div>
             <a href="/logout" class="btn-logout">Sair</a>
         </div>
     </aside>
 
     <main class="main">
         <header>
-            <div style="display:flex;align-items:center;gap:12px;">
-                <button class="menu-toggle" id="btn-open-menu" aria-label="Menu">☰</button>
-                <h1 id="page-title">Home</h1>
+            <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                <button class="menu-toggle" id="btn-open-menu" aria-label="Menu" type="button">☰</button>
+                <div>
+                    <h1 id="page-title">Visão geral</h1>
+                    <p class="page-sub" id="page-subtitle">Leads Raio com telefone · operação comercial</p>
+                </div>
             </div>
             <div class="header-right">
-                <span id="quota-badge" style="font-size:12px;color:var(--muted);margin-right:8px;"></span>
+                <span id="quota-badge">—</span>
                 <div class="avatar" id="user-avatar">A</div>
             </div>
         </header>
@@ -561,10 +705,27 @@
         <!-- HOME -->
         <section id="view-home" class="view active">
             <div class="stats">
-                <div class="stat neon"><h3 id="home-total-label">Leads sem site</h3><div class="value" id="home-total">--</div></div>
-                <div class="stat"><h3 id="home-novos-label">Novos</h3><div class="value" id="home-novos">--</div></div>
-                <div class="stat warn"><h3 id="home-contactados-label">Contactados</h3><div class="value" id="home-contactados">--</div></div>
-                <div class="stat bad"><h3 id="home-descartados-label">Descartados</h3><div class="value" id="home-descartados">--</div></div>
+                <div class="stat neon">
+                    <div class="stat-top"><h3 id="home-total-label">Leads ativos</h3><div class="stat-ico">◎</div></div>
+                    <div class="value" id="home-total">--</div>
+                    <div class="stat-meta" id="home-total-meta">Carteira atual</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-top"><h3 id="home-novos-label">Novos</h3><div class="stat-ico">+</div></div>
+                    <div class="value" id="home-novos">--</div>
+                    <div class="stat-meta">Prontos para abordar</div>
+                </div>
+                <div class="stat warn">
+                    <div class="stat-top"><h3 id="home-contactados-label">Contactados</h3><div class="stat-ico">☎</div></div>
+                    <div class="value" id="home-contactados">--</div>
+                    <div class="stat-meta" id="home-contact-meta">Em follow-up</div>
+                </div>
+                <div class="stat bad">
+                    <div class="stat-top"><h3 id="home-descartados-label">Descartados</h3><div class="stat-ico">✓</div></div>
+                    <div class="value" id="home-descartados">--</div>
+                    <div class="quota-bar" id="home-quota-bar" style="display:none;"><span id="home-quota-fill" style="width:0%"></span></div>
+                    <div class="stat-meta" id="home-desc-meta">Fora do funil</div>
+                </div>
             </div>
             <div class="panel" id="home-pool-panel" style="display:none;margin-bottom:14px;border-color:var(--neon);">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
@@ -776,7 +937,18 @@
 
         <!-- LEADS -->
         <section id="view-leads" class="view">
-            <div class="filters">
+            <div class="leads-head-actions">
+                <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="distributeFreeLeads()">Distribuir sobra</button>
+                <a class="btn btn-secondary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
+            </div>
+            <div class="chip-filters" id="status-chips">
+                <button type="button" class="chip on" data-st="" onclick="setStatusChip('', this)">Todos</button>
+                <button type="button" class="chip" data-st="novo" onclick="setStatusChip('novo', this)">Novos</button>
+                <button type="button" class="chip" data-st="contactado" onclick="setStatusChip('contactado', this)">Contactados</button>
+                <button type="button" class="chip" data-st="convertido" onclick="setStatusChip('convertido', this)">Convertidos</button>
+                <button type="button" class="chip" data-st="descartado" onclick="setStatusChip('descartado', this)">Descartados</button>
+            </div>
+            <div class="filters leads-toolbar">
                 <select id="filter-scope" style="display:none;" title="Escopo do Patrão">
                     <option value="free" selected>Só sobras (livres)</option>
                     <option value="all">Todos os leads</option>
@@ -785,7 +957,10 @@
                 <select id="filter-owner" style="display:none;" title="Usuário dono">
                     <option value="">Escolha o usuário</option>
                 </select>
-                <input type="search" id="filter-search" placeholder="Buscar empresa...">
+                <div class="search-wrap">
+                    <span class="search-ico">⌕</span>
+                    <input type="search" id="filter-search" placeholder="Buscar empresa, cidade, telefone…">
+                </div>
                 <select id="filter-niche"><option value="">Todos os nichos</option></select>
                 <select id="filter-status">
                     <option value="">Todos os status</option>
@@ -794,8 +969,6 @@
                     <option value="convertido">Convertido</option>
                     <option value="descartado">Descartado</option>
                 </select>
-                <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="distributeFreeLeads()">Distribuir sobra</button>
-                <a class="btn btn-primary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
             </div>
             <div class="table-wrap" id="leads-table-wrap">
                 <table>
@@ -957,42 +1130,43 @@
                 }
                 const name = currentUser.username || 'user';
                 const label = currentUser.label || name;
-                document.getElementById('sidebar-user').textContent = label;
-                document.getElementById('user-avatar').textContent = (label[0] || 'U').toUpperCase();
+                const initial = (label[0] || 'U').toUpperCase();
+                const sideUser = document.getElementById('sidebar-user');
+                if (sideUser) sideUser.textContent = label;
+                document.getElementById('user-avatar').textContent = initial;
+                const sideAv = document.getElementById('sidebar-avatar');
+                if (sideAv) sideAv.textContent = initial;
 
                 const uname = (currentUser.username || '').toLowerCase().trim();
                 const imp = !!currentUser.impersonating;
-                // Menus de Patrão só se for admin REAL e NÃO estiver impersonando
-                const showAdminNav = !!currentUser.is_real_admin && !imp
-                    && (uname === 'patrao' || currentUser.real_username === 'patrao' || currentUser.is_admin);
-                // quando impersonate, username é o cliente — usa is_real_admin da API
                 const showAdmin = !!currentUser.is_real_admin && !imp;
                 ['nav-users-wrap', 'nav-audit-wrap', 'nav-bot-wrap'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.style.display = showAdmin ? '' : 'none';
                 });
 
-                // Banner impersonate
+                const used = currentUser.assigned_this_month || 0;
+                const q = currentUser.monthly_quota || 0;
+                const roleEl = document.getElementById('sidebar-user-role');
                 const banner = document.getElementById('impersonate-banner');
                 if (imp) {
                     document.body.classList.add('impersonating');
                     banner.classList.add('show');
                     document.getElementById('impersonate-banner-text').textContent =
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
-                    const used = currentUser.assigned_this_month || 0;
-                    const q = currentUser.monthly_quota || 0;
                     document.getElementById('quota-badge').textContent =
                         'Modo cliente · Cota: ' + used + '/' + q;
+                    if (roleEl) roleEl.textContent = 'Impersonate · Cota ' + used + '/' + q;
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
                     if (showAdmin) {
                         document.getElementById('quota-badge').textContent = 'Patrão · sobras';
+                        if (roleEl) roleEl.textContent = 'Admin · Pro';
                     } else {
-                        const used = currentUser.assigned_this_month || 0;
-                        const q = currentUser.monthly_quota || 0;
                         document.getElementById('quota-badge').textContent =
                             q ? `Cota: ${used}/${q} este mês` : (currentUser.username || '');
+                        if (roleEl) roleEl.textContent = q ? `Cliente · ${used}/${q}` : 'Cliente';
                     }
                 }
                 setupPatraoScopeFilters(showAdmin);
@@ -1128,48 +1302,54 @@
             }
         }
 
+        function setPageMeta(title, sub) {
+            const t = document.getElementById('page-title');
+            const s = document.getElementById('page-subtitle');
+            if (t) t.textContent = title;
+            if (s) s.textContent = sub || '';
+        }
+
         function handleRouting() {
             const path = location.pathname;
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-            const title = document.getElementById('page-title');
 
             if (path === '/' || path === '') {
                 document.getElementById('view-home').classList.add('active');
                 document.getElementById('nav-home').classList.add('active');
-                title.textContent = 'Home';
+                setPageMeta('Visão geral', 'Leads Raio com telefone · operação comercial');
                 loadHome();
             } else if (path === '/leads') {
                 document.getElementById('view-leads').classList.add('active');
                 document.getElementById('nav-leads').classList.add('active');
-                title.textContent = 'Leads';
+                setPageMeta('Leads', 'Busca, filtros e ordenação · clique na linha para abrir o detalhe.');
                 loadLeads();
             } else if (path.startsWith('/lead/')) {
                 document.getElementById('view-lead-detail').classList.add('active');
-                title.textContent = 'Detalhe';
+                setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
                 loadDetail(parseInt(path.split('/')[2], 10));
             } else if (path === '/reports') {
                 document.getElementById('view-reports').classList.add('active');
                 document.getElementById('nav-reports').classList.add('active');
-                title.textContent = 'Relatórios';
+                setPageMeta('Relatórios', 'Indicadores e problemas mais comuns no período.');
                 loadReports();
             } else if (path === '/users') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
-                title.textContent = 'Usuários';
+                setPageMeta('Usuários', 'Clientes, cotas, ATIVO e acesso ao painel.');
                 loadUsers();
             } else if (path === '/audit') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 document.getElementById('view-audit').classList.add('active');
                 document.getElementById('nav-audit').classList.add('active');
-                title.textContent = 'Auditoria';
+                setPageMeta('Auditoria', 'Histórico de ações no sistema.');
                 loadAudit();
             } else if (path === '/bot') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 document.getElementById('view-bot').classList.add('active');
                 document.getElementById('nav-bot').classList.add('active');
-                title.textContent = 'Status do Robô';
+                setPageMeta('Status do Robô', 'Plano de busca, meta de leads e logs da sessão.');
                 loadBotStatus();
                 loadBotPlan();
             } else {
@@ -1656,6 +1836,8 @@
                 const descartados = stats.descartados || stats.frios || 0;
                 const novos = Math.max(total - contactados, 0);
 
+                const quotaBar = document.getElementById('home-quota-bar');
+                const quotaFill = document.getElementById('home-quota-fill');
                 if (patrao) {
                     document.getElementById('home-total-label').textContent = 'Sobras (livres)';
                     document.getElementById('home-novos-label').textContent = 'Sobras novas';
@@ -1665,20 +1847,38 @@
                     document.getElementById('home-novos').textContent = novos;
                     document.getElementById('home-contactados').textContent = stats.assigned_total != null ? stats.assigned_total : contactados;
                     document.getElementById('home-descartados').textContent = stats.all_total != null ? stats.all_total : total;
+                    document.getElementById('home-total-meta').textContent = 'Pool para encaminhar';
+                    document.getElementById('home-contact-meta').textContent = 'Com clientes';
+                    document.getElementById('home-desc-meta').textContent = 'Raios no sistema';
                     document.getElementById('home-chart-status-title').textContent = 'Status das sobras';
-                    document.getElementById('home-top-title').textContent = 'Prioridade — top sobras para encaminhar';
+                    document.getElementById('home-top-title').textContent = 'Hot leads — top sobras';
+                    if (quotaBar) quotaBar.style.display = 'none';
                     renderPoolPanel(stats);
                 } else {
-                    document.getElementById('home-total-label').textContent = 'Leads sem site';
+                    document.getElementById('home-total-label').textContent = 'Leads ativos';
                     document.getElementById('home-novos-label').textContent = 'Novos';
                     document.getElementById('home-contactados-label').textContent = 'Contactados';
-                    document.getElementById('home-descartados-label').textContent = 'Descartados';
+                    document.getElementById('home-descartados-label').textContent = 'Cota do mês';
                     document.getElementById('home-total').textContent = total;
                     document.getElementById('home-novos').textContent = novos;
                     document.getElementById('home-contactados').textContent = contactados;
-                    document.getElementById('home-descartados').textContent = descartados;
+                    const used = currentUser.assigned_this_month || 0;
+                    const q = currentUser.monthly_quota || 0;
+                    document.getElementById('home-descartados').innerHTML = q
+                        ? `${used}<span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`
+                        : String(descartados);
+                    document.getElementById('home-total-meta').textContent = 'Na sua carteira';
+                    const rate = total ? Math.round((contactados / total) * 100) : 0;
+                    document.getElementById('home-contact-meta').innerHTML = `Taxa <strong style="color:var(--text)">${rate}%</strong>`;
+                    document.getElementById('home-desc-meta').textContent = q ? 'Uso da cota' : 'Descartados';
+                    if (quotaBar && quotaFill && q) {
+                        quotaBar.style.display = '';
+                        quotaFill.style.width = Math.min(100, Math.round((used / q) * 100)) + '%';
+                    } else if (quotaBar) {
+                        quotaBar.style.display = 'none';
+                    }
                     document.getElementById('home-chart-status-title').textContent = 'Status dos leads';
-                    document.getElementById('home-top-title').textContent = 'Prioridade — top 5 para abordar';
+                    document.getElementById('home-top-title').textContent = 'Hot leads — top 5';
                     const poolPanel = document.getElementById('home-pool-panel');
                     if (poolPanel) poolPanel.style.display = 'none';
                 }
@@ -1841,6 +2041,7 @@
         }
 
         function applyFilters() {
+            syncStatusChips();
             const q = document.getElementById('filter-search').value.toLowerCase().trim();
             const niche = document.getElementById('filter-niche').value;
             const status = document.getElementById('filter-status').value;
@@ -1884,10 +2085,27 @@
             const tel = phoneDigits(l.phone);
             const stop = stopProp ? 'event.stopPropagation();' : '';
             return `
-                ${wa ? `<a class="btn btn-sm btn-wa" href="${wa}" target="_blank" rel="noopener" onclick="${stop}">WhatsApp</a>` : ''}
-                ${tel ? `<a class="btn btn-sm btn-call" href="tel:${tel}" onclick="${stop}">Ligar</a>` : ''}
-                <button class="btn btn-sm" onclick="${stop}openPrompt(${l.id})">Mensagem</button>
+                ${wa ? `<a class="icon-btn wa" href="${wa}" target="_blank" rel="noopener" title="WhatsApp" onclick="${stop}">WA</a>` : ''}
+                ${tel ? `<a class="icon-btn" href="tel:${tel}" title="Ligar" onclick="${stop}">☎</a>` : ''}
+                <button class="icon-btn" type="button" title="Mensagem" onclick="${stop}openPrompt(${l.id})">✎</button>
+                <button class="icon-btn" type="button" title="Abrir" onclick="${stop}navigateTo('/lead/${l.id}')">→</button>
             `;
+        }
+
+        function setStatusChip(st, el) {
+            document.querySelectorAll('#status-chips .chip').forEach(c => c.classList.remove('on'));
+            if (el) el.classList.add('on');
+            const sel = document.getElementById('filter-status');
+            if (sel) sel.value = st || '';
+            currentPage = 1;
+            applyFilters();
+        }
+
+        function syncStatusChips() {
+            const st = document.getElementById('filter-status')?.value || '';
+            document.querySelectorAll('#status-chips .chip').forEach(c => {
+                c.classList.toggle('on', (c.getAttribute('data-st') || '') === st);
+            });
         }
 
         function renderTable() {
@@ -1895,6 +2113,16 @@
             const mobile = document.getElementById('leads-mobile');
             const start = (currentPage - 1) * PAGE_SIZE;
             const page = filteredLeads.slice(start, start + PAGE_SIZE);
+            const novos = (allLeads || []).filter(l => getStatus(l) === 'novo').length;
+            const badge = document.getElementById('nav-leads-badge');
+            if (badge) {
+                if (novos > 0) {
+                    badge.style.display = '';
+                    badge.textContent = String(novos);
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
 
             if (!filteredLeads.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum lead encontrado.</td></tr>';
@@ -1905,12 +2133,13 @@
 
             tbody.innerHTML = page.map(l => {
                 const st = getStatus(l);
+                const sc = l.lead_score || 0;
                 return `
                     <tr onclick="navigateTo('/lead/${l.id}')">
-                        <td><strong>${esc(l.name)}</strong><div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc((l.niche || '').toUpperCase())}</div></td>
+                        <td class="company-cell"><strong>${esc(l.name)}</strong><small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small></td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
                         <td class="phone-cell">${esc(l.phone || '—')}</td>
-                        <td><span class="badge raio">${l.lead_score || 0}</span></td>
+                        <td><span class="badge raio ${sc >= 110 ? 'high' : ''}">${sc}</span></td>
                         <td><span class="badge-status ${st}">${statusLabel(st)}</span></td>
                         <td onclick="event.stopPropagation()"><div class="actions-cell">${actionButtons(l, true)}</div></td>
                     </tr>
@@ -1919,16 +2148,15 @@
 
             mobile.innerHTML = page.map(l => {
                 const st = getStatus(l);
+                const sc = l.lead_score || 0;
                 return `
                     <div class="m-card">
                         <div class="row">
                             <div class="name" onclick="navigateTo('/lead/${l.id}')">${esc(l.name)}</div>
-                            <span class="badge raio">${l.lead_score || 0}</span>
+                            <span class="badge raio ${sc >= 110 ? 'high' : ''}">${sc}</span>
                         </div>
                         <div class="meta">${esc(l.city || '')} · ${esc(l.phone || 'Sem telefone')} · ${statusLabel(st)}</div>
-                        <div class="actions">${actionButtons(l, false)}
-                            <button class="btn btn-sm" onclick="navigateTo('/lead/${l.id}')">Abrir</button>
-                        </div>
+                        <div class="actions">${actionButtons(l, false)}</div>
                     </div>
                 `;
             }).join('');

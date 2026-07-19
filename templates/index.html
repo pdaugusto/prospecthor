@@ -575,6 +575,27 @@
             font-size: 10px; font-weight: 800; color: var(--muted-2);
             letter-spacing: .04em; margin-right: 2px;
         }
+        /* Foguinho na tabela de Leads (top 5) */
+        .company-cell .name-row {
+            display: flex; align-items: center; gap: 7px;
+        }
+        .company-cell .name-row strong { min-width: 0; }
+        .fire-ico.fire-sm {
+            width: 22px; height: 22px;
+            box-shadow: 0 0 10px rgba(255, 120, 30, 0.55), 0 0 18px rgba(255, 60, 0, 0.25);
+        }
+        .fire-ico.fire-sm svg { width: 13px; height: 13px; }
+        .fire-ico.fire-sm.rank-1 {
+            width: 24px; height: 24px;
+            animation: fire-flicker-hot 0.8s ease-in-out infinite;
+            box-shadow: 0 0 14px rgba(255, 150, 40, 0.85), 0 0 26px rgba(255, 80, 0, 0.4);
+        }
+        .fire-ico.fire-sm.rank-1 svg { width: 15px; height: 15px; }
+        .m-card .name {
+            display: flex; align-items: center; gap: 6px;
+        }
+        tr.hot-row { background: rgba(255, 90, 20, 0.04); }
+        tr.hot-row.rank-1 { background: rgba(255, 90, 20, 0.07); }
         @keyframes fire-flicker {
             0%, 100% {
                 transform: scale(1) translateY(0);
@@ -2692,11 +2713,10 @@
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
                         : '<p class="empty">Nenhum lead novo sem site no momento.</p>';
                 } else {
-                    const fireSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff9f1a" d="M12 2c.4 2.2-.3 3.8-1.4 5.1C9.3 8.5 8.2 9.8 8.2 12c0 2.3 1.7 4 3.8 4 .6 0 1.1-.1 1.6-.4-.5 1.4-1.7 2.4-3.3 2.4-2.6 0-4.5-2.1-4.5-4.9 0-2.6 1.4-4.4 2.8-6C10 5.5 11 3.8 12 2z"/><path fill="#ff5a1f" d="M13.2 22c3.4 0 5.8-2.4 5.8-5.7 0-2.6-1.3-4.2-2.5-5.5-1-1.1-1.8-2.1-1.8-3.6 0-.4 0-.8.1-1.2-.1 2.1-1.2 3.4-2.3 4.6-1.3 1.4-2.5 2.8-2.5 5 0 3.3 2.3 6.4 3.2 6.4z"/><path fill="#ffe08a" d="M12.1 18.6c1.1 0 1.9-.9 1.9-2.1 0-1.1-.6-1.8-1.2-2.4-.5-.5-.9-1-.9-1.7 0 1.2-.5 1.9-1 2.5-.6.7-1.2 1.4-1.2 2.4 0 1.3 1.1 1.3 2.4 1.3z"/></svg>`;
                     topHtml = top.map((l, i) => `
                     <div class="top-item rank-${i + 1}" onclick="openLead(${Number(l.id)})">
                         <div class="top-left">
-                            <span class="fire-ico" title="Hot lead #${i + 1}">${fireSvg}</span>
+                            <span class="fire-ico" title="Hot lead #${i + 1}">${FIRE_SVG}</span>
                             <div class="top-text">
                                 <div class="name"><span class="rank-num">#${i + 1}</span> ${esc(l.name)}</div>
                                 <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
@@ -2859,6 +2879,11 @@
             });
 
             filteredLeads.sort((a, b) => {
+                // Descartados sempre no final (mesmo com sort por score)
+                const da = getStatus(a) === 'descartado' ? 1 : 0;
+                const db = getStatus(b) === 'descartado' ? 1 : 0;
+                if (da !== db) return da - db;
+
                 let va, vb;
                 if (sortKey === 'status') {
                     va = getStatus(a); vb = getStatus(b);
@@ -2878,6 +2903,23 @@
             renderTable();
         }
 
+        /** Top 5 mais quentes (score) entre leads NÃO descartados — mapa id → rank 1..5 */
+        function getHotLeadRanks() {
+            const sorted = [...(allLeads || [])]
+                .filter(l => getStatus(l) !== 'descartado')
+                .sort((a, b) => (Number(b.lead_score) || 0) - (Number(a.lead_score) || 0))
+                .slice(0, 5);
+            const map = new Map();
+            sorted.forEach((l, i) => map.set(Number(l.id), i + 1));
+            return map;
+        }
+
+        function fireIcoHtml(rank) {
+            if (!rank) return '';
+            const cls = rank === 1 ? 'fire-ico fire-sm rank-1' : 'fire-ico fire-sm';
+            return `<span class="${cls}" title="Hot lead #${rank} — top 5 por oportunidade">${FIRE_SVG}</span>`;
+        }
+
         function sortBy(key) {
             if (sortKey === key) sortAsc = !sortAsc;
             else { sortKey = key; sortAsc = key !== 'lead_score'; }
@@ -2886,6 +2928,7 @@
 
         const ICO_WA = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.85 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
         const ICO_CALL = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.15 15.15 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.4 21 3 13.6 3 4.5a1 1 0 011-1H7.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>`;
+        const FIRE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff9f1a" d="M12 2c.4 2.2-.3 3.8-1.4 5.1C9.3 8.5 8.2 9.8 8.2 12c0 2.3 1.7 4 3.8 4 .6 0 1.1-.1 1.6-.4-.5 1.4-1.7 2.4-3.3 2.4-2.6 0-4.5-2.1-4.5-4.9 0-2.6 1.4-4.4 2.8-6C10 5.5 11 3.8 12 2z"/><path fill="#ff5a1f" d="M13.2 22c3.4 0 5.8-2.4 5.8-5.7 0-2.6-1.3-4.2-2.5-5.5-1-1.1-1.8-2.1-1.8-3.6 0-.4 0-.8.1-1.2-.1 2.1-1.2 3.4-2.3 4.6-1.3 1.4-2.5 2.8-2.5 5 0 3.3 2.3 6.4 3.2 6.4z"/><path fill="#ffe08a" d="M12.1 18.6c1.1 0 1.9-.9 1.9-2.1 0-1.1-.6-1.8-1.2-2.4-.5-.5-.9-1-.9-1.7 0 1.2-.5 1.9-1 2.5-.6.7-1.2 1.4-1.2 2.4 0 1.3 1.1 1.3 2.4 1.3z"/></svg>`;
 
         function actionButtons(l, stopProp) {
             const wa = waLink(l.phone);
@@ -2938,12 +2981,22 @@
                 return;
             }
 
+            const hotRanks = getHotLeadRanks();
+
             tbody.innerHTML = page.map(l => {
                 const st = getStatus(l);
                 const sc = l.lead_score || 0;
+                const rank = hotRanks.get(Number(l.id)) || 0;
+                const hotCls = rank ? ` hot-row rank-${rank}` : '';
                 return `
-                    <tr onclick="openLead(${Number(l.id)})">
-                        <td class="company-cell"><strong>${esc(l.name)}</strong><small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small></td>
+                    <tr class="${hotCls.trim()}" onclick="openLead(${Number(l.id)})">
+                        <td class="company-cell">
+                            <div class="name-row">
+                                ${fireIcoHtml(rank)}
+                                <strong>${esc(l.name)}</strong>
+                            </div>
+                            <small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small>
+                        </td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
                         <td class="phone-cell">${esc(l.phone || '—')}</td>
                         <td onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</td>
@@ -2956,10 +3009,11 @@
             mobile.innerHTML = page.map(l => {
                 const st = getStatus(l);
                 const sc = l.lead_score || 0;
+                const rank = hotRanks.get(Number(l.id)) || 0;
                 return `
                     <div class="m-card">
                         <div class="row">
-                            <div class="name" onclick="openLead(${Number(l.id)})">${esc(l.name)}</div>
+                            <div class="name" onclick="openLead(${Number(l.id)})">${fireIcoHtml(rank)}${esc(l.name)}</div>
                             ${scoreBadgeHtml(sc, l.lead_problems)}
                         </div>
                         <div class="meta">${esc(l.city || '')} · ${esc(l.phone || 'Sem telefone')} · ${statusLabel(st)}</div>

@@ -1084,7 +1084,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th title="Marque quem recebe leads do bot">ATIVO</th>
+                            <th title="Só controla se recebe leads do bot/distribuição — não desliga o login">Recebe leads</th>
                             <th>Login</th>
                             <th>Nome</th>
                             <th>Papel</th>
@@ -1233,10 +1233,10 @@
                         <input type="password" id="edit-user-pass" placeholder="••••••••">
                     </div>
                     <div class="form-g">
-                        <label>Ativo</label>
+                        <label>Recebe leads do bot</label>
                         <select id="edit-user-active">
-                            <option value="1">Sim</option>
-                            <option value="0">Não</option>
+                            <option value="1">Sim (entra na distribuição)</option>
+                            <option value="0">Não (login ok, sem leads novos)</option>
                         </select>
                     </div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
@@ -1963,7 +1963,7 @@
                 homeLoadSeq++;
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
-                setPageMeta('Usuários', 'Clientes, cotas, ATIVO e acesso ao painel.');
+                setPageMeta('Usuários', 'Clientes, cotas e quem recebe leads (não bloqueia login).');
                 loadUsers();
             } else if (path === '/audit') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
@@ -2017,10 +2017,10 @@
                     const active = !!u.active;
                     const check = isPatrao
                         ? '<span style="color:var(--muted);font-size:11px;">—</span>'
-                        : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Marque para receber leads do bot">
+                        : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Só para receber leads — login continua funcionando se OFF">
                             <input type="checkbox" class="active-toggle" data-uid="${uid}" ${active ? 'checked' : ''}
                                 style="width:18px;height:18px;accent-color:#00d4ff;cursor:pointer;">
-                            <span style="font-size:11px;font-weight:700;color:${active ? 'var(--neon)' : 'var(--muted)'}">${active ? 'ATIVO' : 'OFF'}</span>
+                            <span style="font-size:11px;font-weight:700;color:${active ? 'var(--neon)' : 'var(--muted)'}">${active ? 'SIM' : 'NÃO'}</span>
                            </label>`;
                     let actions = '';
                     if (isPatrao) {
@@ -2064,7 +2064,7 @@
                         const active = cb.checked ? 1 : 0;
                         const { res, data } = await apiUserUpdate(id, { active });
                         if (!res.ok) {
-                            alert(data.error || 'Erro ao mudar ATIVO');
+                            alert(data.error || 'Erro ao mudar “recebe leads”');
                             cb.checked = !cb.checked;
                             return;
                         }
@@ -2077,8 +2077,8 @@
                         (u.username || '').toLowerCase() !== 'patrao' && u.active
                     );
                     hint.textContent = activeClients.length
-                        ? `ATIVO marcado = recebe leads do bot. Agora ativo(s): ${activeClients.map(u => u.username).join(', ')}. UI v3`
-                        : 'Nenhum cliente ATIVO — o bot grava leads livres (só você vê) até você ativar alguém ou atribuir na mão.';
+                        ? `“Recebe leads” = entra na distribuição do bot (não desliga login). Agora: ${activeClients.map(u => u.username).join(', ')}.`
+                        : 'Ninguém marcado pra receber leads — o bot grava sobras livres até você marcar alguém ou atribuir na mão. Login de todos continua ok.';
                 }
             } catch (e) {
                 console.error(e);

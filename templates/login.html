@@ -1,146 +1,349 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar — ProspecTHOR</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #05070b;
-            --card: #0a0e17;
-            --border: #1a2233;
-            --text: #e8eef7;
-            --muted: #7a8ba3;
-            --neon: #00d4ff;
-            --neon-dim: rgba(0, 212, 255, 0.12);
-            --danger: #ff4d6a;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Inter", system-ui, -apple-system, sans-serif; }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-image:
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.08), transparent),
-                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 100, 200, 0.06), transparent);
-        }
-        .wrap { width: 100%; max-width: 400px; padding: 24px; }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 40px 32px;
-            box-shadow: 0 0 40px rgba(0, 212, 255, 0.04), 0 20px 40px rgba(0,0,0,0.4);
-            position: relative;
-        }
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 24px; right: 24px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--neon), transparent);
-            box-shadow: 0 0 12px var(--neon);
-        }
-        .brand {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .brand h1 {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: var(--text);
-        }
-        .brand h1 span { color: var(--neon); text-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
-        .brand p {
-            margin-top: 8px;
-            font-size: 12px;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-        }
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-        .field { margin-bottom: 20px; }
-        input {
-            width: 100%;
-            padding: 12px 14px;
-            background: #070b12;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input:focus {
-            border-color: var(--neon);
-            box-shadow: 0 0 0 3px var(--neon-dim);
-        }
-        .btn {
-            width: 100%;
-            margin-top: 8px;
-            padding: 13px;
-            background: linear-gradient(135deg, #00d4ff, #0090c4);
-            color: #031018;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: box-shadow 0.2s, transform 0.15s;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
-        }
-        .btn:hover { box-shadow: 0 0 28px rgba(0, 212, 255, 0.4); }
-        .btn:active { transform: scale(0.99); }
-        .error {
-            background: rgba(255, 77, 106, 0.08);
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProspecTHOR — Entrar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070b;
+      --border: #1a2233;
+      --text: #ffffff;
+      --muted: #8b9bb4;
+      --muted-2: #5a6b82;
+      --neon: #00d4ff;
+      --neon-dim: rgba(0, 212, 255, 0.10);
+      --neon-glow: rgba(0, 212, 255, 0.35);
+      --danger: #ff4d6a;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: var(--font);
+      color: #e8eef7;
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 212, 255, 0.12), transparent 55%),
+        radial-gradient(ellipse 45% 40% at 90% 80%, rgba(59, 158, 255, 0.08), transparent 50%),
+        var(--bg);
+    }
+    .bg-layer::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000 10%, transparent 70%);
+    }
+
+    .pitch {
+      position: relative; z-index: 1;
+      padding: 56px 56px 56px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      border-right: 1px solid var(--border);
+      max-width: 640px;
+      margin-left: auto;
+      width: 100%;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-mark {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: linear-gradient(145deg, #00d4ff, #0a6fa8);
+      color: #031018; font-weight: 900; font-size: 15px;
+      display: grid; place-items: center;
+      box-shadow: 0 0 24px var(--neon-glow);
+    }
+    .brand strong {
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .brand strong span { color: var(--neon); }
+
+    .pitch h1 {
+      font-size: clamp(36px, 4.5vw, 52px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: #fff;
+    }
+    .pitch h1 em {
+      font-style: normal;
+      background: linear-gradient(100deg, #fff 20%, #00d4ff 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .pitch p {
+      font-size: 17px;
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 420px;
+    }
+    .pitch p strong { color: #fff; font-weight: 600; }
+
+    .metrics {
+      display: flex;
+      gap: 32px;
+      padding-top: 8px;
+    }
+    .metrics div b {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+    .metrics div b span { color: var(--neon); }
+    .metrics div small {
+      font-size: 12px;
+      color: var(--muted-2);
+      font-weight: 500;
+    }
+
+    .auth {
+      position: relative; z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(10, 14, 23, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px 28px;
+      box-shadow:
+        0 0 0 1px rgba(0, 212, 255, 0.04),
+        0 24px 48px rgba(0, 0, 0, 0.4),
+        0 0 48px rgba(0, 212, 255, 0.05);
+      position: relative;
+    }
+    .auth-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 24px; right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      box-shadow: 0 0 12px var(--neon);
+    }
+
+    .auth-card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .auth-card .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted-2);
+      margin-bottom: 8px;
+    }
+    .field { margin-bottom: 16px; }
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      background: #070b12;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+    input::placeholder { color: var(--muted-2); }
+    input:focus {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 3px var(--neon-dim);
+    }
+
+    .btn-enter {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: var(--font);
+      cursor: pointer;
+      color: #031018;
+      background: linear-gradient(135deg, #00d4ff, #0090c4);
+      box-shadow: 0 0 22px var(--neon-dim);
+      transition: filter .15s, transform .15s, box-shadow .15s;
+    }
+    .btn-enter:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px var(--neon-glow);
+    }
+    .btn-enter:active { transform: translateY(0); }
+    .btn-enter:disabled {
+      opacity: .7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .error {
+      background: rgba(255, 77, 106, 0.08);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .auth-foot {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted-2);
+      line-height: 1.45;
+    }
+    .auth-foot b { color: #fff; }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .pitch {
+        padding: 48px 28px 28px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-width: none;
+        margin: 0;
+      }
+      .pitch h1 { font-size: 32px; }
+      .metrics { gap: 24px; }
+      .auth { padding: 28px 20px 48px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="wrap">
-        <div class="card">
-            <div class="brand">
-                <h1>Prospec<span>THOR</span></h1>
-                <p>Painel de prospecção de leads</p>
-            </div>
-            {% if error %}
-            <div class="error">{{ error }}</div>
-            {% endif %}
-            <form action="/login" method="POST">
-                <div class="field">
-                    <label for="username">Usuário</label>
-                    <input type="text" id="username" name="username" placeholder="Seu usuário" required autocomplete="username">
-                </div>
-                <div class="field">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" name="password" placeholder="Sua senha" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn">Entrar</button>
-            </form>
+  <div class="bg-layer" aria-hidden="true"></div>
+
+  <div class="page">
+    <section class="pitch">
+      <div class="brand">
+        <div class="brand-mark">PT</div>
+        <strong>Prospec<span>THOR</span></strong>
+      </div>
+
+      <h1>
+        Feche mais sites.<br />
+        <em>Sem caçar cliente.</em>
+      </h1>
+
+      <p>
+        Leads locais <strong>sem site</strong>, ranqueados por chance de venda.
+        Você só aborda e fecha.
+      </p>
+
+      <div class="metrics">
+        <div>
+          <b><span>+72%</span></b>
+          <small>mais contatos</small>
         </div>
-    </div>
+        <div>
+          <b>3–5</b>
+          <small>sites a mais / mês</small>
+        </div>
+        <div>
+          <b>1×</b>
+          <small>fechamento paga o acesso</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth">
+      <div class="auth-card">
+        <h2>Entrar</h2>
+        <p class="sub">Acesse seus leads e comece a vender.</p>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/login" method="POST" id="login-form">
+          <div class="field">
+            <label for="username">Usuário</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Seu usuário"
+              required
+              autocomplete="username"
+              autofocus
+            />
+          </div>
+          <div class="field">
+            <label for="password">Senha</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Sua senha"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <button type="submit" class="btn-enter" id="btn-login">Entrar →</button>
+        </form>
+
+        <div class="auth-foot">
+          <b>1 fechamento</b> já paga o acesso. O ticket é o seu.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', function () {
+      var btn = document.getElementById('btn-login');
+      btn.disabled = true;
+      btn.textContent = 'Entrando…';
+    });
+  </script>
 </body>
 </html>

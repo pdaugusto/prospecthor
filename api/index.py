@@ -105,10 +105,14 @@ def _is_real_admin() -> bool:
 
 def _is_admin() -> bool:
     """
-    Poder de admin no painel (Usuários, Auditoria, Bot, assign).
-    Em impersonate = False (vê como cliente).
+    Poder de admin no painel (vê TODOS os leads, Usuários, etc.).
+    Em impersonate = False.
+    Nunca confiar só em role=admin se username não for patrao.
     """
     if _is_impersonating():
+        return False
+    uname = (_session_user().get("username") or "").lower().strip()
+    if uname != "patrao" and uname != "patrão":
         return False
     return _is_real_admin()
 
@@ -127,13 +131,20 @@ def _audit_actor() -> tuple[int | None, str]:
 def get_all_leads(use_cache=True):
     """
     Leads Raio:
-    - Patrão (admin): TODOS os leads
-    - admin/amigo (client): SÓ assigned_to = ele
+    - Patrão REAL (e não em impersonate): TODOS
+    - Qualquer cliente (incl. nova conta): SOMENTE assigned_to == user_id
     """
     uid = _session_user().get("id")
-    uname = (_session_user().get("username") or "").lower()
-    is_adm = _is_admin()
-    cache_key = f"{'adm' if is_adm else 'cli'}:{uid}:{uname}"
+    uname = (_session_user().get("username") or "").lower().strip()
+    # Só patrao (fora de impersonate) vê tudo
+    sees_all = _is_admin() and not _is_impersonating()
+
+    try:
+        uid_int = int(uid) if uid not in (None, "", 0, "0") else None
+    except (TypeError, ValueError):
+        uid_int = None
+
+    cache_key = f"{'all' if sees_all else 'own'}:{uid_int}:{uname}"
 
     now = time.time()
     if (
@@ -145,6 +156,11 @@ def get_all_leads(use_cache=True):
 
     if not DATABASE_URL:
         return []
+
+    # Cliente sem id válido = lista vazia (nunca vaza lista completa)
+    if not sees_all and not uid_int:
+        return []
+
     try:
         try:
             from src.users import ensure_schema
@@ -154,55 +170,37 @@ def get_all_leads(use_cache=True):
 
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        sql = _SQL_RAIO_BASE
-        params = []
-        # Cliente (amigo): só os que o Patrão mandou / bot atribuiu
-        if not is_adm:
-            if uid:
-                sql += " AND assigned_to = %s"
-                params.append(int(uid))
-            else:
-                # sem id = não vê leads de ninguém
-                cur.close()
-                conn.close()
-                return []
-        sql += " ORDER BY lead_score DESC NULLS LAST;"
-        try:
-            cur.execute(sql, params)
-        except Exception:
-            cur.execute(
-                """
-                SELECT id, name, phone, city, state, niche, category, address,
-                       website, website_status, maps_url, rating, review_count,
-                       instagram_url, instagram_username, lead_score, lead_class,
-                       lead_problems, lead_services, lead_priority,
-                       contacted_at, notes, created_at, scraped_at
-                FROM companies
-                WHERE lead_class = 'raio'
-                   OR website_status IN ('sem_site', 'so_social')
-                   OR website IS NULL OR TRIM(COALESCE(website, '')) = ''
-                ORDER BY lead_score DESC NULLS LAST;
-                """
+
+        if sees_all:
+            sql = _SQL_RAIO_BASE + " ORDER BY lead_score DESC NULLS LAST;"
+            cur.execute(sql)
+        else:
+            # filtro rígido no SQL + reforço em Python
+            sql = (
+                _SQL_RAIO_BASE
+                + " AND assigned_to = %s ORDER BY lead_score DESC NULLS LAST;"
             )
-            # se fallback e cliente, filtra em Python se possível
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
-            if not is_adm:
-                leads = []  # sem coluna assigned, cliente não vê lista inteira
-            _cache["leads"][cache_key] = leads
-            _cache["leads_at"][cache_key] = now
-            return leads
+            cur.execute(sql, (uid_int,))
 
         rows = cur.fetchall()
         cur.close()
         conn.close()
         leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
+
+        if not sees_all:
+            leads = [
+                l for l in leads
+                if l.get("assigned_to") is not None
+                and int(l.get("assigned_to")) == uid_int
+            ]
+
         _cache["leads"][cache_key] = leads
         _cache["leads_at"][cache_key] = now
         return leads
     except Exception:
+        # NUNCA devolver cache de outro usuário / lista completa em falha
+        if not sees_all:
+            return []
         return _cache["leads"].get(cache_key) or []
 
 
@@ -299,9 +297,17 @@ def login():
         if user:
             session.clear()
             session["logged_in"] = True
+            # id obrigatório para cliente filtrar leads (sem id = lista vazia)
             session["user_id"] = user.get("id")
-            session["username"] = user.get("username")
-            session["role"] = user.get("role") or "client"
+            session["username"] = (user.get("username") or "").strip()
+            # nunca promover client a admin na sessão
+            role = (user.get("role") or "client").lower()
+            uname = session["username"].lower()
+            if uname == "patrao":
+                role = "admin"
+            elif role == "admin" and uname != "patrao":
+                role = "client"
+            session["role"] = role
             session["label"] = user.get("label") or user.get("username")
             return redirect("/")
         error = "Usuário ou senha incorretos."

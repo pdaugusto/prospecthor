@@ -316,7 +316,10 @@ def create_user(
     username = (username or "").strip().lower()
     if not username or not password:
         raise ValueError("username e password obrigatórios")
-    if role not in ("admin", "client"):
+    # Nunca criar outro admin pelo painel — só "patrao" é admin do sistema
+    if username == _PRINCIPAL_USERNAME:
+        role = "admin"
+    else:
         role = "client"
     conn = _connect()
     try:

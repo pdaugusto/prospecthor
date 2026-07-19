@@ -128,22 +128,54 @@ def _audit_actor() -> tuple[int | None, str]:
     return u.get("id"), (u.get("username") or "sistema")
 
 
+def _effective_user_id() -> int | None:
+    """ID do usuário efetivo na sessão (cliente ou impersonado)."""
+    uid = _session_user().get("id")
+    try:
+        if uid in (None, "", 0, "0"):
+            return None
+        return int(uid)
+    except (TypeError, ValueError):
+        return None
+
+
+def _sees_all_leads() -> bool:
+    """Só o Patrão real (login patrao), fora de impersonate, vê lista completa."""
+    return _is_admin() and not _is_impersonating()
+
+
+def _filter_leads_for_session(leads: list) -> list:
+    """
+    Cinto e suspensório: qualquer lista de leads passa por aqui antes de ir ao cliente.
+    Cliente / impersonate → só assigned_to == user_id. Sem id → [].
+    """
+    if _sees_all_leads():
+        return leads
+    uid = _effective_user_id()
+    if not uid:
+        return []
+    out = []
+    for l in leads or []:
+        try:
+            owner = l.get("assigned_to")
+            if owner is not None and int(owner) == uid:
+                out.append(l)
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
 def get_all_leads(use_cache=True):
     """
     Leads Raio:
     - Patrão REAL (e não em impersonate): TODOS
     - Qualquer cliente (incl. nova conta): SOMENTE assigned_to == user_id
     """
-    uid = _session_user().get("id")
+    uid_int = _effective_user_id()
     uname = (_session_user().get("username") or "").lower().strip()
-    # Só patrao (fora de impersonate) vê tudo
-    sees_all = _is_admin() and not _is_impersonating()
+    sees_all = _sees_all_leads()
 
-    try:
-        uid_int = int(uid) if uid not in (None, "", 0, "0") else None
-    except (TypeError, ValueError):
-        uid_int = None
-
+    # Isolamento rígido: nunca cache compartilhado entre escopos
     cache_key = f"{'all' if sees_all else 'own'}:{uid_int}:{uname}"
 
     now = time.time()
@@ -152,7 +184,7 @@ def get_all_leads(use_cache=True):
         and cache_key in _cache["leads"]
         and (now - _cache["leads_at"].get(cache_key, 0)) < _CACHE_TTL
     ):
-        return _cache["leads"][cache_key]
+        return _filter_leads_for_session(_cache["leads"][cache_key])
 
     if not DATABASE_URL:
         return []
@@ -186,13 +218,7 @@ def get_all_leads(use_cache=True):
         cur.close()
         conn.close()
         leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
-
-        if not sees_all:
-            leads = [
-                l for l in leads
-                if l.get("assigned_to") is not None
-                and int(l.get("assigned_to")) == uid_int
-            ]
+        leads = _filter_leads_for_session(leads)
 
         _cache["leads"][cache_key] = leads
         _cache["leads_at"][cache_key] = now
@@ -201,7 +227,18 @@ def get_all_leads(use_cache=True):
         # NUNCA devolver cache de outro usuário / lista completa em falha
         if not sees_all:
             return []
-        return _cache["leads"].get(cache_key) or []
+        return _filter_leads_for_session(_cache["leads"].get(cache_key) or [])
+
+
+@app.after_request
+def _no_store_private(resp):
+    """Evita CDN/browser reutilizar /api/leads de outro usuário."""
+    path = (request.path or "")
+    if path.startswith("/api/"):
+        resp.headers["Cache-Control"] = "private, no-store, no-cache, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Vary"] = "Cookie"
+    return resp
 
 
 def get_lead_by_id(lead_id):
@@ -470,7 +507,8 @@ def api_impersonate_stop():
 @app.route("/api/leads")
 @login_required
 def api_leads():
-    return jsonify(get_all_leads())
+    # sempre filtra de novo (nunca confiar só em cache interno)
+    return jsonify(_filter_leads_for_session(get_all_leads()))
 
 
 @app.route("/api/leads/<int:lead_id>")
@@ -479,6 +517,15 @@ def api_lead_detail(lead_id):
     lead = get_lead_by_id(lead_id)
     if not lead:
         return jsonify({"error": "Not found"}), 404
+    # cliente nunca acessa lead de outro
+    if not _sees_all_leads():
+        uid = _effective_user_id()
+        try:
+            owner = lead.get("assigned_to")
+            if owner is None or int(owner) != uid:
+                return jsonify({"error": "Not found"}), 404
+        except (TypeError, ValueError):
+            return jsonify({"error": "Not found"}), 404
     return jsonify(lead)
 
 
@@ -551,14 +598,15 @@ def api_update_status(lead_id):
 @app.route("/api/stats")
 @login_required
 def api_stats():
-    uid = _session_user().get("id")
-    role = _session_user().get("role")
-    cache_key = f"{role}:{uid}"
+    uid = _effective_user_id()
+    uname = (_session_user().get("username") or "").lower().strip()
+    scope = "all" if _sees_all_leads() else "own"
+    cache_key = f"stats:{scope}:{uid}:{uname}"
     now = time.time()
     if cache_key in _cache["stats"] and (now - _cache["stats_at"].get(cache_key, 0)) < _CACHE_TTL:
         return jsonify(_cache["stats"][cache_key])
 
-    leads = get_all_leads()
+    leads = _filter_leads_for_session(get_all_leads())
     nichos = {}
     contactados = 0
     descartados = 0

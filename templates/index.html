@@ -744,10 +744,22 @@
             closeSidebar();
         }
 
+        function clearLeadsCache() {
+            allLeads = [];
+            filteredLeads = [];
+            leadsCacheAt = 0;
+        }
+
         async function loadMe() {
             try {
-                const res = await fetch('/api/me');
+                const res = await fetch('/api/me', { cache: 'no-store', credentials: 'same-origin' });
+                const prevId = currentUser && currentUser.id;
+                const prevImp = currentUser && currentUser.impersonating;
                 currentUser = await res.json();
+                // se mudou de usuário (login/impersonate), zera cache local de leads
+                if (prevId !== currentUser.id || !!prevImp !== !!currentUser.impersonating) {
+                    clearLeadsCache();
+                }
                 const name = currentUser.username || 'user';
                 const label = currentUser.label || name;
                 document.getElementById('sidebar-user').textContent = label;
@@ -799,10 +811,13 @@
                 const res = await fetch('/api/impersonate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId })
+                    body: JSON.stringify({ user_id: userId }),
+                    cache: 'no-store',
+                    credentials: 'same-origin'
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) { alert(data.error || 'Erro ao impersonar'); return; }
+                clearLeadsCache();
                 await loadMe();
                 navigateTo('/');
                 alert('Agora você está vendo como: ' + (data.label || data.username));
@@ -813,9 +828,14 @@
 
         async function stopImpersonate() {
             try {
-                const res = await fetch('/api/impersonate/stop', { method: 'POST' });
+                const res = await fetch('/api/impersonate/stop', {
+                    method: 'POST',
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) { alert(data.error || 'Erro ao voltar'); return; }
+                clearLeadsCache();
                 await loadMe();
                 navigateTo('/users');
             } catch (e) {
@@ -1193,8 +1213,27 @@
             if (!force && allLeads.length && (now - leadsCacheAt) < CACHE_MS) {
                 return allLeads;
             }
-            const res = await fetch('/api/leads');
-            allLeads = await res.json();
+            const res = await fetch('/api/leads', { cache: 'no-store', credentials: 'same-origin' });
+            if (!res.ok) {
+                allLeads = [];
+                leadsCacheAt = now;
+                return allLeads;
+            }
+            const data = await res.json();
+            // API deve devolver array; se vier erro/objeto, não mostra nada
+            allLeads = Array.isArray(data) ? data : [];
+            // Isolamento extra no front: só Patrão (não impersonando) vê todos
+            const seesAll = !!currentUser.is_admin && !currentUser.impersonating;
+            if (!seesAll) {
+                const myId = currentUser.id != null ? Number(currentUser.id) : null;
+                if (myId == null || Number.isNaN(myId)) {
+                    allLeads = [];
+                } else {
+                    allLeads = allLeads.filter(
+                        l => l.assigned_to != null && Number(l.assigned_to) === myId
+                    );
+                }
+            }
             leadsCacheAt = now;
             return allLeads;
         }
@@ -1202,8 +1241,8 @@
         async function loadHome() {
             try {
                 const [stats, leads] = await Promise.all([
-                    fetch('/api/stats').then(r => r.json()),
-                    fetchLeads()
+                    fetch('/api/stats', { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()),
+                    fetchLeads(true)
                 ]);
 
                 const total = stats.total || 0;

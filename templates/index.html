@@ -1078,8 +1078,30 @@
         let leadsOwnerId = '';
         let leadsScopeKey = '';
         let fetchLeadsSeq = 0;
+        let homeLoadSeq = 0;
         let navLockUntil = 0;
         let leadsLoading = false;
+
+        function destroyHomeCharts() {
+            if (chartStatus) {
+                try { chartStatus.destroy(); } catch (_) {}
+                chartStatus = null;
+            }
+            if (chartNiche) {
+                try { chartNiche.destroy(); } catch (_) {}
+                chartNiche = null;
+            }
+        }
+
+        function setText(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        function setHtml(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = val;
+        }
 
         function esc(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -1338,36 +1360,50 @@
                 document.getElementById('view-home').classList.add('active');
                 document.getElementById('nav-home').classList.add('active');
                 setPageMeta('Visão geral', 'Leads Raio com telefone · operação comercial');
-                loadHome();
+                // próximo tick: canvas já com layout (evita chart 0x0 ao voltar do Leads)
+                setTimeout(() => loadHome(), 0);
             } else if (path === '/leads') {
+                // ao sair da home, mata charts (evita bug de resize em display:none)
+                destroyHomeCharts();
+                homeLoadSeq++; // cancela loadHome pendente
                 document.getElementById('view-leads').classList.add('active');
                 document.getElementById('nav-leads').classList.add('active');
                 setPageMeta('Leads', 'Busca, filtros e ordenação · clique na linha para abrir o detalhe.');
                 loadLeads();
             } else if (path.startsWith('/lead/')) {
+                destroyHomeCharts();
+                homeLoadSeq++;
                 document.getElementById('view-lead-detail').classList.add('active');
                 setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
                 const id = parseInt(path.split('/')[2], 10);
                 if (!Number.isNaN(id)) loadDetail(id);
             } else if (path === '/reports') {
+                destroyHomeCharts();
+                homeLoadSeq++;
                 document.getElementById('view-reports').classList.add('active');
                 document.getElementById('nav-reports').classList.add('active');
                 setPageMeta('Relatórios', 'Indicadores e problemas mais comuns no período.');
                 loadReports();
             } else if (path === '/users') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
+                destroyHomeCharts();
+                homeLoadSeq++;
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
                 setPageMeta('Usuários', 'Clientes, cotas, ATIVO e acesso ao painel.');
                 loadUsers();
             } else if (path === '/audit') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
+                destroyHomeCharts();
+                homeLoadSeq++;
                 document.getElementById('view-audit').classList.add('active');
                 document.getElementById('nav-audit').classList.add('active');
                 setPageMeta('Auditoria', 'Histórico de ações no sistema.');
                 loadAudit();
             } else if (path === '/bot') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
+                destroyHomeCharts();
+                homeLoadSeq++;
                 document.getElementById('view-bot').classList.add('active');
                 document.getElementById('nav-bot').classList.add('active');
                 setPageMeta('Status do Robô', 'Plano de busca, meta de leads e logs da sessão.');
@@ -1858,144 +1894,183 @@
 
         async function loadHome() {
             if (!meReady) return;
-            // só aplica UI se ainda estiver na home (evita matar Leads no meio)
+            const loadId = ++homeLoadSeq;
             const stillHome = () => {
                 const p = location.pathname;
-                return p === '/' || p === '';
+                return (p === '/' || p === '') && loadId === homeLoadSeq;
             };
+
+            // feedback imediato (não fica com "--" velho)
+            setText('home-total', '…');
+            setText('home-novos', '…');
+            setText('home-contactados', '…');
+            setText('home-descartados', '…');
+            const topBox = document.getElementById('home-top');
+            if (topBox) topBox.innerHTML = '<p class="empty">Carregando…</p>';
+
+            // limpa charts antigos (bug clássico ao voltar de outra aba)
+            destroyHomeCharts();
+
             try {
-                const q = leadsQueryString();
-                // Home do Patrão: sempre sobras (despacho), independente do filtro da aba Leads
-                const homeQ = isPatraoSession() ? '?scope=free' : q;
-                const [stats, leads] = await Promise.all([
-                    fetch('/api/stats' + homeQ, { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()),
-                    (async () => {
-                        if (isPatraoSession()) {
-                            // NÃO sobrescreve allLeads da aba Leads (scope all/user) — só top da home
-                            const res = await fetch('/api/leads?scope=free', { cache: 'no-store', credentials: 'same-origin' });
-                            const data = await res.json();
-                            return Array.isArray(data) ? data.filter(l => l.assigned_to == null) : [];
-                        }
-                        // cliente: preenche cache da carteira (ajuda Leads na sequência)
-                        return fetchLeads(false);
-                    })()
-                ]);
+                const homeQ = isPatraoSession() ? '?scope=free' : '';
+                // 1) stats — sempre
+                let stats = {};
+                try {
+                    const sr = await fetch('/api/stats' + homeQ, { cache: 'no-store', credentials: 'same-origin' });
+                    stats = await sr.json().catch(() => ({}));
+                    if (!sr.ok) stats = {};
+                } catch (_) {
+                    stats = {};
+                }
+                if (!stillHome()) return;
+
+                // 2) leads só pro top — isolado de allLeads (não interfere na aba Leads)
+                let leads = [];
+                try {
+                    if (isPatraoSession()) {
+                        const res = await fetch('/api/leads?scope=free', { cache: 'no-store', credentials: 'same-origin' });
+                        const data = await res.json().catch(() => []);
+                        leads = Array.isArray(data) ? data.filter(l => l.assigned_to == null) : [];
+                    } else if (allLeads.length) {
+                        leads = allLeads.slice();
+                    } else {
+                        leads = (await fetchLeads(true)).slice();
+                    }
+                } catch (_) {
+                    leads = allLeads.slice();
+                }
                 if (!stillHome()) return;
 
                 const patrao = isPatraoSession();
-                const total = stats.total || 0;
-                const contactados = stats.mornos || stats.contactados || 0;
-                const descartados = stats.descartados || stats.frios || 0;
+                const total = Number(stats.total) || 0;
+                const contactados = Number(stats.mornos || stats.contactados) || 0;
+                const descartados = Number(stats.descartados || stats.frios) || 0;
                 const novos = Math.max(total - contactados, 0);
 
                 const quotaBar = document.getElementById('home-quota-bar');
                 const quotaFill = document.getElementById('home-quota-fill');
                 if (patrao) {
-                    document.getElementById('home-total-label').textContent = 'Sobras (livres)';
-                    document.getElementById('home-novos-label').textContent = 'Sobras novas';
-                    document.getElementById('home-contactados-label').textContent = 'Já distribuídos';
-                    document.getElementById('home-descartados-label').textContent = 'Total no banco';
-                    document.getElementById('home-total').textContent = stats.free != null ? stats.free : total;
-                    document.getElementById('home-novos').textContent = novos;
-                    document.getElementById('home-contactados').textContent = stats.assigned_total != null ? stats.assigned_total : contactados;
-                    document.getElementById('home-descartados').textContent = stats.all_total != null ? stats.all_total : total;
-                    document.getElementById('home-total-meta').textContent = 'Pool para encaminhar';
-                    document.getElementById('home-contact-meta').textContent = 'Com clientes';
-                    document.getElementById('home-desc-meta').textContent = 'Raios no sistema';
-                    document.getElementById('home-chart-status-title').textContent = 'Status das sobras';
-                    document.getElementById('home-top-title').textContent = 'Hot leads — top sobras';
+                    setText('home-total-label', 'Sobras (livres)');
+                    setText('home-novos-label', 'Sobras novas');
+                    setText('home-contactados-label', 'Já distribuídos');
+                    setText('home-descartados-label', 'Total no banco');
+                    setText('home-total', String(stats.free != null ? stats.free : total));
+                    setText('home-novos', String(novos));
+                    setText('home-contactados', String(stats.assigned_total != null ? stats.assigned_total : contactados));
+                    setText('home-descartados', String(stats.all_total != null ? stats.all_total : total));
+                    setText('home-total-meta', 'Pool para encaminhar');
+                    setText('home-contact-meta', 'Com clientes');
+                    setText('home-desc-meta', 'Raios no sistema');
+                    setText('home-chart-status-title', 'Status das sobras');
+                    setText('home-top-title', 'Hot leads — top sobras');
                     if (quotaBar) quotaBar.style.display = 'none';
-                    renderPoolPanel(stats);
+                    try { renderPoolPanel(stats); } catch (e) { console.error(e); }
                 } else {
-                    document.getElementById('home-total-label').textContent = 'Leads ativos';
-                    document.getElementById('home-novos-label').textContent = 'Novos';
-                    document.getElementById('home-contactados-label').textContent = 'Contactados';
-                    document.getElementById('home-descartados-label').textContent = 'Cota do mês';
-                    document.getElementById('home-total').textContent = total;
-                    document.getElementById('home-novos').textContent = novos;
-                    document.getElementById('home-contactados').textContent = contactados;
+                    setText('home-total-label', 'Leads ativos');
+                    setText('home-novos-label', 'Novos');
+                    setText('home-contactados-label', 'Contactados');
+                    setText('home-descartados-label', 'Cota do mês');
+                    setText('home-total', String(total));
+                    setText('home-novos', String(novos));
+                    setText('home-contactados', String(contactados));
                     const used = currentUser.assigned_this_month || 0;
                     const q = currentUser.monthly_quota || 0;
-                    document.getElementById('home-descartados').innerHTML = q
-                        ? `${used}<span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`
-                        : String(descartados);
-                    document.getElementById('home-total-meta').textContent = 'Na sua carteira';
+                    if (q) {
+                        setHtml('home-descartados', `${used}<span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`);
+                    } else {
+                        setText('home-descartados', String(descartados));
+                    }
+                    setText('home-total-meta', 'Na sua carteira');
                     const rate = total ? Math.round((contactados / total) * 100) : 0;
-                    document.getElementById('home-contact-meta').innerHTML = `Taxa <strong style="color:var(--text)">${rate}%</strong>`;
-                    document.getElementById('home-desc-meta').textContent = q ? 'Uso da cota' : 'Descartados';
+                    setHtml('home-contact-meta', `Taxa <strong style="color:var(--text)">${rate}%</strong>`);
+                    setText('home-desc-meta', q ? 'Uso da cota' : 'Descartados');
                     if (quotaBar && quotaFill && q) {
                         quotaBar.style.display = '';
                         quotaFill.style.width = Math.min(100, Math.round((used / q) * 100)) + '%';
                     } else if (quotaBar) {
                         quotaBar.style.display = 'none';
                     }
-                    document.getElementById('home-chart-status-title').textContent = 'Status dos leads';
-                    document.getElementById('home-top-title').textContent = 'Hot leads — top 5';
+                    setText('home-chart-status-title', 'Status dos leads');
+                    setText('home-top-title', 'Hot leads — top 5');
                     const poolPanel = document.getElementById('home-pool-panel');
                     if (poolPanel) poolPanel.style.display = 'none';
                 }
 
+                // charts no próximo frame (canvas já visível na home)
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 if (!stillHome()) return;
+
                 const pieEl = document.getElementById('chart-status');
                 const barEl = document.getElementById('chart-niche');
-                if (pieEl) {
-                    const pieCtx = pieEl.getContext('2d');
-                    if (chartStatus) { try { chartStatus.destroy(); } catch (_) {} }
-                    const pieLabels = patrao
-                        ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
-                        : ['Novos', 'Contactados', 'Descartados'];
-                    chartStatus = new Chart(pieCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: pieLabels,
-                            datasets: [{
-                                data: [novos, contactados, descartados],
-                                backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            animation: false,
-                            plugins: { legend: { position: 'bottom' } },
-                            cutout: '62%'
-                        }
-                    });
+                destroyHomeCharts();
+
+                if (pieEl && pieEl.offsetParent !== null || pieEl) {
+                    try {
+                        const pieCtx = pieEl.getContext('2d');
+                        const pieLabels = patrao
+                            ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
+                            : ['Novos', 'Contactados', 'Descartados'];
+                        chartStatus = new Chart(pieCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: pieLabels,
+                                datasets: [{
+                                    data: [novos, contactados, descartados],
+                                    backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: false,
+                                plugins: { legend: { position: 'bottom' } },
+                                cutout: '62%'
+                            }
+                        });
+                    } catch (e) { console.error('chart status', e); }
                 }
 
                 if (barEl) {
-                    const labels = Object.keys(stats.nichos || {});
-                    const values = Object.values(stats.nichos || {});
-                    const barCtx = barEl.getContext('2d');
-                    if (chartNiche) { try { chartNiche.destroy(); } catch (_) {} }
-                    chartNiche = new Chart(barCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels.map(l => l.toUpperCase()),
-                            datasets: [{
-                                data: values,
-                                backgroundColor: '#00d4ff',
-                                borderRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            animation: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } }
+                    try {
+                        const labels = Object.keys(stats.nichos || {});
+                        const values = Object.values(stats.nichos || {});
+                        const barCtx = barEl.getContext('2d');
+                        chartNiche = new Chart(barCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels.map(l => String(l).toUpperCase()),
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: '#00d4ff',
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { grid: { display: false } },
+                                    y: {
+                                        grid: { color: '#1a2233' },
+                                        beginAtZero: true,
+                                        ticks: { precision: 0 }
+                                    }
+                                }
                             }
-                        }
-                    });
+                        });
+                    } catch (e) { console.error('chart niche', e); }
                 }
 
+                if (!stillHome()) return;
                 const top = [...(leads || [])]
                     .filter(l => getStatus(l) === 'novo')
                     .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
                     .slice(0, 5);
                 const box = document.getElementById('home-top');
-                if (!box || !stillHome()) return;
+                if (!box) return;
                 if (!top.length) {
                     box.innerHTML = patrao
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
@@ -2012,7 +2087,14 @@
                     </div>
                 `).join('');
             } catch (e) {
-                console.error(e);
+                console.error('loadHome', e);
+                if (stillHome()) {
+                    setText('home-total', '—');
+                    setText('home-novos', '—');
+                    setText('home-contactados', '—');
+                    setText('home-descartados', '—');
+                    if (topBox) topBox.innerHTML = '<p class="empty">Erro ao carregar a home. Clique de novo em Visão geral.</p>';
+                }
             }
         }
 

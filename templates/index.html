@@ -1078,8 +1078,8 @@
         let leadsOwnerId = '';
         let leadsScopeKey = '';
         let fetchLeadsSeq = 0;
-        let routeSeq = 0;
         let navLockUntil = 0;
+        let leadsLoading = false;
 
         function esc(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -1791,6 +1791,15 @@
             if (e.target.id === 'user-edit-modal') closeUserEdit();
         });
 
+        function showLeadsLoading() {
+            const tbody = document.getElementById('leads-tbody');
+            const mobile = document.getElementById('leads-mobile');
+            const pag = document.getElementById('leads-pagination');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando leads…</td></tr>';
+            if (mobile) mobile.innerHTML = '<p class="empty">Carregando leads…</p>';
+            if (pag) pag.innerHTML = '';
+        }
+
         async function fetchLeads(force) {
             if (!meReady) return allLeads;
             const now = Date.now();
@@ -1800,12 +1809,12 @@
                 return allLeads;
             }
             const seq = ++fetchLeadsSeq;
+            leadsLoading = true;
             try {
                 const res = await fetch('/api/leads' + q, { cache: 'no-store', credentials: 'same-origin' });
                 // resposta antiga (clique duplo) — ignora
                 if (seq !== fetchLeadsSeq) return allLeads;
                 if (!res.ok) {
-                    // não zera lista em erro transitório se já tem dados
                     if (!allLeads.length) {
                         leadsCacheAt = 0;
                         leadsScopeKey = '';
@@ -1842,12 +1851,18 @@
             } catch (e) {
                 console.error('fetchLeads', e);
                 return allLeads;
+            } finally {
+                if (seq === fetchLeadsSeq) leadsLoading = false;
             }
         }
 
         async function loadHome() {
             if (!meReady) return;
-            const myRoute = ++routeSeq;
+            // só aplica UI se ainda estiver na home (evita matar Leads no meio)
+            const stillHome = () => {
+                const p = location.pathname;
+                return p === '/' || p === '';
+            };
             try {
                 const q = leadsQueryString();
                 // Home do Patrão: sempre sobras (despacho), independente do filtro da aba Leads
@@ -1861,10 +1876,11 @@
                             const data = await res.json();
                             return Array.isArray(data) ? data.filter(l => l.assigned_to == null) : [];
                         }
-                        return fetchLeads(true);
+                        // cliente: preenche cache da carteira (ajuda Leads na sequência)
+                        return fetchLeads(false);
                     })()
                 ]);
-                if (myRoute !== routeSeq) return;
+                if (!stillHome()) return;
 
                 const patrao = isPatraoSession();
                 const total = stats.total || 0;
@@ -1919,7 +1935,7 @@
                     if (poolPanel) poolPanel.style.display = 'none';
                 }
 
-                if (myRoute !== routeSeq) return;
+                if (!stillHome()) return;
                 const pieEl = document.getElementById('chart-status');
                 const barEl = document.getElementById('chart-niche');
                 if (pieEl) {
@@ -1979,7 +1995,7 @@
                     .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
                     .slice(0, 5);
                 const box = document.getElementById('home-top');
-                if (!box) return;
+                if (!box || !stillHome()) return;
                 if (!top.length) {
                     box.innerHTML = patrao
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
@@ -2073,23 +2089,52 @@
 
         async function loadLeads() {
             if (!meReady) return;
-            const myRoute = ++routeSeq;
+            const stillLeads = () => location.pathname === '/leads';
+            // feedback imediato (antes o fetch demorava e parecia “sumido”)
+            if (!allLeads.length) showLeadsLoading();
             try {
+                // se já tem cache do mesmo escopo, pinta na hora e atualiza em background
+                const q = leadsQueryString();
+                const key = (isPatraoSession() ? (leadsScope || 'free') : 'own') + ':' + (leadsOwnerId || '') + ':' + (currentUser.id || '');
+                const hasFreshCache = allLeads.length && leadsScopeKey === key && (Date.now() - leadsCacheAt) < CACHE_MS;
+                if (hasFreshCache) {
+                    const niches = [...new Set(allLeads.map(l => l.niche).filter(Boolean))].sort();
+                    const sel = document.getElementById('filter-niche');
+                    if (sel) {
+                        const cur = sel.value;
+                        sel.innerHTML = '<option value="">Todos os nichos</option>' +
+                            niches.map(n => `<option value="${esc(n)}">${esc(n.toUpperCase())}</option>`).join('');
+                        if (cur && niches.includes(cur)) sel.value = cur;
+                    }
+                    applyFilters();
+                    // refresh silencioso
+                    fetchLeads(true).then(() => {
+                        if (!stillLeads()) return;
+                        applyFilters();
+                    });
+                    return;
+                }
+
                 await fetchLeads(true);
-                if (myRoute !== routeSeq) return;
+                if (!stillLeads()) return;
                 const niches = [...new Set(allLeads.map(l => l.niche).filter(Boolean))].sort();
                 const sel = document.getElementById('filter-niche');
                 if (sel) {
                     const cur = sel.value;
                     sel.innerHTML = '<option value="">Todos os nichos</option>' +
                         niches.map(n => `<option value="${esc(n)}">${esc(n.toUpperCase())}</option>`).join('');
-                    // só restaura se ainda existir na lista
                     if (cur && niches.includes(cur)) sel.value = cur;
                     else sel.value = '';
                 }
                 applyFilters();
             } catch (e) {
                 console.error(e);
+                if (stillLeads()) {
+                    const tbody = document.getElementById('leads-tbody');
+                    if (tbody && !allLeads.length) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="empty">Erro ao carregar. Clique de novo em Leads.</td></tr>';
+                    }
+                }
             }
         }
 
@@ -2579,7 +2624,14 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
 
         window.onpopstate = handleRouting;
         // só roteia depois de /api/me (evita filtrar como admin por engano)
-        loadMe().then(() => handleRouting()).catch(err => {
+        // e já pré-carrega leads em paralelo com a primeira tela
+        loadMe().then(() => {
+            handleRouting();
+            // prefetch: na próxima ida a Leads a lista já está pronta
+            if (location.pathname !== '/leads') {
+                fetchLeads(true).catch(() => {});
+            }
+        }).catch(err => {
             console.error(err);
             meReady = true;
             handleRouting();

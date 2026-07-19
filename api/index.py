@@ -16,15 +16,24 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 app = Flask(__name__, template_folder="../templates")
 
-# Sessão: exige FLASK_SECRET_KEY ou DASHBOARD_SECRET_KEY em produção
+import hashlib as _hashlib
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+# Patrão fixo — nunca default de senha no código
+DASHBOARD_USER = "patrao"
+DASHBOARD_PASS = (os.getenv("DASHBOARD_PASS") or "").strip()
+
+# Sessão: SEMPRE estável entre instâncias Vercel.
+# Se FLASK_SECRET_KEY faltar, deriva do DATABASE_URL (mesma em todos os pods).
+# secrets.token_hex aleatório quebrava login/admin entre cold starts.
 _secret = (
     os.getenv("FLASK_SECRET_KEY")
     or os.getenv("DASHBOARD_SECRET_KEY")
     or ""
 ).strip()
 if not _secret:
-    # dev local only — em Vercel configure a env (instâncias diferentes quebram sessão)
-    _secret = secrets.token_hex(32)
+    _seed = DATABASE_URL or os.getenv("VERCEL_GIT_COMMIT_SHA") or "prospecthor-local"
+    _secret = _hashlib.sha256(f"prospecthor-session-v1|{_seed}".encode("utf-8")).hexdigest()
 app.secret_key = _secret
 _is_vercel = bool(os.getenv("VERCEL") or os.getenv("VERCEL_ENV"))
 app.config.update(
@@ -34,11 +43,6 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     SESSION_COOKIE_NAME="prospecthor_session",
 )
-
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-# Patrão fixo — nunca default de senha no código
-DASHBOARD_USER = "patrao"
-DASHBOARD_PASS = (os.getenv("DASHBOARD_PASS") or "").strip()
 
 # Rate limit simples de login (por IP) — protege brute force em serverless (best-effort)
 _login_attempts: dict[str, list[float]] = defaultdict(list)
@@ -117,15 +121,31 @@ def _is_impersonating() -> bool:
     return bool(session.get("impersonating"))
 
 
+def _norm_username(u: str | None) -> str:
+    """Normaliza username (patrao / patrão → patrao)."""
+    s = (u or "").lower().strip()
+    # remove acentos comuns
+    for a, b in (("ã", "a"), ("á", "a"), ("â", "a"), ("à", "a"), ("é", "e"), ("ê", "e"), ("ó", "o"), ("ô", "o")):
+        s = s.replace(a, b)
+    return s
+
+
+def _is_principal_username(u: str | None) -> bool:
+    return _norm_username(u) == "patrao"
+
+
 def _is_real_admin() -> bool:
     """Só o Patrão real (login patrao), nunca o cliente impersonado."""
     ru = _real_session_user()
-    uname = (ru.get("username") or "").lower().strip()
+    uname = _norm_username(ru.get("username"))
     if uname in ("admin", "teste_amigo"):
         return False
-    if uname in ("patrao", "patrão"):
+    if uname == "patrao":
         return True
-    return (ru.get("role") or "").lower() == "admin" and uname == "patrao"
+    # role na sessão (login grava admin só pro patrao)
+    if (ru.get("role") or "").lower() == "admin" and uname == "patrao":
+        return True
+    return False
 
 
 def _is_admin() -> bool:
@@ -136,8 +156,8 @@ def _is_admin() -> bool:
     """
     if _is_impersonating():
         return False
-    uname = (_session_user().get("username") or "").lower().strip()
-    if uname != "patrao" and uname != "patrão":
+    uname = _norm_username(_session_user().get("username"))
+    if uname != "patrao":
         return False
     return _is_real_admin()
 
@@ -513,18 +533,38 @@ def login():
             session.clear()
             session.permanent = True
             session["logged_in"] = True
-            # id obrigatório para cliente filtrar leads (sem id = lista vazia)
-            session["user_id"] = user.get("id")
-            session["username"] = (user.get("username") or "").strip()
-            # nunca promover client a admin na sessão
-            role = (user.get("role") or "client").lower()
-            uname = session["username"].lower()
-            if uname == "patrao":
-                role = "admin"
-            elif role == "admin" and uname != "patrao":
-                role = "client"
-            session["role"] = role
-            session["label"] = user.get("label") or user.get("username")
+            # limpa flags de impersonate (segurança)
+            session.pop("impersonating", None)
+
+            raw_uname = (user.get("username") or "").strip()
+            uname_n = _norm_username(raw_uname)
+            # principal SEMPRE como "patrao" canônico
+            if uname_n == "patrao":
+                session["username"] = "patrao"
+                session["role"] = "admin"
+                session["label"] = user.get("label") or "Patrão"
+                uid = user.get("id")
+                try:
+                    uid_int = int(uid) if uid not in (None, "", 0, "0") else 0
+                except (TypeError, ValueError):
+                    uid_int = 0
+                if not uid_int:
+                    try:
+                        from src.users import get_user_by_username
+                        db_u = get_user_by_username("patrao") or {}
+                        uid_int = int(db_u.get("id") or 0)
+                    except Exception:
+                        uid_int = 0
+                session["user_id"] = uid_int or user.get("id")
+            else:
+                session["username"] = raw_uname
+                role = (user.get("role") or "client").lower()
+                # nunca promover client a admin na sessão
+                if role == "admin":
+                    role = "client"
+                session["role"] = role
+                session["label"] = user.get("label") or raw_uname
+                session["user_id"] = user.get("id")
             return redirect("/")
         _login_register_fail(ip)
         error = "Usuário ou senha incorretos."

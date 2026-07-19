@@ -1158,6 +1158,11 @@
         async function loadMe() {
             try {
                 const res = await fetch('/api/me', { cache: 'no-store', credentials: 'same-origin' });
+                if (!res.ok) {
+                    // sessão inválida (secret trocado / cookie) → relogin
+                    window.location.href = '/login';
+                    return;
+                }
                 const prevId = currentUser && currentUser.id;
                 const prevImp = currentUser && currentUser.impersonating;
                 currentUser = await res.json();
@@ -1177,7 +1182,12 @@
 
                 const uname = (currentUser.username || '').toLowerCase().trim();
                 const imp = !!currentUser.impersonating;
-                const showAdmin = !!currentUser.is_real_admin && !imp;
+                // menu admin: API diz is_real_admin OU username patrao
+                const showAdmin = !imp && (
+                    !!currentUser.is_real_admin
+                    || !!currentUser.is_admin
+                    || normUser(currentUser.username) === 'patrao'
+                );
                 ['nav-users-wrap', 'nav-audit-wrap', 'nav-bot-wrap'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.style.display = showAdmin ? '' : 'none';
@@ -1213,14 +1223,22 @@
             }
         }
 
+        function normUser(u) {
+            return String(u || '')
+                .toLowerCase()
+                .trim()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        }
+
         function isPatraoSession() {
-            if (!meReady) return false;
-            if (!currentUser || currentUser.impersonating) return false;
-            if (!currentUser.is_real_admin) return false;
-            const uname = (currentUser.username || '').toLowerCase().trim();
-            const real = (currentUser.real_username || '').toLowerCase().trim();
-            // só patrao real — nunca is_admin genérico (default antigo bugava a lista)
-            return uname === 'patrao' || uname === 'patrão' || real === 'patrao' || real === 'patrão';
+            if (!meReady || !currentUser) return false;
+            if (currentUser.impersonating) return false;
+            // confia na API (fonte da verdade)
+            if (currentUser.is_real_admin || currentUser.is_admin) return true;
+            const uname = normUser(currentUser.username);
+            const real = normUser(currentUser.real_username);
+            return uname === 'patrao' || real === 'patrao';
         }
 
         function setupPatraoScopeFilters(show) {

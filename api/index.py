@@ -192,7 +192,7 @@ def _apply_patrao_scope(leads: list, scope: str, owner_id: int | None) -> list:
 def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | None = None) -> list:
     """
     Isolamento final:
-    - Cliente / impersonate → só assigned_to == user_id
+    - Cliente / impersonate → só assigned_to == user_id E com telefone
     - Patrão → aplica scope (default free = sobras para encaminhar)
     """
     if _is_patrao_view():
@@ -200,11 +200,16 @@ def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | 
     uid = _effective_user_id()
     if not uid:
         return []
+    try:
+        from src.users import has_contact_phone
+    except Exception:
+        def has_contact_phone(p):  # type: ignore
+            return bool(p and str(p).strip())
     out = []
     for l in leads or []:
         try:
             owner = l.get("assigned_to")
-            if owner is not None and int(owner) == uid:
+            if owner is not None and int(owner) == uid and has_contact_phone(l.get("phone")):
                 out.append(l)
         except (TypeError, ValueError):
             continue
@@ -1009,13 +1014,24 @@ def api_lead_assign(lead_id):
     from src.users import manual_assign
     from src.audit import log_action
     data = request.get_json(silent=True) or {}
+    from src.users import has_contact_phone
     aid = data.get("assigned_to")
     lead = get_lead_by_id(lead_id) or {}
     if aid in (None, "", 0, "0", "null"):
         ok = manual_assign(lead_id, None)
         assigned = None
     else:
+        if not has_contact_phone(lead.get("phone")):
+            return jsonify({
+                "success": False,
+                "error": "Lead sem telefone de contato — não envia para cliente.",
+            }), 400
         ok = manual_assign(lead_id, int(aid))
+        if not ok:
+            return jsonify({
+                "success": False,
+                "error": "Não foi possível atribuir (sem telefone ou erro).",
+            }), 400
         assigned = int(aid)
     audit_uid, audit_uname = _audit_actor()
     log_action(

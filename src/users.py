@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Any
 
@@ -527,6 +528,20 @@ def delete_user(user_id: int, reassign_leads_to: int | None = None) -> bool:
         conn.close()
 
 
+def has_contact_phone(phone: Any) -> bool:
+    """
+    Telefone utilizável para o cliente ligar/WhatsApp.
+    Exige ao menos 10 dígitos (DDD + número) ou 12+ com código 55.
+    """
+    digits = re.sub(r"\D", "", str(phone or ""))
+    if not digits:
+        return False
+    # remove zeros à esquerda inúteis
+    if digits.startswith("55") and len(digits) >= 12:
+        return True
+    return len(digits) >= 10
+
+
 def _user_accepts_lead(user: dict[str, Any], company: dict[str, Any]) -> bool:
     """Filtro opcional de cidade/nicho do usuário."""
     cities = user.get("cities") or []
@@ -542,11 +557,61 @@ def _user_accepts_lead(user: dict[str, Any], company: dict[str, Any]) -> bool:
     return True
 
 
+def unassign_leads_without_phone() -> int:
+    """Tira de clientes qualquer lead sem telefone útil (vira sobra do Patrão)."""
+    if not _DATABASE_URL:
+        return 0
+    ensure_schema()
+    conn = _connect()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, phone, assigned_to, name FROM companies
+            WHERE assigned_to IS NOT NULL;
+            """
+        )
+        rows = cur.fetchall()
+        bad_ids: list[int] = []
+        for r in rows:
+            if not has_contact_phone(r.get("phone")):
+                bad_ids.append(int(r["id"]))
+        if not bad_ids:
+            cur.close()
+            return 0
+        cur.execute(
+            """
+            UPDATE companies
+            SET assigned_to = NULL, assigned_at = NULL
+            WHERE id IN %s;
+            """,
+            (tuple(bad_ids),),
+        )
+        n = cur.rowcount
+        conn.commit()
+        cur.close()
+        logger.warning(
+            "[Users] %s lead(s) sem telefone devolvidos ao pool (não vão pra cliente)",
+            n,
+        )
+        return int(n or 0)
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.warning("[Users] unassign_leads_without_phone: %s", exc)
+        return 0
+    finally:
+        conn.close()
+
+
 def assign_raio_lead(company_id: int) -> int | None:
     """
     Atribui lead Raio a um cliente com vaga na cota do mês.
     Round-robin justo: quem tem menos leads no mês (e ainda tem quota).
     Retorna user_id ou None se ninguém puder receber.
+    Nunca atribui lead SEM telefone de contato.
     """
     if not company_id or not _DATABASE_URL:
         return None
@@ -561,6 +626,17 @@ def assign_raio_lead(company_id: int) -> int | None:
             conn.close()
             return None
         company = dict(company)
+
+        # sem telefone útil → não manda pra cliente (fica livre pro Patrão)
+        if not has_contact_phone(company.get("phone")):
+            logger.warning(
+                "[Users] Lead %s (%r) SEM telefone — não atribuído a cliente",
+                company_id,
+                company.get("name"),
+            )
+            cur.close()
+            conn.close()
+            return None
 
         # já atribuído
         if company.get("assigned_to"):
@@ -650,12 +726,27 @@ def assign_raio_lead(company_id: int) -> int | None:
 
 
 def manual_assign(company_id: int, user_id: int | None) -> bool:
-    """Admin atribui/remove dono do lead manualmente."""
+    """Admin atribui/remove dono do lead manualmente.
+
+    Se user_id for cliente, exige telefone de contato (senão False).
+    """
     ensure_schema()
     conn = _connect()
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         if user_id:
+            cur.execute(
+                "SELECT phone, name FROM companies WHERE id = %s LIMIT 1;",
+                (int(company_id),),
+            )
+            row = cur.fetchone()
+            if not row or not has_contact_phone(dict(row).get("phone")):
+                logger.warning(
+                    "[Users] manual_assign bloqueado: lead %s sem telefone",
+                    company_id,
+                )
+                cur.close()
+                return False
             cur.execute(
                 """
                 UPDATE companies SET assigned_to = %s, assigned_at = %s WHERE id = %s;
@@ -694,11 +785,14 @@ def distribute_free_leads(
     NÃO zera nada no mês novo — só empurra o pool livre agora.
     """
     ensure_schema()
+    # limpa carteiras: sem telefone não fica com cliente
+    freed = unassign_leads_without_phone()
     result: dict[str, Any] = {
         "distributed": 0,
         "remaining_free": 0,
         "skipped": 0,
         "by_user": {},
+        "freed_no_phone": freed,
         "message": "",
     }
     if not _DATABASE_URL:
@@ -796,6 +890,10 @@ def distribute_free_leads(
         now = datetime.now().isoformat()
 
         for company in free_leads:
+            # Cliente não recebe lead sem telefone
+            if not has_contact_phone(company.get("phone")):
+                skipped += 1
+                continue
             candidates: list[tuple[int, dict]] = []
             for u in clients:
                 if u["_quota"] <= 0 or u["_used"] >= u["_quota"]:

@@ -1489,9 +1489,12 @@
                 if (myId == null || Number.isNaN(myId)) {
                     allLeads = [];
                 } else {
-                    allLeads = allLeads.filter(
-                        l => l.assigned_to != null && Number(l.assigned_to) === myId
-                    );
+                    // cliente: só os dele E com telefone de contato
+                    allLeads = allLeads.filter(l => {
+                        if (l.assigned_to == null || Number(l.assigned_to) !== myId) return false;
+                        const d = String(l.phone || '').replace(/\D/g, '');
+                        return d.length >= 10;
+                    });
                 }
             } else if ((leadsScope || 'free') === 'free') {
                 // reforço: só sobras

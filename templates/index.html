@@ -1070,11 +1070,16 @@
         let activePromptLead = null;
         let leadsCacheAt = 0;
         const CACHE_MS = 45000;
-        let currentUser = { username: 'admin', role: 'admin', is_admin: true, is_real_admin: true, impersonating: false };
+        // NUNCA assumir admin antes do /api/me — causava filtro "só sobras" e lista vazia
+        let currentUser = { username: '', role: 'client', is_admin: false, is_real_admin: false, impersonating: false, id: null };
+        let meReady = false;
         // Patrão: free = sobras (default) | all | user
         let leadsScope = 'free';
         let leadsOwnerId = '';
         let leadsScopeKey = '';
+        let fetchLeadsSeq = 0;
+        let routeSeq = 0;
+        let navLockUntil = 0;
 
         function esc(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -1107,7 +1112,16 @@
         }
 
         function navigateTo(path) {
-            history.pushState({}, '', path);
+            const now = Date.now();
+            // evita clique duplo sumindo dados / race de load
+            if (now < navLockUntil && location.pathname === path) {
+                closeSidebar();
+                return;
+            }
+            navLockUntil = now + 350;
+            if (location.pathname !== path) {
+                history.pushState({}, '', path);
+            }
             handleRouting();
             closeSidebar();
         }
@@ -1116,6 +1130,7 @@
             allLeads = [];
             filteredLeads = [];
             leadsCacheAt = 0;
+            leadsScopeKey = '';
         }
 
         async function loadMe() {
@@ -1124,6 +1139,7 @@
                 const prevId = currentUser && currentUser.id;
                 const prevImp = currentUser && currentUser.impersonating;
                 currentUser = await res.json();
+                meReady = true;
                 // se mudou de usuário (login/impersonate), zera cache local de leads
                 if (prevId !== currentUser.id || !!prevImp !== !!currentUser.impersonating) {
                     clearLeadsCache();
@@ -1176,10 +1192,13 @@
         }
 
         function isPatraoSession() {
-            return !!currentUser.is_real_admin && !currentUser.impersonating
-                && ((currentUser.username || '').toLowerCase() === 'patrao'
-                    || currentUser.real_username === 'patrao'
-                    || currentUser.is_admin);
+            if (!meReady) return false;
+            if (!currentUser || currentUser.impersonating) return false;
+            if (!currentUser.is_real_admin) return false;
+            const uname = (currentUser.username || '').toLowerCase().trim();
+            const real = (currentUser.real_username || '').toLowerCase().trim();
+            // só patrao real — nunca is_admin genérico (default antigo bugava a lista)
+            return uname === 'patrao' || uname === 'patrão' || real === 'patrao' || real === 'patrão';
         }
 
         function setupPatraoScopeFilters(show) {
@@ -1310,6 +1329,7 @@
         }
 
         function handleRouting() {
+            if (!meReady) return;
             const path = location.pathname;
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
@@ -1327,7 +1347,8 @@
             } else if (path.startsWith('/lead/')) {
                 document.getElementById('view-lead-detail').classList.add('active');
                 setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
-                loadDetail(parseInt(path.split('/')[2], 10));
+                const id = parseInt(path.split('/')[2], 10);
+                if (!Number.isNaN(id)) loadDetail(id);
             } else if (path === '/reports') {
                 document.getElementById('view-reports').classList.add('active');
                 document.getElementById('nav-reports').classList.add('active');
@@ -1771,49 +1792,62 @@
         });
 
         async function fetchLeads(force) {
+            if (!meReady) return allLeads;
             const now = Date.now();
             const q = leadsQueryString();
-            const key = q || 'own';
+            const key = (isPatraoSession() ? (leadsScope || 'free') : 'own') + ':' + (leadsOwnerId || '') + ':' + (currentUser.id || '');
             if (!force && allLeads.length && leadsScopeKey === key && (now - leadsCacheAt) < CACHE_MS) {
                 return allLeads;
             }
-            const res = await fetch('/api/leads' + q, { cache: 'no-store', credentials: 'same-origin' });
-            if (!res.ok) {
-                allLeads = [];
-                leadsCacheAt = now;
+            const seq = ++fetchLeadsSeq;
+            try {
+                const res = await fetch('/api/leads' + q, { cache: 'no-store', credentials: 'same-origin' });
+                // resposta antiga (clique duplo) — ignora
+                if (seq !== fetchLeadsSeq) return allLeads;
+                if (!res.ok) {
+                    // não zera lista em erro transitório se já tem dados
+                    if (!allLeads.length) {
+                        leadsCacheAt = 0;
+                        leadsScopeKey = '';
+                    }
+                    return allLeads;
+                }
+                const data = await res.json();
+                if (seq !== fetchLeadsSeq) return allLeads;
+                let list = Array.isArray(data) ? data : [];
+                // Isolamento extra no front (cliente)
+                if (!isPatraoSession()) {
+                    const myId = currentUser.id != null ? Number(currentUser.id) : null;
+                    if (myId == null || Number.isNaN(myId)) {
+                        list = [];
+                    } else {
+                        list = list.filter(l => {
+                            if (l.assigned_to == null || Number(l.assigned_to) !== myId) return false;
+                            const d = String(l.phone || '').replace(/\D/g, '');
+                            return d.length >= 10;
+                        });
+                    }
+                } else if ((leadsScope || 'free') === 'free') {
+                    list = list.filter(l => l.assigned_to == null);
+                } else if (leadsScope === 'user' && leadsOwnerId) {
+                    const oid = Number(leadsOwnerId);
+                    list = list.filter(
+                        l => l.assigned_to != null && Number(l.assigned_to) === oid
+                    );
+                }
+                allLeads = list;
+                leadsCacheAt = Date.now();
                 leadsScopeKey = key;
                 return allLeads;
+            } catch (e) {
+                console.error('fetchLeads', e);
+                return allLeads;
             }
-            const data = await res.json();
-            allLeads = Array.isArray(data) ? data : [];
-            // Isolamento extra no front (cliente)
-            if (!isPatraoSession()) {
-                const myId = currentUser.id != null ? Number(currentUser.id) : null;
-                if (myId == null || Number.isNaN(myId)) {
-                    allLeads = [];
-                } else {
-                    // cliente: só os dele E com telefone de contato
-                    allLeads = allLeads.filter(l => {
-                        if (l.assigned_to == null || Number(l.assigned_to) !== myId) return false;
-                        const d = String(l.phone || '').replace(/\D/g, '');
-                        return d.length >= 10;
-                    });
-                }
-            } else if ((leadsScope || 'free') === 'free') {
-                // reforço: só sobras
-                allLeads = allLeads.filter(l => l.assigned_to == null);
-            } else if (leadsScope === 'user' && leadsOwnerId) {
-                const oid = Number(leadsOwnerId);
-                allLeads = allLeads.filter(
-                    l => l.assigned_to != null && Number(l.assigned_to) === oid
-                );
-            }
-            leadsCacheAt = now;
-            leadsScopeKey = key;
-            return allLeads;
         }
 
         async function loadHome() {
+            if (!meReady) return;
+            const myRoute = ++routeSeq;
             try {
                 const q = leadsQueryString();
                 // Home do Patrão: sempre sobras (despacho), independente do filtro da aba Leads
@@ -1822,6 +1856,7 @@
                     fetch('/api/stats' + homeQ, { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()),
                     (async () => {
                         if (isPatraoSession()) {
+                            // NÃO sobrescreve allLeads da aba Leads (scope all/user) — só top da home
                             const res = await fetch('/api/leads?scope=free', { cache: 'no-store', credentials: 'same-origin' });
                             const data = await res.json();
                             return Array.isArray(data) ? data.filter(l => l.assigned_to == null) : [];
@@ -1829,6 +1864,7 @@
                         return fetchLeads(true);
                     })()
                 ]);
+                if (myRoute !== routeSeq) return;
 
                 const patrao = isPatraoSession();
                 const total = stats.total || 0;
@@ -1883,57 +1919,67 @@
                     if (poolPanel) poolPanel.style.display = 'none';
                 }
 
-                const pieCtx = document.getElementById('chart-status').getContext('2d');
-                if (chartStatus) chartStatus.destroy();
-                const pieLabels = patrao
-                    ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
-                    : ['Novos', 'Contactados', 'Descartados'];
-                chartStatus = new Chart(pieCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: pieLabels,
-                        datasets: [{
-                            data: [novos, contactados, descartados],
-                            backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } },
-                        cutout: '62%'
-                    }
-                });
-
-                const labels = Object.keys(stats.nichos || {});
-                const values = Object.values(stats.nichos || {});
-                const barCtx = document.getElementById('chart-niche').getContext('2d');
-                if (chartNiche) chartNiche.destroy();
-                chartNiche = new Chart(barCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels.map(l => l.toUpperCase()),
-                        datasets: [{
-                            data: values,
-                            backgroundColor: '#00d4ff',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } }
+                if (myRoute !== routeSeq) return;
+                const pieEl = document.getElementById('chart-status');
+                const barEl = document.getElementById('chart-niche');
+                if (pieEl) {
+                    const pieCtx = pieEl.getContext('2d');
+                    if (chartStatus) { try { chartStatus.destroy(); } catch (_) {} }
+                    const pieLabels = patrao
+                        ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
+                        : ['Novos', 'Contactados', 'Descartados'];
+                    chartStatus = new Chart(pieCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: pieLabels,
+                            datasets: [{
+                                data: [novos, contactados, descartados],
+                                backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            animation: false,
+                            plugins: { legend: { position: 'bottom' } },
+                            cutout: '62%'
                         }
-                    }
-                });
+                    });
+                }
 
-                const top = [...leads]
+                if (barEl) {
+                    const labels = Object.keys(stats.nichos || {});
+                    const values = Object.values(stats.nichos || {});
+                    const barCtx = barEl.getContext('2d');
+                    if (chartNiche) { try { chartNiche.destroy(); } catch (_) {} }
+                    chartNiche = new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels.map(l => l.toUpperCase()),
+                            datasets: [{
+                                data: values,
+                                backgroundColor: '#00d4ff',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            animation: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } }
+                            }
+                        }
+                    });
+                }
+
+                const top = [...(leads || [])]
                     .filter(l => getStatus(l) === 'novo')
                     .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
                     .slice(0, 5);
                 const box = document.getElementById('home-top');
+                if (!box) return;
                 if (!top.length) {
                     box.innerHTML = patrao
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
@@ -2026,14 +2072,21 @@
         }
 
         async function loadLeads() {
+            if (!meReady) return;
+            const myRoute = ++routeSeq;
             try {
-                await fetchLeads();
+                await fetchLeads(true);
+                if (myRoute !== routeSeq) return;
                 const niches = [...new Set(allLeads.map(l => l.niche).filter(Boolean))].sort();
                 const sel = document.getElementById('filter-niche');
-                const cur = sel.value;
-                sel.innerHTML = '<option value="">Todos os nichos</option>' +
-                    niches.map(n => `<option value="${esc(n)}">${esc(n.toUpperCase())}</option>`).join('');
-                sel.value = cur;
+                if (sel) {
+                    const cur = sel.value;
+                    sel.innerHTML = '<option value="">Todos os nichos</option>' +
+                        niches.map(n => `<option value="${esc(n)}">${esc(n.toUpperCase())}</option>`).join('');
+                    // só restaura se ainda existir na lista
+                    if (cur && niches.includes(cur)) sel.value = cur;
+                    else sel.value = '';
+                }
                 applyFilters();
             } catch (e) {
                 console.error(e);
@@ -2525,7 +2578,12 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         });
 
         window.onpopstate = handleRouting;
-        loadMe().then(() => handleRouting());
+        // só roteia depois de /api/me (evita filtrar como admin por engano)
+        loadMe().then(() => handleRouting()).catch(err => {
+            console.error(err);
+            meReady = true;
+            handleRouting();
+        });
     </script>
 </body>
 </html>

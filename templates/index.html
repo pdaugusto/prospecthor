@@ -269,23 +269,33 @@
             font-variant-numeric: tabular-nums;
             min-width: 40px; text-align: center;
         }
-        .badge.score-high, .badge.raio.score-high {
+        /* Score cores: 90+ ouro · 71–89 roxo · 51–70 verde · 0–50 cinza */
+        .badge.score-gold, .badge.raio.score-gold {
+            background: linear-gradient(145deg, rgba(255, 215, 80, 0.22), rgba(212, 160, 20, 0.12));
+            color: #f5d76e;
+            border-color: rgba(245, 200, 60, 0.55);
+            box-shadow: 0 0 14px rgba(245, 200, 60, 0.28), inset 0 0 8px rgba(255, 220, 100, 0.08);
+            text-shadow: 0 0 8px rgba(255, 210, 80, 0.35);
+        }
+        .badge.score-purple, .badge.raio.score-purple {
+            background: rgba(168, 85, 247, 0.16); color: #c084fc;
+            border-color: rgba(168, 85, 247, 0.45);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.22);
+        }
+        .badge.score-green, .badge.raio.score-green {
             background: rgba(34, 197, 94, 0.14); color: #4ade80;
             border-color: rgba(34, 197, 94, 0.4);
             box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
         }
-        .badge.score-mid, .badge.raio.score-mid {
-            background: rgba(0, 212, 255, 0.12); color: var(--neon);
-            border-color: var(--border-glow);
-            box-shadow: 0 0 12px rgba(0, 212, 255, 0.12);
+        .badge.score-gray, .badge.raio.score-gray {
+            background: rgba(122, 139, 163, 0.12); color: #8b9bb4;
+            border-color: rgba(122, 139, 163, 0.35);
+            box-shadow: none;
         }
-        .badge.score-low, .badge.raio.score-low {
-            background: rgba(245, 158, 11, 0.12); color: var(--warning);
-            border-color: rgba(245, 158, 11, 0.35);
-        }
-        .top-item .score.score-high { color: #4ade80; text-shadow: 0 0 12px rgba(34,197,94,0.3); }
-        .top-item .score.score-mid { color: var(--neon); text-shadow: 0 0 12px var(--neon-dim); }
-        .top-item .score.score-low { color: var(--warning); }
+        .top-item .score.score-gold { color: #f5d76e; text-shadow: 0 0 14px rgba(245,200,60,0.45); }
+        .top-item .score.score-purple { color: #c084fc; text-shadow: 0 0 12px rgba(168,85,247,0.35); }
+        .top-item .score.score-green { color: #4ade80; text-shadow: 0 0 12px rgba(34,197,94,0.3); }
+        .top-item .score.score-gray { color: #8b9bb4; text-shadow: none; }
         /* Tooltip de breakdown do score (flutuante, fora da tabela) */
         .score-tip-wrap {
             display: inline-flex; align-items: center; cursor: help;
@@ -315,9 +325,10 @@
             font-size: 14px; font-weight: 800; letter-spacing: 0;
             text-transform: none; font-variant-numeric: tabular-nums;
         }
-        #score-tip-float .st-head strong.score-high { color: #4ade80; }
-        #score-tip-float .st-head strong.score-mid { color: var(--neon); }
-        #score-tip-float .st-head strong.score-low { color: var(--warning); }
+        #score-tip-float .st-head strong.score-gold { color: #f5d76e; }
+        #score-tip-float .st-head strong.score-purple { color: #c084fc; }
+        #score-tip-float .st-head strong.score-green { color: #4ade80; }
+        #score-tip-float .st-head strong.score-gray { color: #8b9bb4; }
         #score-tip-float table {
             width: 100%; border-collapse: collapse; min-width: 0;
             margin: 0;
@@ -723,26 +734,33 @@
             display: inline-block; padding: 4px 9px; border-radius: 8px;
             font-size: 11px; font-weight: 700; letter-spacing: .2px;
         }
-        /* Base (sem tier): neon. Tiers de oportunidade sobrescrevem abaixo. */
-        .badge.raio:not(.score-high):not(.score-mid):not(.score-low) {
+        /* Base (sem tier): cinza. Tiers de score sobrescrevem abaixo. */
+        .badge.raio:not(.score-gold):not(.score-purple):not(.score-green):not(.score-gray) {
             background: var(--neon-dim); color: var(--neon);
             border: 1px solid var(--border-glow);
         }
-        /* Score 0–100: quente / morno / frio (maior especificidade, depois do base) */
-        span.badge.raio.score-high {
+        /* Score 0–100: ouro / roxo / verde / cinza */
+        span.badge.raio.score-gold {
+            background: linear-gradient(145deg, rgba(255, 215, 80, 0.25), rgba(212, 160, 20, 0.14)) !important;
+            color: #f5d76e !important;
+            border: 1px solid rgba(245, 200, 60, 0.55) !important;
+            box-shadow: 0 0 16px rgba(245, 200, 60, 0.32) !important;
+            text-shadow: 0 0 8px rgba(255, 210, 80, 0.4);
+        }
+        span.badge.raio.score-purple {
+            background: rgba(168, 85, 247, 0.16) !important; color: #c084fc !important;
+            border: 1px solid rgba(168, 85, 247, 0.5) !important;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.25) !important;
+        }
+        span.badge.raio.score-green {
             background: rgba(34, 197, 94, 0.14) !important; color: #4ade80 !important;
             border: 1px solid rgba(34, 197, 94, 0.45) !important;
-            box-shadow: 0 0 12px rgba(34, 197, 94, 0.18);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.18) !important;
         }
-        span.badge.raio.score-mid {
-            background: rgba(0, 212, 255, 0.12) !important; color: var(--neon) !important;
-            border: 1px solid var(--border-glow) !important;
-            box-shadow: 0 0 12px rgba(0, 212, 255, 0.14);
-        }
-        span.badge.raio.score-low {
-            background: rgba(245, 158, 11, 0.12) !important; color: var(--warning) !important;
-            border: 1px solid rgba(245, 158, 11, 0.4) !important;
-            box-shadow: none;
+        span.badge.raio.score-gray {
+            background: rgba(122, 139, 163, 0.12) !important; color: #8b9bb4 !important;
+            border: 1px solid rgba(122, 139, 163, 0.35) !important;
+            box-shadow: none !important;
         }
         .badge-status {
             display: inline-flex; align-items: center; gap: 5px;
@@ -1265,7 +1283,7 @@
                             <th onclick="sortBy('name')">Empresa</th>
                             <th onclick="sortBy('city')">Cidade</th>
                             <th onclick="sortBy('phone')">Telefone</th>
-                            <th onclick="sortBy('lead_score')" title="Oportunidade de venda 0–100 · 75+ quente · 50–74 morno · &lt;50 frio">Score <span style="font-weight:500;color:var(--muted);font-size:10px;">/100</span></th>
+                            <th onclick="sortBy('lead_score')" title="Oportunidade 0–100 · 90+ ouro · 71–89 roxo · 51–70 verde · 0–50 cinza">Score <span style="font-weight:500;color:var(--muted);font-size:10px;">/100</span></th>
                             <th onclick="sortBy('status')">Status</th>
                             <th>Ações</th>
                         </tr>
@@ -1486,11 +1504,20 @@
         }
 
         /** Score 0–100: classe de cor por faixa de oportunidade */
+        /** Cores: 90+ ouro · 71–89 roxo · 51–70 verde · 0–50 cinza */
         function scoreTier(sc) {
             const n = Number(sc) || 0;
-            if (n >= 75) return 'score-high'; // quente
-            if (n >= 50) return 'score-mid';  // morno
-            return 'score-low';               // frio
+            if (n >= 90) return 'score-gold';
+            if (n >= 71) return 'score-purple';
+            if (n >= 51) return 'score-green';
+            return 'score-gray';
+        }
+        function scoreTierLabel(sc) {
+            const n = Number(sc) || 0;
+            if (n >= 90) return 'Elite';
+            if (n >= 71) return 'Alto';
+            if (n >= 51) return 'Médio';
+            return 'Baixo';
         }
 
         /** Extrai linhas {label, pts} de lead_problems: "Motivo (+20) — detalhe" */
@@ -1567,7 +1594,7 @@
                     <tr class="st-total"><td>Total</td><td class="pts">${n}/100</td></tr>
                 </tbody></table>`;
             }
-            const tierLabel = n >= 75 ? 'Quente' : n >= 50 ? 'Morno' : 'Frio';
+            const tierLabel = scoreTierLabel(n);
             el.innerHTML = `
                 <div class="st-head">
                     <span>Por que este score</span>

@@ -1036,6 +1036,47 @@ def api_lead_assign(lead_id):
     return jsonify({"success": ok, "assigned_to": assigned})
 
 
+@app.route("/api/leads/distribute", methods=["POST"])
+@login_required
+@admin_required
+def api_leads_distribute():
+    """
+    Patrão distribui sobras (livres) para clientes ATIVOS com vaga na cota.
+    Body opcional: { "limit": N, "user_id": id } — user_id manda só pra um cliente.
+    """
+    from src.users import distribute_free_leads
+    from src.audit import log_action
+    data = request.get_json(silent=True) or {}
+    limit = data.get("limit")
+    only_uid = data.get("user_id")
+    try:
+        lim = int(limit) if limit not in (None, "", "null") else None
+    except (TypeError, ValueError):
+        lim = None
+    try:
+        only = int(only_uid) if only_uid not in (None, "", "null", 0, "0") else None
+    except (TypeError, ValueError):
+        only = None
+
+    result = distribute_free_leads(limit=lim, only_user_id=only)
+    audit_uid, audit_uname = _audit_actor()
+    log_action(
+        "distribute_free",
+        user_id=audit_uid,
+        username=audit_uname,
+        details={
+            "distributed": result.get("distributed"),
+            "remaining_free": result.get("remaining_free"),
+            "skipped": result.get("skipped"),
+            "by_user": result.get("by_user"),
+            "limit": lim,
+            "only_user_id": only,
+        },
+    )
+    _invalidate_cache()
+    return jsonify({"success": True, **result})
+
+
 @app.route("/api/audit")
 @login_required
 @admin_required

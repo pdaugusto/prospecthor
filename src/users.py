@@ -677,3 +677,200 @@ def manual_assign(company_id: int, user_id: int | None) -> bool:
         return False
     finally:
         conn.close()
+
+
+def distribute_free_leads(
+    limit: int | None = None,
+    only_user_id: int | None = None,
+) -> dict[str, Any]:
+    """
+    Distribui sobras (assigned_to IS NULL) para clientes ATIVOS com vaga na cota.
+
+    - Round-robin justo: quem tem menos leads no mês recebe primeiro
+    - Respeita cota mensal e filtro cidade/nicho do usuário
+    - limit: máximo de leads a distribuir (None = todos que couberem)
+    - only_user_id: manda só para um cliente (ainda respeita cota dele)
+
+    NÃO zera nada no mês novo — só empurra o pool livre agora.
+    """
+    ensure_schema()
+    result: dict[str, Any] = {
+        "distributed": 0,
+        "remaining_free": 0,
+        "skipped": 0,
+        "by_user": {},
+        "message": "",
+    }
+    if not _DATABASE_URL:
+        result["message"] = "DATABASE_URL não configurada"
+        return result
+
+    conn = _connect()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Clientes elegíveis
+        if only_user_id:
+            cur.execute(
+                """
+                SELECT id, username, monthly_quota, cities, niches, active, label
+                FROM app_users
+                WHERE id = %s AND lower(username) <> 'patrao'
+                LIMIT 1;
+                """,
+                (int(only_user_id),),
+            )
+            clients = [dict(r) for r in cur.fetchall()]
+            clients = [
+                u for u in clients
+                if u.get("active") in (1, True, "1")
+            ]
+        else:
+            cur.execute(
+                """
+                SELECT id, username, monthly_quota, cities, niches, active, label
+                FROM app_users
+                WHERE active = 1 AND role = 'client' AND lower(username) <> 'patrao'
+                ORDER BY id;
+                """
+            )
+            clients = [dict(r) for r in cur.fetchall()]
+
+        if not clients:
+            # conta sobras mesmo assim
+            cur.execute(
+                """
+                SELECT COUNT(*) AS n FROM companies
+                WHERE assigned_to IS NULL
+                  AND (
+                    lead_class = 'raio'
+                    OR website_status IN ('sem_site', 'so_social')
+                    OR website IS NULL
+                    OR TRIM(COALESCE(website, '')) = ''
+                  );
+                """
+            )
+            result["remaining_free"] = int((cur.fetchone() or {}).get("n") or 0)
+            result["message"] = "Nenhum cliente ATIVO com vaga para receber."
+            cur.close()
+            return result
+
+        for u in clients:
+            u["cities"] = _parse_json_list(u.get("cities"))
+            u["niches"] = _parse_json_list(u.get("niches"))
+            u["_used"] = count_assigned_this_month(int(u["id"]))
+            u["_quota"] = int(u.get("monthly_quota") or 0)
+
+        # Sobras (raio / sem site), melhor score primeiro
+        cur.execute(
+            """
+            SELECT id, name, city, niche, lead_score, assigned_to,
+                   website, website_status, lead_class
+            FROM companies
+            WHERE assigned_to IS NULL
+              AND (
+                lead_class = 'raio'
+                OR website_status IN ('sem_site', 'so_social')
+                OR website IS NULL
+                OR TRIM(COALESCE(website, '')) = ''
+              )
+            ORDER BY lead_score DESC NULLS LAST, id ASC;
+            """
+        )
+        free_leads = [dict(r) for r in cur.fetchall()]
+        if limit is not None:
+            try:
+                lim = max(0, int(limit))
+                free_leads = free_leads[:lim]
+            except (TypeError, ValueError):
+                pass
+
+        if not free_leads:
+            result["message"] = "Nenhuma sobra para distribuir."
+            cur.close()
+            return result
+
+        by_user: dict[str, int] = {}
+        distributed = 0
+        skipped = 0
+        now = datetime.now().isoformat()
+
+        for company in free_leads:
+            candidates: list[tuple[int, dict]] = []
+            for u in clients:
+                if u["_quota"] <= 0 or u["_used"] >= u["_quota"]:
+                    continue
+                if not _user_accepts_lead(u, company):
+                    continue
+                candidates.append((u["_used"], u))
+            if not candidates:
+                skipped += 1
+                continue
+            candidates.sort(key=lambda x: (x[0], int(x[1]["id"])))
+            chosen = candidates[0][1]
+            uid = int(chosen["id"])
+            uname = chosen.get("username") or str(uid)
+
+            cur.execute(
+                """
+                UPDATE companies
+                SET assigned_to = %s, assigned_at = %s
+                WHERE id = %s AND assigned_to IS NULL;
+                """,
+                (uid, now, int(company["id"])),
+            )
+            if cur.rowcount:
+                chosen["_used"] += 1
+                distributed += 1
+                by_user[uname] = by_user.get(uname, 0) + 1
+            else:
+                skipped += 1
+
+        conn.commit()
+
+        # sobras que sobraram no banco
+        cur.execute(
+            """
+            SELECT COUNT(*) AS n FROM companies
+            WHERE assigned_to IS NULL
+              AND (
+                lead_class = 'raio'
+                OR website_status IN ('sem_site', 'so_social')
+                OR website IS NULL
+                OR TRIM(COALESCE(website, '')) = ''
+              );
+            """
+        )
+        remaining = int((cur.fetchone() or {}).get("n") or 0)
+        cur.close()
+
+        result["distributed"] = distributed
+        result["remaining_free"] = remaining
+        result["skipped"] = skipped
+        result["by_user"] = by_user
+        if distributed == 0:
+            result["message"] = (
+                "Nada distribuído: cotas cheias, filtros cidade/nicho ou sem cliente ATIVO."
+            )
+        else:
+            parts = [f"{k}: {v}" for k, v in by_user.items()]
+            result["message"] = (
+                f"Distribuiu {distributed} sobra(s)"
+                + (f" ({', '.join(parts)})" if parts else "")
+                + f". Restam {remaining} livres."
+            )
+        logger.warning("[Users] distribute_free_leads: %s", result["message"])
+        return result
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.warning("[Users] distribute_free_leads falhou: %s", exc)
+        result["message"] = str(exc)
+        return result
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass

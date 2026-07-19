@@ -444,7 +444,10 @@
                 <div class="stat bad"><h3 id="home-descartados-label">Descartados</h3><div class="value" id="home-descartados">--</div></div>
             </div>
             <div class="panel" id="home-pool-panel" style="display:none;margin-bottom:14px;border-color:var(--neon);">
-                <h3 style="margin-bottom:8px;color:var(--neon);">Pool do Patrão</h3>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+                    <h3 style="margin:0;color:var(--neon);">Pool do Patrão</h3>
+                    <button type="button" class="btn btn-primary" id="btn-distribute-free" onclick="distributeFreeLeads()">Distribuir sobra</button>
+                </div>
                 <p id="home-pool-summary" style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;"></p>
                 <div id="home-pool-users" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
             </div>
@@ -618,6 +621,7 @@
                     <option value="convertido">Convertido</option>
                     <option value="descartado">Descartado</option>
                 </select>
+                <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="distributeFreeLeads()">Distribuir sobra</button>
                 <a class="btn btn-primary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
             </div>
             <div class="table-wrap" id="leads-table-wrap">
@@ -834,6 +838,8 @@
         function setupPatraoScopeFilters(show) {
             const scopeEl = document.getElementById('filter-scope');
             const ownerEl = document.getElementById('filter-owner');
+            const distBtn = document.getElementById('btn-distribute-leads');
+            if (distBtn) distBtn.style.display = show ? '' : 'none';
             if (!scopeEl || !ownerEl) return;
             scopeEl.style.display = show ? '' : 'none';
             if (!show) {
@@ -1481,7 +1487,9 @@
             const all = stats.all_total != null ? stats.all_total : free + assigned;
             sum.innerHTML = `<strong style="color:var(--text);">${free} sobras</strong> pra encaminhar · `
                 + `${assigned} já com clientes · ${all} raios no total. `
-                + `Home e Leads mostram <em>só sobras</em> por padrão.`;
+                + `Use <strong>Distribuir sobra</strong> para mandar automaticamente a quem tem vaga (ATIVO + cota).`;
+            const distHome = document.getElementById('btn-distribute-free');
+            if (distHome) distHome.disabled = free <= 0;
             const users = (stats.pool && stats.pool.users) || [];
             if (!users.length) {
                 box.innerHTML = '<span style="font-size:12px;color:var(--muted);">Nenhum cliente cadastrado.</span>';
@@ -1495,6 +1503,48 @@
                     ${esc(u.label || u.username)}: ${u.used}/${u.quota}${full}${on}
                 </span>`;
             }).join('');
+        }
+
+        async function distributeFreeLeads() {
+            if (!isPatraoSession()) return;
+            const msg = 'Distribuir sobras agora?\n\n'
+                + '• Só clientes ATIVO com vaga na cota\n'
+                + '• Round-robin (quem tem menos no mês primeiro)\n'
+                + '• Leads sem dono saem do seu pool e vão pra eles\n'
+                + '• Não fura cota; o que não couber continua livre';
+            if (!confirm(msg)) return;
+            const btns = [
+                document.getElementById('btn-distribute-free'),
+                document.getElementById('btn-distribute-leads')
+            ].filter(Boolean);
+            btns.forEach(b => { b.disabled = true; b.textContent = 'Distribuindo…'; });
+            try {
+                const body = {};
+                // se na aba Leads o filtro for "Por usuário", manda só pra ele
+                if (leadsScope === 'user' && leadsOwnerId && location.pathname === '/leads') {
+                    body.user_id = parseInt(leadsOwnerId, 10);
+                }
+                const res = await fetch('/api/leads/distribute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao distribuir');
+                    return;
+                }
+                clearLeadsCache();
+                alert(data.message || (`Distribuídos: ${data.distributed || 0}`));
+                if (location.pathname === '/leads') await loadLeads();
+                else await loadHome();
+            } catch (e) {
+                alert('Falha: ' + e);
+            } finally {
+                btns.forEach(b => { b.disabled = false; b.textContent = 'Distribuir sobra'; });
+            }
         }
 
         async function loadLeads() {

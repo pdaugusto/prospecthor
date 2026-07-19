@@ -201,9 +201,38 @@ def increment_session_leads(n: int = 1) -> None:
         logger.warning("bot_status increment: %s", exc)
 
 
+# Se "rodando" sem atualização por mais que isso, considera morto (Ctrl+C, fechou CMD, crash)
+_STALE_RODANDO_MINUTES = int(os.getenv("BOT_STALE_MINUTES") or "20")
+
+
+def _parse_iso(ts: str | None) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "").split("+")[0])
+    except Exception:
+        return None
+
+
+def force_parado(
+    *,
+    reason: str = "marcado parado manualmente",
+    last_job: str | None = None,
+) -> dict[str, Any]:
+    """Força status parado (dashboard ou auto-stale)."""
+    set_status(
+        "parado",
+        last_job=last_job or reason,
+        last_leads=None,
+        session_leads=None,
+    )
+    add_log(reason, level="WARN")
+    return get_status(15)
+
+
 def get_status(log_limit: int = 15) -> dict[str, Any]:
     if not _DATABASE_URL:
-        return {"status": "desconhecido", "logs": []}
+        return {"status": "desconhecido", "logs": [], "stale": False}
     try:
         ensure_schema()
         conn = _connect()
@@ -224,7 +253,42 @@ def get_status(log_limit: int = 15) -> dict[str, Any]:
         conn.close()
         data = dict(row) if row else {"status": "parado"}
         data["logs"] = logs
+        data["stale"] = False
+
+        # Auto-corrige "rodando" fantasma (bot morto sem gravar parado)
+        st = (data.get("status") or "").lower().strip()
+        if st == "rodando":
+            updated = _parse_iso(data.get("updated_at")) or _parse_iso(data.get("last_started_at"))
+            age_min = None
+            if updated is not None:
+                age_min = (datetime.now() - updated).total_seconds() / 60.0
+                data["minutes_since_update"] = round(age_min, 1)
+            stale = updated is None or (age_min is not None and age_min > _STALE_RODANDO_MINUTES)
+            if stale:
+                data["stale"] = True
+                if updated is None:
+                    msg = "auto: rodando sem updated_at → parado"
+                else:
+                    msg = (
+                        f"auto: sem heartbeat há {int(age_min)} min "
+                        f"(limite {_STALE_RODANDO_MINUTES}) → parado"
+                    )
+                try:
+                    set_status(
+                        "parado",
+                        last_job=msg,
+                        last_leads=data.get("session_leads_count"),
+                        session_leads=data.get("session_leads_count"),
+                    )
+                    add_log(msg, level="WARN")
+                except Exception:
+                    pass
+                # devolve já corrigido (sem recursão)
+                data["status"] = "parado"
+                data["last_job"] = msg
+                data["last_finished_at"] = datetime.now().isoformat()
+
         return data
     except Exception as exc:
         logger.warning("bot_status get: %s", exc)
-        return {"status": "erro", "last_error": str(exc), "logs": []}
+        return {"status": "erro", "last_error": str(exc), "logs": [], "stale": False}

@@ -876,12 +876,17 @@
 
         <!-- BOT STATUS (Patrão) -->
         <section id="view-bot" class="view">
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-bottom:12px;">
+                <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar status</button>
+                <button class="btn btn-danger btn-sm" type="button" id="btn-bot-force-stop" onclick="forceBotStop()">Marcar como parado</button>
+            </div>
             <div class="stats" style="margin-bottom:14px;">
                 <div class="stat neon"><h3>Status</h3><div class="value" id="bot-status-label" style="font-size:22px;">--</div></div>
                 <div class="stat"><h3>Última execução</h3><div class="value" id="bot-last-run" style="font-size:14px;">--</div></div>
                 <div class="stat"><h3>Leads última sessão</h3><div class="value" id="bot-last-leads">--</div></div>
                 <div class="stat"><h3>Job atual / último</h3><div class="value" id="bot-last-job" style="font-size:13px;">--</div></div>
             </div>
+            <p id="bot-status-hint" style="font-size:12px;color:var(--muted);margin:-6px 0 14px;"></p>
 
             <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
                 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
@@ -1857,6 +1862,18 @@
                 document.getElementById('bot-last-job').textContent = st.last_job || '—';
                 document.getElementById('bot-error').textContent = st.last_error
                     ? ('Erro: ' + st.last_error) : '';
+                const hint = document.getElementById('bot-status-hint');
+                if (hint) {
+                    if (status === 'rodando' && st.minutes_since_update != null) {
+                        hint.textContent = `Último heartbeat há ${st.minutes_since_update} min. Se o PowerShell está fechado, clique em "Marcar como parado". Após ~20 min sem update, o painel corrige sozinho.`;
+                    } else if (status === 'parado') {
+                        hint.textContent = 'Bot parado. Para rodar: no PC use  venv\\Scripts\\python.exe main.py run';
+                    } else {
+                        hint.textContent = '';
+                    }
+                }
+                const stopBtn = document.getElementById('btn-bot-force-stop');
+                if (stopBtn) stopBtn.style.display = status === 'rodando' ? '' : '';
                 const logs = st.logs || [];
                 document.getElementById('bot-logs').innerHTML = logs.length
                     ? logs.map(l => {
@@ -1871,6 +1888,27 @@
             } catch (e) {
                 document.getElementById('bot-status-label').textContent = 'ERRO';
                 document.getElementById('bot-logs').textContent = String(e);
+            }
+        }
+
+        async function forceBotStop() {
+            if (!confirm('Marcar o robô como PARADO no painel?\n\nIsso não mata o processo no PC — só corrige o status se ele ficou preso em "rodando".')) return;
+            try {
+                const res = await fetch('/api/bot-status/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({ reason: 'marcado parado pelo painel' })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao marcar parado');
+                    return;
+                }
+                await loadBotStatus();
+            } catch (e) {
+                alert('Falha: ' + e);
             }
         }
 

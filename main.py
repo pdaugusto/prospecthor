@@ -108,9 +108,20 @@ def run_now(
     """
     logger.info("Bot iniciado com sucesso.")
 
+    import atexit
     from src.checkpoint import CompanyCheckpoint
     from src.coverage import list_pending_jobs, mark_done, is_done
     from src.bot_status import set_status, add_log, increment_session_leads
+
+    # Se o processo morrer sem except (fechar janela), tenta gravar parado
+    def _atexit_mark_stopped() -> None:
+        try:
+            set_status("parado", last_job="processo encerrado (atexit)")
+            add_log("Processo do bot encerrado (atexit)", level="WARN")
+        except Exception:
+            pass
+
+    atexit.register(_atexit_mark_stopped)
 
     known = CompanyCheckpoint.load()
     logger.info(f"Empresas já no banco (place_id): {len(known)}")

@@ -1285,6 +1285,28 @@ def api_bot_status():
     return jsonify(get_status(log_limit=int(request.args.get("limit") or 15)))
 
 
+@app.route("/api/bot-status/stop", methods=["POST"])
+@login_required
+@admin_required
+def api_bot_status_stop():
+    """Força status = parado (quando o bot morreu e ficou 'rodando' no painel)."""
+    from src.bot_status import force_parado, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "marcado parado pelo painel").strip()[:200]
+    st = force_parado(reason=reason)
+    su = _session_user()
+    log_action(
+        "bot_force_stop",
+        user_id=su.get("id"),
+        username=su.get("username"),
+        details={"reason": reason},
+    )
+    _invalidate_cache()
+    return jsonify({"success": True, "status": st})
+
+
 @app.route("/api/settings")
 @login_required
 def api_settings():

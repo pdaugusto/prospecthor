@@ -413,13 +413,6 @@ def admin_required(f):
             return jsonify({"error": "Forbidden"}), 403
         if _is_impersonating() and request.path.startswith("/api/"):
             # impersonate: só bloqueia rotas admin (users/audit/bot)
-            blocked = (
-                request.path.startswith("/api/users")
-                or request.path.startswith("/api/audit")
-                or request.path.startswith("/api/bot-status")
-                or request.path.startswith("/api/impersonate")
-                and request.path.rstrip("/").endswith("/impersonate")
-            )
             # allow stop impersonate
             if request.path.rstrip("/").endswith("/impersonate/stop"):
                 return f(*args, **kwargs)
@@ -427,6 +420,7 @@ def admin_required(f):
                 request.path.startswith("/api/users")
                 or request.path.startswith("/api/audit")
                 or request.path.startswith("/api/bot-status")
+                or request.path.startswith("/api/bot-plan")
             ):
                 return jsonify({"error": "Indisponível em modo impersonate. Volte à sua conta."}), 403
         return f(*args, **kwargs)
@@ -1092,6 +1086,57 @@ def api_audit():
         limit=int(request.args.get("limit") or 150),
     )
     return jsonify(logs)
+
+
+@app.route("/api/bot-plan", methods=["GET"])
+@login_required
+@admin_required
+def api_bot_plan_get():
+    """Plano de busca (meta leads + cidades + nichos) + catálogo."""
+    from src.bot_plan import get_plan, ensure_schema
+    ensure_schema()
+    return jsonify(get_plan())
+
+
+@app.route("/api/bot-plan", methods=["POST", "PUT"])
+@login_required
+@admin_required
+def api_bot_plan_save():
+    """Salva plano do robô a partir do painel."""
+    from src.bot_plan import save_plan, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    data = request.get_json(silent=True) or {}
+    try:
+        target = int(data.get("target_leads") if data.get("target_leads") is not None else 20)
+    except (TypeError, ValueError):
+        target = 20
+    city_ids = data.get("city_ids") or []
+    niche_ids = data.get("niche_ids") or []
+    if not isinstance(city_ids, list):
+        city_ids = []
+    if not isinstance(niche_ids, list):
+        niche_ids = []
+    notes = str(data.get("notes") or "")
+    su = _session_user()
+    plan = save_plan(
+        target_leads=target,
+        city_ids=[str(x) for x in city_ids],
+        niche_ids=[str(x) for x in niche_ids],
+        notes=notes,
+        updated_by=su.get("username") or "patrao",
+    )
+    log_action(
+        "bot_plan_save",
+        user_id=su.get("id"),
+        username=su.get("username"),
+        details={
+            "target_leads": target,
+            "city_ids": city_ids,
+            "niche_ids": niche_ids,
+        },
+    )
+    return jsonify({"success": True, "plan": plan})
 
 
 @app.route("/api/bot-status")

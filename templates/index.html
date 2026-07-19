@@ -542,6 +542,56 @@
                 <div class="stat"><h3>Leads última sessão</h3><div class="value" id="bot-last-leads">--</div></div>
                 <div class="stat"><h3>Job atual / último</h3><div class="value" id="bot-last-job" style="font-size:13px;">--</div></div>
             </div>
+
+            <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
+                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                    <h3 style="margin:0;color:var(--neon);">Plano de busca (sem editar código)</h3>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn btn-sm" type="button" onclick="loadBotPlan()">Recarregar</button>
+                        <button class="btn btn-primary" type="button" id="btn-save-bot-plan" onclick="saveBotPlan()">Salvar plano</button>
+                    </div>
+                </div>
+                <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
+                    Escolha <strong style="color:var(--text);">quantos leads</strong>, <strong style="color:var(--text);">cidades</strong> e <strong style="color:var(--text);">nichos</strong>.
+                    O bot local lê isso ao rodar (<code>python main.py run</code>) e para ao bater a meta.
+                    Sem cidades marcadas = usa as ativas do arquivo (legado).
+                </p>
+                <div class="filters" style="margin:0 0 14px;flex-wrap:wrap;align-items:flex-end;">
+                    <div>
+                        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Meta de leads nesta sessão</label>
+                        <input type="number" id="bot-plan-target" min="0" value="20" style="width:120px;" title="0 = sem limite">
+                    </div>
+                    <div style="flex:1;min-width:180px;">
+                        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Nota (opcional)</label>
+                        <input type="text" id="bot-plan-notes" placeholder="Ex: 20 pro Fafa — Campinas + Santos" style="width:100%;">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <h3 style="margin:0;font-size:14px;">Nichos</h3>
+                            <span>
+                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('niche', true)">Todos</button>
+                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('niche', false)">Nenhum</button>
+                            </span>
+                        </div>
+                        <div id="bot-plan-niches" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto;padding:4px;"></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <h3 style="margin:0;font-size:14px;">Cidades</h3>
+                            <span>
+                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('city', true)">Todas</button>
+                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('city', false)">Nenhuma</button>
+                            </span>
+                        </div>
+                        <input type="search" id="bot-plan-city-filter" placeholder="Filtrar cidade..." style="width:100%;margin-bottom:8px;" oninput="filterBotPlanCities()">
+                        <div id="bot-plan-cities" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow:auto;padding:4px;"></div>
+                    </div>
+                </div>
+                <p id="bot-plan-meta" style="font-size:12px;color:var(--muted);margin-top:12px;"></p>
+            </div>
+
             <div class="panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <h3>Últimos logs</h3>
@@ -998,6 +1048,7 @@
                 document.getElementById('nav-bot').classList.add('active');
                 title.textContent = 'Status do Robô';
                 loadBotStatus();
+                loadBotPlan();
             } else {
                 navigateTo('/');
             }
@@ -1132,6 +1183,107 @@
                 `).join('');
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="5" class="empty">Erro: ' + esc(String(e.message || e)) + '</td></tr>';
+            }
+        }
+
+        let botPlanCatalog = { cities: [], niches: [] };
+
+        async function loadBotPlan() {
+            const nichesBox = document.getElementById('bot-plan-niches');
+            const citiesBox = document.getElementById('bot-plan-cities');
+            const meta = document.getElementById('bot-plan-meta');
+            if (!nichesBox || !citiesBox) return;
+            try {
+                const res = await fetch('/api/bot-plan?_=' + Date.now(), { cache: 'no-store', credentials: 'same-origin' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const plan = await res.json();
+                botPlanCatalog = plan.catalog || { cities: [], niches: [] };
+                const selectedCities = new Set(plan.city_ids || []);
+                const selectedNiches = new Set(plan.niche_ids || []);
+
+                document.getElementById('bot-plan-target').value = plan.target_leads != null ? plan.target_leads : 20;
+                document.getElementById('bot-plan-notes').value = plan.notes || '';
+
+                nichesBox.innerHTML = (botPlanCatalog.niches || []).map(n => `
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+                        <input type="checkbox" class="bot-plan-niche" value="${esc(n.id)}" ${selectedNiches.has(n.id) ? 'checked' : ''}>
+                        <span>${esc(n.label || n.id)}</span>
+                    </label>
+                `).join('') || '<span style="color:var(--muted);font-size:12px;">Nenhum nicho no catálogo.</span>';
+
+                citiesBox.innerHTML = (botPlanCatalog.cities || []).map(c => {
+                    const id = c.id || '';
+                    const label = `${c.nome || id}${c.estado ? ' / ' + c.estado : ''}`;
+                    const checked = selectedCities.has(id) ? 'checked' : '';
+                    return `
+                    <label class="bot-plan-city-row" data-name="${esc((c.nome || '').toLowerCase())}" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+                        <input type="checkbox" class="bot-plan-city" value="${esc(id)}" ${checked}>
+                        <span>${esc(label)}</span>
+                        <span style="color:var(--muted);font-size:11px;">${c.bairros_count || 0} bairros</span>
+                    </label>`;
+                }).join('') || '<span style="color:var(--muted);font-size:12px;">Nenhuma cidade no catálogo.</span>';
+
+                if (meta) {
+                    meta.textContent = plan.updated_at
+                        ? `Última gravação: ${(plan.updated_at || '').replace('T',' ').slice(0,19)} por ${plan.updated_by || '—'}`
+                        : 'Ainda não salvo — escolha e clique em Salvar plano.';
+                }
+                filterBotPlanCities();
+            } catch (e) {
+                console.error(e);
+                if (meta) meta.textContent = 'Erro ao carregar plano: ' + e;
+            }
+        }
+
+        function botPlanToggleAll(kind, on) {
+            const cls = kind === 'niche' ? '.bot-plan-niche' : '.bot-plan-city';
+            document.querySelectorAll(cls).forEach(el => {
+                const row = el.closest('.bot-plan-city-row');
+                if (row && row.style.display === 'none') return;
+                el.checked = !!on;
+            });
+        }
+
+        function filterBotPlanCities() {
+            const q = (document.getElementById('bot-plan-city-filter')?.value || '').toLowerCase().trim();
+            document.querySelectorAll('.bot-plan-city-row').forEach(row => {
+                const name = row.getAttribute('data-name') || '';
+                row.style.display = !q || name.includes(q) ? '' : 'none';
+            });
+        }
+
+        async function saveBotPlan() {
+            const target = parseInt(document.getElementById('bot-plan-target').value || '0', 10);
+            const notes = document.getElementById('bot-plan-notes').value || '';
+            const city_ids = [...document.querySelectorAll('.bot-plan-city:checked')].map(el => el.value);
+            const niche_ids = [...document.querySelectorAll('.bot-plan-niche:checked')].map(el => el.value);
+            if (!niche_ids.length) {
+                alert('Marque pelo menos um nicho.');
+                return;
+            }
+            const msg = `Salvar plano?\n\nMeta: ${target || 'sem limite'} leads\nCidades: ${city_ids.length || 'legado (ativas no JSON)'}\nNichos: ${niche_ids.join(', ')}`;
+            if (!confirm(msg)) return;
+            const btn = document.getElementById('btn-save-bot-plan');
+            if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+            try {
+                const res = await fetch('/api/bot-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({ target_leads: target, city_ids, niche_ids, notes })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao salvar');
+                    return;
+                }
+                alert('Plano salvo. Na próxima vez que rodar o bot no PC, ele usa isso.');
+                await loadBotPlan();
+            } catch (e) {
+                alert('Falha: ' + e);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Salvar plano'; }
             }
         }
 

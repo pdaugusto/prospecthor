@@ -116,7 +116,7 @@ def run_now(
     logger.info(f"Empresas já no banco (place_id): {len(known)}")
 
     if not niche or not cidade:
-        logger.info("Montando fila por BAIRRO (cities.json + coverage)...")
+        logger.info("Montando fila por BAIRRO (cities.json + plano do painel)...")
 
         niches_path = Path("config/niches.json")
         cities_path = Path("config/cities.json")
@@ -132,6 +132,25 @@ def run_now(
         except Exception as exc:
             logger.error(f"Falha ao ler JSON: {exc}")
             sys.exit(1)
+
+        # Plano do dashboard (meta de leads + cidades/nichos escolhidos)
+        target_leads = 0
+        try:
+            from src.bot_plan import get_plan, apply_plan_to_job_sources
+            plan = get_plan()
+            cities_data, niches_data, target_leads = apply_plan_to_job_sources(
+                cities_data, niches_data, plan
+            )
+            logger.info(
+                f"Plano painel: meta={target_leads or '∞'} leads | "
+                f"cidades={len(cities_data)} | nichos={[n.get('id') for n in niches_data]}"
+            )
+            add_log(
+                f"Plano: meta {target_leads or '∞'} leads | "
+                f"{len(cities_data)} cidade(s) | nichos={','.join(n.get('id','') for n in niches_data)}"
+            )
+        except Exception as exc:
+            logger.warning(f"Plano do painel indisponível, usando JSON puro: {exc}")
 
         jobs = list_pending_jobs(cities_data, niches_data)
         if limit_jobs and limit_jobs > 0:
@@ -149,19 +168,28 @@ def run_now(
         logger.info(
             f"Fila: {len(jobs)} jobs (bairro×nicho) | "
             f"1º: {jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']} | "
-            f"Instagram off por padrão"
+            f"meta_leads={target_leads or '∞'} | Instagram off por padrão"
         )
         set_status(
             "rodando",
             last_job=f"{jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']}",
             session_leads=0,
         )
-        add_log(f"Sessão iniciada: {len(jobs)} jobs na fila")
+        add_log(f"Sessão iniciada: {len(jobs)} jobs na fila | meta {target_leads or '∞'} leads")
 
         ran = 0
         total_leads = 0
+        stopped_by_target = False
         try:
             for idx, job in enumerate(jobs, start=1):
+                if target_leads and total_leads >= target_leads:
+                    stopped_by_target = True
+                    logger.info(
+                        f"Meta de {target_leads} leads atingida ({total_leads}). Encerrando sessão."
+                    )
+                    add_log(f"Meta atingida: {total_leads}/{target_leads} leads — parando")
+                    break
+
                 n_id = job["niche"]
                 c_name = job["city"]
                 c_state = job["state"]
@@ -177,7 +205,8 @@ def run_now(
                 try:
                     logger.info(
                         f"[{idx}/{len(jobs)}] ▶ {n_id} | {c_name}-{c_state} | "
-                        f"bairro={area} | meta={max_r}"
+                        f"bairro={area} | meta={max_r} | leads_sessão={total_leads}"
+                        + (f"/{target_leads}" if target_leads else "")
                     )
                     set_status("rodando", last_job=job_label, session_leads=total_leads)
                     add_log(f"[{idx}/{len(jobs)}] {job_label}")
@@ -195,7 +224,8 @@ def run_now(
                     total_leads += found
                     if found:
                         increment_session_leads(found)
-                        add_log(f"+{found} leads em {job_label}")
+                        add_log(f"+{found} leads em {job_label} (sessão {total_leads}"
+                                + (f"/{target_leads}" if target_leads else "") + ")")
                 except Exception as exc:
                     logger.error(
                         f"Falha {n_id} | {c_name}/{area}: {exc} "
@@ -203,13 +233,18 @@ def run_now(
                     )
                     add_log(f"ERRO {job_label}: {exc}", level="ERROR")
 
+            end_job = (
+                f"meta {total_leads}/{target_leads}" if stopped_by_target and target_leads
+                else f"ok: {ran} áreas, {total_leads} leads"
+            )
             set_status(
                 "parado",
                 last_leads=total_leads,
                 session_leads=total_leads,
-                last_job=f"ok: {ran} áreas, {total_leads} leads",
+                last_job=end_job,
             )
-            add_log(f"Sessão finalizada: {ran} áreas | {total_leads} leads novos")
+            add_log(f"Sessão finalizada: {ran} áreas | {total_leads} leads novos"
+                    + (f" (meta {target_leads})" if target_leads else ""))
             logger.info(
                 f"Sessão ok: {ran} áreas | {total_leads} leads NOVOS sem site. "
                 f"Pode parar a qualquer momento; o que entrou já tem score."

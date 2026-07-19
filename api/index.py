@@ -36,12 +36,19 @@ if not _secret:
     _secret = _hashlib.sha256(f"prospecthor-session-v1|{_seed}".encode("utf-8")).hexdigest()
 app.secret_key = _secret
 _is_vercel = bool(os.getenv("VERCEL") or os.getenv("VERCEL_ENV"))
+# Sessão longa: fica logado até clicar em Sair (não só 12h)
+_SESSION_DAYS = int(os.getenv("SESSION_DAYS") or "90")
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
+    # Secure só em HTTPS (Vercel). Em HTTP local o cookie precisa poder ser setado.
     SESSION_COOKIE_SECURE=_is_vercel or os.getenv("SESSION_COOKIE_SECURE", "").lower() in ("1", "true"),
-    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
+    PERMANENT_SESSION_LIFETIME=timedelta(days=max(1, _SESSION_DAYS)),
+    # a cada request renova o prazo do cookie
+    SESSION_REFRESH_EACH_REQUEST=True,
     SESSION_COOKIE_NAME="prospecthor_session",
+    # path / = cookie vale em todas as rotas
+    SESSION_COOKIE_PATH="/",
 )
 
 # Rate limit simples de login (por IP) — protege brute force em serverless (best-effort)
@@ -442,6 +449,13 @@ def _invalidate_cache():
     _cache["stats_at"] = {}
 
 
+@app.before_request
+def _keep_session_alive():
+    """Enquanto estiver logado, mantém cookie permanente (até Sair)."""
+    if session.get("logged_in"):
+        session.permanent = True
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -449,6 +463,8 @@ def login_required(f):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "Unauthorized"}), 401
             return redirect(url_for("login"))
+        # renova em toda página autenticada
+        session.permanent = True
         return f(*args, **kwargs)
     return decorated
 
@@ -531,8 +547,9 @@ def login():
             }
         if user:
             session.clear()
-            session.permanent = True
+            session.permanent = True  # cookie até SESSION_DAYS ou até /logout
             session["logged_in"] = True
+            session["login_at"] = datetime.now().isoformat()
             # limpa flags de impersonate (segurança)
             session.pop("impersonating", None)
 
@@ -573,8 +590,15 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """Único lugar que encerra a sessão — reentrar no link mantém login até aqui."""
     session.clear()
-    return redirect("/login")
+    resp = redirect("/login")
+    # apaga cookie de sessão no browser
+    resp.delete_cookie(
+        app.config.get("SESSION_COOKIE_NAME") or "prospecthor_session",
+        path=app.config.get("SESSION_COOKIE_PATH") or "/",
+    )
+    return resp
 
 
 @app.route("/")

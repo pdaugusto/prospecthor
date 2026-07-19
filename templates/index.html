@@ -1317,9 +1317,15 @@
         async function loadMe() {
             try {
                 const res = await fetch('/api/me', { cache: 'no-store', credentials: 'same-origin' });
-                if (!res.ok) {
-                    // sessão inválida (secret trocado / cookie) → relogin
+                if (res.status === 401) {
+                    // só desloga se o servidor disser que a sessão morreu
                     window.location.href = '/login';
+                    return;
+                }
+                if (!res.ok) {
+                    // erro transitório (500 etc.) — não joga pro login
+                    console.error('api/me HTTP', res.status);
+                    meReady = true;
                     return;
                 }
                 const prevId = currentUser && currentUser.id;

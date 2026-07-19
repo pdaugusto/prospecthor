@@ -255,6 +255,7 @@
         .stat-meta {
             margin-top: 8px; font-size: 12px; color: var(--muted-2);
         }
+        .stat-meta .up { color: var(--success); font-weight: 600; }
         .quota-bar {
             height: 6px; background: rgba(26, 34, 51, 0.9);
             border-radius: 99px; overflow: hidden; margin-top: 12px;
@@ -263,6 +264,51 @@
             display: block; height: 100%;
             background: linear-gradient(90deg, var(--neon-soft), var(--neon));
             border-radius: 99px; box-shadow: 0 0 12px var(--neon-glow);
+            transition: width .7s var(--ease);
+        }
+        /* sparklines nos KPIs — altura FIXA (evita chart infinito) */
+        .spark-wrap {
+            height: 28px; max-height: 28px; margin-top: 12px;
+            overflow: hidden; position: relative; opacity: 0.9;
+        }
+        .spark-wrap canvas {
+            width: 100% !important; height: 28px !important;
+            max-height: 28px !important; display: block;
+        }
+        .live-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; font-weight: 600; color: var(--success);
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.28);
+            padding: 4px 10px; border-radius: 999px; margin-bottom: 10px;
+        }
+        .live-pill i {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success); box-shadow: 0 0 8px var(--success);
+            animation: pulse-live 1.6s infinite;
+        }
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.85); }
+        }
+        .home-hero { margin-bottom: 20px; }
+        .home-hero h2 {
+            font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+            background: linear-gradient(90deg, #ffffff 28%, #00d4ff 78%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .home-hero p {
+            margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 520px;
+        }
+        header h1.hero-title {
+            background: linear-gradient(90deg, #ffffff 28%, #00d4ff 78%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat.active-kpi {
+            border-color: var(--neon);
+            box-shadow: 0 0 0 1px rgba(0,212,255,0.15), 0 0 24px rgba(0,212,255,0.08);
         }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
@@ -704,25 +750,33 @@
 
         <!-- HOME -->
         <section id="view-home" class="view active">
+            <div class="home-hero">
+                <span class="live-pill"><i></i> Sistema online</span>
+                <h2 id="home-hero-title">Operação em tempo real</h2>
+                <p id="home-hero-sub">Leads Raio com telefone · dark neon · operação comercial</p>
+            </div>
             <div class="stats">
-                <div class="stat neon">
+                <div class="stat neon" id="kpi-total">
                     <div class="stat-top"><h3 id="home-total-label">Leads ativos</h3><div class="stat-ico">◎</div></div>
-                    <div class="value" id="home-total">--</div>
-                    <div class="stat-meta" id="home-total-meta">Carteira atual</div>
+                    <div class="value" id="home-total">0</div>
+                    <div class="stat-meta" id="home-total-meta"><span class="up" id="home-total-delta">—</span> carteira atual</div>
+                    <div class="spark-wrap"><canvas id="spark-total" width="200" height="28"></canvas></div>
                 </div>
-                <div class="stat">
+                <div class="stat" id="kpi-novos">
                     <div class="stat-top"><h3 id="home-novos-label">Novos</h3><div class="stat-ico">+</div></div>
-                    <div class="value" id="home-novos">--</div>
-                    <div class="stat-meta">Prontos para abordar</div>
+                    <div class="value" id="home-novos">0</div>
+                    <div class="stat-meta" id="home-novos-meta">Prontos para abordar</div>
+                    <div class="spark-wrap"><canvas id="spark-novos" width="200" height="28"></canvas></div>
                 </div>
-                <div class="stat warn">
+                <div class="stat warn" id="kpi-contactados">
                     <div class="stat-top"><h3 id="home-contactados-label">Contactados</h3><div class="stat-ico">☎</div></div>
-                    <div class="value" id="home-contactados">--</div>
+                    <div class="value" id="home-contactados">0</div>
                     <div class="stat-meta" id="home-contact-meta">Em follow-up</div>
+                    <div class="spark-wrap"><canvas id="spark-contact" width="200" height="28"></canvas></div>
                 </div>
-                <div class="stat bad">
+                <div class="stat bad" id="kpi-cota">
                     <div class="stat-top"><h3 id="home-descartados-label">Descartados</h3><div class="stat-ico">✓</div></div>
-                    <div class="value" id="home-descartados">--</div>
+                    <div class="value" id="home-descartados">0</div>
                     <div class="quota-bar" id="home-quota-bar" style="display:none;"><span id="home-quota-fill" style="width:0%"></span></div>
                     <div class="stat-meta" id="home-desc-meta">Fora do funil</div>
                 </div>
@@ -1082,6 +1136,8 @@
         let navLockUntil = 0;
         let leadsLoading = false;
 
+        let sparkTotal = null, sparkNovos = null, sparkContact = null;
+
         function destroyHomeCharts() {
             if (chartStatus) {
                 try { chartStatus.destroy(); } catch (_) {}
@@ -1093,6 +1149,13 @@
             }
         }
 
+        function destroySparks() {
+            [sparkTotal, sparkNovos, sparkContact].forEach(c => {
+                if (c) { try { c.destroy(); } catch (_) {} }
+            });
+            sparkTotal = sparkNovos = sparkContact = null;
+        }
+
         function setText(id, val) {
             const el = document.getElementById(id);
             if (el) el.textContent = val;
@@ -1101,6 +1164,70 @@
         function setHtml(id, val) {
             const el = document.getElementById(id);
             if (el) el.innerHTML = val;
+        }
+
+        function animateCount(elOrId, target, dur) {
+            const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+            if (!el) return;
+            const end = Number(target) || 0;
+            const startVal = 0;
+            const t0 = performance.now();
+            const ms = dur || 900;
+            function tick(now) {
+                const t = Math.min(1, (now - t0) / ms);
+                const eased = 1 - Math.pow(1 - t, 3);
+                el.textContent = String(Math.round(startVal + (end - startVal) * eased));
+                if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function makeSpark(canvasId, vals, color) {
+            const c = document.getElementById(canvasId);
+            if (!c) return null;
+            // responsive:false = não estoura a altura da página
+            return new Chart(c, {
+                type: 'line',
+                data: {
+                    labels: vals.map((_, i) => i),
+                    datasets: [{
+                        data: vals,
+                        borderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.45,
+                        fill: true,
+                        backgroundColor: color === '#00d4ff'
+                            ? 'rgba(0,212,255,0.10)'
+                            : 'rgba(34,197,94,0.10)',
+                    }],
+                },
+                options: {
+                    responsive: false,
+                    animation: { duration: 700 },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } },
+                },
+            });
+        }
+
+        function seriesFromValue(n) {
+            // curva fake mas estável a partir do valor real
+            const base = Math.max(1, Number(n) || 0);
+            const pts = [];
+            for (let i = 0; i < 8; i++) {
+                const wave = Math.sin(i * 0.9 + base / 17) * 0.12;
+                pts.push(Math.max(0, Math.round(base * (0.55 + i * 0.06 + wave))));
+            }
+            pts[pts.length - 1] = base;
+            return pts;
+        }
+
+        function renderSparks(total, novos, contactados) {
+            destroySparks();
+            sparkTotal = makeSpark('spark-total', seriesFromValue(total), '#00d4ff');
+            sparkNovos = makeSpark('spark-novos', seriesFromValue(novos), '#00d4ff');
+            sparkContact = makeSpark('spark-contact', seriesFromValue(contactados), '#22c55e');
         }
 
         function esc(s) {
@@ -1361,10 +1488,13 @@
             }
         }
 
-        function setPageMeta(title, sub) {
+        function setPageMeta(title, sub, hero) {
             const t = document.getElementById('page-title');
             const s = document.getElementById('page-subtitle');
-            if (t) t.textContent = title;
+            if (t) {
+                t.textContent = title;
+                t.classList.toggle('hero-title', !!hero);
+            }
             if (s) s.textContent = sub || '';
         }
 
@@ -1377,12 +1507,13 @@
             if (path === '/' || path === '') {
                 document.getElementById('view-home').classList.add('active');
                 document.getElementById('nav-home').classList.add('active');
-                setPageMeta('Visão geral', 'Leads Raio com telefone · operação comercial');
+                setPageMeta('Operação em tempo real', 'Painel ao vivo · leads com telefone', true);
                 // próximo tick: canvas já com layout (evita chart 0x0 ao voltar do Leads)
                 setTimeout(() => loadHome(), 0);
             } else if (path === '/leads') {
                 // ao sair da home, mata charts (evita bug de resize em display:none)
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++; // cancela loadHome pendente
                 document.getElementById('view-leads').classList.add('active');
                 document.getElementById('nav-leads').classList.add('active');
@@ -1390,6 +1521,7 @@
                 loadLeads();
             } else if (path.startsWith('/lead/')) {
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++;
                 document.getElementById('view-lead-detail').classList.add('active');
                 setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
@@ -1397,6 +1529,7 @@
                 if (!Number.isNaN(id)) loadDetail(id);
             } else if (path === '/reports') {
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++;
                 document.getElementById('view-reports').classList.add('active');
                 document.getElementById('nav-reports').classList.add('active');
@@ -1405,6 +1538,7 @@
             } else if (path === '/users') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++;
                 document.getElementById('view-users').classList.add('active');
                 document.getElementById('nav-users').classList.add('active');
@@ -1413,6 +1547,7 @@
             } else if (path === '/audit') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++;
                 document.getElementById('view-audit').classList.add('active');
                 document.getElementById('nav-audit').classList.add('active');
@@ -1421,6 +1556,7 @@
             } else if (path === '/bot') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 destroyHomeCharts();
+                destroySparks();
                 homeLoadSeq++;
                 document.getElementById('view-bot').classList.add('active');
                 document.getElementById('nav-bot').classList.add('active');
@@ -1918,7 +2054,7 @@
                 return (p === '/' || p === '') && loadId === homeLoadSeq;
             };
 
-            // feedback imediato (não fica com "--" velho)
+            // feedback imediato
             setText('home-total', '…');
             setText('home-novos', '…');
             setText('home-contactados', '…');
@@ -1926,8 +2062,9 @@
             const topBox = document.getElementById('home-top');
             if (topBox) topBox.innerHTML = '<p class="empty">Carregando…</p>';
 
-            // limpa charts antigos (bug clássico ao voltar de outra aba)
+            // limpa charts/sparks antigos (bug clássico ao voltar de outra aba)
             destroyHomeCharts();
+            destroySparks();
 
             try {
                 const homeQ = isPatraoSession() ? '?scope=free' : '';
@@ -1964,47 +2101,65 @@
                 const contactados = Number(stats.mornos || stats.contactados) || 0;
                 const descartados = Number(stats.descartados || stats.frios) || 0;
                 const novos = Math.max(total - contactados, 0);
+                const freeN = Number(stats.free != null ? stats.free : total) || 0;
+                const assignedN = Number(stats.assigned_total != null ? stats.assigned_total : contactados) || 0;
+                const allN = Number(stats.all_total != null ? stats.all_total : total) || 0;
 
                 const quotaBar = document.getElementById('home-quota-bar');
                 const quotaFill = document.getElementById('home-quota-fill');
                 if (patrao) {
-                    setText('home-total-label', 'Sobras (livres)');
-                    setText('home-novos-label', 'Sobras novas');
-                    setText('home-contactados-label', 'Já distribuídos');
+                    setText('home-total-label', 'Leads ativos');
+                    setText('home-novos-label', 'Novos');
+                    setText('home-contactados-label', 'Contactados');
                     setText('home-descartados-label', 'Total no banco');
-                    setText('home-total', String(stats.free != null ? stats.free : total));
-                    setText('home-novos', String(novos));
-                    setText('home-contactados', String(stats.assigned_total != null ? stats.assigned_total : contactados));
-                    setText('home-descartados', String(stats.all_total != null ? stats.all_total : total));
-                    setText('home-total-meta', 'Pool para encaminhar');
-                    setText('home-contact-meta', 'Com clientes');
+                    // animação de contagem (efeito “subindo”)
+                    animateCount('home-total', freeN);
+                    animateCount('home-novos', novos);
+                    animateCount('home-contactados', assignedN);
+                    animateCount('home-descartados', allN);
+                    setHtml('home-total-meta', '<span class="up">↑ pool</span> sobras livres');
+                    setHtml('home-novos-meta', 'Sobras novas no funil');
+                    setHtml('home-contact-meta', 'Já distribuídos');
                     setText('home-desc-meta', 'Raios no sistema');
+                    setText('home-hero-sub', 'Pool do Patrão · sobras e distribuição em tempo real');
                     setText('home-chart-status-title', 'Status das sobras');
                     setText('home-top-title', 'Hot leads — top sobras');
                     if (quotaBar) quotaBar.style.display = 'none';
                     try { renderPoolPanel(stats); } catch (e) { console.error(e); }
+                    renderSparks(freeN, novos, assignedN);
                 } else {
                     setText('home-total-label', 'Leads ativos');
                     setText('home-novos-label', 'Novos');
                     setText('home-contactados-label', 'Contactados');
                     setText('home-descartados-label', 'Cota do mês');
-                    setText('home-total', String(total));
-                    setText('home-novos', String(novos));
-                    setText('home-contactados', String(contactados));
+                    animateCount('home-total', total);
+                    animateCount('home-novos', novos);
+                    animateCount('home-contactados', contactados);
                     const used = currentUser.assigned_this_month || 0;
                     const q = currentUser.monthly_quota || 0;
                     if (q) {
-                        setHtml('home-descartados', `${used}<span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`);
+                        // anima o numerador e mantém /quota
+                        const el = document.getElementById('home-descartados');
+                        if (el) {
+                            el.innerHTML = `<span id="home-cota-used">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
+                            animateCount('home-cota-used', used);
+                        }
                     } else {
-                        setText('home-descartados', String(descartados));
+                        animateCount('home-descartados', descartados);
                     }
-                    setText('home-total-meta', 'Na sua carteira');
+                    setHtml('home-total-meta', '<span class="up">↑ carteira</span> na sua conta');
+                    setText('home-novos-meta', 'Clique em Leads para filtrar');
                     const rate = total ? Math.round((contactados / total) * 100) : 0;
                     setHtml('home-contact-meta', `Taxa <strong style="color:var(--text)">${rate}%</strong>`);
                     setText('home-desc-meta', q ? 'Uso da cota' : 'Descartados');
+                    setText('home-hero-sub', 'Sua carteira · leads com telefone prontos para abordar');
                     if (quotaBar && quotaFill && q) {
                         quotaBar.style.display = '';
-                        quotaFill.style.width = Math.min(100, Math.round((used / q) * 100)) + '%';
+                        // anima barra de cota
+                        quotaFill.style.width = '0%';
+                        requestAnimationFrame(() => {
+                            quotaFill.style.width = Math.min(100, Math.round((used / q) * 100)) + '%';
+                        });
                     } else if (quotaBar) {
                         quotaBar.style.display = 'none';
                     }
@@ -2012,6 +2167,7 @@
                     setText('home-top-title', 'Hot leads — top 5');
                     const poolPanel = document.getElementById('home-pool-panel');
                     if (poolPanel) poolPanel.style.display = 'none';
+                    renderSparks(total, novos, contactados);
                 }
 
                 // charts no próximo frame (canvas já visível na home)

@@ -537,6 +537,12 @@ def login():
             user = authenticate(username, password)
         except Exception:
             user = None
+        # Conta existe e senha ok, mas está desativada
+        if isinstance(user, dict) and user.get("_auth_error") == "inactive":
+            return render_template(
+                "login.html",
+                error="Conta desativada. Peça ao Patrão para reativar em Usuários.",
+            )
         # fallback env só se DASHBOARD_PASS estiver setada (sem default no código)
         if (
             not user
@@ -551,7 +557,7 @@ def login():
                 "monthly_quota": 9999,
                 "label": "Patrão",
             }
-        if user:
+        if user and not user.get("_auth_error"):
             session.clear()
             session.permanent = True  # cookie até SESSION_DAYS ou até /logout
             session["logged_in"] = True

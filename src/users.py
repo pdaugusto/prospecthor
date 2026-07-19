@@ -226,7 +226,10 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
         if row:
             user = dict(row)
             stored = user.pop("password_hash", "") or ""
+            # Conta desativada (exceto patrão): senha ok ainda assim não entra
             if not user.get("active") and uname_l != _PRINCIPAL_USERNAME:
+                if verify_password(password, stored):
+                    return {"_auth_error": "inactive", "username": user.get("username")}
                 return None
             if not verify_password(password, stored):
                 # Fallback: patrao ainda com senha só na env (migração)

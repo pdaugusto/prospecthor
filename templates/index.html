@@ -174,14 +174,20 @@
         }
         header h1 {
             font-size: 24px; font-weight: 800; letter-spacing: -0.03em;
-            background: linear-gradient(90deg, #fff 40%, var(--neon));
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text);
         }
         .page-sub {
             font-size: 13px; color: var(--muted); margin-top: 4px;
-            font-weight: 400; -webkit-text-fill-color: var(--muted);
-            background: none;
+            font-weight: 400;
+        }
+        /* Home: some o título do header (evita duplicar com o hero) */
+        body.on-home header .page-head-titles,
+        body.on-home #page-title,
+        body.on-home #page-subtitle {
+            display: none !important;
+        }
+        body.on-home header {
+            margin-bottom: 12px;
         }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .leads-head-actions {
@@ -291,20 +297,16 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.45; transform: scale(0.85); }
         }
-        .home-hero { margin-bottom: 20px; }
+        .home-hero { margin-bottom: 22px; }
         .home-hero h2 {
-            font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
-            background: linear-gradient(90deg, #ffffff 28%, #00d4ff 78%);
+            font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+            background: linear-gradient(90deg, #ffffff 22%, #00d4ff 72%, #3b9eff 100%);
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 18px rgba(0, 212, 255, 0.25));
         }
         .home-hero p {
             margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 520px;
-        }
-        header h1.hero-title {
-            background: linear-gradient(90deg, #ffffff 28%, #00d4ff 78%);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         .stat.active-kpi {
             border-color: var(--neon);
@@ -737,7 +739,7 @@
         <header>
             <div style="display:flex;align-items:center;gap:12px;min-width:0;">
                 <button class="menu-toggle" id="btn-open-menu" aria-label="Menu" type="button">☰</button>
-                <div>
+                <div class="page-head-titles">
                     <h1 id="page-title">Visão geral</h1>
                     <p class="page-sub" id="page-subtitle">Leads Raio com telefone · operação comercial</p>
                 </div>
@@ -753,7 +755,7 @@
             <div class="home-hero">
                 <span class="live-pill"><i></i> Sistema online</span>
                 <h2 id="home-hero-title">Operação em tempo real</h2>
-                <p id="home-hero-sub">Leads Raio com telefone · dark neon · operação comercial</p>
+                <p id="home-hero-sub">Painel ao vivo · leads com telefone</p>
             </div>
             <div class="stats">
                 <div class="stat neon" id="kpi-total">
@@ -1518,13 +1520,10 @@
             }
         }
 
-        function setPageMeta(title, sub, hero) {
+        function setPageMeta(title, sub) {
             const t = document.getElementById('page-title');
             const s = document.getElementById('page-subtitle');
-            if (t) {
-                t.textContent = title;
-                t.classList.toggle('hero-title', !!hero);
-            }
+            if (t) t.textContent = title;
             if (s) s.textContent = sub || '';
         }
 
@@ -1533,11 +1532,13 @@
             const path = location.pathname;
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            // Home usa o hero grande; some o título pequeno do header
+            document.body.classList.toggle('on-home', path === '/' || path === '');
 
             if (path === '/' || path === '') {
                 document.getElementById('view-home').classList.add('active');
                 document.getElementById('nav-home').classList.add('active');
-                setPageMeta('Operação em tempo real', 'Painel ao vivo · leads com telefone', true);
+                setPageMeta('', '');
                 // próximo tick: canvas já com layout (evita chart 0x0 ao voltar do Leads)
                 setTimeout(() => loadHome(), 0);
             } else if (path === '/leads') {

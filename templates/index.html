@@ -259,6 +259,67 @@
         .top-item .score.score-high { color: #4ade80; text-shadow: 0 0 12px rgba(34,197,94,0.3); }
         .top-item .score.score-mid { color: var(--neon); text-shadow: 0 0 12px var(--neon-dim); }
         .top-item .score.score-low { color: var(--warning); }
+        /* Tooltip de breakdown do score (flutuante, fora da tabela) */
+        .score-tip-wrap {
+            display: inline-flex; align-items: center; cursor: help;
+            position: relative; z-index: 2;
+        }
+        #score-tip-float {
+            position: fixed; z-index: 9999; pointer-events: none;
+            min-width: 240px; max-width: 320px;
+            background: linear-gradient(165deg, #121a28, #0a0f18);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 24px rgba(0,212,255,0.08);
+            padding: 0; opacity: 0; visibility: hidden;
+            transform: translateY(4px);
+            transition: opacity .12s ease, transform .12s ease, visibility .12s;
+        }
+        #score-tip-float.visible {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        #score-tip-float .st-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px 8px; border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 700; letter-spacing: .04em;
+            text-transform: uppercase; color: var(--muted-2);
+        }
+        #score-tip-float .st-head strong {
+            font-size: 14px; font-weight: 800; letter-spacing: 0;
+            text-transform: none; font-variant-numeric: tabular-nums;
+        }
+        #score-tip-float .st-head strong.score-high { color: #4ade80; }
+        #score-tip-float .st-head strong.score-mid { color: var(--neon); }
+        #score-tip-float .st-head strong.score-low { color: var(--warning); }
+        #score-tip-float table {
+            width: 100%; border-collapse: collapse; min-width: 0;
+            margin: 0;
+        }
+        #score-tip-float td {
+            padding: 7px 12px; font-size: 12px; border-bottom: 1px solid rgba(26,34,51,0.7);
+            color: var(--text); vertical-align: middle;
+        }
+        #score-tip-float tr:last-child td { border-bottom: none; }
+        #score-tip-float td.pts {
+            text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;
+            font-family: var(--mono); white-space: nowrap; color: var(--neon);
+            width: 52px;
+        }
+        #score-tip-float td.pts.zero { color: var(--muted); }
+        #score-tip-float td.pts.neg { color: var(--danger); }
+        #score-tip-float tr.st-total td {
+            border-top: 1px solid var(--border); font-weight: 700;
+            color: var(--muted-2); font-size: 11px; text-transform: uppercase;
+            letter-spacing: .04em; padding-top: 9px; padding-bottom: 10px;
+        }
+        #score-tip-float tr.st-total td.pts { color: var(--text); font-size: 13px; }
+        #score-tip-float .st-empty {
+            padding: 12px; font-size: 12px; color: var(--muted);
+        }
+        #score-tip-float .st-foot {
+            padding: 6px 12px 10px; font-size: 10px; color: var(--muted-2);
+            border-top: 1px solid rgba(26,34,51,0.7);
+        }
         td.company-cell strong { font-weight: 600; color: var(--text); }
         td.company-cell small {
             display: block; font-weight: 400; color: var(--muted);
@@ -1302,10 +1363,115 @@
             if (n >= 50) return 'score-mid';  // morno
             return 'score-low';               // frio
         }
-        function scoreBadgeHtml(sc) {
-            const n = Number(sc) || 0;
-            return `<span class="badge raio ${scoreTier(n)}" title="Oportunidade de venda 0–100">${n}</span>`;
+
+        /** Extrai linhas {label, pts} de lead_problems: "Motivo (+20) — detalhe" */
+        function parseScoreBreakdown(problemsRaw) {
+            let list = problemsRaw;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list || '[]'); } catch (_) { list = []; }
+            }
+            if (!Array.isArray(list)) list = [];
+            return list.map(raw => {
+                const s = String(raw || '');
+                const m = s.match(/^(.+?)\s*\(([+-]?\d+)\)(?:\s*[—–\-].*)?$/);
+                if (m) {
+                    return { label: m[1].trim(), pts: parseInt(m[2], 10) };
+                }
+                return { label: s.trim(), pts: null };
+            }).filter(r => r.label);
         }
+
+        function scoreBadgeHtml(sc, problemsRaw) {
+            const n = Number(sc) || 0;
+            const rows = parseScoreBreakdown(problemsRaw);
+            const payload = encodeURIComponent(JSON.stringify({ score: n, rows }));
+            return `<span class="score-tip-wrap"
+                data-score-tip="${payload}"
+                onmouseenter="showScoreTip(event)"
+                onmouseleave="hideScoreTip()"
+                onfocus="showScoreTip(event)"
+                onblur="hideScoreTip()"
+                tabindex="0"
+                role="img"
+                aria-label="Score ${n} de 100 — passe o mouse para ver o breakdown">
+                <span class="badge raio ${scoreTier(n)}">${n}</span>
+            </span>`;
+        }
+
+        function ensureScoreTipEl() {
+            let el = document.getElementById('score-tip-float');
+            if (el) return el;
+            el = document.createElement('div');
+            el.id = 'score-tip-float';
+            el.setAttribute('role', 'tooltip');
+            document.body.appendChild(el);
+            return el;
+        }
+
+        function showScoreTip(ev) {
+            const wrap = ev.currentTarget || ev.target.closest('.score-tip-wrap');
+            if (!wrap) return;
+            let data = { score: 0, rows: [] };
+            try {
+                data = JSON.parse(decodeURIComponent(wrap.getAttribute('data-score-tip') || '%7B%7D'));
+            } catch (_) {}
+            const n = Number(data.score) || 0;
+            const tier = scoreTier(n);
+            const rows = Array.isArray(data.rows) ? data.rows : [];
+            const el = ensureScoreTipEl();
+            let body;
+            if (!rows.length) {
+                body = '<div class="st-empty">Sem detalhe de pontuação para este lead.</div>';
+            } else {
+                const trs = rows.map(r => {
+                    const pts = r.pts;
+                    let ptsHtml = '—';
+                    let cls = 'pts';
+                    if (pts != null && !Number.isNaN(pts)) {
+                        ptsHtml = (pts > 0 ? '+' : '') + pts;
+                        if (pts === 0) cls += ' zero';
+                        if (pts < 0) cls += ' neg';
+                    }
+                    return `<tr><td>${esc(r.label)}</td><td class="${cls}">${ptsHtml}</td></tr>`;
+                }).join('');
+                body = `<table><tbody>${trs}
+                    <tr class="st-total"><td>Total</td><td class="pts">${n}/100</td></tr>
+                </tbody></table>`;
+            }
+            const tierLabel = n >= 75 ? 'Quente' : n >= 50 ? 'Morno' : 'Frio';
+            el.innerHTML = `
+                <div class="st-head">
+                    <span>Por que este score</span>
+                    <strong class="${tier}">${n}<span style="font-weight:500;opacity:.7;font-size:11px;">/100 · ${tierLabel}</span></strong>
+                </div>
+                ${body}
+                <div class="st-foot">Oportunidade de venda · maior = mais chance de fechar</div>
+            `;
+            el.classList.add('visible');
+            // posiciona perto do badge, sem sair da tela
+            const rect = wrap.getBoundingClientRect();
+            const tipW = 280;
+            const tipH = el.offsetHeight || 180;
+            let left = rect.left + rect.width / 2 - tipW / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+            let top = rect.bottom + 8;
+            if (top + tipH > window.innerHeight - 8) {
+                top = rect.top - tipH - 8;
+            }
+            if (top < 8) top = 8;
+            el.style.width = tipW + 'px';
+            el.style.left = left + 'px';
+            el.style.top = top + 'px';
+        }
+
+        function hideScoreTip() {
+            const el = document.getElementById('score-tip-float');
+            if (el) el.classList.remove('visible');
+        }
+
+        // esconde ao rolar / trocar de página
+        window.addEventListener('scroll', hideScoreTip, true);
+        window.addEventListener('resize', hideScoreTip);
 
         function phoneDigits(p) {
             return String(p || '').replace(/\D/g, '');
@@ -2424,7 +2590,7 @@
                             <div class="name">${esc(l.name)}</div>
                             <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
                         </div>
-                        <div class="score ${scoreTier(l.lead_score || 0)}">${l.lead_score || 0}</div>
+                        <div onclick="event.stopPropagation()">${scoreBadgeHtml(l.lead_score || 0, l.lead_problems)}</div>
                     </div>
                 `).join('');
                 }
@@ -2665,7 +2831,7 @@
                         <td class="company-cell"><strong>${esc(l.name)}</strong><small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small></td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
                         <td class="phone-cell">${esc(l.phone || '—')}</td>
-                        <td>${scoreBadgeHtml(sc)}</td>
+                        <td onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</td>
                         <td><span class="badge-status ${st}">${statusLabel(st)}</span></td>
                         <td onclick="event.stopPropagation()"><div class="actions-cell">${actionButtons(l, true)}</div></td>
                     </tr>
@@ -2679,7 +2845,7 @@
                     <div class="m-card">
                         <div class="row">
                             <div class="name" onclick="openLead(${Number(l.id)})">${esc(l.name)}</div>
-                            ${scoreBadgeHtml(sc)}
+                            ${scoreBadgeHtml(sc, l.lead_problems)}
                         </div>
                         <div class="meta">${esc(l.city || '')} · ${esc(l.phone || 'Sem telefone')} · ${statusLabel(st)}</div>
                         <div class="actions">${actionButtons(l, false)}</div>
@@ -2788,7 +2954,7 @@
                                     <h2>${esc(lead.name)}</h2>
                                     <p>${esc(lead.address || 'Endereço não informado')}</p>
                                 </div>
-                                ${scoreBadgeHtml(lead.lead_score || 0)} <span style="font-size:11px;color:var(--muted);margin-left:4px;">/100</span>
+                                ${scoreBadgeHtml(lead.lead_score || 0, lead.lead_problems)} <span style="font-size:11px;color:var(--muted);margin-left:4px;">/100</span>
                             </div>
                             <ul class="meta-list">
                                 <li><strong>Telefone</strong> ${lead.phone ? `<a href="tel:${tel}">${esc(lead.phone)}</a>` : '—'}</li>

@@ -438,14 +438,19 @@
         <!-- HOME -->
         <section id="view-home" class="view active">
             <div class="stats">
-                <div class="stat neon"><h3>Leads sem site</h3><div class="value" id="home-total">--</div></div>
-                <div class="stat"><h3>Novos</h3><div class="value" id="home-novos">--</div></div>
-                <div class="stat warn"><h3>Contactados</h3><div class="value" id="home-contactados">--</div></div>
-                <div class="stat bad"><h3>Descartados</h3><div class="value" id="home-descartados">--</div></div>
+                <div class="stat neon"><h3 id="home-total-label">Leads sem site</h3><div class="value" id="home-total">--</div></div>
+                <div class="stat"><h3 id="home-novos-label">Novos</h3><div class="value" id="home-novos">--</div></div>
+                <div class="stat warn"><h3 id="home-contactados-label">Contactados</h3><div class="value" id="home-contactados">--</div></div>
+                <div class="stat bad"><h3 id="home-descartados-label">Descartados</h3><div class="value" id="home-descartados">--</div></div>
+            </div>
+            <div class="panel" id="home-pool-panel" style="display:none;margin-bottom:14px;border-color:var(--neon);">
+                <h3 style="margin-bottom:8px;color:var(--neon);">Pool do Patrão</h3>
+                <p id="home-pool-summary" style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;"></p>
+                <div id="home-pool-users" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
             </div>
             <div class="charts">
                 <div class="panel">
-                    <h3>Status dos leads</h3>
+                    <h3 id="home-chart-status-title">Status dos leads</h3>
                     <div class="chart-box"><canvas id="chart-status"></canvas></div>
                 </div>
                 <div class="panel">
@@ -454,7 +459,7 @@
                 </div>
             </div>
             <div class="panel">
-                <h3>Prioridade — top 5 para abordar</h3>
+                <h3 id="home-top-title">Prioridade — top 5 para abordar</h3>
                 <div class="top-list" id="home-top"></div>
             </div>
         </section>
@@ -464,10 +469,11 @@
             <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
                 <h3 style="margin-bottom:8px;color:var(--neon);">Controle de usuários (Patrão)</h3>
                 <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
-                    <strong style="color:var(--text);">Você sempre vê TODOS os leads</strong> (Home / Leads), mesmo os do amigo.<br>
-                    <strong>Cota 0</strong> = ele para de receber leads <em>novos</em> do bot (os que já tem continuam com ele e com você).<br>
-                    <strong>Zerar mês</strong> = contagem do mês volta a 0 (pode receber de novo até a cota); leads não somem.<br>
-                    <strong>Remover</strong> = apaga a conta; leads ficam livres (você continua vendo).
+                    <strong style="color:var(--text);">Sua tela (Home/Leads) = só SOBRAS</strong> (leads livres, sem dono) — pra você encaminhar.<br>
+                    Use o filtro <em>Todos</em> ou <em>Por usuário</em> se precisar inspecionar a carteira de alguém.<br>
+                    <strong>Cota 0</strong> = para de receber leads <em>novos</em> do bot (os que já tem continuam com ele).<br>
+                    <strong>Zerar mês</strong> = contagem do mês volta a 0; leads não somem.<br>
+                    <strong>Remover</strong> = apaga a conta; leads dele voltam pro pool de sobras.
                 </p>
                 <h3 style="margin-bottom:12px;font-size:14px;">Novo cliente</h3>
                 <div class="filters" style="margin:0;flex-wrap:wrap;">
@@ -595,6 +601,14 @@
         <!-- LEADS -->
         <section id="view-leads" class="view">
             <div class="filters">
+                <select id="filter-scope" style="display:none;" title="Escopo do Patrão">
+                    <option value="free" selected>Só sobras (livres)</option>
+                    <option value="all">Todos os leads</option>
+                    <option value="user">Por usuário…</option>
+                </select>
+                <select id="filter-owner" style="display:none;" title="Usuário dono">
+                    <option value="">Escolha o usuário</option>
+                </select>
                 <input type="search" id="filter-search" placeholder="Buscar empresa...">
                 <select id="filter-niche"><option value="">Todos os nichos</option></select>
                 <select id="filter-status">
@@ -604,7 +618,7 @@
                     <option value="convertido">Convertido</option>
                     <option value="descartado">Descartado</option>
                 </select>
-                <a class="btn btn-primary" href="/api/export/csv">CSV</a>
+                <a class="btn btn-primary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
             </div>
             <div class="table-wrap" id="leads-table-wrap">
                 <table>
@@ -707,6 +721,10 @@
         let leadsCacheAt = 0;
         const CACHE_MS = 45000;
         let currentUser = { username: 'admin', role: 'admin', is_admin: true, is_real_admin: true, impersonating: false };
+        // Patrão: free = sobras (default) | all | user
+        let leadsScope = 'free';
+        let leadsOwnerId = '';
+        let leadsScopeKey = '';
 
         function esc(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -792,7 +810,7 @@
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
                     if (showAdmin) {
-                        document.getElementById('quota-badge').textContent = 'Patrão';
+                        document.getElementById('quota-badge').textContent = 'Patrão · sobras';
                     } else {
                         const used = currentUser.assigned_this_month || 0;
                         const q = currentUser.monthly_quota || 0;
@@ -800,9 +818,97 @@
                             q ? `Cota: ${used}/${q} este mês` : (currentUser.username || '');
                     }
                 }
+                setupPatraoScopeFilters(showAdmin);
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        function isPatraoSession() {
+            return !!currentUser.is_real_admin && !currentUser.impersonating
+                && ((currentUser.username || '').toLowerCase() === 'patrao'
+                    || currentUser.real_username === 'patrao'
+                    || currentUser.is_admin);
+        }
+
+        function setupPatraoScopeFilters(show) {
+            const scopeEl = document.getElementById('filter-scope');
+            const ownerEl = document.getElementById('filter-owner');
+            if (!scopeEl || !ownerEl) return;
+            scopeEl.style.display = show ? '' : 'none';
+            if (!show) {
+                ownerEl.style.display = 'none';
+                leadsScope = 'free';
+                leadsOwnerId = '';
+                return;
+            }
+            scopeEl.value = leadsScope || 'free';
+            ownerEl.style.display = (leadsScope === 'user') ? '' : 'none';
+            updateExportLink();
+            if (!scopeEl._bound) {
+                scopeEl._bound = true;
+                scopeEl.addEventListener('change', async () => {
+                    leadsScope = scopeEl.value || 'free';
+                    ownerEl.style.display = (leadsScope === 'user') ? '' : 'none';
+                    if (leadsScope === 'user' && !ownerEl.options.length) {
+                        await fillOwnerFilter();
+                    } else if (leadsScope === 'user') {
+                        await fillOwnerFilter();
+                    }
+                    clearLeadsCache();
+                    updateExportLink();
+                    if (location.pathname === '/leads') loadLeads();
+                    else if (location.pathname === '/' || location.pathname === '') loadHome();
+                });
+                ownerEl.addEventListener('change', () => {
+                    leadsOwnerId = ownerEl.value || '';
+                    clearLeadsCache();
+                    updateExportLink();
+                    if (location.pathname === '/leads') loadLeads();
+                    else if (location.pathname === '/' || location.pathname === '') loadHome();
+                });
+            }
+        }
+
+        async function fillOwnerFilter() {
+            const ownerEl = document.getElementById('filter-owner');
+            if (!ownerEl || !isPatraoSession()) return;
+            try {
+                const res = await fetch('/api/users', { cache: 'no-store', credentials: 'same-origin' });
+                const users = await res.json();
+                if (!Array.isArray(users)) return;
+                const cur = leadsOwnerId || ownerEl.value;
+                ownerEl.innerHTML = '<option value="">Escolha o usuário</option>' +
+                    users
+                        .filter(u => (u.username || '').toLowerCase() !== 'patrao')
+                        .map(u => `<option value="${u.id}">${esc(u.label || u.username)} (${esc(u.username)})</option>`)
+                        .join('');
+                if (cur) ownerEl.value = String(cur);
+                leadsOwnerId = ownerEl.value || '';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateExportLink() {
+            const a = document.getElementById('export-csv-btn');
+            if (!a) return;
+            if (!isPatraoSession()) {
+                a.href = '/api/export/csv';
+                return;
+            }
+            const p = new URLSearchParams();
+            p.set('scope', leadsScope || 'free');
+            if (leadsScope === 'user' && leadsOwnerId) p.set('user_id', leadsOwnerId);
+            a.href = '/api/export/csv?' + p.toString();
+        }
+
+        function leadsQueryString() {
+            if (!isPatraoSession()) return '';
+            const p = new URLSearchParams();
+            p.set('scope', leadsScope || 'free');
+            if (leadsScope === 'user' && leadsOwnerId) p.set('user_id', leadsOwnerId);
+            return '?' + p.toString();
         }
 
         async function startImpersonate(userId, label) {
@@ -889,11 +995,6 @@
             } else {
                 navigateTo('/');
             }
-        }
-
-        function isPatraoSession() {
-            // menus admin: só Patrão real, fora de impersonate
-            return !!currentUser.is_real_admin && !currentUser.impersonating;
         }
 
         let usersCache = [];
@@ -1210,21 +1311,22 @@
 
         async function fetchLeads(force) {
             const now = Date.now();
-            if (!force && allLeads.length && (now - leadsCacheAt) < CACHE_MS) {
+            const q = leadsQueryString();
+            const key = q || 'own';
+            if (!force && allLeads.length && leadsScopeKey === key && (now - leadsCacheAt) < CACHE_MS) {
                 return allLeads;
             }
-            const res = await fetch('/api/leads', { cache: 'no-store', credentials: 'same-origin' });
+            const res = await fetch('/api/leads' + q, { cache: 'no-store', credentials: 'same-origin' });
             if (!res.ok) {
                 allLeads = [];
                 leadsCacheAt = now;
+                leadsScopeKey = key;
                 return allLeads;
             }
             const data = await res.json();
-            // API deve devolver array; se vier erro/objeto, não mostra nada
             allLeads = Array.isArray(data) ? data : [];
-            // Isolamento extra no front: só Patrão (não impersonando) vê todos
-            const seesAll = !!currentUser.is_admin && !currentUser.impersonating;
-            if (!seesAll) {
+            // Isolamento extra no front (cliente)
+            if (!isPatraoSession()) {
                 const myId = currentUser.id != null ? Number(currentUser.id) : null;
                 if (myId == null || Number.isNaN(myId)) {
                     allLeads = [];
@@ -1233,34 +1335,79 @@
                         l => l.assigned_to != null && Number(l.assigned_to) === myId
                     );
                 }
+            } else if ((leadsScope || 'free') === 'free') {
+                // reforço: só sobras
+                allLeads = allLeads.filter(l => l.assigned_to == null);
+            } else if (leadsScope === 'user' && leadsOwnerId) {
+                const oid = Number(leadsOwnerId);
+                allLeads = allLeads.filter(
+                    l => l.assigned_to != null && Number(l.assigned_to) === oid
+                );
             }
             leadsCacheAt = now;
+            leadsScopeKey = key;
             return allLeads;
         }
 
         async function loadHome() {
             try {
+                const q = leadsQueryString();
+                // Home do Patrão: sempre sobras (despacho), independente do filtro da aba Leads
+                const homeQ = isPatraoSession() ? '?scope=free' : q;
                 const [stats, leads] = await Promise.all([
-                    fetch('/api/stats', { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()),
-                    fetchLeads(true)
+                    fetch('/api/stats' + homeQ, { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()),
+                    (async () => {
+                        if (isPatraoSession()) {
+                            const res = await fetch('/api/leads?scope=free', { cache: 'no-store', credentials: 'same-origin' });
+                            const data = await res.json();
+                            return Array.isArray(data) ? data.filter(l => l.assigned_to == null) : [];
+                        }
+                        return fetchLeads(true);
+                    })()
                 ]);
 
+                const patrao = isPatraoSession();
                 const total = stats.total || 0;
                 const contactados = stats.mornos || stats.contactados || 0;
                 const descartados = stats.descartados || stats.frios || 0;
                 const novos = Math.max(total - contactados, 0);
 
-                document.getElementById('home-total').textContent = total;
-                document.getElementById('home-novos').textContent = novos;
-                document.getElementById('home-contactados').textContent = contactados;
-                document.getElementById('home-descartados').textContent = descartados;
+                if (patrao) {
+                    document.getElementById('home-total-label').textContent = 'Sobras (livres)';
+                    document.getElementById('home-novos-label').textContent = 'Sobras novas';
+                    document.getElementById('home-contactados-label').textContent = 'Já distribuídos';
+                    document.getElementById('home-descartados-label').textContent = 'Total no banco';
+                    document.getElementById('home-total').textContent = stats.free != null ? stats.free : total;
+                    document.getElementById('home-novos').textContent = novos;
+                    document.getElementById('home-contactados').textContent = stats.assigned_total != null ? stats.assigned_total : contactados;
+                    document.getElementById('home-descartados').textContent = stats.all_total != null ? stats.all_total : total;
+                    document.getElementById('home-chart-status-title').textContent = 'Status das sobras';
+                    document.getElementById('home-top-title').textContent = 'Prioridade — top sobras para encaminhar';
+                    renderPoolPanel(stats);
+                } else {
+                    document.getElementById('home-total-label').textContent = 'Leads sem site';
+                    document.getElementById('home-novos-label').textContent = 'Novos';
+                    document.getElementById('home-contactados-label').textContent = 'Contactados';
+                    document.getElementById('home-descartados-label').textContent = 'Descartados';
+                    document.getElementById('home-total').textContent = total;
+                    document.getElementById('home-novos').textContent = novos;
+                    document.getElementById('home-contactados').textContent = contactados;
+                    document.getElementById('home-descartados').textContent = descartados;
+                    document.getElementById('home-chart-status-title').textContent = 'Status dos leads';
+                    document.getElementById('home-top-title').textContent = 'Prioridade — top 5 para abordar';
+                    const poolPanel = document.getElementById('home-pool-panel');
+                    if (poolPanel) poolPanel.style.display = 'none';
+                }
 
                 const pieCtx = document.getElementById('chart-status').getContext('2d');
                 if (chartStatus) chartStatus.destroy();
+                const pieLabels = patrao
+                    ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
+                    : ['Novos', 'Contactados', 'Descartados'];
                 chartStatus = new Chart(pieCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Novos', 'Contactados', 'Descartados'],
+                        labels: pieLabels,
                         datasets: [{
                             data: [novos, contactados, descartados],
                             backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
@@ -1304,7 +1451,9 @@
                     .slice(0, 5);
                 const box = document.getElementById('home-top');
                 if (!top.length) {
-                    box.innerHTML = '<p class="empty">Nenhum lead novo sem site no momento.</p>';
+                    box.innerHTML = patrao
+                        ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
+                        : '<p class="empty">Nenhum lead novo sem site no momento.</p>';
                     return;
                 }
                 box.innerHTML = top.map(l => `
@@ -1319,6 +1468,33 @@
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        function renderPoolPanel(stats) {
+            const panel = document.getElementById('home-pool-panel');
+            const sum = document.getElementById('home-pool-summary');
+            const box = document.getElementById('home-pool-users');
+            if (!panel || !sum || !box) return;
+            panel.style.display = '';
+            const free = stats.free != null ? stats.free : 0;
+            const assigned = stats.assigned_total != null ? stats.assigned_total : 0;
+            const all = stats.all_total != null ? stats.all_total : free + assigned;
+            sum.innerHTML = `<strong style="color:var(--text);">${free} sobras</strong> pra encaminhar · `
+                + `${assigned} já com clientes · ${all} raios no total. `
+                + `Home e Leads mostram <em>só sobras</em> por padrão.`;
+            const users = (stats.pool && stats.pool.users) || [];
+            if (!users.length) {
+                box.innerHTML = '<span style="font-size:12px;color:var(--muted);">Nenhum cliente cadastrado.</span>';
+                return;
+            }
+            box.innerHTML = users.map(u => {
+                const full = u.full ? ' · COTA CHEIA' : '';
+                const on = u.active ? '' : ' · off';
+                const color = u.full ? 'var(--warning)' : (u.active ? 'var(--text)' : 'var(--muted)');
+                return `<span style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;color:${color};">
+                    ${esc(u.label || u.username)}: ${u.used}/${u.quota}${full}${on}
+                </span>`;
+            }).join('');
         }
 
         async function loadLeads() {

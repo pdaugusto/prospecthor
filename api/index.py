@@ -139,18 +139,64 @@ def _effective_user_id() -> int | None:
         return None
 
 
-def _sees_all_leads() -> bool:
-    """Só o Patrão real (login patrao), fora de impersonate, vê lista completa."""
+def _is_patrao_view() -> bool:
+    """Patrão real, fora de impersonate — pode ver pool e filtrar."""
     return _is_admin() and not _is_impersonating()
 
 
-def _filter_leads_for_session(leads: list) -> list:
+def _sees_all_leads() -> bool:
+    """Compat: poder de acessar qualquer lead (detalhe/assign)."""
+    return _is_patrao_view()
+
+
+def _parse_leads_scope() -> tuple[str, int | None]:
     """
-    Cinto e suspensório: qualquer lista de leads passa por aqui antes de ir ao cliente.
-    Cliente / impersonate → só assigned_to == user_id. Sem id → [].
+    Escopo da lista (só Patrão usa):
+      free  → sobras (assigned_to IS NULL)  [DEFAULT]
+      all   → todos
+      user  → assigned_to = user_id
+    Cliente ignora e sempre vê só os dele.
     """
-    if _sees_all_leads():
-        return leads
+    scope = (request.args.get("scope") or "free").strip().lower()
+    if scope not in ("free", "all", "user"):
+        scope = "free"
+    owner_id = None
+    raw = request.args.get("user_id")
+    if raw not in (None, "", "null"):
+        try:
+            owner_id = int(raw)
+        except (TypeError, ValueError):
+            owner_id = None
+    if scope == "user" and not owner_id:
+        scope = "free"
+    return scope, owner_id
+
+
+def _apply_patrao_scope(leads: list, scope: str, owner_id: int | None) -> list:
+    """Filtra lista do Patrão por escopo (default = só sobras)."""
+    if scope == "all":
+        return list(leads or [])
+    if scope == "user" and owner_id:
+        out = []
+        for l in leads or []:
+            try:
+                if l.get("assigned_to") is not None and int(l.get("assigned_to")) == int(owner_id):
+                    out.append(l)
+            except (TypeError, ValueError):
+                continue
+        return out
+    # free / default: só sobras
+    return [l for l in (leads or []) if l.get("assigned_to") is None]
+
+
+def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | None = None) -> list:
+    """
+    Isolamento final:
+    - Cliente / impersonate → só assigned_to == user_id
+    - Patrão → aplica scope (default free = sobras para encaminhar)
+    """
+    if _is_patrao_view():
+        return _apply_patrao_scope(leads, scope, owner_id)
     uid = _effective_user_id()
     if not uid:
         return []
@@ -165,18 +211,27 @@ def _filter_leads_for_session(leads: list) -> list:
     return out
 
 
-def get_all_leads(use_cache=True):
+def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None = None):
     """
     Leads Raio:
-    - Patrão REAL (e não em impersonate): TODOS
-    - Qualquer cliente (incl. nova conta): SOMENTE assigned_to == user_id
+    - Patrão: por padrão SÓ sobras (assigned_to NULL); scope=all|user sob demanda
+    - Cliente: SOMENTE assigned_to == user_id
     """
     uid_int = _effective_user_id()
     uname = (_session_user().get("username") or "").lower().strip()
-    sees_all = _sees_all_leads()
+    is_patrao = _is_patrao_view()
 
-    # Isolamento rígido: nunca cache compartilhado entre escopos
-    cache_key = f"{'all' if sees_all else 'own'}:{uid_int}:{uname}"
+    if is_patrao:
+        if scope is None:
+            scope, owner_id = _parse_leads_scope()
+        scope = (scope or "free").lower()
+        if scope not in ("free", "all", "user"):
+            scope = "free"
+    else:
+        scope = "own"
+        owner_id = uid_int
+
+    cache_key = f"{scope}:{owner_id}:{uid_int}:{uname}"
 
     now = time.time()
     if (
@@ -184,13 +239,13 @@ def get_all_leads(use_cache=True):
         and cache_key in _cache["leads"]
         and (now - _cache["leads_at"].get(cache_key, 0)) < _CACHE_TTL
     ):
-        return _filter_leads_for_session(_cache["leads"][cache_key])
+        return _filter_leads_for_session(_cache["leads"][cache_key], scope, owner_id)
 
     if not DATABASE_URL:
         return []
 
-    # Cliente sem id válido = lista vazia (nunca vaza lista completa)
-    if not sees_all and not uid_int:
+    # Cliente sem id válido = lista vazia
+    if not is_patrao and not uid_int:
         return []
 
     try:
@@ -203,11 +258,24 @@ def get_all_leads(use_cache=True):
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        if sees_all:
-            sql = _SQL_RAIO_BASE + " ORDER BY lead_score DESC NULLS LAST;"
-            cur.execute(sql)
+        if is_patrao:
+            if scope == "all":
+                sql = _SQL_RAIO_BASE + " ORDER BY lead_score DESC NULLS LAST;"
+                cur.execute(sql)
+            elif scope == "user" and owner_id:
+                sql = (
+                    _SQL_RAIO_BASE
+                    + " AND assigned_to = %s ORDER BY lead_score DESC NULLS LAST;"
+                )
+                cur.execute(sql, (int(owner_id),))
+            else:
+                # default: sobras
+                sql = (
+                    _SQL_RAIO_BASE
+                    + " AND assigned_to IS NULL ORDER BY lead_score DESC NULLS LAST;"
+                )
+                cur.execute(sql)
         else:
-            # filtro rígido no SQL + reforço em Python
             sql = (
                 _SQL_RAIO_BASE
                 + " AND assigned_to = %s ORDER BY lead_score DESC NULLS LAST;"
@@ -218,16 +286,70 @@ def get_all_leads(use_cache=True):
         cur.close()
         conn.close()
         leads = [dict(r) for r in rows if _is_raio_lead(dict(r))]
-        leads = _filter_leads_for_session(leads)
+        leads = _filter_leads_for_session(leads, scope, owner_id)
 
         _cache["leads"][cache_key] = leads
         _cache["leads_at"][cache_key] = now
         return leads
     except Exception:
-        # NUNCA devolver cache de outro usuário / lista completa em falha
-        if not sees_all:
+        if not is_patrao:
             return []
-        return _filter_leads_for_session(_cache["leads"].get(cache_key) or [])
+        return _filter_leads_for_session(_cache["leads"].get(cache_key) or [], scope, owner_id)
+
+
+def _pool_summary() -> dict:
+    """Contadores do pool (Patrão): livres / atribuídos / total + uso por cliente."""
+    empty = {"free": 0, "assigned": 0, "all": 0, "users": []}
+    if not DATABASE_URL or not _is_patrao_view():
+        return empty
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            f"""
+            SELECT
+              COUNT(*) FILTER (WHERE assigned_to IS NULL) AS free,
+              COUNT(*) FILTER (WHERE assigned_to IS NOT NULL) AS assigned,
+              COUNT(*) AS total
+            FROM companies
+            WHERE (
+                website_status IN ('sem_site', 'so_social')
+                OR website IS NULL
+                OR TRIM(COALESCE(website, '')) = ''
+                OR lead_class = 'raio'
+                OR website ILIKE '%%instagram.com%%'
+                OR website ILIKE '%%facebook.com%%'
+                OR website ILIKE '%%linktr.ee%%'
+            );
+            """
+        )
+        row = cur.fetchone() or {}
+        free = int(row.get("free") or 0)
+        assigned = int(row.get("assigned") or 0)
+        total = int(row.get("total") or 0)
+
+        from src.users import list_users, count_assigned_this_month
+        users_out = []
+        for u in list_users():
+            if (u.get("username") or "").lower() == "patrao":
+                continue
+            uid = int(u["id"])
+            used = count_assigned_this_month(uid)
+            quota = int(u.get("monthly_quota") or 0)
+            users_out.append({
+                "id": uid,
+                "username": u.get("username"),
+                "label": u.get("label") or u.get("username"),
+                "active": u.get("active"),
+                "used": used,
+                "quota": quota,
+                "full": quota > 0 and used >= quota,
+            })
+        cur.close()
+        conn.close()
+        return {"free": free, "assigned": assigned, "all": total, "users": users_out}
+    except Exception:
+        return empty
 
 
 @app.after_request
@@ -242,23 +364,25 @@ def _no_store_private(resp):
 
 
 def get_lead_by_id(lead_id):
-    leads = get_all_leads(use_cache=True)
+    # tenta na lista do escopo atual (sobras etc.)
+    if _is_patrao_view():
+        # Patrão: busca direta no banco (pode abrir lead atribuído mesmo com lista = sobras)
+        if not DATABASE_URL:
+            return None
+        try:
+            conn = get_db()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(f"SELECT {_LIST_COLS} FROM companies WHERE id = %s LIMIT 1;", (lead_id,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            return dict(row) if row else None
+        except Exception:
+            return None
+
+    leads = get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id())
     lead = next((l for l in leads if l.get("id") == lead_id), None)
-    if lead:
-        return lead
-    # admin pode buscar direto
-    if not _is_admin() or not DATABASE_URL:
-        return None
-    try:
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(f"SELECT {_LIST_COLS} FROM companies WHERE id = %s LIMIT 1;", (lead_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        return dict(row) if row else None
-    except Exception:
-        return None
+    return lead
 
 
 def _invalidate_cache():
@@ -507,8 +631,12 @@ def api_impersonate_stop():
 @app.route("/api/leads")
 @login_required
 def api_leads():
-    # sempre filtra de novo (nunca confiar só em cache interno)
-    return jsonify(_filter_leads_for_session(get_all_leads()))
+    # Patrão: scope=free (default) | all | user&user_id=
+    # Cliente: só os dele
+    if _is_patrao_view():
+        scope, owner_id = _parse_leads_scope()
+        return jsonify(get_all_leads(use_cache=True, scope=scope, owner_id=owner_id))
+    return jsonify(get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id()))
 
 
 @app.route("/api/leads/<int:lead_id>")
@@ -517,8 +645,8 @@ def api_lead_detail(lead_id):
     lead = get_lead_by_id(lead_id)
     if not lead:
         return jsonify({"error": "Not found"}), 404
-    # cliente nunca acessa lead de outro
-    if not _sees_all_leads():
+    # cliente nunca acessa lead de outro (livre ou de outrem)
+    if not _is_patrao_view():
         uid = _effective_user_id()
         try:
             owner = lead.get("assigned_to")
@@ -600,13 +728,20 @@ def api_update_status(lead_id):
 def api_stats():
     uid = _effective_user_id()
     uname = (_session_user().get("username") or "").lower().strip()
-    scope = "all" if _sees_all_leads() else "own"
-    cache_key = f"stats:{scope}:{uid}:{uname}"
+    if _is_patrao_view():
+        scope, owner_id = _parse_leads_scope()
+    else:
+        scope, owner_id = "own", uid
+    cache_key = f"stats:{scope}:{owner_id}:{uid}:{uname}"
     now = time.time()
     if cache_key in _cache["stats"] and (now - _cache["stats_at"].get(cache_key, 0)) < _CACHE_TTL:
         return jsonify(_cache["stats"][cache_key])
 
-    leads = _filter_leads_for_session(get_all_leads())
+    if _is_patrao_view():
+        leads = get_all_leads(use_cache=True, scope=scope, owner_id=owner_id)
+    else:
+        leads = get_all_leads(use_cache=True, scope="own", owner_id=uid)
+
     nichos = {}
     contactados = 0
     descartados = 0
@@ -633,7 +768,15 @@ def api_stats():
         "novos": max(len(leads) - contactados, 0),
         "nichos": nichos,
         "top": sorted(leads, key=lambda x: x.get("lead_score") or 0, reverse=True)[:5],
+        "scope": scope,
     }
+    if _is_patrao_view():
+        pool = _pool_summary()
+        payload["pool"] = pool
+        # atalhos no topo
+        payload["free"] = pool.get("free", 0)
+        payload["assigned_total"] = pool.get("assigned", 0)
+        payload["all_total"] = pool.get("all", 0)
     _cache["stats"][cache_key] = payload
     _cache["stats_at"][cache_key] = now
     return jsonify(payload)
@@ -642,7 +785,12 @@ def api_stats():
 @app.route("/api/reports/<period>")
 @login_required
 def api_reports(period):
-    leads = get_all_leads()
+    # Patrão: relatório no escopo atual (default sobras); cliente: só os dele
+    if _is_patrao_view():
+        scope, owner_id = _parse_leads_scope()
+        leads = get_all_leads(use_cache=True, scope=scope, owner_id=owner_id)
+    else:
+        leads = get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id())
     days = 1 if period == "daily" else 7 if period == "weekly" else 30
     cutoff = datetime.now() - timedelta(days=days)
     filtered = []
@@ -685,7 +833,11 @@ def api_reports(period):
 @app.route("/api/export/csv")
 @login_required
 def api_export_csv():
-    leads = get_all_leads(use_cache=False)
+    if _is_patrao_view():
+        scope, owner_id = _parse_leads_scope()
+        leads = get_all_leads(use_cache=False, scope=scope, owner_id=owner_id)
+    else:
+        leads = get_all_leads(use_cache=False, scope="own", owner_id=_effective_user_id())
     output = io.StringIO()
     output.write("\ufeff")
     w = csv.writer(output, delimiter=";")

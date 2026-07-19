@@ -1135,6 +1135,8 @@
         let homeLoadSeq = 0;
         let navLockUntil = 0;
         let leadsLoading = false;
+        // último snapshot da Home — evita “zerar” ao voltar da outra aba
+        let lastHomeSnapshot = null;
 
         let sparkTotal = null, sparkNovos = null, sparkContact = null;
 
@@ -1261,18 +1263,46 @@
         }
 
         function navigateTo(path) {
+            // atalho confiável para detalhe do lead
+            if (String(path).startsWith('/lead/')) {
+                const id = parseInt(String(path).split('/')[2], 10);
+                if (!Number.isNaN(id)) {
+                    openLead(id);
+                    return;
+                }
+            }
             const now = Date.now();
-            // evita clique duplo sumindo dados / race de load
+            // evita clique duplo na MESMA rota
             if (now < navLockUntil && location.pathname === path) {
                 closeSidebar();
                 return;
             }
-            navLockUntil = now + 350;
+            navLockUntil = now + 280;
             if (location.pathname !== path) {
                 history.pushState({}, '', path);
             }
             handleRouting();
             closeSidebar();
+        }
+
+        /** Abre detalhe do lead de forma direta (não depende só do router). */
+        function openLead(id) {
+            id = parseInt(id, 10);
+            if (!id || Number.isNaN(id)) return;
+            // cancela home em voo sem limpar snapshot
+            homeLoadSeq++;
+            destroyHomeCharts();
+            destroySparks();
+            try {
+                history.pushState({}, '', '/lead/' + id);
+            } catch (_) {}
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            const detail = document.getElementById('view-lead-detail');
+            if (detail) detail.classList.add('active');
+            setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
+            closeSidebar();
+            loadDetail(id);
         }
 
         function clearLeadsCache() {
@@ -1511,22 +1541,22 @@
                 // próximo tick: canvas já com layout (evita chart 0x0 ao voltar do Leads)
                 setTimeout(() => loadHome(), 0);
             } else if (path === '/leads') {
-                // ao sair da home, mata charts (evita bug de resize em display:none)
+                // cancela home em voo — NÃO apaga lastHomeSnapshot
+                homeLoadSeq++;
                 destroyHomeCharts();
                 destroySparks();
-                homeLoadSeq++; // cancela loadHome pendente
                 document.getElementById('view-leads').classList.add('active');
                 document.getElementById('nav-leads').classList.add('active');
                 setPageMeta('Leads', 'Busca, filtros e ordenação · clique na linha para abrir o detalhe.');
                 loadLeads();
             } else if (path.startsWith('/lead/')) {
-                destroyHomeCharts();
-                destroySparks();
-                homeLoadSeq++;
-                document.getElementById('view-lead-detail').classList.add('active');
-                setPageMeta('Detalhe', 'Ficha completa do lead e ações de abordagem.');
-                const id = parseInt(path.split('/')[2], 10);
-                if (!Number.isNaN(id)) loadDetail(id);
+                const id = parseInt(path.split('/').filter(Boolean).pop(), 10);
+                if (!Number.isNaN(id)) {
+                    openLead(id);
+                } else {
+                    navigateTo('/leads');
+                }
+                return;
             } else if (path === '/reports') {
                 destroyHomeCharts();
                 destroySparks();
@@ -2046,6 +2076,92 @@
             }
         }
 
+        function applyHomeNumbers(snap, animate) {
+            if (!snap) return;
+            const patrao = !!snap.patrao;
+            const quotaBar = document.getElementById('home-quota-bar');
+            const quotaFill = document.getElementById('home-quota-fill');
+
+            if (patrao) {
+                setText('home-total-label', 'Leads ativos');
+                setText('home-novos-label', 'Novos');
+                setText('home-contactados-label', 'Contactados');
+                setText('home-descartados-label', 'Total no banco');
+                if (animate) {
+                    animateCount('home-total', snap.freeN);
+                    animateCount('home-novos', snap.novos);
+                    animateCount('home-contactados', snap.assignedN);
+                    animateCount('home-descartados', snap.allN);
+                } else {
+                    setText('home-total', String(snap.freeN));
+                    setText('home-novos', String(snap.novos));
+                    setText('home-contactados', String(snap.assignedN));
+                    setText('home-descartados', String(snap.allN));
+                }
+                setHtml('home-total-meta', '<span class="up">↑ pool</span> sobras livres');
+                setHtml('home-novos-meta', 'Sobras novas no funil');
+                setHtml('home-contact-meta', 'Já distribuídos');
+                setText('home-desc-meta', 'Raios no sistema');
+                setText('home-hero-sub', 'Pool do Patrão · sobras e distribuição em tempo real');
+                setText('home-chart-status-title', 'Status das sobras');
+                setText('home-top-title', 'Hot leads — top sobras');
+                if (quotaBar) quotaBar.style.display = 'none';
+            } else {
+                setText('home-total-label', 'Leads ativos');
+                setText('home-novos-label', 'Novos');
+                setText('home-contactados-label', 'Contactados');
+                setText('home-descartados-label', 'Cota do mês');
+                if (animate) {
+                    animateCount('home-total', snap.total);
+                    animateCount('home-novos', snap.novos);
+                    animateCount('home-contactados', snap.contactados);
+                } else {
+                    setText('home-total', String(snap.total));
+                    setText('home-novos', String(snap.novos));
+                    setText('home-contactados', String(snap.contactados));
+                }
+                const used = snap.used || 0;
+                const q = snap.quota || 0;
+                if (q) {
+                    const el = document.getElementById('home-descartados');
+                    if (el) {
+                        if (animate) {
+                            el.innerHTML = `<span id="home-cota-used">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
+                            animateCount('home-cota-used', used);
+                        } else {
+                            el.innerHTML = `<span id="home-cota-used">${used}</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
+                        }
+                    }
+                } else if (animate) {
+                    animateCount('home-descartados', snap.descartados);
+                } else {
+                    setText('home-descartados', String(snap.descartados));
+                }
+                setHtml('home-total-meta', '<span class="up">↑ carteira</span> na sua conta');
+                setText('home-novos-meta', 'Clique em Leads para filtrar');
+                const rate = snap.total ? Math.round((snap.contactados / snap.total) * 100) : 0;
+                setHtml('home-contact-meta', `Taxa <strong style="color:var(--text)">${rate}%</strong>`);
+                setText('home-desc-meta', q ? 'Uso da cota' : 'Descartados');
+                setText('home-hero-sub', 'Sua carteira · leads com telefone prontos para abordar');
+                if (quotaBar && quotaFill && q) {
+                    quotaBar.style.display = '';
+                    const pct = Math.min(100, Math.round((used / q) * 100));
+                    if (animate) {
+                        quotaFill.style.width = '0%';
+                        requestAnimationFrame(() => { quotaFill.style.width = pct + '%'; });
+                    } else {
+                        quotaFill.style.width = pct + '%';
+                    }
+                } else if (quotaBar) {
+                    quotaBar.style.display = 'none';
+                }
+                setText('home-chart-status-title', 'Status dos leads');
+                setText('home-top-title', 'Hot leads — top 5');
+                const poolPanel = document.getElementById('home-pool-panel');
+                if (poolPanel) poolPanel.style.display = 'none';
+            }
+        }
+
         async function loadHome() {
             if (!meReady) return;
             const loadId = ++homeLoadSeq;
@@ -2054,21 +2170,25 @@
                 return (p === '/' || p === '') && loadId === homeLoadSeq;
             };
 
-            // feedback imediato
-            setText('home-total', '…');
-            setText('home-novos', '…');
-            setText('home-contactados', '…');
-            setText('home-descartados', '…');
-            const topBox = document.getElementById('home-top');
-            if (topBox) topBox.innerHTML = '<p class="empty">Carregando…</p>';
-
-            // limpa charts/sparks antigos (bug clássico ao voltar de outra aba)
-            destroyHomeCharts();
-            destroySparks();
+            // Se já tem snapshot, mostra na hora (não zera a tela)
+            if (lastHomeSnapshot) {
+                applyHomeNumbers(lastHomeSnapshot, false);
+                if (lastHomeSnapshot.topHtml) {
+                    const box = document.getElementById('home-top');
+                    if (box) box.innerHTML = lastHomeSnapshot.topHtml;
+                }
+            } else {
+                setText('home-total', '…');
+                setText('home-novos', '…');
+                setText('home-contactados', '…');
+                setText('home-descartados', '…');
+                const topBox0 = document.getElementById('home-top');
+                if (topBox0) topBox0.innerHTML = '<p class="empty">Carregando…</p>';
+            }
 
             try {
                 const homeQ = isPatraoSession() ? '?scope=free' : '';
-                // 1) stats — sempre
+                // 1) stats
                 let stats = {};
                 try {
                     const sr = await fetch('/api/stats' + homeQ, { cache: 'no-store', credentials: 'same-origin' });
@@ -2079,7 +2199,7 @@
                 }
                 if (!stillHome()) return;
 
-                // 2) leads só pro top — isolado de allLeads (não interfere na aba Leads)
+                // 2) leads pro top — NÃO mexe em allLeads
                 let leads = [];
                 try {
                     if (isPatraoSession()) {
@@ -2104,69 +2224,22 @@
                 const freeN = Number(stats.free != null ? stats.free : total) || 0;
                 const assignedN = Number(stats.assigned_total != null ? stats.assigned_total : contactados) || 0;
                 const allN = Number(stats.all_total != null ? stats.all_total : total) || 0;
+                const used = currentUser.assigned_this_month || 0;
+                const q = currentUser.monthly_quota || 0;
 
-                const quotaBar = document.getElementById('home-quota-bar');
-                const quotaFill = document.getElementById('home-quota-fill');
+                const snap = {
+                    patrao, total, novos, contactados, descartados,
+                    freeN, assignedN, allN, used, quota: q,
+                    nichos: stats.nichos || {},
+                    stats,
+                };
+                lastHomeSnapshot = snap;
+                applyHomeNumbers(snap, true);
+
                 if (patrao) {
-                    setText('home-total-label', 'Leads ativos');
-                    setText('home-novos-label', 'Novos');
-                    setText('home-contactados-label', 'Contactados');
-                    setText('home-descartados-label', 'Total no banco');
-                    // animação de contagem (efeito “subindo”)
-                    animateCount('home-total', freeN);
-                    animateCount('home-novos', novos);
-                    animateCount('home-contactados', assignedN);
-                    animateCount('home-descartados', allN);
-                    setHtml('home-total-meta', '<span class="up">↑ pool</span> sobras livres');
-                    setHtml('home-novos-meta', 'Sobras novas no funil');
-                    setHtml('home-contact-meta', 'Já distribuídos');
-                    setText('home-desc-meta', 'Raios no sistema');
-                    setText('home-hero-sub', 'Pool do Patrão · sobras e distribuição em tempo real');
-                    setText('home-chart-status-title', 'Status das sobras');
-                    setText('home-top-title', 'Hot leads — top sobras');
-                    if (quotaBar) quotaBar.style.display = 'none';
                     try { renderPoolPanel(stats); } catch (e) { console.error(e); }
                     renderSparks(freeN, novos, assignedN);
                 } else {
-                    setText('home-total-label', 'Leads ativos');
-                    setText('home-novos-label', 'Novos');
-                    setText('home-contactados-label', 'Contactados');
-                    setText('home-descartados-label', 'Cota do mês');
-                    animateCount('home-total', total);
-                    animateCount('home-novos', novos);
-                    animateCount('home-contactados', contactados);
-                    const used = currentUser.assigned_this_month || 0;
-                    const q = currentUser.monthly_quota || 0;
-                    if (q) {
-                        // anima o numerador e mantém /quota
-                        const el = document.getElementById('home-descartados');
-                        if (el) {
-                            el.innerHTML = `<span id="home-cota-used">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
-                            animateCount('home-cota-used', used);
-                        }
-                    } else {
-                        animateCount('home-descartados', descartados);
-                    }
-                    setHtml('home-total-meta', '<span class="up">↑ carteira</span> na sua conta');
-                    setText('home-novos-meta', 'Clique em Leads para filtrar');
-                    const rate = total ? Math.round((contactados / total) * 100) : 0;
-                    setHtml('home-contact-meta', `Taxa <strong style="color:var(--text)">${rate}%</strong>`);
-                    setText('home-desc-meta', q ? 'Uso da cota' : 'Descartados');
-                    setText('home-hero-sub', 'Sua carteira · leads com telefone prontos para abordar');
-                    if (quotaBar && quotaFill && q) {
-                        quotaBar.style.display = '';
-                        // anima barra de cota
-                        quotaFill.style.width = '0%';
-                        requestAnimationFrame(() => {
-                            quotaFill.style.width = Math.min(100, Math.round((used / q) * 100)) + '%';
-                        });
-                    } else if (quotaBar) {
-                        quotaBar.style.display = 'none';
-                    }
-                    setText('home-chart-status-title', 'Status dos leads');
-                    setText('home-top-title', 'Hot leads — top 5');
-                    const poolPanel = document.getElementById('home-pool-panel');
-                    if (poolPanel) poolPanel.style.display = 'none';
                     renderSparks(total, novos, contactados);
                 }
 
@@ -2245,14 +2318,14 @@
                     .slice(0, 5);
                 const box = document.getElementById('home-top');
                 if (!box) return;
+                let topHtml;
                 if (!top.length) {
-                    box.innerHTML = patrao
+                    topHtml = patrao
                         ? '<p class="empty">Nenhuma sobra no momento — cotas absorveram tudo ou o bot ainda não gerou livre.</p>'
                         : '<p class="empty">Nenhum lead novo sem site no momento.</p>';
-                    return;
-                }
-                box.innerHTML = top.map(l => `
-                    <div class="top-item" onclick="navigateTo('/lead/${l.id}')">
+                } else {
+                    topHtml = top.map(l => `
+                    <div class="top-item" onclick="openLead(${Number(l.id)})">
                         <div>
                             <div class="name">${esc(l.name)}</div>
                             <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
@@ -2260,14 +2333,19 @@
                         <div class="score">${l.lead_score || 0}</div>
                     </div>
                 `).join('');
+                }
+                box.innerHTML = topHtml;
+                if (lastHomeSnapshot) lastHomeSnapshot.topHtml = topHtml;
             } catch (e) {
                 console.error('loadHome', e);
-                if (stillHome()) {
+                // se falhar e não tiver snapshot, avisa — senão mantém o último bom
+                if (stillHome() && !lastHomeSnapshot) {
                     setText('home-total', '—');
                     setText('home-novos', '—');
                     setText('home-contactados', '—');
                     setText('home-descartados', '—');
-                    if (topBox) topBox.innerHTML = '<p class="empty">Erro ao carregar a home. Clique de novo em Visão geral.</p>';
+                    const tb = document.getElementById('home-top');
+                    if (tb) tb.innerHTML = '<p class="empty">Erro ao carregar a home. Clique de novo em Visão geral.</p>';
                 }
             }
         }
@@ -2442,7 +2520,7 @@
                 ${wa ? `<a class="icon-btn wa" href="${wa}" target="_blank" rel="noopener" title="WhatsApp" onclick="${stop}">WA</a>` : ''}
                 ${tel ? `<a class="icon-btn" href="tel:${tel}" title="Ligar" onclick="${stop}">☎</a>` : ''}
                 <button class="icon-btn" type="button" title="Mensagem" onclick="${stop}openPrompt(${l.id})">✎</button>
-                <button class="icon-btn" type="button" title="Abrir" onclick="${stop}navigateTo('/lead/${l.id}')">→</button>
+                <button class="icon-btn" type="button" title="Abrir" onclick="${stop}openLead(${Number(l.id)})">→</button>
             `;
         }
 
@@ -2489,7 +2567,7 @@
                 const st = getStatus(l);
                 const sc = l.lead_score || 0;
                 return `
-                    <tr onclick="navigateTo('/lead/${l.id}')">
+                    <tr onclick="openLead(${Number(l.id)})">
                         <td class="company-cell"><strong>${esc(l.name)}</strong><small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small></td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
                         <td class="phone-cell">${esc(l.phone || '—')}</td>
@@ -2506,7 +2584,7 @@
                 return `
                     <div class="m-card">
                         <div class="row">
-                            <div class="name" onclick="navigateTo('/lead/${l.id}')">${esc(l.name)}</div>
+                            <div class="name" onclick="openLead(${Number(l.id)})">${esc(l.name)}</div>
                             <span class="badge raio ${sc >= 110 ? 'high' : ''}">${sc}</span>
                         </div>
                         <div class="meta">${esc(l.city || '')} · ${esc(l.phone || 'Sem telefone')} · ${statusLabel(st)}</div>
@@ -2530,17 +2608,31 @@
         }
 
         async function loadDetail(id) {
+            id = parseInt(id, 10);
             const wrap = document.getElementById('lead-detail-wrapper');
+            if (!wrap) {
+                console.error('lead-detail-wrapper não encontrado');
+                return;
+            }
+            if (!id || Number.isNaN(id)) {
+                wrap.innerHTML = '<p class="empty">Lead inválido.</p>';
+                return;
+            }
             wrap.innerHTML = '<p class="empty">Carregando...</p>';
+            // garante que a view de detalhe está visível
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-lead-detail')?.classList.add('active');
             try {
-                const res = await fetch(`/api/leads/${id}`);
+                const res = await fetch(`/api/leads/${id}`, { cache: 'no-store', credentials: 'same-origin' });
                 if (!res.ok) {
-                    wrap.innerHTML = '<p class="empty">Lead não encontrado.</p>';
+                    const err = await res.json().catch(() => ({}));
+                    wrap.innerHTML = `<p class="empty">Lead não encontrado (${res.status}). ${esc(err.error || '')}</p>
+                        <p style="text-align:center;margin-top:12px;"><button class="btn" type="button" onclick="navigateTo('/leads')">← Voltar aos leads</button></p>`;
                     return;
                 }
                 const lead = await res.json();
                 // refresh cache entry
-                const idx = allLeads.findIndex(x => x.id === id);
+                const idx = allLeads.findIndex(x => Number(x.id) === Number(id));
                 if (idx >= 0) allLeads[idx] = lead;
 
                 let problems = [], services = [];

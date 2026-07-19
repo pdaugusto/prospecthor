@@ -2,3 +2,6 @@ flask==3.0.3
 requests
 psycopg2-binary
 python-dotenv
+loguru
+click
+playwright

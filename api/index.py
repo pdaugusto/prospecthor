@@ -12,9 +12,15 @@ from functools import wraps
 from collections import defaultdict
 from flask import Flask, jsonify, render_template, request, make_response, session, redirect, url_for
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(
+    __name__,
+    template_folder=os.path.join(_ROOT, "templates"),
+    static_folder=os.path.join(_ROOT, "static"),
+    static_url_path="/static",
+)
 
 import hashlib as _hashlib
 

@@ -70,11 +70,20 @@
       display: flex; align-items: center; gap: 12px;
     }
     .brand-mark {
-      width: 40px; height: 40px; border-radius: 11px;
+      width: 44px; height: 44px; border-radius: 12px;
       background: linear-gradient(145deg, #00d4ff, #0a6fa8);
-      color: #031018; font-weight: 900; font-size: 15px;
       display: grid; place-items: center;
       box-shadow: 0 0 24px var(--neon-glow);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .brand-mark img,
+    .brand-mark svg {
+      width: 28px; height: 28px;
+      display: block;
+      object-fit: contain;
+      /* máscara preta estilo vetor */
+      filter: brightness(0);
     }
     .brand strong {
       font-size: 16px; font-weight: 800; color: #fff;
@@ -265,7 +274,9 @@
   <div class="page">
     <section class="pitch">
       <div class="brand">
-        <div class="brand-mark">PT</div>
+        <div class="brand-mark" title="ProspecTHOR" aria-label="ProspecTHOR">
+          <img src="/static/thor-mask.png" alt="" width="28" height="28" />
+        </div>
         <strong>Prospec<span>THOR</span></strong>
       </div>
 

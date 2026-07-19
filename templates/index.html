@@ -84,11 +84,18 @@
         }
         .brand-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .brand-mark {
-            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
             background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
-            color: #031018; font-weight: 800; font-size: 16px;
             display: grid; place-items: center;
             box-shadow: 0 0 22px var(--neon-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+        .brand-mark img,
+        .brand-mark svg {
+            width: 26px; height: 26px;
+            display: block;
+            object-fit: contain;
+            filter: brightness(0); /* preto estilo vetor */
         }
         .brand-text h2 {
             font-size: 15px; font-weight: 800; letter-spacing: -0.02em; color: var(--text);
@@ -949,7 +956,9 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-row">
-                <div class="brand-mark">P</div>
+                <div class="brand-mark" title="ProspecTHOR" aria-label="ProspecTHOR">
+                    <img src="/static/thor-mask.png" alt="" width="26" height="26" />
+                </div>
                 <div class="brand-text">
                     <h2>Prospec<span>THOR</span></h2>
                     <small>Inteligência comercial</small>

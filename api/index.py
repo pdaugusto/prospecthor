@@ -4,21 +4,46 @@ import io
 import csv
 import json
 import time
+import secrets
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
 from functools import wraps
+from collections import defaultdict
 from flask import Flask, jsonify, render_template, request, make_response, session, redirect, url_for
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 app = Flask(__name__, template_folder="../templates")
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "prospector_secret")
+
+# Sessão: exige FLASK_SECRET_KEY ou DASHBOARD_SECRET_KEY em produção
+_secret = (
+    os.getenv("FLASK_SECRET_KEY")
+    or os.getenv("DASHBOARD_SECRET_KEY")
+    or ""
+).strip()
+if not _secret:
+    # dev local only — em Vercel configure a env (instâncias diferentes quebram sessão)
+    _secret = secrets.token_hex(32)
+app.secret_key = _secret
+_is_vercel = bool(os.getenv("VERCEL") or os.getenv("VERCEL_ENV"))
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=_is_vercel or os.getenv("SESSION_COOKIE_SECURE", "").lower() in ("1", "true"),
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
+    SESSION_COOKIE_NAME="prospecthor_session",
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-# Patrão fixo — não usar "admin" (conta do amigo)
+# Patrão fixo — nunca default de senha no código
 DASHBOARD_USER = "patrao"
-DASHBOARD_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
+DASHBOARD_PASS = (os.getenv("DASHBOARD_PASS") or "").strip()
+
+# Rate limit simples de login (por IP) — protege brute force em serverless (best-effort)
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+_LOGIN_MAX = 12
+_LOGIN_WINDOW_S = 600  # 10 min
 
 _SOCIAL_MARKERS = (
     "instagram.com", "facebook.com", "fb.com", "linktr.ee",
@@ -432,12 +457,36 @@ def admin_required(f):
     return decorated
 
 
+def _client_ip() -> str:
+    # Vercel / proxies
+    xff = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return xff or (request.remote_addr or "unknown")
+
+
+def _login_rate_limited(ip: str) -> bool:
+    now = time.time()
+    window = _login_attempts[ip]
+    # limpa antigos
+    _login_attempts[ip] = [t for t in window if now - t < _LOGIN_WINDOW_S]
+    return len(_login_attempts[ip]) >= _LOGIN_MAX
+
+
+def _login_register_fail(ip: str) -> None:
+    _login_attempts[ip].append(time.time())
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("logged_in"):
         return redirect("/")
     error = None
     if request.method == "POST":
+        ip = _client_ip()
+        if _login_rate_limited(ip):
+            return render_template(
+                "login.html",
+                error="Muitas tentativas. Aguarde alguns minutos e tente de novo.",
+            ), 429
         username = request.form.get("username") or ""
         password = request.form.get("password") or ""
         user = None
@@ -445,17 +494,24 @@ def login():
             from src.users import authenticate
             user = authenticate(username, password)
         except Exception:
-            # fallback env = Patrão
-            if (username or "").lower() == (DASHBOARD_USER or "").lower() and password == DASHBOARD_PASS:
-                user = {
-                    "id": 0,
-                    "username": (DASHBOARD_USER or "patrao").lower(),
-                    "role": "admin",
-                    "monthly_quota": 9999,
-                    "label": "Patrão",
-                }
+            user = None
+        # fallback env só se DASHBOARD_PASS estiver setada (sem default no código)
+        if (
+            not user
+            and DASHBOARD_PASS
+            and (username or "").lower() == (DASHBOARD_USER or "").lower()
+            and password == DASHBOARD_PASS
+        ):
+            user = {
+                "id": 0,
+                "username": (DASHBOARD_USER or "patrao").lower(),
+                "role": "admin",
+                "monthly_quota": 9999,
+                "label": "Patrão",
+            }
         if user:
             session.clear()
+            session.permanent = True
             session["logged_in"] = True
             # id obrigatório para cliente filtrar leads (sem id = lista vazia)
             session["user_id"] = user.get("id")
@@ -470,6 +526,7 @@ def login():
             session["role"] = role
             session["label"] = user.get("label") or user.get("username")
             return redirect("/")
+        _login_register_fail(ip)
         error = "Usuário ou senha incorretos."
     return render_template("login.html", error=error)
 

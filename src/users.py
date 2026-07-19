@@ -27,11 +27,66 @@ _DATABASE_URL = os.getenv("DATABASE_URL", "")
 # Login do Patrão (fixo). Nunca use "admin" aqui — admin é a conta do amigo.
 _PRINCIPAL_USERNAME = "patrao"
 _ENV_ADMIN_USER = os.getenv("DASHBOARD_USER", "patrao")
-_ENV_ADMIN_PASS = os.getenv("DASHBOARD_PASS", "Ronaldete1")
+# NUNCA default de senha no código — só env
+_ENV_ADMIN_PASS = (os.getenv("DASHBOARD_PASS") or "").strip()
 
 
 def _hash_password(password: str) -> str:
+    """Hash moderno (pbkdf2). Preferir verify_password para login."""
+    try:
+        from werkzeug.security import generate_password_hash
+        return generate_password_hash(password or "", method="pbkdf2:sha256", salt_length=16)
+    except Exception:
+        # fallback extremo (não ideal)
+        return "sha256:" + hashlib.sha256((password or "").encode("utf-8")).hexdigest()
+
+
+def _legacy_sha256(password: str) -> str:
     return hashlib.sha256((password or "").encode("utf-8")).hexdigest()
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    """Aceita hash werkzeug (pbkdf2/scrypt) ou SHA256 legado (64 hex)."""
+    stored = (stored_hash or "").strip()
+    if not stored:
+        return False
+    # Werkzeug / pbkdf2
+    if stored.startswith(("pbkdf2:", "scrypt:", "argon2:")) or stored.count("$") >= 2:
+        try:
+            from werkzeug.security import check_password_hash
+            return check_password_hash(stored, password or "")
+        except Exception:
+            return False
+    # Legado: sha256 hex puro
+    if re.fullmatch(r"[0-9a-f]{64}", stored):
+        return _legacy_sha256(password) == stored
+    # Prefixo nosso
+    if stored.startswith("sha256:"):
+        return _legacy_sha256(password) == stored[7:]
+    try:
+        from werkzeug.security import check_password_hash
+        return check_password_hash(stored, password or "")
+    except Exception:
+        return False
+
+
+def _upgrade_password_hash(user_id: int, password: str) -> None:
+    """Migra hash legado → pbkdf2 no login bem-sucedido."""
+    if not user_id:
+        return
+    try:
+        conn = _connect()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE app_users SET password_hash = %s WHERE id = %s;",
+            (_hash_password(password), int(user_id)),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        logger.warning("[Users] password hash upgraded user_id=%s", user_id)
+    except Exception as exc:
+        logger.warning("[Users] upgrade hash falhou: %s", exc)
 
 
 def _connect():
@@ -85,14 +140,20 @@ def ensure_schema() -> None:
             (principal,),
         )
         if not cur.fetchone():
-            cur.execute(
-                """
-                INSERT INTO app_users (username, password_hash, role, monthly_quota, active, label)
-                VALUES (%s, %s, 'admin', 9999, 1, 'Patrão')
-                """,
-                (principal, _hash_password(_ENV_ADMIN_PASS)),
-            )
-            logger.warning("[Users] Admin principal criado: %s", principal)
+            if not _ENV_ADMIN_PASS:
+                logger.warning(
+                    "[Users] DASHBOARD_PASS não definida — não criou usuário patrao. "
+                    "Configure a env na Vercel/.env"
+                )
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO app_users (username, password_hash, role, monthly_quota, active, label)
+                    VALUES (%s, %s, 'admin', 9999, 1, 'Patrão')
+                    """,
+                    (principal, _hash_password(_ENV_ADMIN_PASS)),
+                )
+                logger.warning("[Users] Admin principal criado: %s", principal)
         else:
             # Só garante role/admin do patrao — NÃO sobrescreve label se já customizado
             cur.execute(
@@ -137,34 +198,13 @@ def ensure_schema() -> None:
 
 
 def authenticate(username: str, password: str) -> dict[str, Any] | None:
-    """Valida login. Fallback env só para conta patrao (nunca para username admin)."""
+    """Valida login por hash no banco. Fallback DASHBOARD_PASS só para patrao (env)."""
     username = (username or "").strip()
     password = password or ""
-    if not username:
+    if not username or not password:
         return None
 
     uname_l = username.lower()
-    # Fallback env: apenas se o login for explicitamente "patrao"
-    # (ignora DASHBOARD_USER=admin antigo na Vercel)
-    if uname_l == _PRINCIPAL_USERNAME and password == _ENV_ADMIN_PASS:
-        try:
-            ensure_schema()
-            u = get_user_by_username(_PRINCIPAL_USERNAME)
-            if u:
-                u["role"] = "admin"
-                return u
-        except Exception:
-            pass
-        return {
-            "id": 0,
-            "username": _PRINCIPAL_USERNAME,
-            "role": "admin",
-            "monthly_quota": 9999,
-            "active": 1,
-            "label": "Patrão",
-            "cities": [],
-            "niches": [],
-        }
 
     try:
         ensure_schema()
@@ -172,24 +212,63 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
-            SELECT id, username, role, monthly_quota, active, cities, niches, label
+            SELECT id, username, role, monthly_quota, active, cities, niches, label, password_hash
             FROM app_users
-            WHERE lower(username) = lower(%s) AND password_hash = %s
+            WHERE lower(username) = lower(%s)
             LIMIT 1;
             """,
-            (username, _hash_password(password)),
+            (username,),
         )
         row = cur.fetchone()
         cur.close()
         conn.close()
-        if not row:
-            return None
-        user = dict(row)
-        if not user.get("active"):
-            return None
-        user["cities"] = _parse_json_list(user.get("cities"))
-        user["niches"] = _parse_json_list(user.get("niches"))
-        return user
+
+        if row:
+            user = dict(row)
+            stored = user.pop("password_hash", "") or ""
+            if not user.get("active") and uname_l != _PRINCIPAL_USERNAME:
+                return None
+            if not verify_password(password, stored):
+                # Fallback: patrao ainda com senha só na env (migração)
+                if (
+                    uname_l == _PRINCIPAL_USERNAME
+                    and _ENV_ADMIN_PASS
+                    and password == _ENV_ADMIN_PASS
+                ):
+                    _upgrade_password_hash(int(user["id"]), password)
+                    user["role"] = "admin"
+                    user["cities"] = _parse_json_list(user.get("cities"))
+                    user["niches"] = _parse_json_list(user.get("niches"))
+                    return user
+                return None
+            # migra SHA256 legado → pbkdf2
+            if re.fullmatch(r"[0-9a-f]{64}", (stored or "").strip()) or (
+                stored or ""
+            ).startswith("sha256:"):
+                _upgrade_password_hash(int(user["id"]), password)
+            if uname_l == _PRINCIPAL_USERNAME:
+                user["role"] = "admin"
+            user["cities"] = _parse_json_list(user.get("cities"))
+            user["niches"] = _parse_json_list(user.get("niches"))
+            return user
+
+        # patrao ainda não existe no banco: bootstrap só com env
+        if (
+            uname_l == _PRINCIPAL_USERNAME
+            and _ENV_ADMIN_PASS
+            and password == _ENV_ADMIN_PASS
+        ):
+            return {
+                "id": 0,
+                "username": _PRINCIPAL_USERNAME,
+                "role": "admin",
+                "monthly_quota": 9999,
+                "active": 1,
+                "label": "Patrão",
+                "cities": [],
+                "niches": [],
+            }
+        return None
     except Exception as exc:
         logger.warning("[Users] auth falhou: %s", exc)
         return None

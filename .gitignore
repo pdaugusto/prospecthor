@@ -6,7 +6,13 @@
 .env
 .env.local
 .env.*.local
+.env.txt
+.env.backup
+*.pem
+*.key
 secrets/
+credentials.json
+service-account*.json
 
 # Python
 __pycache__/

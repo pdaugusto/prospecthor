@@ -34,8 +34,9 @@ class Settings:
     REQUEST_DELAY_MAX_S: float = float(os.getenv("REQUEST_DELAY_MAX_S", "3.5"))
 
     # ── Scorer ──────────────────────────────────────────
-    MIN_SCORE_TO_SAVE: int = int(os.getenv("MIN_SCORE_TO_SAVE", "21"))
-    NOTIFY_MIN_SCORE: int = int(os.getenv("NOTIFY_MIN_SCORE", "46"))
+    # Escala 0–100 (oportunidade de venda)
+    MIN_SCORE_TO_SAVE: int = int(os.getenv("MIN_SCORE_TO_SAVE", "35"))
+    NOTIFY_MIN_SCORE: int = int(os.getenv("NOTIFY_MIN_SCORE", "70"))
 
     # ── Dashboard ───────────────────────────────────────
     DASHBOARD_USER: str = os.getenv("DASHBOARD_USER", "admin")

@@ -255,75 +255,160 @@ class LeadScorer:
         lower = website.lower()
         return any(m in lower for m in social_markers)
 
+    # Nichos de ticket alto (mais chance de pagar site / serviço digital)
+    _NICHES_ALTO = {
+        "odontologia", "advocacia", "clinica_medica", "clinica", "estetica",
+        "contabilidade", "imobiliaria", "arquitetura", "fisioterapia", "psicologia",
+    }
+    _NICHES_MEDIO = {
+        "comercio", "restaurante", "pet", "oficina", "academia", "farmacia",
+        "padaria", "otica", "moveis", "informatica", "evento", "seguranca",
+        "limpeza", "eletrica", "construcao", "hotel", "salao_barbearia", "lavanderia",
+        "fotografia", "joalheria", "escola",
+    }
+
+    @staticmethod
+    def _phone_digits(phone: Any) -> str:
+        import re
+        return re.sub(r"\D", "", str(phone or ""))
+
     def calculate_score(self, company: dict[str, Any]) -> dict[str, Any]:
         """
-        Aplica as regras da tabela de pontuação sobre os dados da empresa.
+        Score de OPORTUNIDADE DE VENDA — máximo 100.
 
-        Regra de negócio (foco comercial):
-            ⚡ RAIO  = SEM site próprio  → único tipo listado no dashboard
-            ☁️ TROVÃO / 🔊 ECO = tem site (com ou sem problemas) → não listados
+        Quanto MAIOR o score, MAIOR a chance de fechar (presença digital fraca
+        + negócio com potencial + contato utilizável).
 
-        Args:
-            company: Registro da tabela de empresas com dados enriquecidos.
+        Faixas:
+            75–100  quente  (prioridade alta)
+            50–74   morno   (prioridade média)
+             0–49   frio    (prioridade baixa)
 
-        Returns:
-            Dicionário com o score calculado, classificação, problemas e serviços sugeridos.
+        ⚡ RAIO  = sem site próprio (listado no dashboard)
+        ☁️ TROVÃO / 🔊 ECO = tem site (não é o foco principal)
         """
         score = 0
-        problems = []
-        services = []
+        problems: list[str] = []
+        services: list[str] = []
         no_website = self._has_no_website(company)
-
-        # ── 1. Critérios de Site ──────────────────────────────────────────
         web_flags = (company.get("website_flags") or "").split(",")
 
+        # ── 1. Presença digital (núcleo da oportunidade) ─────────────────
         if no_website:
-            # Lead Raio: sem site é o critério principal de oportunidade
-            score += 55
-            problems.append("Sem site (+55)")
+            score += 40
+            problems.append("Sem site próprio (+40) — principal gatilho de venda")
             services.append("Site profissional")
+            services.append("Google Meu Negócio + presença local")
         else:
-            # Tem site: pontua problemas de qualidade (nunca vira Raio)
+            # tem site: oportunidade menor, mas problemas técnicos ainda vendem
             if "sem_https" in web_flags or company.get("website_https") == 0:
-                score += 15
-                problems.append("Site sem HTTPS (+15)")
+                score += 12
+                problems.append("Site sem HTTPS (+12)")
                 services.append("Certificado SSL")
-
             speed = company.get("website_speed_s")
-            if speed is not None and speed > 5.0:
-                score += 15
-                problems.append(f"Site lento ({speed:.1f}s) (+15)")
-                services.append("Otimização de velocidade")
-
+            try:
+                if speed is not None and float(speed) > 5.0:
+                    score += 10
+                    problems.append(f"Site lento ({float(speed):.1f}s) (+10)")
+                    services.append("Otimização de velocidade")
+            except (TypeError, ValueError):
+                pass
             if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
-                score += 15
-                problems.append("Site não mobile-friendly (+15)")
+                score += 12
+                problems.append("Site não mobile-friendly (+12)")
                 services.append("Design responsivo")
 
-        # ── 2. Critérios de Instagram ─────────────────────────────────────
+        # ── 2. Contato (sem telefone = quase não vende) ───────────────────
+        digits = self._phone_digits(company.get("phone"))
+        if len(digits) >= 12 or (len(digits) >= 11 and digits.startswith("55")):
+            # celular BR típico
+            score += 20
+            problems.append("Telefone celular / WhatsApp (+20)")
+            services.append("Abordagem por WhatsApp")
+        elif len(digits) >= 10:
+            score += 12
+            problems.append("Telefone fixo utilizável (+12)")
+            services.append("Ligação comercial")
+        else:
+            problems.append("Sem telefone útil (+0) — baixa chance de fechar")
+            # penaliza oportunidade (cap implícito: sem contato não sobe)
+
+        # ── 3. Prova social no Maps (negócio real + vitrine fraca) ───────
+        try:
+            rating = float(company.get("rating") or 0)
+        except (TypeError, ValueError):
+            rating = 0.0
+        try:
+            reviews = int(company.get("review_count") or 0)
+        except (TypeError, ValueError):
+            reviews = 0
+
+        if no_website and rating >= 4.5 and reviews >= 3:
+            score += 15
+            problems.append(f"Nota alta ({rating:.1f}) sem site (+15) — negócio bom, digital fraco")
+        elif no_website and rating >= 4.0:
+            score += 10
+            problems.append(f"Boa reputação Maps ({rating:.1f}) (+10)")
+        elif rating >= 3.5:
+            score += 5
+            problems.append(f"Reputação ok ({rating:.1f}) (+5)")
+
+        if 3 <= reviews <= 40 and no_website:
+            score += 5
+            problems.append(f"Volume de avaliações saudável ({reviews}) (+5)")
+        elif reviews > 100 and no_website:
+            score += 2
+            problems.append(f"Muitas avaliações ({reviews}) (+2)")
+
+        # ── 4. Ticket / nicho (quem paga mais por site) ───────────────────
+        niche = (company.get("niche") or "").strip().lower()
+        if niche in self._NICHES_ALTO:
+            score += 12
+            problems.append(f"Nicho alto ticket ({niche}) (+12)")
+            services.append("Site + agenda / captura de leads")
+        elif niche in self._NICHES_MEDIO:
+            score += 8
+            problems.append(f"Nicho médio ({niche}) (+8)")
+            services.append("Site institucional + WhatsApp")
+        elif niche:
+            score += 5
+            problems.append(f"Nicho local ({niche}) (+5)")
+        else:
+            score += 3
+
+        # ── 5. Instagram sem site (presença social solta) ─────────────────
         has_ig = (
             company.get("instagram_status") == "tem_instagram"
             or bool(company.get("instagram_url"))
             or bool(company.get("instagram_username"))
         )
-        if has_ig and company.get("instagram_has_link") == 0:
-            score += 15
-            problems.append("Tem Instagram mas sem link na bio (+15)")
-            services.append("Conectar Instagram ao site")
+        if no_website and has_ig:
+            score += 8
+            problems.append("Só Instagram / social (+8) — falta casa própria na web")
+            services.append("Site + link na bio")
+            if company.get("instagram_has_link") == 0:
+                score += 3
+                problems.append("Instagram sem link na bio (+3)")
 
-        # ── 3. Classificação ──────────────────────────────────────────────
-        # Raio = exclusivamente empresas sem site próprio
+        # ── 6. Cap 0–100 ─────────────────────────────────────────────────
+        score = max(0, min(100, int(score)))
+
+        # ── 7. Classificação ─────────────────────────────────────────────
         if no_website:
             lead_class = "raio"
-            priority = "alta"
-        elif score >= 30:
+        elif score >= 45:
             lead_class = "trovao"
-            priority = "media"
         else:
             lead_class = "eco"
-            priority = "baixa"
 
-        dedup_services = []
+        if score >= 75:
+            priority = "alta"   # quente
+        elif score >= 50:
+            priority = "media"  # morno
+        else:
+            priority = "baixa"  # frio
+
+        dedup_services: list[str] = []
         for s in services:
             if s not in dedup_services:
                 dedup_services.append(s)
@@ -372,18 +457,48 @@ class LeadScorer:
                 logger.debug(f"[LeadScorer] assign: {exc}")
         return result
 
-    def score_all(self) -> list[dict[str, Any]]:
+    def score_all(self, force: bool = False) -> list[dict[str, Any]]:
         """
-        Pontua todas as empresas ainda sem score no banco.
+        Pontua empresas no banco.
 
-        Útil se o bot parou no meio: roda só o score sem rebuscar no Maps.
+        force=False → só quem ainda não tem scored_at
+        force=True  → reprocessa todos os sem site / raio (nova escala 0–100)
         """
-        companies = self.db.get_collected_companies()
+        if force:
+            conn = self.db._connect()
+            try:
+                cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute(
+                    """
+                    SELECT * FROM companies
+                    WHERE (business_status IS NULL OR business_status != 'CLOSED_PERMANENTLY')
+                      AND (
+                          website_status IN ('sem_site', 'so_social')
+                          OR website IS NULL
+                          OR TRIM(COALESCE(website, '')) = ''
+                          OR lead_class = 'raio'
+                          OR website ILIKE '%%instagram.com%%'
+                          OR website ILIKE '%%facebook.com%%'
+                          OR website ILIKE '%%linktr.ee%%'
+                      )
+                    ORDER BY id;
+                    """
+                )
+                companies = [dict(r) for r in cur.fetchall()]
+                cur.close()
+            finally:
+                conn.close()
+        else:
+            companies = self.db.get_collected_companies()
+
         if not companies:
-            logger.info("[LeadScorer] Nenhuma empresa pendente de score.")
+            logger.info("[LeadScorer] Nenhuma empresa para pontuar.")
             return []
 
-        logger.info(f"[LeadScorer] Qualificando {len(companies)} empresas sem score...")
+        logger.info(
+            f"[LeadScorer] Qualificando {len(companies)} empresas "
+            f"({'re-score 0-100' if force else 'pendentes'})..."
+        )
 
         scored_leads = []
         raio_count = 0
@@ -405,7 +520,7 @@ class LeadScorer:
 
         logger.info(
             f"[LeadScorer] {len(scored_leads)} pontuadas | "
-            f"{raio_count} Raio (sem site) no dashboard."
+            f"{raio_count} Raio (sem site) | escala 0–100."
         )
         return scored_leads
 
@@ -440,7 +555,7 @@ class LeadScorer:
 
             # Desenha o card do Lead
             print("┌" + "─" * 56 + "┐")
-            print(f"│ {title_tag:<22} — Score: {score:<4}/150              │")
+            print(f"│ {title_tag:<22} — Score: {score:<4}/100              │")
             print("│" + " " * 56 + "│")
             print(f"│ 🏪 {name[:50]:<52} │")
             print(f"│ 📍 {address[:50]:<52} │")

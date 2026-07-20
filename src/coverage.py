@@ -187,4 +187,54 @@ def list_pending_jobs(
             j["area"],
         )
     )
-    return jobs
+    # Revezamento entre nichos (1 de cada, em ciclo) — evita encher um nicho e só depois o outro
+    return interleave_jobs_by_niche(jobs)
+
+
+def interleave_jobs_by_niche(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Round-robin por nicho: n1, n2, n3, n1, n2, ...
+    Assim o robô não varre vários bairros do mesmo nicho em sequência.
+    """
+    if not jobs:
+        return []
+    from collections import defaultdict, deque
+
+    buckets: dict[str, deque] = defaultdict(deque)
+    order: list[str] = []
+    for j in jobs:
+        nid = j.get("niche") or ""
+        if nid not in buckets:
+            order.append(nid)
+        buckets[nid].append(j)
+
+    if len(order) <= 1:
+        return list(jobs)
+
+    out: list[dict[str, Any]] = []
+    while any(buckets[n] for n in order):
+        for nid in order:
+            if buckets[nid]:
+                out.append(buckets[nid].popleft())
+    return out
+
+
+def niche_quotas(target_leads: int, niche_ids: list[str]) -> dict[str, int]:
+    """
+    Divide a meta total entre os nichos o mais igual possível.
+    Ex.: 20 leads e 3 nichos → 7, 7, 6.
+    """
+    ids = [n for n in niche_ids if n]
+    # unique preserve order
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for n in ids:
+        if n not in seen:
+            seen.add(n)
+            uniq.append(n)
+    if not uniq or target_leads <= 0:
+        return {n: 0 for n in uniq}
+    n = len(uniq)
+    base = target_leads // n
+    rem = target_leads % n
+    return {nid: base + (1 if i < rem else 0) for i, nid in enumerate(uniq)}

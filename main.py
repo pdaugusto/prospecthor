@@ -163,7 +163,11 @@ def run_now(
         except Exception as exc:
             logger.warning(f"Plano do painel indisponível, usando JSON puro: {exc}")
 
+        from src.coverage import interleave_jobs_by_niche, niche_quotas
+
         jobs = list_pending_jobs(cities_data, niches_data)
+        # list_pending_jobs já intercala nichos; reforça se vier de outro caminho
+        jobs = interleave_jobs_by_niche(jobs)
         if limit_jobs and limit_jobs > 0:
             jobs = jobs[:limit_jobs]
 
@@ -173,11 +177,26 @@ def run_now(
             add_log("Fila vazia — nada a processar")
             return
 
+        niche_order = []
+        _seen_n = set()
+        for j in jobs:
+            nid = j.get("niche") or ""
+            if nid and nid not in _seen_n:
+                _seen_n.add(nid)
+                niche_order.append(nid)
+        quotas = niche_quotas(target_leads, niche_order) if target_leads else {}
+        per_niche_found: dict[str, int] = {n: 0 for n in niche_order}
+
         from src.scheduler import LeadGenerationPipeline
         pipeline = LeadGenerationPipeline()
 
+        if quotas:
+            qtxt = ", ".join(f"{k}={v}" for k, v in quotas.items())
+            logger.info(f"Cota por nicho (meta {target_leads} dividida): {qtxt}")
+            add_log(f"Revezamento de nichos | cotas: {qtxt}")
+
         logger.info(
-            f"Fila: {len(jobs)} jobs (bairro×nicho) | "
+            f"Fila: {len(jobs)} jobs (bairro×nicho, round-robin) | "
             f"1º: {jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']} | "
             f"meta_leads={target_leads or '∞'} | Instagram off por padrão"
         )
@@ -186,7 +205,10 @@ def run_now(
             last_job=f"{jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']}",
             session_leads=0,
         )
-        add_log(f"Sessão iniciada: {len(jobs)} jobs na fila | meta {target_leads or '∞'} leads")
+        add_log(
+            f"Sessão iniciada: {len(jobs)} jobs | meta {target_leads or '∞'} leads | "
+            f"nicho(s) revezando: {','.join(niche_order) or '—'}"
+        )
 
         ran = 0
         total_leads = 0
@@ -206,7 +228,22 @@ def run_now(
                 c_state = job["state"]
                 area = job["area"]
                 q_term = job["query_term"]
-                max_r = job.get("max_results", 12)
+                max_r = int(job.get("max_results", 12) or 12)
+
+                # Cota do nicho já cheia → pula (vai pro próximo nicho no round-robin)
+                if quotas:
+                    q_lim = int(quotas.get(n_id, 0) or 0)
+                    got = int(per_niche_found.get(n_id, 0) or 0)
+                    if q_lim <= 0 or got >= q_lim:
+                        logger.info(
+                            f"[{idx}/{len(jobs)}] ⏭ cota do nicho {n_id} cheia "
+                            f"({got}/{q_lim})"
+                        )
+                        continue
+                    # não pede mais leads do que falta pra esse nicho (e pra meta total)
+                    remain_niche = q_lim - got
+                    remain_total = max(0, target_leads - total_leads) if target_leads else remain_niche
+                    max_r = max(1, min(max_r, remain_niche, remain_total))
 
                 if is_done(n_id, c_name, c_state, area):
                     logger.info(f"[{idx}/{len(jobs)}] ⏭ já coberto: {c_name}/{area}/{n_id}")
@@ -218,6 +255,10 @@ def run_now(
                         f"[{idx}/{len(jobs)}] ▶ {n_id} | {c_name}-{c_state} | "
                         f"bairro={area} | meta={max_r} | leads_sessão={total_leads}"
                         + (f"/{target_leads}" if target_leads else "")
+                        + (
+                            f" | nicho {per_niche_found.get(n_id, 0)}/{quotas.get(n_id, '∞')}"
+                            if quotas else ""
+                        )
                     )
                     set_status("rodando", last_job=job_label, session_leads=total_leads)
                     add_log(f"[{idx}/{len(jobs)}] {job_label}")
@@ -233,10 +274,18 @@ def run_now(
                     mark_done(n_id, c_name, c_state, area, leads_found=found)
                     ran += 1
                     total_leads += found
+                    per_niche_found[n_id] = int(per_niche_found.get(n_id, 0) or 0) + int(found or 0)
                     if found:
                         increment_session_leads(found)
-                        add_log(f"+{found} leads em {job_label} (sessão {total_leads}"
-                                + (f"/{target_leads}" if target_leads else "") + ")")
+                        add_log(
+                            f"+{found} leads em {job_label} (sessão {total_leads}"
+                            + (f"/{target_leads}" if target_leads else "")
+                            + (
+                                f" | {n_id} {per_niche_found.get(n_id, 0)}/{quotas.get(n_id, '?')}"
+                                if quotas else ""
+                            )
+                            + ")"
+                        )
                 except Exception as exc:
                     logger.error(
                         f"Falha {n_id} | {c_name}/{area}: {exc} "

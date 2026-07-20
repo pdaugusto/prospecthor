@@ -157,10 +157,10 @@
     {
       "id": "salao_barbearia",
       "label": "Barbearia",
-      "query_term": "barbearia barbeiro",
+      "query_term": "barbearia barbeiro salão masculino",
       "check_menu": false,
-      "priority_multiplier": 1.2,
-      "description": "Barbearias locais"
+      "priority_multiplier": 1.25,
+      "description": "Barbearias e salões masculinos — forte demanda local por site e agenda"
     },
     {
       "id": "lavanderia",

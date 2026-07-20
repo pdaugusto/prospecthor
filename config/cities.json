@@ -324,6 +324,19 @@
       "ja_varridos": {
         "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
       }
+    },
+    {
+      "id": "aracaju_se",
+      "nome": "Aracaju",
+      "estado": "SE",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro", "Atalaia", "Jardins", "Farolândia", "Grageru",
+        "São Conrado", "Coroa do Meio", "13 de Julho", "Siqueira Campos", "Inácio Barbosa"
+      ]
     }
   ]
 }

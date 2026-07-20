@@ -109,18 +109,37 @@ def python_exe() -> str:
 
 def is_bot_process_alive() -> bool:
     global _proc
-    if _proc is not None and _proc.poll() is None:
-        return True
+    if _proc is not None:
+        if _proc.poll() is None:
+            return True
+        _proc = None
     st = load_state()
     pid = st.get("pid")
     if not pid:
         return False
+    alive = False
     try:
-        # Windows: signal 0 doesn't work the same; use tasklist-ish via os.kill
-        os.kill(int(pid), 0)
-        return True
+        if sys.platform == "win32":
+            # tasklist filtra pelo PID
+            r = subprocess.run(
+                ["tasklist", "/FI", f"PID eq {int(pid)}", "/NH"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            out = (r.stdout or "") + (r.stderr or "")
+            alive = str(pid) in out and "INFO:" not in out.upper()
+        else:
+            os.kill(int(pid), 0)
+            alive = True
     except Exception:
-        return False
+        alive = False
+    if not alive:
+        st["pid"] = None
+        if st.get("status") == "rodando" and not (_worker and _worker.is_alive()):
+            st["status"] = "parado"
+        save_state(st)
+    return alive
 
 
 @app.get("/")
@@ -355,17 +374,33 @@ def api_run():
     global _worker
     with _lock:
         if _worker and _worker.is_alive():
-            return jsonify({"error": "Já tem fila rodando no cockpit."}), 409
+            return jsonify(
+                {
+                    "error": "Já tem fila rodando no cockpit. Espere terminar ou clique em Parar.",
+                    "code": "queue_running",
+                }
+            ), 409
         if is_bot_process_alive():
             return jsonify(
                 {
-                    "error": "Já existe processo de bot ativo. Pare antes ou espere terminar "
-                    "(se rodou pelo CMD, use Parar ou finalize o CMD)."
+                    "error": "Já existe bot ativo (talvez no CMD antigo). Clique em ■ Parar e tente de novo. "
+                    "Se ainda falhar, feche o CMD do `python main.py run`.",
+                    "code": "bot_alive",
                 }
             ), 409
         pending = [m for m in load_missions() if m.get("status") == "pendente"]
         if not pending:
-            return jsonify({"error": "Fila vazia. Adicione uma missão."}), 400
+            # se tem missão "parada"/"erro", oferece dica
+            all_m = load_missions()
+            if all_m and not any(m.get("status") == "pendente" for m in all_m):
+                return jsonify(
+                    {
+                        "error": "Nenhuma missão PENDENTE na fila. "
+                        "Adicione de novo ou as que tem já estão ok/parada/erro.",
+                        "code": "no_pending",
+                    }
+                ), 400
+            return jsonify({"error": "Fila vazia. Adicione uma missão.", "code": "empty"}), 400
         _stop_flag.clear()
         st = load_state()
         st["status"] = "rodando"

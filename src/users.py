@@ -736,6 +736,48 @@ def assign_raio_lead(company_id: int) -> int | None:
             conn.close()
             return None
 
+        # Cockpit / missão: força dono (se setado e ainda tem cota)
+        force_raw = (os.getenv("PROSPECTHOR_FORCE_ASSIGN_TO") or "").strip()
+        if force_raw.isdigit():
+            force_uid = int(force_raw)
+            cur.execute(
+                """
+                SELECT id, username, monthly_quota, active, role
+                FROM app_users WHERE id = %s LIMIT 1;
+                """,
+                (force_uid,),
+            )
+            fu = cur.fetchone()
+            if fu:
+                fu = dict(fu)
+                used = count_assigned_this_month(force_uid)
+                quota = int(fu.get("monthly_quota") or 0)
+                # Missão do cockpit: dono escolhido na mão (active só afeta round-robin normal)
+                if used < quota or quota <= 0:
+                    # quota 0 = não força (sem vaga)
+                    if quota > 0 and used < quota:
+                        cur.execute(
+                            """
+                            UPDATE companies SET assigned_to = %s, assigned_at = %s
+                            WHERE id = %s AND (assigned_to IS NULL);
+                            """,
+                            (force_uid, datetime.now().isoformat(), company_id),
+                        )
+                        conn.commit()
+                        cur.close()
+                        conn.close()
+                        logger.info(
+                            "[Users] Lead %s → missão/cockpit user_id=%s (%s)",
+                            company_id,
+                            force_uid,
+                            fu.get("username"),
+                        )
+                        return force_uid
+                logger.warning(
+                    "[Users] FORCE_ASSIGN %s sem vaga na cota — cai no round-robin",
+                    force_uid,
+                )
+
         # Só clientes ativos (ex.: amigo "admin") — nunca o patrao
         cur.execute(
             """

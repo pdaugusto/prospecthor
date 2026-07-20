@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ProspecTHOR — Cockpit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070b; --card: #0a0e17; --border: #1a2233; --text: #e8eef7;
+      --muted: #8b9bb4; --neon: #00d4ff; --ok: #22c55e; --warn: #f59e0b; --danger: #ff4d6a;
+      --font: Inter, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      background-image: radial-gradient(ellipse 60% 40% at 10% 0%, rgba(0,212,255,.12), transparent 55%);
+      padding: 20px;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    h1 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+    h1 span { color: var(--neon); }
+    .pill {
+      font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+    .pill.on { color: var(--ok); border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.1); }
+    .pill.run { color: var(--neon); border-color: rgba(0,212,255,.35); background: rgba(0,212,255,.1); }
+    .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: linear-gradient(165deg, rgba(14,20,32,.95), rgba(10,14,23,.98));
+      border: 1px solid var(--border); border-radius: 14px; padding: 16px 16px 14px;
+    }
+    .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
+    label.f { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+    select, input[type=number], input[type=text] {
+      width: 100%; background: #070b12; border: 1px solid var(--border); color: var(--text);
+      border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
+    }
+    select:focus, input:focus { border-color: var(--neon); }
+    .checks {
+      max-height: 160px; overflow: auto; border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px; background: #070b12;
+    }
+    .checks label {
+      display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 4px 2px; cursor: pointer;
+    }
+    .checks input { accent-color: var(--neon); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    button {
+      border: 1px solid var(--border); background: var(--card); color: var(--text);
+      border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    button:hover { border-color: var(--neon); color: var(--neon); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-run {
+      background: linear-gradient(135deg, #00d4ff, #0090c4); color: #031018; border: none;
+      box-shadow: 0 0 18px rgba(0,212,255,.25);
+    }
+    .btn-run:hover { color: #031018; filter: brightness(1.06); }
+    .btn-stop { border-color: var(--danger); color: var(--danger); }
+    .btn-score { border-color: var(--warn); color: var(--warn); }
+    .btn-add { border-color: var(--neon); color: var(--neon); width: 100%; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; color: var(--muted); font-size: 10px; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+    td { padding: 8px 4px; border-bottom: 1px solid rgba(26,34,51,.8); vertical-align: top; }
+    .st { font-weight: 700; font-size: 11px; text-transform: uppercase; }
+    .st.pendente { color: var(--muted); }
+    .st.rodando { color: var(--neon); }
+    .st.ok { color: var(--ok); }
+    .st.erro, .st.parada { color: var(--danger); }
+    .log {
+      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.45;
+      max-height: 220px; overflow: auto; color: var(--muted); background: #070b12;
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+    }
+    .log .e { color: var(--danger); }
+    .log .w { color: var(--warn); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+    .msg { font-size: 13px; color: var(--neon); margin-bottom: 8px; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Prospec<span>THOR</span> · Cockpit</h1>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="pill" id="pill-status">—</span>
+        <span class="pill" id="pill-bot">bot: —</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Nova missão</h2>
+        <label class="f">Quem recebe os leads</label>
+        <select id="user_id">
+          <option value="">Livre (sem dono forçado)</option>
+        </select>
+
+        <label class="f">Meta de leads</label>
+        <input type="number" id="target" min="1" value="20" />
+
+        <label class="f">Nome da missão (opcional)</label>
+        <input type="text" id="label" placeholder="Ex: Ranso · barbearia Aracaju" />
+
+        <label class="f">Nichos</label>
+        <div class="checks" id="niches"></div>
+
+        <label class="f">Cidades</label>
+        <div class="checks" id="cities"></div>
+
+        <button type="button" class="btn-add" onclick="addMission()">+ Adicionar na fila</button>
+        <p class="hint">Várias missões = o bot faz uma atrás da outra. Nichos revezam e a meta divide entre eles.</p>
+      </section>
+
+      <section class="card">
+        <h2>Controles</h2>
+        <p class="msg" id="msg">—</p>
+        <div class="row">
+          <button type="button" class="btn-run" id="btn-run" onclick="runQueue()">▶ Rodar fila</button>
+          <button type="button" class="btn-stop" onclick="stopBot()">■ Parar</button>
+          <button type="button" class="btn-score" onclick="runScore(false)">⚡ Só score</button>
+          <button type="button" class="btn-score" onclick="runScore(true)">⚡ Score force</button>
+        </div>
+        <p class="hint">
+          <b>Só score</b> = pontua o que faltou (ex.: depois de Ctrl+C).<br />
+          <b>Score force</b> = recalcula raios (mais lento).
+        </p>
+
+        <h2 style="margin-top:18px;">Fila</h2>
+        <div class="row" style="margin-top:0;margin-bottom:8px;">
+          <button type="button" onclick="clearDone()">Limpar ok/erro</button>
+          <button type="button" onclick="refresh()">Atualizar</button>
+        </div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Missão</th>
+                <th>Dono</th>
+                <th>Meta</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <h2 style="margin-top:16px;">Log</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    let catalog = { cities: [], niches: [] };
+    let users = [];
+
+    async function jfetch(url, opts) {
+      const res = await fetch(url, {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      return data;
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function loadCatalog() {
+      const data = await jfetch('/api/catalog');
+      catalog = data.catalog || { cities: [], niches: [] };
+      users = data.users || [];
+      const sel = document.getElementById('user_id');
+      sel.innerHTML = '<option value="">Livre (sem dono forçado)</option>' +
+        users.map(u => `<option value="${u.id}">${esc(u.label || u.username)} (@${esc(u.username)}) · cota ${u.used||0}/${u.quota||0}</option>`).join('');
+
+      const sortPt = (a,b) => String(a).localeCompare(String(b), 'pt-BR', {sensitivity:'base'});
+      const niches = [...(catalog.niches||[])].sort((a,b)=>sortPt(a.label||a.id, b.label||b.id));
+      const cities = [...(catalog.cities||[])].sort((a,b)=>sortPt(a.nome||a.id, b.nome||b.id));
+
+      document.getElementById('niches').innerHTML = niches.map(n =>
+        `<label><input type="checkbox" class="niche" value="${esc(n.id)}"> ${esc(n.label||n.id)}</label>`
+      ).join('') || '<span style="color:var(--muted)">Sem nichos</span>';
+
+      document.getElementById('cities').innerHTML = cities.map(c =>
+        `<label><input type="checkbox" class="city" value="${esc(c.id)}"> ${esc(c.nome||c.id)}${c.estado ? ' / '+esc(c.estado) : ''}</label>`
+      ).join('') || '<span style="color:var(--muted)">Sem cidades</span>';
+    }
+
+    function checked(cls) {
+      return [...document.querySelectorAll('.' + cls + ':checked')].map(el => el.value);
+    }
+
+    async function addMission() {
+      const userSel = document.getElementById('user_id');
+      const opt = userSel.selectedOptions[0];
+      const body = {
+        user_id: userSel.value || null,
+        username: opt && userSel.value ? (opt.textContent.split('(@')[0]||'').trim() : '',
+        niche_ids: checked('niche'),
+        city_ids: checked('city'),
+        target_leads: parseInt(document.getElementById('target').value || '20', 10),
+        label: document.getElementById('label').value || '',
+      };
+      try {
+        await jfetch('/api/missions', { method: 'POST', body: JSON.stringify(body) });
+        document.getElementById('label').value = '';
+        await refresh();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function delMission(id) {
+      if (!confirm('Remover missão ' + id + '?')) return;
+      await jfetch('/api/missions/' + id, { method: 'DELETE' });
+      await refresh();
+    }
+
+    async function clearDone() {
+      await jfetch('/api/missions/clear-done', { method: 'POST', body: '{}' });
+      await refresh();
+    }
+
+    async function runQueue() {
+      const btn = document.getElementById('btn-run');
+      btn.disabled = true;
+      try {
+        await jfetch('/api/run', { method: 'POST', body: '{}' });
+      } catch (e) {
+        alert(e.message);
+      }
+      btn.disabled = false;
+      await refresh();
+    }
+
+    async function stopBot() {
+      try {
+        await jfetch('/api/stop', { method: 'POST', body: '{}' });
+      } catch (e) {
+        alert(e.message);
+      }
+      await refresh();
+    }
+
+    async function runScore(force) {
+      try {
+        const data = await jfetch('/api/score', {
+          method: 'POST',
+          body: JSON.stringify({ force: !!force }),
+        });
+        alert(data.message || 'Score iniciado');
+      } catch (e) {
+        alert(e.message);
+      }
+      await refresh();
+    }
+
+    function renderMissions(missions) {
+      const tb = document.getElementById('tbody');
+      if (!missions || !missions.length) {
+        tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Fila vazia</td></tr>';
+        return;
+      }
+      tb.innerHTML = missions.map(m => `
+        <tr>
+          <td><b>${esc(m.label || m.id)}</b><br><span style="color:var(--muted);font-size:11px">${esc((m.niche_ids||[]).join(', '))}<br>${esc((m.city_ids||[]).slice(0,3).join(', '))}${(m.city_ids||[]).length>3?'…':''}</span></td>
+          <td>${esc(m.username || 'livre')}</td>
+          <td>${esc(m.target_leads)}</td>
+          <td><span class="st ${esc(m.status)}">${esc(m.status)}</span></td>
+          <td>${m.status === 'pendente' ? `<button type="button" onclick="delMission('${esc(m.id)}')">✕</button>` : ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderLog(lines) {
+      const el = document.getElementById('log');
+      const arr = [...(lines || [])].reverse();
+      el.innerHTML = arr.map(l => {
+        const cls = l.level === 'ERROR' ? 'e' : (l.level === 'WARN' ? 'w' : '');
+        return `<div class="${cls}">[${esc((l.t||'').slice(11,19))}] ${esc(l.msg)}</div>`;
+      }).join('') || '<div>Sem logs ainda</div>';
+    }
+
+    async function refresh() {
+      try {
+        const data = await jfetch('/api/status');
+        const st = data.state || {};
+        const bot = data.bot || {};
+        document.getElementById('msg').textContent = st.message || '—';
+        const pill = document.getElementById('pill-status');
+        pill.textContent = 'cockpit: ' + (st.status || '—');
+        pill.className = 'pill' + (st.status === 'rodando' ? ' run' : (st.status === 'parado' ? '' : ''));
+        if (st.status === 'rodando') pill.classList.add('run');
+
+        const pb = document.getElementById('pill-bot');
+        const bs = bot.status || '—';
+        pb.textContent = 'bot: ' + bs + (bot.session_leads_count != null ? ' · ' + bot.session_leads_count + ' leads' : '');
+        pb.className = 'pill' + (bs === 'rodando' ? ' run' : (bs === 'parado' ? ' on' : ''));
+
+        renderMissions(data.missions || []);
+        renderLog(st.log || []);
+      } catch (e) {
+        document.getElementById('msg').textContent = 'Erro: ' + e.message;
+      }
+    }
+
+    loadCatalog().then(refresh);
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>

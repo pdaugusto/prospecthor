@@ -2139,14 +2139,22 @@
                 document.getElementById('bot-plan-target').value = plan.target_leads != null ? plan.target_leads : 20;
                 document.getElementById('bot-plan-notes').value = plan.notes || '';
 
-                nichesBox.innerHTML = (botPlanCatalog.niches || []).map(n => `
+                const sortPt = (a, b) => String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base' });
+                const nichesSorted = [...(botPlanCatalog.niches || [])].sort((a, b) =>
+                    sortPt(a.label || a.id, b.label || b.id)
+                );
+                const citiesSorted = [...(botPlanCatalog.cities || [])].sort((a, b) =>
+                    sortPt(a.nome || a.id, b.nome || b.id) || sortPt(a.estado, b.estado)
+                );
+
+                nichesBox.innerHTML = nichesSorted.map(n => `
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
                         <input type="checkbox" class="bot-plan-niche" value="${esc(n.id)}" ${selectedNiches.has(n.id) ? 'checked' : ''}>
                         <span>${esc(n.label || n.id)}</span>
                     </label>
                 `).join('') || '<span style="color:var(--muted);font-size:12px;">Nenhum nicho no catálogo.</span>';
 
-                citiesBox.innerHTML = (botPlanCatalog.cities || []).map(c => {
+                citiesBox.innerHTML = citiesSorted.map(c => {
                     const id = c.id || '';
                     const label = `${c.nome || id}${c.estado ? ' / ' + c.estado : ''}`;
                     const checked = selectedCities.has(id) ? 'checked' : '';

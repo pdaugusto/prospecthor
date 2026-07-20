@@ -117,6 +117,14 @@ def load_catalog() -> dict[str, Any]:
     except Exception as exc:
         logger.warning("[bot_plan] niches.json: %s", exc)
 
+    # Painel: ordem alfabética (cidades por nome+UF, nichos por label)
+    def _sort_key(s: str) -> str:
+        import unicodedata
+        t = (s or "").strip().lower()
+        return unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode("ascii")
+
+    cities.sort(key=lambda c: (_sort_key(c.get("nome") or ""), _sort_key(c.get("estado") or "")))
+    niches.sort(key=lambda n: _sort_key(n.get("label") or n.get("id") or ""))
     return {"cities": cities, "niches": niches}
 
 

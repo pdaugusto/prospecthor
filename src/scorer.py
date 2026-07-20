@@ -264,7 +264,7 @@ class LeadScorer:
         "comercio", "restaurante", "pet", "oficina", "academia", "farmacia",
         "padaria", "otica", "moveis", "informatica", "evento", "seguranca",
         "limpeza", "eletrica", "construcao", "hotel", "salao_barbearia", "lavanderia",
-        "fotografia", "joalheria", "escola",
+        "fotografia", "joalheria", "escola", "acaiteria",
     }
 
     @staticmethod

@@ -3,20 +3,20 @@
   "_instrucoes": "query_term é o texto buscado no Google Maps. id é salvo no banco (niche). Marque no painel (Status do Robô) quais usar.",
   "nichos": [
     {
-      "id": "comercio",
-      "label": "Comércio",
-      "query_term": "loja comércio varejo",
+      "id": "academia",
+      "label": "Academia / Fitness",
+      "query_term": "academia de ginástica personal trainer",
       "check_menu": false,
-      "priority_multiplier": 1.3,
-      "description": "Lojas e comércio local — nicho do Fafa; forte demanda por presença digital"
+      "priority_multiplier": 1.25,
+      "description": "Academias, studios e personal"
     },
     {
-      "id": "odontologia",
-      "label": "Odontologia",
-      "query_term": "dentista clínica odontológica",
-      "check_menu": false,
-      "priority_multiplier": 1.5,
-      "description": "Consultórios e clínicas odontológicas — alto ticket para site e agenda online"
+      "id": "acaiteria",
+      "label": "Açaiteria",
+      "query_term": "açaí açaiteria açaíteria sorveteria de açaí",
+      "check_menu": true,
+      "priority_multiplier": 1.2,
+      "description": "Açaiterias e pontos de açaí — forte presença local e demanda por delivery/site"
     },
     {
       "id": "advocacia",
@@ -27,76 +27,36 @@
       "description": "Escritórios de advocacia — site profissional e presença local"
     },
     {
-      "id": "restaurante",
-      "label": "Restaurante / Food",
-      "query_term": "restaurante lanchonete delivery",
-      "check_menu": true,
-      "priority_multiplier": 1.2,
-      "description": "Restaurantes, lanchonetes e food service local"
-    },
-    {
-      "id": "estetica",
-      "label": "Estética / Beleza",
-      "query_term": "clínica de estética salão de beleza",
-      "check_menu": false,
-      "priority_multiplier": 1.35,
-      "description": "Salões, clínicas de estética e beleza"
-    },
-    {
-      "id": "academia",
-      "label": "Academia / Fitness",
-      "query_term": "academia de ginástica personal trainer",
-      "check_menu": false,
-      "priority_multiplier": 1.25,
-      "description": "Academias, studios e personal"
-    },
-    {
-      "id": "pet",
-      "label": "Pet / Veterinário",
-      "query_term": "pet shop clínica veterinária",
+      "id": "arquitetura",
+      "label": "Arquitetura / Design",
+      "query_term": "escritório de arquitetura design de interiores",
       "check_menu": false,
       "priority_multiplier": 1.3,
-      "description": "Pet shops e clínicas veterinárias"
+      "description": "Arquitetos e design de interiores"
     },
     {
-      "id": "imobiliaria",
-      "label": "Imobiliária",
-      "query_term": "imobiliária corretor de imóveis",
-      "check_menu": false,
-      "priority_multiplier": 1.35,
-      "description": "Imobiliárias e corretores locais"
-    },
-    {
-      "id": "oficina",
-      "label": "Oficina / Auto",
-      "query_term": "oficina mecânica auto center",
+      "id": "salao_barbearia",
+      "label": "Barbearia",
+      "query_term": "barbearia barbeiro salão masculino",
       "check_menu": false,
       "priority_multiplier": 1.25,
-      "description": "Oficinas, auto centers e serviços automotivos"
+      "description": "Barbearias e salões masculinos — forte demanda local por site e agenda"
     },
     {
-      "id": "contabilidade",
-      "label": "Contabilidade",
-      "query_term": "escritório de contabilidade contador",
+      "id": "clinica_medica",
+      "label": "Clínica",
+      "query_term": "clínica médica consultório médico clínica",
       "check_menu": false,
-      "priority_multiplier": 1.4,
-      "description": "Contadores e escritórios contábeis"
+      "priority_multiplier": 1.45,
+      "description": "Clínicas e consultórios médicos"
     },
     {
-      "id": "farmacia",
-      "label": "Farmácia",
-      "query_term": "farmácia drogaria",
+      "id": "comercio",
+      "label": "Comércio",
+      "query_term": "loja comércio varejo",
       "check_menu": false,
-      "priority_multiplier": 1.15,
-      "description": "Farmácias e drogarias de bairro"
-    },
-    {
-      "id": "padaria",
-      "label": "Padaria / Confeitaria",
-      "query_term": "padaria confeitaria",
-      "check_menu": true,
-      "priority_multiplier": 1.15,
-      "description": "Padarias e confeitarias locais"
+      "priority_multiplier": 1.3,
+      "description": "Lojas e comércio local — nicho do Fafa; forte demanda por presença digital"
     },
     {
       "id": "construcao",
@@ -105,6 +65,14 @@
       "check_menu": false,
       "priority_multiplier": 1.2,
       "description": "Materiais de construção e reformas"
+    },
+    {
+      "id": "contabilidade",
+      "label": "Contabilidade",
+      "query_term": "escritório de contabilidade contador",
+      "check_menu": false,
+      "priority_multiplier": 1.4,
+      "description": "Contadores e escritórios contábeis"
     },
     {
       "id": "eletrica",
@@ -123,92 +91,12 @@
       "description": "Escolas particulares e cursos"
     },
     {
-      "id": "clinica_medica",
-      "label": "Clínica médica",
-      "query_term": "clínica médica consultório médico",
-      "check_menu": false,
-      "priority_multiplier": 1.45,
-      "description": "Clínicas e consultórios médicos"
-    },
-    {
-      "id": "fisioterapia",
-      "label": "Fisioterapia",
-      "query_term": "clínica de fisioterapia fisioterapeuta",
+      "id": "estetica",
+      "label": "Estética / Beleza",
+      "query_term": "clínica de estética salão de beleza",
       "check_menu": false,
       "priority_multiplier": 1.35,
-      "description": "Clínicas de fisioterapia"
-    },
-    {
-      "id": "psicologia",
-      "label": "Psicologia",
-      "query_term": "psicólogo consultório de psicologia",
-      "check_menu": false,
-      "priority_multiplier": 1.35,
-      "description": "Consultórios de psicologia"
-    },
-    {
-      "id": "hotel",
-      "label": "Hotel / Pousada",
-      "query_term": "hotel pousada hospedagem",
-      "check_menu": false,
-      "priority_multiplier": 1.2,
-      "description": "Hotéis e pousadas"
-    },
-    {
-      "id": "salao_barbearia",
-      "label": "Barbearia",
-      "query_term": "barbearia barbeiro salão masculino",
-      "check_menu": false,
-      "priority_multiplier": 1.25,
-      "description": "Barbearias e salões masculinos — forte demanda local por site e agenda"
-    },
-    {
-      "id": "lavanderia",
-      "label": "Lavanderia",
-      "query_term": "lavanderia lavagem a seco",
-      "check_menu": false,
-      "priority_multiplier": 1.15,
-      "description": "Lavanderias de bairro"
-    },
-    {
-      "id": "otica",
-      "label": "Ótica",
-      "query_term": "ótica óculos",
-      "check_menu": false,
-      "priority_multiplier": 1.25,
-      "description": "Óticas e lojas de óculos"
-    },
-    {
-      "id": "joalheria",
-      "label": "Joalheria / Relojoaria",
-      "query_term": "joalheria relojoaria",
-      "check_menu": false,
-      "priority_multiplier": 1.2,
-      "description": "Joalherias e relojoarias"
-    },
-    {
-      "id": "moveis",
-      "label": "Móveis / Decoração",
-      "query_term": "loja de móveis decoração",
-      "check_menu": false,
-      "priority_multiplier": 1.2,
-      "description": "Lojas de móveis e decoração"
-    },
-    {
-      "id": "informatica",
-      "label": "Informática / Assistência",
-      "query_term": "assistência técnica informática notebook",
-      "check_menu": false,
-      "priority_multiplier": 1.25,
-      "description": "Assistência técnica e lojas de informática"
-    },
-    {
-      "id": "fotografia",
-      "label": "Fotografia",
-      "query_term": "estúdio fotográfico fotógrafo",
-      "check_menu": false,
-      "priority_multiplier": 1.2,
-      "description": "Estúdios e fotógrafos"
+      "description": "Salões, clínicas de estética e beleza"
     },
     {
       "id": "evento",
@@ -219,12 +107,68 @@
       "description": "Buffets e serviços de eventos"
     },
     {
-      "id": "seguranca",
-      "label": "Segurança / Monitoramento",
-      "query_term": "empresa de segurança monitoramento CFTV",
+      "id": "farmacia",
+      "label": "Farmácia",
+      "query_term": "farmácia drogaria",
+      "check_menu": false,
+      "priority_multiplier": 1.15,
+      "description": "Farmácias e drogarias de bairro"
+    },
+    {
+      "id": "fisioterapia",
+      "label": "Fisioterapia",
+      "query_term": "clínica de fisioterapia fisioterapeuta",
+      "check_menu": false,
+      "priority_multiplier": 1.35,
+      "description": "Clínicas de fisioterapia"
+    },
+    {
+      "id": "fotografia",
+      "label": "Fotografia",
+      "query_term": "estúdio fotográfico fotógrafo",
+      "check_menu": false,
+      "priority_multiplier": 1.2,
+      "description": "Estúdios e fotógrafos"
+    },
+    {
+      "id": "hotel",
+      "label": "Hotel / Pousada",
+      "query_term": "hotel pousada hospedagem",
+      "check_menu": false,
+      "priority_multiplier": 1.2,
+      "description": "Hotéis e pousadas"
+    },
+    {
+      "id": "imobiliaria",
+      "label": "Imobiliária",
+      "query_term": "imobiliária corretor de imóveis",
+      "check_menu": false,
+      "priority_multiplier": 1.35,
+      "description": "Imobiliárias e corretores locais"
+    },
+    {
+      "id": "informatica",
+      "label": "Informática / Assistência",
+      "query_term": "assistência técnica informática notebook",
       "check_menu": false,
       "priority_multiplier": 1.25,
-      "description": "Segurança eletrônica e vigilância"
+      "description": "Assistência técnica e lojas de informática"
+    },
+    {
+      "id": "joalheria",
+      "label": "Joalheria / Relojoaria",
+      "query_term": "joalheria relojoaria",
+      "check_menu": false,
+      "priority_multiplier": 1.2,
+      "description": "Joalherias e relojoarias"
+    },
+    {
+      "id": "lavanderia",
+      "label": "Lavanderia",
+      "query_term": "lavanderia lavagem a seco",
+      "check_menu": false,
+      "priority_multiplier": 1.15,
+      "description": "Lavanderias de bairro"
     },
     {
       "id": "limpeza",
@@ -235,12 +179,76 @@
       "description": "Empresas de limpeza e conservação"
     },
     {
-      "id": "arquitetura",
-      "label": "Arquitetura / Design",
-      "query_term": "escritório de arquitetura design de interiores",
+      "id": "moveis",
+      "label": "Móveis / Decoração",
+      "query_term": "loja de móveis decoração",
+      "check_menu": false,
+      "priority_multiplier": 1.2,
+      "description": "Lojas de móveis e decoração"
+    },
+    {
+      "id": "odontologia",
+      "label": "Odontologia",
+      "query_term": "dentista clínica odontológica",
+      "check_menu": false,
+      "priority_multiplier": 1.5,
+      "description": "Consultórios e clínicas odontológicas — alto ticket para site e agenda online"
+    },
+    {
+      "id": "oficina",
+      "label": "Oficina / Auto",
+      "query_term": "oficina mecânica auto center",
+      "check_menu": false,
+      "priority_multiplier": 1.25,
+      "description": "Oficinas, auto centers e serviços automotivos"
+    },
+    {
+      "id": "otica",
+      "label": "Ótica",
+      "query_term": "ótica óculos",
+      "check_menu": false,
+      "priority_multiplier": 1.25,
+      "description": "Óticas e lojas de óculos"
+    },
+    {
+      "id": "padaria",
+      "label": "Padaria / Confeitaria",
+      "query_term": "padaria confeitaria",
+      "check_menu": true,
+      "priority_multiplier": 1.15,
+      "description": "Padarias e confeitarias locais"
+    },
+    {
+      "id": "pet",
+      "label": "Pet / Veterinário",
+      "query_term": "pet shop clínica veterinária",
       "check_menu": false,
       "priority_multiplier": 1.3,
-      "description": "Arquitetos e design de interiores"
+      "description": "Pet shops e clínicas veterinárias"
+    },
+    {
+      "id": "psicologia",
+      "label": "Psicologia",
+      "query_term": "psicólogo consultório de psicologia",
+      "check_menu": false,
+      "priority_multiplier": 1.35,
+      "description": "Consultórios de psicologia"
+    },
+    {
+      "id": "restaurante",
+      "label": "Restaurante",
+      "query_term": "restaurante lanchonete delivery comida",
+      "check_menu": true,
+      "priority_multiplier": 1.2,
+      "description": "Restaurantes, lanchonetes e food service local"
+    },
+    {
+      "id": "seguranca",
+      "label": "Segurança / Monitoramento",
+      "query_term": "empresa de segurança monitoramento CFTV",
+      "check_menu": false,
+      "priority_multiplier": 1.25,
+      "description": "Segurança eletrônica e vigilância"
     }
   ]
 }

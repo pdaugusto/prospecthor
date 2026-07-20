@@ -3,86 +3,6 @@
   "_instrucoes": "ativo=true entra no lote. bairros=áreas a varrer. ja_varridos marca o que não repetir. allow_citywide=false evita busca genérica da cidade.",
   "cidades": [
     {
-      "id": "campinas_sp",
-      "nome": "Campinas",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Cambuí", "Centro", "Barão Geraldo", "Taquaral", "Nova Campinas", "Guanabara"]
-    },
-    {
-      "id": "santos_sp",
-      "nome": "Santos",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Gonzaga", "Boqueirão", "Ponta da Praia", "Centro", "Embaré"]
-    },
-    {
-      "id": "ribeirao_preto_sp",
-      "nome": "Ribeirão Preto",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Jardim Irajá", "Vila Tibério", "Nova Aliança", "Campos Elíseos"]
-    },
-    {
-      "id": "sao_jose_dos_campos_sp",
-      "nome": "São José dos Campos",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Jardim Aquarius", "Urbanova", "Vila Adyana", "Bosque dos Eucaliptos"]
-    },
-    {
-      "id": "sorocaba_sp",
-      "nome": "Sorocaba",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Campolim", "Éden", "Beyond", "Wanel Ville"]
-    },
-    {
-      "id": "niteroi_rj",
-      "nome": "Niterói",
-      "estado": "RJ",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Icaraí", "Centro", "Santa Rosa", "São Francisco", "Ingá"]
-    },
-    {
-      "id": "nova_iguacu_rj",
-      "nome": "Nova Iguaçu",
-      "estado": "RJ",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Austin", "Posse", "Cabuçu"]
-    },
-    {
-      "id": "duque_de_caxias_rj",
-      "nome": "Duque de Caxias",
-      "estado": "RJ",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 10,
-      "bairros": ["Centro", "Jardim 25 de Agosto", "Saracuruna"]
-    },
-    {
       "id": "anapolis_go",
       "nome": "Anápolis",
       "estado": "GO",
@@ -90,240 +10,12 @@
       "priority": "alta",
       "allow_citywide": false,
       "max_results_bairro": 12,
-      "bairros": ["Centro", "Jundiaí", "Vila Jaiara", "Cidade Jardim"]
-    },
-    {
-      "id": "juiz_de_fora_mg",
-      "nome": "Juiz de Fora",
-      "estado": "MG",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "São Mateus", "Cascatinha", "Santa Helena"]
-    },
-    {
-      "id": "uberlandia_mg",
-      "nome": "Uberlândia",
-      "estado": "MG",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Santa Mônica", "Tibery", "Umuarama"]
-    },
-    {
-      "id": "londrina_pr",
-      "nome": "Londrina",
-      "estado": "PR",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Gleba Palhano", "Zona Norte", "Higienópolis"]
-    },
-    {
-      "id": "maringa_pr",
-      "nome": "Maringá",
-      "estado": "PR",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Zona 7", "Jardim Alvorada"]
-    },
-    {
-      "id": "joinville_sc",
-      "nome": "Joinville",
-      "estado": "SC",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "América", "Anita Garibaldi", "Glória"]
-    },
-    {
-      "id": "blumenau_sc",
-      "nome": "Blumenau",
-      "estado": "SC",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Vorstadt", "Velha", "Garcia"]
-    },
-    {
-      "id": "caxias_do_sul_rs",
-      "nome": "Caxias do Sul",
-      "estado": "RS",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "São Pelegrino", "Exposição", "Panazzolo"]
-    },
-    {
-      "id": "joao_pessoa_pb",
-      "nome": "João Pessoa",
-      "estado": "PB",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Manaíra", "Tambaú", "Centro", "Bessa", "Cabo Branco"]
-    },
-    {
-      "id": "maceio_al",
-      "nome": "Maceió",
-      "estado": "AL",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Pajuçara", "Ponta Verde", "Jatiúca", "Centro"]
-    },
-    {
-      "id": "feira_de_santana_ba",
-      "nome": "Feira de Santana",
-      "estado": "BA",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Centro", "Kalilândia", "Tomba", "Cidade Nova"]
-    },
-    {
-      "id": "brasilia_df",
-      "nome": "Brasília",
-      "estado": "DF",
-      "ativo": true,
-      "priority": "alta",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Asa Sul", "Asa Norte", "Taguatinga", "Ceilândia", "Águas Claras", "Guará"]
-    },
-    {
-      "id": "belo_horizonte_mg",
-      "nome": "Belo Horizonte",
-      "estado": "MG",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Savassi", "Funcionários", "Buritis", "Pampulha", "Lourdes"]
-    },
-    {
-      "id": "curitiba_pr",
-      "nome": "Curitiba",
-      "estado": "PR",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Batel", "Água Verde", "Portão", "Santa Felicidade", "Centro Cívico"]
-    },
-    {
-      "id": "porto_alegre_rs",
-      "nome": "Porto Alegre",
-      "estado": "RS",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Moinhos de Vento", "Petrópolis", "Cidade Baixa", "Menino Deus", "Bela Vista"]
-    },
-    {
-      "id": "salvador_ba",
-      "nome": "Salvador",
-      "estado": "BA",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Pituba", "Barra", "Caminho das Árvores", "Itaigara", "Rio Vermelho"]
-    },
-    {
-      "id": "fortaleza_ce",
-      "nome": "Fortaleza",
-      "estado": "CE",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Meireles", "Aldeota", "Cocó", "Dionísio Torres"]
-    },
-    {
-      "id": "recife_pe",
-      "nome": "Recife",
-      "estado": "PE",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Boa Viagem", "Pina", "Casa Forte", "Espinheiro"]
-    },
-    {
-      "id": "florianopolis_sc",
-      "nome": "Florianópolis",
-      "estado": "SC",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Trindade", "Coqueiros", "Lagoa da Conceição", "Jurerê"]
-    },
-
-    {
-      "id": "sao_paulo_sp",
-      "nome": "São Paulo",
-      "estado": "SP",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 15,
       "bairros": [
-        "Moema", "Pinheiros", "Vila Madalena", "Tatuapé", "Santana",
-        "Santo Amaro", "Lapa", "Ipiranga", "Brooklin", "Perdizes",
-        "Vila Mariana", "Saúde", "Jabaquara", "Penha", "Casa Verde",
-        "Tucuruvi", "Freguesia do Ó", "Pirituba", "Campo Limpo", "Capão Redondo",
-        "Itaquera", "São Mateus", "Guaianases", "Cidade Tiradentes"
-      ],
-      "ja_varridos": {
-        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"],
-        "advocacia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
-      }
-    },
-    {
-      "id": "rio_de_janeiro_rj",
-      "nome": "Rio de Janeiro",
-      "estado": "RJ",
-      "ativo": true,
-      "priority": "media",
-      "allow_citywide": false,
-      "max_results_bairro": 15,
-      "bairros": [
-        "Tijuca", "Botafogo", "Barra da Tijuca", "Méier", "Campo Grande",
-        "Recreio dos Bandeirantes", "Madureira", "Bangu", "Jacarepaguá",
-        "Ilha do Governador", "Realengo", "Santa Cruz", "Penha", "Ramos",
-        "Copacabana", "Ipanema", "Leblon", "Flamengo", "Laranjeiras"
-      ],
-      "ja_varridos": {
-        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"],
-        "advocacia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
-      }
-    },
-    {
-      "id": "goiania_go",
-      "nome": "Goiânia",
-      "estado": "GO",
-      "ativo": true,
-      "priority": "baixa",
-      "allow_citywide": false,
-      "max_results_bairro": 12,
-      "bairros": ["Setor Bueno", "Setor Marista", "Setor Oeste", "Jardim Goiás", "Campinas", "Nova Suíça"],
-      "ja_varridos": {
-        "odontologia": ["_cidade", "centro", "zona sul", "zona norte", "zona leste", "zona oeste"]
-      }
+        "Centro",
+        "Jundiaí",
+        "Vila Jaiara",
+        "Cidade Jardim"
+      ]
     },
     {
       "id": "aracaju_se",
@@ -334,8 +26,546 @@
       "allow_citywide": false,
       "max_results_bairro": 12,
       "bairros": [
-        "Centro", "Atalaia", "Jardins", "Farolândia", "Grageru",
-        "São Conrado", "Coroa do Meio", "13 de Julho", "Siqueira Campos", "Inácio Barbosa"
+        "Centro",
+        "Atalaia",
+        "Jardins",
+        "Farolândia",
+        "Grageru",
+        "São Conrado",
+        "Coroa do Meio",
+        "13 de Julho",
+        "Siqueira Campos",
+        "Inácio Barbosa"
+      ]
+    },
+    {
+      "id": "belo_horizonte_mg",
+      "nome": "Belo Horizonte",
+      "estado": "MG",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Savassi",
+        "Funcionários",
+        "Buritis",
+        "Pampulha",
+        "Lourdes"
+      ]
+    },
+    {
+      "id": "blumenau_sc",
+      "nome": "Blumenau",
+      "estado": "SC",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Vorstadt",
+        "Velha",
+        "Garcia"
+      ]
+    },
+    {
+      "id": "brasilia_df",
+      "nome": "Brasília",
+      "estado": "DF",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Asa Sul",
+        "Asa Norte",
+        "Taguatinga",
+        "Ceilândia",
+        "Águas Claras",
+        "Guará"
+      ]
+    },
+    {
+      "id": "campinas_sp",
+      "nome": "Campinas",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Cambuí",
+        "Centro",
+        "Barão Geraldo",
+        "Taquaral",
+        "Nova Campinas",
+        "Guanabara"
+      ]
+    },
+    {
+      "id": "caxias_do_sul_rs",
+      "nome": "Caxias do Sul",
+      "estado": "RS",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "São Pelegrino",
+        "Exposição",
+        "Panazzolo"
+      ]
+    },
+    {
+      "id": "curitiba_pr",
+      "nome": "Curitiba",
+      "estado": "PR",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Batel",
+        "Água Verde",
+        "Portão",
+        "Santa Felicidade",
+        "Centro Cívico"
+      ]
+    },
+    {
+      "id": "duque_de_caxias_rj",
+      "nome": "Duque de Caxias",
+      "estado": "RJ",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 10,
+      "bairros": [
+        "Centro",
+        "Jardim 25 de Agosto",
+        "Saracuruna"
+      ]
+    },
+    {
+      "id": "feira_de_santana_ba",
+      "nome": "Feira de Santana",
+      "estado": "BA",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Kalilândia",
+        "Tomba",
+        "Cidade Nova"
+      ]
+    },
+    {
+      "id": "florianopolis_sc",
+      "nome": "Florianópolis",
+      "estado": "SC",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Trindade",
+        "Coqueiros",
+        "Lagoa da Conceição",
+        "Jurerê"
+      ]
+    },
+    {
+      "id": "fortaleza_ce",
+      "nome": "Fortaleza",
+      "estado": "CE",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Meireles",
+        "Aldeota",
+        "Cocó",
+        "Dionísio Torres"
+      ]
+    },
+    {
+      "id": "goiania_go",
+      "nome": "Goiânia",
+      "estado": "GO",
+      "ativo": true,
+      "priority": "baixa",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Setor Bueno",
+        "Setor Marista",
+        "Setor Oeste",
+        "Jardim Goiás",
+        "Campinas",
+        "Nova Suíça"
+      ],
+      "ja_varridos": {
+        "odontologia": [
+          "_cidade",
+          "centro",
+          "zona sul",
+          "zona norte",
+          "zona leste",
+          "zona oeste"
+        ]
+      }
+    },
+    {
+      "id": "joao_pessoa_pb",
+      "nome": "João Pessoa",
+      "estado": "PB",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Manaíra",
+        "Tambaú",
+        "Centro",
+        "Bessa",
+        "Cabo Branco"
+      ]
+    },
+    {
+      "id": "joinville_sc",
+      "nome": "Joinville",
+      "estado": "SC",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "América",
+        "Anita Garibaldi",
+        "Glória"
+      ]
+    },
+    {
+      "id": "juiz_de_fora_mg",
+      "nome": "Juiz de Fora",
+      "estado": "MG",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "São Mateus",
+        "Cascatinha",
+        "Santa Helena"
+      ]
+    },
+    {
+      "id": "londrina_pr",
+      "nome": "Londrina",
+      "estado": "PR",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Gleba Palhano",
+        "Zona Norte",
+        "Higienópolis"
+      ]
+    },
+    {
+      "id": "maceio_al",
+      "nome": "Maceió",
+      "estado": "AL",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Pajuçara",
+        "Ponta Verde",
+        "Jatiúca",
+        "Centro"
+      ]
+    },
+    {
+      "id": "maringa_pr",
+      "nome": "Maringá",
+      "estado": "PR",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Zona 7",
+        "Jardim Alvorada"
+      ]
+    },
+    {
+      "id": "niteroi_rj",
+      "nome": "Niterói",
+      "estado": "RJ",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Icaraí",
+        "Centro",
+        "Santa Rosa",
+        "São Francisco",
+        "Ingá"
+      ]
+    },
+    {
+      "id": "nova_iguacu_rj",
+      "nome": "Nova Iguaçu",
+      "estado": "RJ",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Austin",
+        "Posse",
+        "Cabuçu"
+      ]
+    },
+    {
+      "id": "porto_alegre_rs",
+      "nome": "Porto Alegre",
+      "estado": "RS",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Moinhos de Vento",
+        "Petrópolis",
+        "Cidade Baixa",
+        "Menino Deus",
+        "Bela Vista"
+      ]
+    },
+    {
+      "id": "recife_pe",
+      "nome": "Recife",
+      "estado": "PE",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Boa Viagem",
+        "Pina",
+        "Casa Forte",
+        "Espinheiro"
+      ]
+    },
+    {
+      "id": "ribeirao_preto_sp",
+      "nome": "Ribeirão Preto",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Jardim Irajá",
+        "Vila Tibério",
+        "Nova Aliança",
+        "Campos Elíseos"
+      ]
+    },
+    {
+      "id": "rio_de_janeiro_rj",
+      "nome": "Rio de Janeiro",
+      "estado": "RJ",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 15,
+      "bairros": [
+        "Tijuca",
+        "Botafogo",
+        "Barra da Tijuca",
+        "Méier",
+        "Campo Grande",
+        "Recreio dos Bandeirantes",
+        "Madureira",
+        "Bangu",
+        "Jacarepaguá",
+        "Ilha do Governador",
+        "Realengo",
+        "Santa Cruz",
+        "Penha",
+        "Ramos",
+        "Copacabana",
+        "Ipanema",
+        "Leblon",
+        "Flamengo",
+        "Laranjeiras"
+      ],
+      "ja_varridos": {
+        "odontologia": [
+          "_cidade",
+          "centro",
+          "zona sul",
+          "zona norte",
+          "zona leste",
+          "zona oeste"
+        ],
+        "advocacia": [
+          "_cidade",
+          "centro",
+          "zona sul",
+          "zona norte",
+          "zona leste",
+          "zona oeste"
+        ]
+      }
+    },
+    {
+      "id": "salvador_ba",
+      "nome": "Salvador",
+      "estado": "BA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Pituba",
+        "Barra",
+        "Caminho das Árvores",
+        "Itaigara",
+        "Rio Vermelho"
+      ]
+    },
+    {
+      "id": "santos_sp",
+      "nome": "Santos",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Gonzaga",
+        "Boqueirão",
+        "Ponta da Praia",
+        "Centro",
+        "Embaré"
+      ]
+    },
+    {
+      "id": "sao_jose_dos_campos_sp",
+      "nome": "São José dos Campos",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Jardim Aquarius",
+        "Urbanova",
+        "Vila Adyana",
+        "Bosque dos Eucaliptos"
+      ]
+    },
+    {
+      "id": "sao_paulo_sp",
+      "nome": "São Paulo",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 15,
+      "bairros": [
+        "Moema",
+        "Pinheiros",
+        "Vila Madalena",
+        "Tatuapé",
+        "Santana",
+        "Santo Amaro",
+        "Lapa",
+        "Ipiranga",
+        "Brooklin",
+        "Perdizes",
+        "Vila Mariana",
+        "Saúde",
+        "Jabaquara",
+        "Penha",
+        "Casa Verde",
+        "Tucuruvi",
+        "Freguesia do Ó",
+        "Pirituba",
+        "Campo Limpo",
+        "Capão Redondo",
+        "Itaquera",
+        "São Mateus",
+        "Guaianases",
+        "Cidade Tiradentes"
+      ],
+      "ja_varridos": {
+        "odontologia": [
+          "_cidade",
+          "centro",
+          "zona sul",
+          "zona norte",
+          "zona leste",
+          "zona oeste"
+        ],
+        "advocacia": [
+          "_cidade",
+          "centro",
+          "zona sul",
+          "zona norte",
+          "zona leste",
+          "zona oeste"
+        ]
+      }
+    },
+    {
+      "id": "sorocaba_sp",
+      "nome": "Sorocaba",
+      "estado": "SP",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Campolim",
+        "Éden",
+        "Beyond",
+        "Wanel Ville"
+      ]
+    },
+    {
+      "id": "uberlandia_mg",
+      "nome": "Uberlândia",
+      "estado": "MG",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Santa Mônica",
+        "Tibery",
+        "Umuarama"
       ]
     }
   ]

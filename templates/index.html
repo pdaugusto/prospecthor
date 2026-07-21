@@ -934,6 +934,51 @@
         }
         .empty { color: var(--muted); text-align: center; padding: 28px; font-size: 13px; }
 
+        /* Skeleton loading — lista de leads */
+        @keyframes sk-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .sk {
+            display: block;
+            border-radius: 8px;
+            background: linear-gradient(
+                90deg,
+                rgba(26, 34, 51, 0.9) 0%,
+                rgba(40, 54, 78, 0.95) 45%,
+                rgba(26, 34, 51, 0.9) 90%
+            );
+            background-size: 200% 100%;
+            animation: sk-shimmer 1.25s ease-in-out infinite;
+        }
+        .sk-line { height: 12px; margin-bottom: 6px; }
+        .sk-line.sm { height: 10px; width: 55%; margin-bottom: 0; opacity: 0.85; }
+        .sk-line.w40 { width: 40%; }
+        .sk-line.w55 { width: 55%; }
+        .sk-line.w70 { width: 70%; }
+        .sk-line.w85 { width: 85%; }
+        .sk-badge { height: 22px; width: 42px; border-radius: 8px; display: inline-block; }
+        .sk-pill { height: 22px; width: 72px; border-radius: 999px; display: inline-block; }
+        .sk-btn { height: 32px; width: 32px; border-radius: 10px; display: inline-block; margin-right: 6px; }
+        tr.sk-row { pointer-events: none; cursor: default; }
+        tr.sk-row:hover { background: transparent !important; }
+        tr.sk-row:hover td:first-child { box-shadow: none !important; }
+        tr.sk-row td { border-bottom-color: rgba(26, 34, 51, 0.55); }
+        .sk-card {
+            background: rgba(7, 11, 18, 0.85);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-bottom: 8px;
+            pointer-events: none;
+        }
+        .sk-card .sk-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+        .sk-card .sk-actions { display: flex; gap: 6px; margin-top: 12px; }
+        .sk-caption {
+            text-align: center; font-size: 12px; color: var(--muted-2);
+            padding: 8px 0 4px; letter-spacing: .02em;
+        }
+
         /* Pool / bot panels with neon accent */
         #home-pool-panel {
             border-color: var(--border-glow) !important;
@@ -2522,9 +2567,49 @@
             const tbody = document.getElementById('leads-tbody');
             const mobile = document.getElementById('leads-mobile');
             const pag = document.getElementById('leads-pagination');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando leads…</td></tr>';
-            if (mobile) mobile.innerHTML = '<p class="empty">Carregando leads…</p>';
-            if (pag) pag.innerHTML = '';
+            const rows = 8;
+            if (tbody) {
+                tbody.innerHTML = Array.from({ length: rows }, (_, i) => {
+                    const w1 = ['w70', 'w85', 'w55'][i % 3];
+                    const w2 = ['w40', 'w55', 'w70'][i % 3];
+                    return `
+                    <tr class="sk-row" aria-hidden="true">
+                        <td class="company-cell">
+                            <span class="sk sk-line ${w1}"></span>
+                            <span class="sk sk-line sm ${w2}"></span>
+                        </td>
+                        <td><span class="sk sk-line w55"></span></td>
+                        <td><span class="sk sk-line w70"></span></td>
+                        <td><span class="sk sk-badge"></span></td>
+                        <td><span class="sk sk-pill"></span></td>
+                        <td>
+                            <span class="sk sk-btn"></span>
+                            <span class="sk sk-btn"></span>
+                            <span class="sk sk-btn"></span>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+            if (mobile) {
+                mobile.innerHTML = Array.from({ length: 5 }, () => `
+                    <div class="sk-card" aria-hidden="true">
+                        <div class="sk-top">
+                            <div style="flex:1">
+                                <span class="sk sk-line w70"></span>
+                                <span class="sk sk-line sm w55"></span>
+                            </div>
+                            <span class="sk sk-badge"></span>
+                        </div>
+                        <span class="sk sk-line w85"></span>
+                        <div class="sk-actions">
+                            <span class="sk sk-btn"></span>
+                            <span class="sk sk-btn"></span>
+                            <span class="sk sk-btn"></span>
+                        </div>
+                    </div>
+                `).join('') + '<p class="sk-caption">Carregando leads…</p>';
+            }
+            if (pag) pag.innerHTML = '<span class="sk-caption">Carregando…</span>';
         }
 
         async function fetchLeads(force) {

@@ -305,6 +305,161 @@ class LeadScorer:
         import re
         return re.sub(r"\D", "", str(phone or ""))
 
+    @classmethod
+    def _services_for_context(
+        cls,
+        *,
+        niche: str,
+        no_website: bool,
+        has_ig: bool,
+        has_mobile: bool,
+        is_foodtruck: bool,
+    ) -> list[str]:
+        """
+        Ofertas digitais por nicho — não só “site”.
+        Ordem: mais vendável primeiro (máx ~5 itens no final).
+        """
+        out: list[str] = []
+
+        def add(*items: str) -> None:
+            for it in items:
+                if it and it not in out:
+                    out.append(it)
+
+        # Base digital (quase todo mundo sem site)
+        if no_website:
+            if is_foodtruck:
+                add(
+                    "Cardápio digital (QR Code)",
+                    "Link na bio + WhatsApp Business",
+                    "Página one-page / mini-site de cardápio",
+                )
+            else:
+                add("Site profissional", "Google Meu Negócio otimizado")
+
+        # Por nicho
+        n = (niche or "").strip().lower()
+        if is_foodtruck or n == "foodtruck":
+            add("Cardápio digital", "Pedido via WhatsApp", "Identidade visual do carrinho")
+        elif n in ("restaurante", "padaria", "acaiteria"):
+            add(
+                "Cardápio digital interativo",
+                "Integração delivery / iFood",
+                "Site com fotos e cardápio",
+                "QR Code na mesa",
+            )
+        elif n in ("odontologia", "clinica_medica", "clinica", "fisioterapia", "psicologia", "estetica"):
+            add(
+                "Site + agenda online",
+                "WhatsApp para marcar consulta",
+                "Landing de campanha (Google/Instagram)",
+                "Página de depoimentos / antes e depois",
+            )
+        elif n == "advocacia":
+            add(
+                "Site institucional com áreas de atuação",
+                "Captura de leads (formulário)",
+                "Blog / autoridade no Google",
+                "Página de contato + WhatsApp",
+            )
+        elif n == "contabilidade":
+            add(
+                "Site com serviços e diferenciais",
+                "Captura de leads (abertura de empresa)",
+                "Material para redes (posts)",
+            )
+        elif n in ("imobiliaria", "construtora"):
+            add(
+                "Site com catálogo de imóveis/obras",
+                "Landing de lançamento",
+                "Tour virtual / galeria",
+                "CRM leve + WhatsApp",
+            )
+        elif n == "marmore_granito":
+            add(
+                "Catálogo digital de pedras/projetos",
+                "Site portfólio com orçamento",
+                "Galeria de obras realizadas",
+            )
+        elif n in ("mentores_palestrantes",):
+            add(
+                "Site de autoridade + bio",
+                "Página de captura (lead magnet)",
+                "Agenda / inscrição em eventos",
+                "Área de depoimentos e mídia kit",
+            )
+        elif n in ("salao_barbearia", "manicure"):
+            add(
+                "Agenda online (horários)",
+                "Catálogo de serviços e preços",
+                "WhatsApp Business + lembrete",
+                "Site one-page + Instagram",
+            )
+        elif n == "hotel":
+            add(
+                "Site com reserva / disponibilidade",
+                "Galeria e tour",
+                "Integração Booking/Airbnb (link)",
+            )
+        elif n in ("pet",):
+            add(
+                "Site + serviços (banho/tosa/clínica)",
+                "Agendamento online",
+                "Cardápio de serviços",
+            )
+        elif n in ("academia",):
+            add(
+                "Site com planos e horários",
+                "Landing de matrícula",
+                "App/link de treinos (opcional)",
+            )
+        elif n in ("escola",):
+            add(
+                "Site institucional + matrículas",
+                "Área de notícias / blog",
+                "Formulário de interesse",
+            )
+        elif n in ("evento",):
+            add(
+                "Portfólio digital de eventos",
+                "Site one-page + orçamento",
+                "Galeria e vídeos",
+            )
+        elif n in ("oficina", "lava_rapido"):
+            add(
+                "Página de serviços e preços",
+                "Agendamento via WhatsApp",
+                "Pacotes / promoções digitais",
+            )
+        elif n in ("seguradora", "seguranca", "informatica"):
+            add(
+                "Site B2B com serviços",
+                "Landing de cotação",
+                "Captação de leads",
+            )
+        elif n in ("arquitetura", "fotografia", "joalheria", "otica", "moveis"):
+            add(
+                "Portfólio online",
+                "Catálogo de produtos/projetos",
+                "Site com galeria profissional",
+            )
+        elif n in ("comercio", "farmacia", "lavanderia"):
+            add(
+                "Site institucional / catálogo",
+                "WhatsApp para pedidos",
+                "Google Meu Negócio reforçado",
+            )
+        else:
+            if no_website:
+                add("Site one-page + WhatsApp", "Presença local no Google")
+
+        if has_ig and no_website:
+            add("Link na bio + página de destino")
+        if has_mobile:
+            add("Funil de abordagem por WhatsApp")
+
+        return out[:6]
+
     def calculate_score(self, company: dict[str, Any]) -> dict[str, Any]:
         """
         Score de OPORTUNIDADE DE VENDA — escala 0–100 real.
@@ -350,17 +505,14 @@ class LeadScorer:
 
         # ── A) Dor digital 0–100 ─────────────────────────────────────────
         if no_website:
-            dor = 88  # base forte: produto = vender site
+            dor = 88  # base forte: produto = vender presença digital
             problems.append("Sem site próprio (dor alta) — principal gatilho de venda")
-            services.append("Site profissional")
-            services.append("Google Meu Negócio + presença local")
             if only_social:
                 dor = min(100, dor + 6)
                 problems.append("Só rede social no lugar do site")
             if has_ig:
                 dor = min(100, dor + 4)
                 problems.append("Tem Instagram sem site — já se expõe, falta casa na web")
-                services.append("Site + link na bio")
                 if company.get("instagram_has_link") == 0:
                     dor = min(100, dor + 2)
                     problems.append("Instagram sem link na bio")
@@ -370,19 +522,16 @@ class LeadScorer:
             if "sem_https" in web_flags or company.get("website_https") == 0:
                 tech += 22
                 problems.append("Site sem HTTPS")
-                services.append("Certificado SSL")
             speed = company.get("website_speed_s")
             try:
                 if speed is not None and float(speed) > 5.0:
                     tech += 20
                     problems.append(f"Site lento ({float(speed):.1f}s)")
-                    services.append("Otimização de velocidade")
             except (TypeError, ValueError):
                 pass
             if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
                 tech += 22
                 problems.append("Site não mobile-friendly")
-                services.append("Design responsivo")
             dor = min(70, dor + tech)
 
         # ── B) Capacidade / nicho 0–100 ──────────────────────────────────
@@ -395,19 +544,15 @@ class LeadScorer:
                 "Parece food truck/carrinho/lanche — ticket baixo de site "
                 "(não é restaurante de salão)"
             )
-            services.append("Cardápio digital / Instagram (ticket baixo de site)")
         elif niche in self._NICHES_S:
             cap = 92
             problems.append(f"Nicho S — alta propensão/ticket ({niche})")
-            services.append("Site + agenda / captura de leads")
         elif niche in self._NICHES_A:
             cap = 72
             problems.append(f"Nicho A — boa propensão ({niche})")
-            services.append("Site institucional + captura")
         elif niche in self._NICHES_B:
             cap = 48
             problems.append(f"Nicho B — ticket menor ({niche})")
-            services.append("Site + WhatsApp")
         elif niche in self._NICHES_C:
             cap = 28
             problems.append(f"Nicho C — baixa prioridade site ({niche})")
@@ -474,14 +619,26 @@ class LeadScorer:
         if has_mobile:
             ab = 100
             problems.append("Telefone celular / WhatsApp")
-            services.append("Abordagem por WhatsApp")
         elif has_landline:
             ab = 65
             problems.append("Telefone fixo utilizável")
-            services.append("Ligação comercial")
         else:
             ab = 0
             problems.append("Sem telefone útil — baixa chance de fechar agora")
+
+        # Serviços sugeridos por nicho (cardápio, agenda, etc. — não só “site”)
+        services = self._services_for_context(
+            niche=niche,
+            no_website=no_website,
+            has_ig=has_ig,
+            has_mobile=has_mobile,
+            is_foodtruck=is_foodtruck,
+        )
+        if not no_website:
+            if "sem_https" in web_flags or company.get("website_https") == 0:
+                services.insert(0, "Certificado SSL / HTTPS")
+            if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
+                services.insert(0, "Site responsivo (mobile)")
 
         # ── Combinação ponderada → 0–100 ─────────────────────────────────
         # pesos somam 1.0; escala cheia usada de ponta a ponta

@@ -1929,13 +1929,38 @@
             const city = lead.city || 'sua região';
             const niche = lead.niche || 'negócio';
             const name = lead.name || 'empresa';
+            // gancho de oferta por nicho (além de “site”)
+            const n = String(niche || '').toLowerCase();
+            let offer = 'site profissional e presença digital';
+            if (n.includes('restaurant') || n.includes('padaria') || n.includes('acai')) {
+                offer = 'cardápio digital, site e mais pedidos pelo WhatsApp';
+            } else if (n.includes('foodtruck') || n.includes('food')) {
+                offer = 'cardápio digital com QR Code e pedidos no WhatsApp';
+            } else if (n.includes('odonto') || n.includes('clinica') || n.includes('fisio') || n.includes('psico') || n.includes('estetica')) {
+                offer = 'site com agenda online e WhatsApp para marcar';
+            } else if (n.includes('advoc')) {
+                offer = 'site institucional e captura de clientes no Google';
+            } else if (n.includes('imob') || n.includes('construt')) {
+                offer = 'site com catálogo de imóveis/obras e landing de lançamento';
+            } else if (n.includes('barbear') || n.includes('manicure') || n.includes('salao')) {
+                offer = 'agenda online e página de serviços/preços';
+            } else if (n.includes('mentor') || n.includes('palestr')) {
+                offer = 'site de autoridade, captura de leads e página de eventos';
+            } else if (n.includes('contab')) {
+                offer = 'site com serviços e formulário de captação';
+            } else if (n.includes('hotel')) {
+                offer = 'site com reservas e vitrine do hotel';
+            } else if (n.includes('seguro')) {
+                offer = 'landing de cotação e site profissional';
+            }
+
             if (ch === 'instagram') {
-                return `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem site próprio — muita oportunidade perdida no Google. Trabalho com presença digital para ${niche}. Topa um papo rápido de 5 min?`;
+                return `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem presença digital completa no Google. Trabalho com ${offer} para ${niche}. Topa um papo rápido de 5 min?`;
             }
             if (ch === 'email') {
-                return `Assunto: Site profissional para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e identifiquei que ainda não há um site próprio — o que limita a descoberta de novos clientes.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples de site e presença digital.\n\nAtenciosamente,\n${seller}`;
+                return `Assunto: Presença digital para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e vi oportunidade de melhorar com ${offer}.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples.\n\nAtenciosamente,\n${seller}`;
             }
-            return `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos empresas de ${niche} a terem site profissional e captarem mais clientes. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
+            return `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos com *${offer}*. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
         }
 
         function navigateTo(path) {

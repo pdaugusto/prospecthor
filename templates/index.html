@@ -1376,11 +1376,13 @@
             </div>
             <div class="modal-body">
                 <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;">
-                    1) Coloque <strong style="color:var(--text)">seu nome</strong> · 2) Revise a mensagem · 3) Abra o WhatsApp já com o texto pronto.
+                    1) Coloque <strong style="color:var(--text)">seu nome uma vez</strong> · 2) Revise · 3) WhatsApp já com o texto.<br>
+                    <span style="color:var(--neon);">O nome vale em <strong>todos</strong> os leads deste aparelho.</span>
                 </p>
                 <div class="form-g">
-                    <label>Seu nome (salva neste aparelho)</label>
-                    <input type="text" id="seller-name" placeholder="Ex: João" oninput="saveSellerName(this.value)" autocomplete="name">
+                    <label>Seu nome (salva neste aparelho · todos os leads)</label>
+                    <input type="text" id="seller-name" placeholder="Ex: João" oninput="saveSellerName(this.value)" onblur="saveSellerName(this.value, true)" autocomplete="name">
+                    <small id="seller-name-status" style="display:block;margin-top:6px;font-size:11px;color:var(--muted);"></small>
                 </div>
                 <div class="form-g">
                     <label>Canal</label>
@@ -1691,6 +1693,17 @@
 
         function getSellerName() {
             return (localStorage.getItem('prospecthor_seller_name') || '').trim();
+        }
+
+        function refreshSellerNameStatus() {
+            const el = document.getElementById('seller-name-status');
+            if (!el) return;
+            const n = getSellerName();
+            if (n) {
+                el.innerHTML = `Nome salvo: <strong style="color:var(--text)">${esc(n)}</strong> — usado em todos os prompts e no WhatsApp.`;
+            } else {
+                el.textContent = 'Ainda sem nome. Digite uma vez e fica padrão nos outros leads.';
+            }
         }
 
         /** Mensagem de abordagem (mesmo texto do modal) */
@@ -3463,37 +3476,49 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         function setupPrompt() {
-            document.getElementById('seller-name').value = getSellerName();
+            const saved = getSellerName();
+            document.getElementById('seller-name').value = saved;
             document.getElementById('prompt-modal').classList.add('active');
             generatePrompt();
             updatePromptWaHint();
-            // foca no nome se ainda não configurou
-            if (!getSellerName()) {
+            refreshSellerNameStatus();
+            // foca no nome só se ainda não configurou
+            if (!saved) {
                 setTimeout(() => document.getElementById('seller-name')?.focus(), 80);
             }
         }
 
         function closePrompt() {
+            // garante que o que estiver no campo fique salvo ao fechar
+            const v = document.getElementById('seller-name')?.value?.trim();
+            if (v) localStorage.setItem('prospecthor_seller_name', v);
             document.getElementById('prompt-modal').classList.remove('active');
             activePromptLead = null;
         }
 
-        function saveSellerName(name) {
-            localStorage.setItem('prospecthor_seller_name', (name || '').trim());
+        function saveSellerName(name, allowClear) {
+            const v = (name || '').trim();
+            // não apaga o nome salvo se a pessoa só apagou o campo sem querer
+            if (v) {
+                localStorage.setItem('prospecthor_seller_name', v);
+            } else if (allowClear) {
+                localStorage.removeItem('prospecthor_seller_name');
+            }
             generatePrompt();
             updatePromptWaHint();
+            refreshSellerNameStatus();
         }
 
         function generatePrompt() {
             if (!activePromptLead) return;
-            // usa o nome do input (pode estar digitando) ou o salvo
             const inputName = document.getElementById('seller-name')?.value?.trim();
             if (inputName) localStorage.setItem('prospecthor_seller_name', inputName);
             const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
-            // buildApproachMessage lê do localStorage; se input vazio usa placeholder
+            // se o campo estiver vazio no meio da digitação, ainda usa o nome salvo
             const msg = buildApproachMessage(activePromptLead, channel);
             document.getElementById('prompt-text').value = msg;
             updatePromptWaHint();
+            refreshSellerNameStatus();
         }
 
         function updatePromptWaHint() {

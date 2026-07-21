@@ -238,6 +238,34 @@
             border-color: var(--neon); color: var(--neon);
             background: var(--neon-dim); text-decoration: none;
         }
+        /* Prompt / mensagem — branco (precisa configurar antes do WA) */
+        .icon-btn.prompt {
+            background: #ffffff;
+            border-color: #e8eef7;
+            color: #0a0e17;
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .icon-btn.prompt:hover {
+            background: #fff;
+            border-color: #fff;
+            color: #031018;
+            transform: translateY(-1px) scale(1.06);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.35);
+            text-decoration: none;
+        }
+        .btn-prompt-white {
+            background: #ffffff !important;
+            color: #0a0e17 !important;
+            border: 1px solid #ffffff !important;
+            font-weight: 800;
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
+        }
+        .btn-prompt-white:hover {
+            filter: brightness(0.96);
+            color: #031018 !important;
+            transform: translateY(-1px);
+        }
         /* WhatsApp — verde vivo */
         .icon-btn.wa {
             background: linear-gradient(145deg, #25d366, #128c7e);
@@ -1347,9 +1375,12 @@
                 <button class="btn btn-sm" onclick="closePrompt()">Fechar</button>
             </div>
             <div class="modal-body">
+                <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;">
+                    1) Coloque <strong style="color:var(--text)">seu nome</strong> · 2) Revise a mensagem · 3) Abra o WhatsApp já com o texto pronto.
+                </p>
                 <div class="form-g">
-                    <label>Seu nome</label>
-                    <input type="text" id="seller-name" placeholder="Nome do vendedor" oninput="saveSellerName(this.value)">
+                    <label>Seu nome (salva neste aparelho)</label>
+                    <input type="text" id="seller-name" placeholder="Ex: João" oninput="saveSellerName(this.value)" autocomplete="name">
                 </div>
                 <div class="form-g">
                     <label>Canal</label>
@@ -1361,9 +1392,15 @@
                 </div>
                 <div class="form-g">
                     <label>Mensagem</label>
-                    <textarea id="prompt-text" readonly style="min-height:180px;"></textarea>
+                    <textarea id="prompt-text" style="min-height:180px;" placeholder="A mensagem aparece aqui…"></textarea>
                 </div>
-                <button class="btn btn-primary" style="width:100%;" onclick="copyPrompt()">Copiar mensagem</button>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button type="button" class="btn btn-wa" id="btn-prompt-open-wa" style="width:100%;" onclick="openWhatsAppFromPrompt()">
+                        Abrir WhatsApp com esta mensagem
+                    </button>
+                    <button type="button" class="btn" style="width:100%;" onclick="copyPrompt()">Copiar mensagem</button>
+                </div>
+                <p id="prompt-wa-hint" style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4;"></p>
             </div>
         </div>
     </div>
@@ -1641,11 +1678,36 @@
             return String(p || '').replace(/\D/g, '');
         }
 
-        function waLink(phone) {
+        function waLink(phone, text) {
             const d = phoneDigits(phone);
             if (!d) return null;
             const full = d.length <= 11 ? '55' + d : d;
-            return `https://wa.me/${full}`;
+            let url = `https://wa.me/${full}`;
+            if (text && String(text).trim()) {
+                url += `?text=${encodeURIComponent(String(text).trim())}`;
+            }
+            return url;
+        }
+
+        function getSellerName() {
+            return (localStorage.getItem('prospecthor_seller_name') || '').trim();
+        }
+
+        /** Mensagem de abordagem (mesmo texto do modal) */
+        function buildApproachMessage(lead, channel) {
+            if (!lead) return '';
+            const seller = getSellerName() || '[Seu Nome]';
+            const ch = channel || 'whatsapp';
+            const city = lead.city || 'sua região';
+            const niche = lead.niche || 'negócio';
+            const name = lead.name || 'empresa';
+            if (ch === 'instagram') {
+                return `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem site próprio — muita oportunidade perdida no Google. Trabalho com presença digital para ${niche}. Topa um papo rápido de 5 min?`;
+            }
+            if (ch === 'email') {
+                return `Assunto: Site profissional para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e identifiquei que ainda não há um site próprio — o que limita a descoberta de novos clientes.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples de site e presença digital.\n\nAtenciosamente,\n${seller}`;
+            }
+            return `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos empresas de ${niche} a terem site profissional e captarem mais clientes. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
         }
 
         function navigateTo(path) {
@@ -2974,14 +3036,15 @@
         const FIRE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff9f1a" d="M12 2c.4 2.2-.3 3.8-1.4 5.1C9.3 8.5 8.2 9.8 8.2 12c0 2.3 1.7 4 3.8 4 .6 0 1.1-.1 1.6-.4-.5 1.4-1.7 2.4-3.3 2.4-2.6 0-4.5-2.1-4.5-4.9 0-2.6 1.4-4.4 2.8-6C10 5.5 11 3.8 12 2z"/><path fill="#ff5a1f" d="M13.2 22c3.4 0 5.8-2.4 5.8-5.7 0-2.6-1.3-4.2-2.5-5.5-1-1.1-1.8-2.1-1.8-3.6 0-.4 0-.8.1-1.2-.1 2.1-1.2 3.4-2.3 4.6-1.3 1.4-2.5 2.8-2.5 5 0 3.3 2.3 6.4 3.2 6.4z"/><path fill="#ffe08a" d="M12.1 18.6c1.1 0 1.9-.9 1.9-2.1 0-1.1-.6-1.8-1.2-2.4-.5-.5-.9-1-.9-1.7 0 1.2-.5 1.9-1 2.5-.6.7-1.2 1.4-1.2 2.4 0 1.3 1.1 1.3 2.4 1.3z"/></svg>`;
 
         function actionButtons(l, stopProp) {
-            const wa = waLink(l.phone);
             const tel = phoneDigits(l.phone);
             const stop = stopProp ? 'event.stopPropagation();' : '';
+            const id = Number(l.id);
+            // Ordem: 1) Prompt (branco) 2) WhatsApp c/ texto 3) Ligar 4) Abrir
             return `
-                ${wa ? `<a class="icon-btn wa" href="${wa}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp" onclick="${stop}">${ICO_WA}</a>` : ''}
+                <button class="icon-btn prompt" type="button" title="Montar mensagem (seu nome)" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
+                ${tel ? `<button class="icon-btn wa" type="button" title="WhatsApp com mensagem pronta" aria-label="WhatsApp" onclick="${stop}openWhatsAppForLead(${id})">${ICO_WA}</button>` : ''}
                 ${tel ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
-                <button class="icon-btn" type="button" title="Mensagem" onclick="${stop}openPrompt(${l.id})">✎</button>
-                <button class="icon-btn" type="button" title="Abrir" onclick="${stop}openLead(${Number(l.id)})">→</button>
+                <button class="icon-btn" type="button" title="Abrir" onclick="${stop}openLead(${id})">→</button>
             `;
         }
 
@@ -3201,9 +3264,9 @@
                                 <span class="badge-status ${st}">${statusLabel(st)}</span>
                             </div>
                             <div class="action-stack">
-                                ${wa ? `<a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">${ICO_WA} Abrir WhatsApp</a>` : ''}
+                                <button class="btn btn-prompt-white" type="button" onclick="openPrompt(${lead.id})">✎ Montar mensagem (seu nome)</button>
+                                ${tel ? `<button class="btn btn-wa" type="button" onclick="openWhatsAppForLead(${lead.id})">${ICO_WA} WhatsApp com mensagem</button>` : ''}
                                 ${tel ? `<a class="btn btn-call" href="tel:${tel}">${ICO_CALL} Ligar agora</a>` : ''}
-                                <button class="btn btn-primary" onclick="openPrompt(${lead.id})">Gerar mensagem</button>
                                 <button class="btn" onclick="updateStatus(${lead.id}, 'contactado')">Marcar contactado</button>
                                 <button class="btn btn-success" onclick="updateStatus(${lead.id}, 'convertido')">Marcar convertido</button>
                                 ${st === 'descartado'
@@ -3381,23 +3444,33 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             } catch (e) { console.error(e); }
         }
 
+        async function resolveLead(id) {
+            let lead = allLeads.find(l => Number(l.id) === Number(id));
+            if (lead) return lead;
+            try {
+                const r = await fetch(`/api/leads/${id}`, { credentials: 'same-origin', cache: 'no-store' });
+                if (r.ok) return await r.json();
+            } catch (_) {}
+            return null;
+        }
+
         function openPrompt(id) {
-            const lead = allLeads.find(l => l.id === id);
-            if (lead) {
-                activePromptLead = lead;
-                setupPrompt();
-                return;
-            }
-            fetch(`/api/leads/${id}`).then(r => r.json()).then(data => {
+            resolveLead(id).then(data => {
+                if (!data) { alert('Lead não encontrado.'); return; }
                 activePromptLead = data;
                 setupPrompt();
             });
         }
 
         function setupPrompt() {
-            document.getElementById('seller-name').value = localStorage.getItem('prospecthor_seller_name') || '';
+            document.getElementById('seller-name').value = getSellerName();
             document.getElementById('prompt-modal').classList.add('active');
             generatePrompt();
+            updatePromptWaHint();
+            // foca no nome se ainda não configurou
+            if (!getSellerName()) {
+                setTimeout(() => document.getElementById('seller-name')?.focus(), 80);
+            }
         }
 
         function closePrompt() {
@@ -3406,28 +3479,80 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         function saveSellerName(name) {
-            localStorage.setItem('prospecthor_seller_name', name);
+            localStorage.setItem('prospecthor_seller_name', (name || '').trim());
             generatePrompt();
+            updatePromptWaHint();
         }
 
         function generatePrompt() {
             if (!activePromptLead) return;
-            const seller = document.getElementById('seller-name').value.trim() || '[Seu Nome]';
-            const channel = document.getElementById('prompt-channel').value;
-            const lead = activePromptLead;
-            const city = lead.city || 'sua região';
-            const niche = lead.niche || 'negócio';
-            const name = lead.name || 'empresa';
-            let message = '';
+            // usa o nome do input (pode estar digitando) ou o salvo
+            const inputName = document.getElementById('seller-name')?.value?.trim();
+            if (inputName) localStorage.setItem('prospecthor_seller_name', inputName);
+            const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
+            // buildApproachMessage lê do localStorage; se input vazio usa placeholder
+            const msg = buildApproachMessage(activePromptLead, channel);
+            document.getElementById('prompt-text').value = msg;
+            updatePromptWaHint();
+        }
 
-            if (channel === 'whatsapp') {
-                message = `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos empresas de ${niche} a terem site profissional e captarem mais clientes. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
-            } else if (channel === 'instagram') {
-                message = `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem site próprio — muita oportunidade perdida no Google. Trabalho com presença digital para ${niche}. Topa um papo rápido de 5 min?`;
-            } else {
-                message = `Assunto: Site profissional para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e identifiquei que ainda não há um site próprio — o que limita a descoberta de novos clientes.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples de site e presença digital.\n\nAtenciosamente,\n${seller}`;
+        function updatePromptWaHint() {
+            const hint = document.getElementById('prompt-wa-hint');
+            const btn = document.getElementById('btn-prompt-open-wa');
+            if (!hint) return;
+            const lead = activePromptLead;
+            const hasPhone = lead && phoneDigits(lead.phone);
+            const hasName = !!getSellerName();
+            if (!hasPhone) {
+                hint.textContent = 'Este lead não tem telefone — use Copiar e mande por outro canal.';
+                if (btn) btn.disabled = true;
+                return;
             }
-            document.getElementById('prompt-text').value = message;
+            if (btn) btn.disabled = false;
+            if (!hasName) {
+                hint.textContent = 'Dica: preencha seu nome acima — a mensagem no WhatsApp sai personalizada.';
+            } else {
+                hint.textContent = 'Ao clicar, o WhatsApp abre com o texto já escrito. É só enviar.';
+            }
+        }
+
+        /** WhatsApp direto (lista/detalhe) com texto pronto; se não tem nome, abre o modal primeiro */
+        async function openWhatsAppForLead(id) {
+            const lead = await resolveLead(id);
+            if (!lead) { alert('Lead não encontrado.'); return; }
+            if (!phoneDigits(lead.phone)) {
+                alert('Este lead não tem telefone.');
+                return;
+            }
+            if (!getSellerName()) {
+                activePromptLead = lead;
+                setupPrompt();
+                alert('Coloque seu nome na mensagem e depois toque em “Abrir WhatsApp com esta mensagem”.');
+                return;
+            }
+            const text = buildApproachMessage(lead, 'whatsapp');
+            const url = waLink(lead.phone, text);
+            if (url) window.open(url, '_blank', 'noopener');
+        }
+
+        /** Do modal: usa o texto da caixa (editável) */
+        function openWhatsAppFromPrompt() {
+            if (!activePromptLead) return;
+            const phone = activePromptLead.phone;
+            if (!phoneDigits(phone)) {
+                alert('Este lead não tem telefone.');
+                return;
+            }
+            const nameInput = document.getElementById('seller-name')?.value?.trim();
+            if (nameInput) localStorage.setItem('prospecthor_seller_name', nameInput);
+            if (!getSellerName()) {
+                alert('Preencha seu nome antes de abrir o WhatsApp.');
+                document.getElementById('seller-name')?.focus();
+                return;
+            }
+            const text = document.getElementById('prompt-text')?.value || buildApproachMessage(activePromptLead, 'whatsapp');
+            const url = waLink(phone, text);
+            if (url) window.open(url, '_blank', 'noopener');
         }
 
         async function copyPrompt() {

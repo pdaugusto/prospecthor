@@ -255,18 +255,28 @@ class LeadScorer:
         lower = website.lower()
         return any(m in lower for m in social_markers)
 
-    # Nichos de ticket alto (mais chance de pagar site / serviço digital)
-    _NICHES_ALTO = {
+    # Capacidade de pagar + propensão a site (tier S/A/B/C)
+    # S: alta propensão + condição | A: boa | B: ticket menor | C: baixa prioridade
+    _NICHES_S = {
         "odontologia", "advocacia", "clinica_medica", "clinica", "estetica",
         "contabilidade", "imobiliaria", "arquitetura", "fisioterapia", "psicologia",
-        "construtora",
+        "construtora", "mentores_palestrantes", "seguradora",
     }
-    _NICHES_MEDIO = {
-        "comercio", "restaurante", "pet", "oficina", "academia", "farmacia",
-        "padaria", "otica", "moveis", "informatica", "evento", "seguranca",
-        "limpeza", "eletrica", "construcao", "hotel", "salao_barbearia", "lavanderia",
-        "fotografia", "joalheria", "escola", "acaiteria", "mentores_palestrantes",
+    _NICHES_A = {
+        "hotel", "escola", "pet", "otica", "joalheria", "academia", "evento",
+        "seguranca", "informatica", "marmore_granito",
     }
+    _NICHES_B = {
+        "salao_barbearia", "restaurante", "acaiteria", "padaria", "comercio",
+        "oficina", "eletrica", "limpeza", "construcao", "moveis", "farmacia",
+        "fotografia", "manicure", "lava_rapido",
+    }
+    _NICHES_C = {
+        "lavanderia",
+    }
+    # compat aliases antigos
+    _NICHES_ALTO = _NICHES_S
+    _NICHES_MEDIO = _NICHES_A | _NICHES_B
 
     @staticmethod
     def _phone_digits(phone: Any) -> str:
@@ -277,64 +287,93 @@ class LeadScorer:
         """
         Score de OPORTUNIDADE DE VENDA — máximo 100.
 
-        Quanto MAIOR o score, MAIOR a chance de fechar (presença digital fraca
-        + negócio com potencial + contato utilizável).
+        Blocos:
+            A) Dor digital ........ 0–35  (sem site / social solta / site ruim)
+            B) Capacidade pagar ... 0–30  (nicho S/A/B/C + porte por reviews)
+            C) Visibilidade ....... 0–20  (nota Maps + volume + IG)
+            D) Abordabilidade ..... 0–15  (celular/fixo; sem fone = teto 55)
 
-        Faixas:
-            75–100  quente  (prioridade alta)
-            50–74   morno   (prioridade média)
-             0–49   frio    (prioridade baixa)
-
-        ⚡ RAIO  = sem site próprio (listado no dashboard)
-        ☁️ TROVÃO / 🔊 ECO = tem site (não é o foco principal)
+        Cores UI: 90+ ouro · 71–89 roxo · 51–70 verde · 0–50 cinza
         """
         score = 0
         problems: list[str] = []
         services: list[str] = []
         no_website = self._has_no_website(company)
-        web_flags = (company.get("website_flags") or "").split(",")
+        web_flags = [f.strip() for f in (company.get("website_flags") or "").split(",") if f.strip()]
+        website = (company.get("website") or "").strip().lower()
+        only_social = bool(website) and any(
+            m in website
+            for m in (
+                "instagram.com", "facebook.com", "fb.com", "linktr.ee",
+                "bio.link", "wa.me", "whatsapp.com", "tiktok.com",
+            )
+        )
 
-        # ── 1. Presença digital (núcleo da oportunidade) ─────────────────
+        # ── A. Dor digital (0–35) ────────────────────────────────────────
         if no_website:
-            score += 40
-            problems.append("Sem site próprio (+40) — principal gatilho de venda")
+            score += 28
+            problems.append("Sem site próprio (+28) — principal gatilho de venda")
             services.append("Site profissional")
             services.append("Google Meu Negócio + presença local")
+            if only_social:
+                score += 4
+                problems.append("Só rede social no lugar do site (+4)")
         else:
-            # tem site: oportunidade menor, mas problemas técnicos ainda vendem
+            tech = 0
             if "sem_https" in web_flags or company.get("website_https") == 0:
-                score += 12
-                problems.append("Site sem HTTPS (+12)")
+                tech += 6
+                problems.append("Site sem HTTPS (+6)")
                 services.append("Certificado SSL")
             speed = company.get("website_speed_s")
             try:
                 if speed is not None and float(speed) > 5.0:
-                    score += 10
-                    problems.append(f"Site lento ({float(speed):.1f}s) (+10)")
+                    tech += 6
+                    problems.append(f"Site lento ({float(speed):.1f}s) (+6)")
                     services.append("Otimização de velocidade")
             except (TypeError, ValueError):
                 pass
             if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
-                score += 12
-                problems.append("Site não mobile-friendly (+12)")
+                tech += 6
+                problems.append("Site não mobile-friendly (+6)")
                 services.append("Design responsivo")
+            score += min(18, tech)
 
-        # ── 2. Contato (sem telefone = quase não vende) ───────────────────
-        digits = self._phone_digits(company.get("phone"))
-        if len(digits) >= 12 or (len(digits) >= 11 and digits.startswith("55")):
-            # celular BR típico
-            score += 20
-            problems.append("Telefone celular / WhatsApp (+20)")
-            services.append("Abordagem por WhatsApp")
-        elif len(digits) >= 10:
-            score += 12
-            problems.append("Telefone fixo utilizável (+12)")
-            services.append("Ligação comercial")
+        has_ig = (
+            company.get("instagram_status") == "tem_instagram"
+            or bool(company.get("instagram_url"))
+            or bool(company.get("instagram_username"))
+        )
+        if no_website and has_ig:
+            score += 3
+            problems.append("Tem Instagram sem site (+3) — já se expõe, falta casa na web")
+            services.append("Site + link na bio")
+            if company.get("instagram_has_link") == 0:
+                score += 2
+                problems.append("Instagram sem link na bio (+2)")
+
+        # ── B. Capacidade de pagar / nicho (0–30) ────────────────────────
+        niche = (company.get("niche") or "").strip().lower()
+        if niche in self._NICHES_S:
+            score += 24
+            problems.append(f"Nicho S — alta propensão/ticket ({niche}) (+24)")
+            services.append("Site + agenda / captura de leads")
+        elif niche in self._NICHES_A:
+            score += 16
+            problems.append(f"Nicho A — boa propensão ({niche}) (+16)")
+            services.append("Site institucional + captura")
+        elif niche in self._NICHES_B:
+            score += 10
+            problems.append(f"Nicho B — ticket menor ({niche}) (+10)")
+            services.append("Site + WhatsApp")
+        elif niche in self._NICHES_C:
+            score += 4
+            problems.append(f"Nicho C — baixa prioridade site ({niche}) (+4)")
+        elif niche:
+            score += 6
+            problems.append(f"Nicho local ({niche}) (+6)")
         else:
-            problems.append("Sem telefone útil (+0) — baixa chance de fechar")
-            # penaliza oportunidade (cap implícito: sem contato não sobe)
+            score += 3
 
-        # ── 3. Prova social no Maps (negócio real + vitrine fraca) ───────
         try:
             rating = float(company.get("rating") or 0)
         except (TypeError, ValueError):
@@ -344,57 +383,74 @@ class LeadScorer:
         except (TypeError, ValueError):
             reviews = 0
 
-        if no_website and rating >= 4.5 and reviews >= 3:
-            score += 15
-            problems.append(f"Nota alta ({rating:.1f}) sem site (+15) — negócio bom, digital fraco")
-        elif no_website and rating >= 4.0:
-            score += 10
-            problems.append(f"Boa reputação Maps ({rating:.1f}) (+10)")
-        elif rating >= 3.5:
+        # porte / condição inferida por volume de reviews
+        if 20 <= reviews <= 80:
             score += 5
-            problems.append(f"Reputação ok ({rating:.1f}) (+5)")
-
-        if 3 <= reviews <= 40 and no_website:
-            score += 5
-            problems.append(f"Volume de avaliações saudável ({reviews}) (+5)")
-        elif reviews > 100 and no_website:
-            score += 2
-            problems.append(f"Muitas avaliações ({reviews}) (+2)")
-
-        # ── 4. Ticket / nicho (quem paga mais por site) ───────────────────
-        niche = (company.get("niche") or "").strip().lower()
-        if niche in self._NICHES_ALTO:
-            score += 12
-            problems.append(f"Nicho alto ticket ({niche}) (+12)")
-            services.append("Site + agenda / captura de leads")
-        elif niche in self._NICHES_MEDIO:
-            score += 8
-            problems.append(f"Nicho médio ({niche}) (+8)")
-            services.append("Site institucional + WhatsApp")
-        elif niche:
-            score += 5
-            problems.append(f"Nicho local ({niche}) (+5)")
-        else:
+            problems.append(f"Porte saudável ({reviews} avaliações) (+5)")
+        elif 8 <= reviews <= 19:
             score += 3
+            problems.append(f"Porte em crescimento ({reviews} avaliações) (+3)")
+        elif reviews >= 81:
+            score += 2
+            problems.append(f"Muita tração no Maps ({reviews} avaliações) (+2)")
+        elif reviews <= 1:
+            score -= 2
+            problems.append("Pouca prova social no Maps (−2)")
 
-        # ── 5. Instagram sem site (presença social solta) ─────────────────
-        has_ig = (
-            company.get("instagram_status") == "tem_instagram"
-            or bool(company.get("instagram_url"))
-            or bool(company.get("instagram_username"))
-        )
+        # ── C. Visibilidade / tração real (0–20) ─────────────────────────
+        vis = 0
+        if rating >= 4.5 and reviews >= 5:
+            vis += 10
+            problems.append(f"Nota excelente ({rating:.1f}) + reviews (+10)")
+        elif rating >= 4.0 and reviews >= 3:
+            vis += 7
+            problems.append(f"Boa reputação Maps ({rating:.1f}) (+7)")
+        elif rating >= 3.5:
+            vis += 4
+            problems.append(f"Reputação ok ({rating:.1f}) (+4)")
+        elif rating > 0 and rating < 3.0 and reviews >= 5:
+            vis += 1
+            problems.append(f"Nota baixa ({rating:.1f}) (+1)")
+
+        if 5 <= reviews <= 40:
+            vis += 5
+            problems.append(f"Volume ideal de avaliações ({reviews}) (+5)")
+        elif 41 <= reviews <= 100:
+            vis += 3
+            problems.append(f"Volume alto de avaliações ({reviews}) (+3)")
+        elif reviews > 100:
+            vis += 2
+            problems.append(f"Muitas avaliações ({reviews}) (+2) — pode achar que não precisa")
+
         if no_website and has_ig:
-            score += 8
-            problems.append("Só Instagram / social (+8) — falta casa própria na web")
-            services.append("Site + link na bio")
-            if company.get("instagram_has_link") == 0:
-                score += 3
-                problems.append("Instagram sem link na bio (+3)")
+            vis += 3
+            # já contou IG na dor; aqui reforça tração sem estourar muito
+            problems.append("Presença social ativa (+3 visibilidade)")
 
-        # ── 6. Cap 0–100 ─────────────────────────────────────────────────
+        score += min(20, vis)
+
+        # ── D. Abordabilidade (0–15) ─────────────────────────────────────
+        digits = self._phone_digits(company.get("phone"))
+        has_mobile = len(digits) >= 12 or (len(digits) >= 11 and digits.startswith("55"))
+        has_landline = len(digits) >= 10 and not has_mobile
+        if has_mobile:
+            score += 15
+            problems.append("Telefone celular / WhatsApp (+15)")
+            services.append("Abordagem por WhatsApp")
+        elif has_landline:
+            score += 9
+            problems.append("Telefone fixo utilizável (+9)")
+            services.append("Ligação comercial")
+        else:
+            problems.append("Sem telefone útil (+0) — não entra no topo quente")
+
+        # ── Cap 0–100 + teto sem telefone ────────────────────────────────
         score = max(0, min(100, int(score)))
+        if not has_mobile and not has_landline and score > 55:
+            problems.append(f"Teto 55 sem telefone (era {score})")
+            score = 55
 
-        # ── 7. Classificação ─────────────────────────────────────────────
+        # ── Classificação ────────────────────────────────────────────────
         if no_website:
             lead_class = "raio"
         elif score >= 45:
@@ -403,11 +459,11 @@ class LeadScorer:
             lead_class = "eco"
 
         if score >= 75:
-            priority = "alta"   # quente
-        elif score >= 50:
-            priority = "media"  # morno
+            priority = "alta"
+        elif score >= 55:
+            priority = "media"
         else:
-            priority = "baixa"  # frio
+            priority = "baixa"
 
         dedup_services: list[str] = []
         for s in services:

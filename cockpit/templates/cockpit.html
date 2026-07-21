@@ -42,13 +42,30 @@
     }
     select:focus, input:focus { border-color: var(--neon); }
     .checks {
-      max-height: 160px; overflow: auto; border: 1px solid var(--border); border-radius: 10px;
+      max-height: 180px; overflow: auto; border: 1px solid var(--border); border-radius: 10px;
       padding: 8px; background: #070b12;
     }
     .checks label {
       display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 4px 2px; cursor: pointer;
     }
+    .checks label.hidden { display: none; }
     .checks input { accent-color: var(--neon); }
+    .sel-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      margin: 10px 0 6px;
+    }
+    .sel-head .f { margin: 0; }
+    .sel-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sel-actions button {
+      padding: 6px 10px; font-size: 11px; border-radius: 8px;
+    }
+    .filter-input {
+      width: 100%; background: #070b12; border: 1px solid var(--border); color: var(--text);
+      border-radius: 10px; padding: 9px 12px; font: inherit; outline: none; margin-bottom: 6px;
+    }
+    .filter-input:focus { border-color: var(--neon); }
+    .filter-input::placeholder { color: var(--muted); }
+    .sel-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
     button {
       border: 1px solid var(--border); background: var(--card); color: var(--text);
@@ -114,11 +131,31 @@
         <label class="f">Nome da missão (opcional)</label>
         <input type="text" id="label" placeholder="Ex: Ranso · barbearia Aracaju" />
 
-        <label class="f">Nichos</label>
+        <div class="sel-head">
+          <label class="f">Nichos</label>
+          <div class="sel-actions">
+            <button type="button" onclick="selectAll('niche', true)" title="Marcar todos visíveis">Todos</button>
+            <button type="button" onclick="clearChecks('niche')" title="Limpar nichos">Limpar</button>
+          </div>
+        </div>
+        <input type="search" class="filter-input" id="niche-filter" placeholder="Pesquisar nicho…" oninput="filterChecks('niche')" autocomplete="off" />
         <div class="checks" id="niches"></div>
+        <div class="sel-count" id="niche-count">0 selecionado(s)</div>
 
-        <label class="f">Cidades</label>
+        <div class="sel-head">
+          <label class="f">Cidades</label>
+          <div class="sel-actions">
+            <button type="button" onclick="selectAll('city', true)" title="Marcar todas visíveis">Todas</button>
+            <button type="button" onclick="clearChecks('city')" title="Limpar cidades">Limpar</button>
+          </div>
+        </div>
+        <input type="search" class="filter-input" id="city-filter" placeholder="Pesquisar cidade…" oninput="filterChecks('city')" autocomplete="off" />
         <div class="checks" id="cities"></div>
+        <div class="sel-count" id="city-count">0 selecionada(s)</div>
+
+        <div class="row" style="margin-top:10px;">
+          <button type="button" onclick="clearAllSelections()" style="flex:1;border-color:var(--danger);color:var(--danger);">✕ Limpar nichos e cidades</button>
+        </div>
 
         <button type="button" class="btn-add" onclick="addMission()">+ Adicionar na fila</button>
         <p class="hint">Várias missões = o bot faz uma atrás da outra. Nichos revezam e a meta divide entre eles.</p>
@@ -197,17 +234,76 @@
       const niches = [...(catalog.niches||[])].sort((a,b)=>sortPt(a.label||a.id, b.label||b.id));
       const cities = [...(catalog.cities||[])].sort((a,b)=>sortPt(a.nome||a.id, b.nome||b.id));
 
-      document.getElementById('niches').innerHTML = niches.map(n =>
-        `<label><input type="checkbox" class="niche" value="${esc(n.id)}"> ${esc(n.label||n.id)}</label>`
-      ).join('') || '<span style="color:var(--muted)">Sem nichos</span>';
+      document.getElementById('niches').innerHTML = niches.map(n => {
+        const lab = n.label || n.id;
+        const q = `${lab} ${n.id} ${n.query_term || ''}`.toLowerCase();
+        return `<label data-q="${esc(q)}"><input type="checkbox" class="niche" value="${esc(n.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
+      }).join('') || '<span style="color:var(--muted)">Sem nichos</span>';
 
-      document.getElementById('cities').innerHTML = cities.map(c =>
-        `<label><input type="checkbox" class="city" value="${esc(c.id)}"> ${esc(c.nome||c.id)}${c.estado ? ' / '+esc(c.estado) : ''}</label>`
-      ).join('') || '<span style="color:var(--muted)">Sem cidades</span>';
+      document.getElementById('cities').innerHTML = cities.map(c => {
+        const lab = `${c.nome || c.id}${c.estado ? ' / ' + c.estado : ''}`;
+        const q = `${lab} ${c.id || ''}`.toLowerCase();
+        return `<label data-q="${esc(q)}"><input type="checkbox" class="city" value="${esc(c.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
+      }).join('') || '<span style="color:var(--muted)">Sem cidades</span>';
+
+      updateSelCounts();
+      filterChecks('niche');
+      filterChecks('city');
     }
 
     function checked(cls) {
       return [...document.querySelectorAll('.' + cls + ':checked')].map(el => el.value);
+    }
+
+    function updateSelCounts() {
+      const nc = document.querySelectorAll('.niche:checked').length;
+      const cc = document.querySelectorAll('.city:checked').length;
+      const ne = document.getElementById('niche-count');
+      const ce = document.getElementById('city-count');
+      if (ne) ne.textContent = nc + ' selecionado(s)';
+      if (ce) ce.textContent = cc + ' selecionada(s)';
+    }
+
+    function filterChecks(kind) {
+      const inputId = kind === 'niche' ? 'niche-filter' : 'city-filter';
+      const boxId = kind === 'niche' ? 'niches' : 'cities';
+      const q = (document.getElementById(inputId)?.value || '').toLowerCase().trim();
+      const box = document.getElementById(boxId);
+      if (!box) return;
+      box.querySelectorAll('label[data-q]').forEach(lab => {
+        const hay = lab.getAttribute('data-q') || '';
+        lab.classList.toggle('hidden', !!(q && !hay.includes(q)));
+      });
+    }
+
+    function clearChecks(kind) {
+      const cls = kind === 'niche' ? 'niche' : 'city';
+      document.querySelectorAll('.' + cls).forEach(el => { el.checked = false; });
+      updateSelCounts();
+    }
+
+    function selectAll(kind, onlyVisible) {
+      const cls = kind === 'niche' ? 'niche' : 'city';
+      const boxId = kind === 'niche' ? 'niches' : 'cities';
+      const box = document.getElementById(boxId);
+      if (!box) return;
+      box.querySelectorAll('label').forEach(lab => {
+        if (onlyVisible && lab.classList.contains('hidden')) return;
+        const inp = lab.querySelector('input.' + cls);
+        if (inp) inp.checked = true;
+      });
+      updateSelCounts();
+    }
+
+    function clearAllSelections() {
+      clearChecks('niche');
+      clearChecks('city');
+      const nf = document.getElementById('niche-filter');
+      const cf = document.getElementById('city-filter');
+      if (nf) nf.value = '';
+      if (cf) cf.value = '';
+      filterChecks('niche');
+      filterChecks('city');
     }
 
     async function addMission() {

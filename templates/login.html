@@ -252,17 +252,26 @@
     .auth-foot b { color: #fff; }
 
     @media (max-width: 900px) {
-      .page { grid-template-columns: 1fr; }
+      .page { grid-template-columns: 1fr; min-height: 100dvh; }
       .pitch {
-        padding: 48px 28px 28px;
+        padding: 36px 20px 20px;
         border-right: none;
         border-bottom: 1px solid var(--border);
         max-width: none;
         margin: 0;
+        gap: 18px;
       }
-      .pitch h1 { font-size: 32px; }
-      .metrics { gap: 24px; }
-      .auth { padding: 28px 20px 48px; }
+      .pitch h1 { font-size: 28px; }
+      .pitch p { font-size: 15px; }
+      .metrics { gap: 16px; flex-wrap: wrap; }
+      .metrics div b { font-size: 22px; }
+      .auth {
+        padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0));
+        align-items: flex-start;
+      }
+      .auth-card { max-width: none; padding: 28px 20px 22px; }
+      input { font-size: 16px; min-height: 48px; }
+      .btn-enter { min-height: 50px; font-size: 15px; }
     }
   </style>
 </head>

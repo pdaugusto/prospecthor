@@ -1,19 +1,13 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-title ProspecTHOR Cockpit (com log)
+title ProspecTHOR Cockpit LOG
 echo.
-echo  Cockpit COM janela de log (so se precisar debugar)
-echo  http://127.0.0.1:5055
-echo  Pode minimizar esta janela — nao feche enquanto usar o painel.
+echo   Cockpit com log
+echo   http://127.0.0.1:5055
 echo.
-
 if exist "venv\Scripts\python.exe" (
-  set PY=venv\Scripts\python.exe
+  "venv\Scripts\python.exe" "cockpit\start.py"
 ) else (
-  set PY=python
+  python "cockpit\start.py"
 )
-
-start "" "http://127.0.0.1:5055"
-"%PY%" cockpit\app.py
-if errorlevel 1 pause
+pause

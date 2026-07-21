@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -85,19 +86,148 @@ def save_state(state: dict) -> None:
     _save_json(STATE_PATH, state)
 
 
-def append_log(msg: str, level: str = "INFO") -> None:
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+# linhas "úteis" do bot (não poluir com debug demais)
+_KEEP_HINTS = (
+    "▶",
+    "⏭",
+    "meta",
+    "lead",
+    "Lead",
+    "Fila",
+    "Plano",
+    "Sessão",
+    "job",
+    "bairro",
+    "OK ",
+    "ok:",
+    "ERRO",
+    "Error",
+    "Falha",
+    "encontr",
+    "sem site",
+    "Raio",
+    "score",
+    "Score",
+    "Inici",
+    "finaliz",
+    "parada",
+    "Bot ",
+    "pipeline",
+    "Pipeline",
+    "cota",
+    "Cota",
+    "revez",
+    "Missão",
+    "missao",
+    "+",
+)
+
+
+def _strip_ansi(s: str) -> str:
+    return _ANSI_RE.sub("", s or "").strip()
+
+
+def _line_level(line: str) -> str:
+    u = line.upper()
+    if "ERROR" in u or "ERRO" in u or "FALHA" in u or "TRACEBACK" in u:
+        return "ERROR"
+    if "WARN" in u or "⚠" in u:
+        return "WARN"
+    return "INFO"
+
+
+def _should_keep_bot_line(line: str) -> bool:
+    if not line or len(line) < 3:
+        return False
+    # sempre erros
+    if _line_level(line) == "ERROR":
+        return True
+    low = line.lower()
+    for h in _KEEP_HINTS:
+        if h.lower() in low:
+            return True
+    # contagem tipo "12 leads" / "session"
+    if re.search(r"\b\d+\s*leads?\b", low):
+        return True
+    return False
+
+
+def _parse_session_leads(line: str, current: int) -> int:
+    """Tenta extrair contagem de leads da sessão a partir do log do bot."""
+    # ex: leads_sessão=12/20  |  sessão 12/20  |  +3 leads ... (sessão 12
+    m = re.search(r"leads[_ ]sess[aã]o[=:\s]+(\d+)", line, re.I)
+    if m:
+        return max(current, int(m.group(1)))
+    m = re.search(r"sess[aã]o\s+(\d+)\s*/\s*\d+", line, re.I)
+    if m:
+        return max(current, int(m.group(1)))
+    m = re.search(r"\+(\d+)\s*leads?", line, re.I)
+    if m:
+        return current + int(m.group(1))
+    m = re.search(r"(\d+)\s*leads?\s*NOVOS", line, re.I)
+    if m:
+        return max(current, int(m.group(1)))
+    return current
+
+
+def append_log(msg: str, level: str = "INFO", *, from_bot: bool = False) -> None:
+    clean = _strip_ansi(str(msg))
+    if not clean:
+        return
+    if from_bot and not _should_keep_bot_line(clean):
+        return
     st = load_state()
     lines = list(st.get("log") or [])
-    lines.append({"t": _now(), "level": level, "msg": str(msg)[:500]})
-    st["log"] = lines[-80:]
-    st["message"] = str(msg)[:200]
+    # evita spam da mesma linha repetida
+    if lines and lines[-1].get("msg") == clean[:500]:
+        return
+    lines.append({"t": _now(), "level": level, "msg": clean[:500], "bot": bool(from_bot)})
+    st["log"] = lines[-250:]
+    if not from_bot:
+        st["message"] = clean[:200]
+    else:
+        leads = int(st.get("session_leads") or 0)
+        leads = _parse_session_leads(clean, leads)
+        st["session_leads"] = leads
+        if leads:
+            st["message"] = f"Rodando · {leads} leads na sessão"
     save_state(st)
-    try:
-        from src.bot_status import add_log
+    if not from_bot:
+        try:
+            from src.bot_status import add_log
 
-        add_log(f"[cockpit] {msg}", level=level)
-    except Exception:
-        pass
+            add_log(f"[cockpit] {clean}", level=level)
+        except Exception:
+            pass
+
+
+def _pump_bot_output(proc: subprocess.Popen) -> None:
+    """Lê stdout/stderr do bot e joga no log do cockpit ao vivo."""
+    def _reader(stream, label: str) -> None:
+        try:
+            for raw in iter(stream.readline, ""):
+                if raw is None:
+                    break
+                line = _strip_ansi(raw)
+                if not line:
+                    continue
+                # loguru: ".... | INFO | mensagem" → pega a mensagem se der
+                parts = re.split(r"\s\|\s", line, maxsplit=3)
+                msg = parts[-1] if len(parts) >= 3 else line
+                append_log(msg if len(parts) >= 3 else line, _line_level(line), from_bot=True)
+        except Exception as exc:
+            append_log(f"({label} pipe: {exc})", "WARN")
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    if proc.stdout:
+        threading.Thread(target=_reader, args=(proc.stdout, "out"), daemon=True).start()
+    if proc.stderr:
+        threading.Thread(target=_reader, args=(proc.stderr, "err"), daemon=True).start()
 
 
 def python_exe() -> str:
@@ -292,28 +422,61 @@ def _run_one_mission(mission: dict) -> int:
         creation = subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
 
     _proc = subprocess.Popen(
-        [python_exe(), str(ROOT / "main.py"), "run"],
+        [python_exe(), "-u", str(ROOT / "main.py"), "run"],
         cwd=str(ROOT),
         env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # junta tudo num stream
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
         creationflags=creation,
     )
     st = load_state()
     st["status"] = "rodando"
     st["pid"] = _proc.pid
     st["current_mission_id"] = mid
+    st["session_leads"] = 0
+    st["message"] = f"Rodando missão {mid}…"
     save_state(st)
+    _pump_bot_output(_proc)
 
     while _proc.poll() is None:
         if _stop_flag.is_set():
             append_log("Parada pedida — encerrando processo do bot", "WARN")
             _kill_proc()
             return -1
+        # sincroniza contagem com bot_runtime se existir
+        try:
+            from src.bot_status import get_status
+
+            bs = get_status() or {}
+            sess = bs.get("session_leads_count")
+            if sess is not None:
+                st = load_state()
+                st["session_leads"] = int(sess or 0)
+                if st.get("status") == "rodando":
+                    st["message"] = f"Rodando · {st['session_leads']} leads na sessão"
+                save_state(st)
+        except Exception:
+            pass
         time.sleep(1.0)
 
     code = _proc.returncode if _proc else -1
+    try:
+        # drena o que sobrou
+        if _proc and _proc.stdout:
+            rest = _proc.stdout.read()
+            if rest:
+                for line in rest.splitlines():
+                    append_log(line, _line_level(line), from_bot=True)
+    except Exception:
+        pass
     _proc = None
+    st = load_state()
+    leads = int(st.get("session_leads") or 0)
+    append_log(f"Missão {mid} terminou (code={code}) · leads sessão≈{leads}")
     return int(code if code is not None else -1)
 
 

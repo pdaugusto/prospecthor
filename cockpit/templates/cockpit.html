@@ -73,14 +73,21 @@
     .st.ok { color: var(--ok); }
     .st.erro, .st.parada { color: var(--danger); }
     .log {
-      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.45;
-      max-height: 220px; overflow: auto; color: var(--muted); background: #070b12;
+      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.5;
+      max-height: 340px; overflow: auto; color: var(--muted); background: #070b12;
       border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+      white-space: pre-wrap; word-break: break-word;
     }
     .log .e { color: var(--danger); }
     .log .w { color: var(--warn); }
+    .log .b { color: #9fdfff; }
     .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
     .msg { font-size: 13px; color: var(--neon); margin-bottom: 8px; min-height: 1.2em; }
+    .leads-big {
+      font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.03em;
+      margin: 4px 0 10px;
+    }
+    .leads-big span { color: var(--neon); text-shadow: 0 0 14px rgba(0,212,255,.35); }
   </style>
 </head>
 <body>
@@ -120,6 +127,7 @@
       <section class="card">
         <h2>Controles</h2>
         <p class="msg" id="msg">—</p>
+        <div class="leads-big">Leads sessão: <span id="sess-leads">0</span></div>
         <div class="row">
           <button type="button" class="btn-run" id="btn-run" onclick="runQueue()">▶ Rodar fila</button>
           <button type="button" class="btn-stop" onclick="stopBot()">■ Parar</button>
@@ -151,7 +159,8 @@
           </table>
         </div>
 
-        <h2 style="margin-top:16px;">Log</h2>
+        <h2 style="margin-top:16px;">Log do bot (ao vivo)</h2>
+        <p class="hint" style="margin-top:0;margin-bottom:8px;">Mesma ideia do CMD antigo — jobs, bairros e contagem de leads.</p>
         <div class="log" id="log"></div>
       </section>
     </div>
@@ -286,10 +295,16 @@
     function renderLog(lines) {
       const el = document.getElementById('log');
       const arr = [...(lines || [])].reverse();
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
       el.innerHTML = arr.map(l => {
-        const cls = l.level === 'ERROR' ? 'e' : (l.level === 'WARN' ? 'w' : '');
+        let cls = l.level === 'ERROR' ? 'e' : (l.level === 'WARN' ? 'w' : '');
+        if (l.bot) cls = (cls + ' b').trim();
         return `<div class="${cls}">[${esc((l.t||'').slice(11,19))}] ${esc(l.msg)}</div>`;
-      }).join('') || '<div>Sem logs ainda</div>';
+      }).join('') || '<div>Sem logs ainda — aperte ▶ Rodar fila</div>';
+      // mantém no topo (mais recente) se usuario ja estava no topo
+      if (atBottom || el.dataset.stick !== '1') {
+        el.scrollTop = 0;
+      }
     }
 
     async function refresh() {
@@ -298,6 +313,8 @@
         const st = data.state || {};
         const bot = data.bot || {};
         document.getElementById('msg').textContent = st.message || '—';
+        const sess = st.session_leads != null ? st.session_leads : (bot.session_leads_count || 0);
+        document.getElementById('sess-leads').textContent = String(sess || 0);
         const pill = document.getElementById('pill-status');
         pill.textContent = 'cockpit: ' + (st.status || '—');
         pill.className = 'pill' + (st.status === 'rodando' ? ' run' : (st.status === 'parado' ? '' : ''));
@@ -316,7 +333,7 @@
     }
 
     loadCatalog().then(refresh);
-    setInterval(refresh, 3000);
+    setInterval(refresh, 1500);
   </script>
 </body>
 </html>

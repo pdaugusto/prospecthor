@@ -390,10 +390,10 @@ class LeadScorer:
         is_foodtruck = self._looks_like_foodtruck(company)
         # "Lanche"/carrinho classificado como restaurante → trata como food truck
         if is_foodtruck:
-            cap = 22
+            cap = 12
             problems.append(
-                "Parece food truck/carrinho/lanche (+baixa capacidade) — "
-                "não é restaurante de salão"
+                "Parece food truck/carrinho/lanche — ticket baixo de site "
+                "(não é restaurante de salão)"
             )
             services.append("Cardápio digital / Instagram (ticket baixo de site)")
         elif niche in self._NICHES_S:
@@ -504,6 +504,10 @@ class LeadScorer:
         if not has_mobile and not has_landline and score > 58:
             problems.append(f"Teto 58 sem telefone (era {score})")
             score = 58
+        # food truck/carrinho: raramente fecha site "completo" → teto
+        if is_foodtruck and score > 62:
+            problems.append(f"Teto 62 food truck/carrinho (era {score})")
+            score = 62
 
         # ── Classificação ────────────────────────────────────────────────
         if no_website:

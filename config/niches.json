@@ -67,6 +67,14 @@
       "description": "Materiais de construção e reformas"
     },
     {
+      "id": "construtora",
+      "label": "Construtoras",
+      "query_term": "construtora incorporadora obras",
+      "check_menu": false,
+      "priority_multiplier": 1.35,
+      "description": "Construtoras e incorporadoras — alto ticket digital"
+    },
+    {
       "id": "contabilidade",
       "label": "Contabilidade",
       "query_term": "escritório de contabilidade contador",
@@ -141,7 +149,7 @@
     {
       "id": "imobiliaria",
       "label": "Imobiliária",
-      "query_term": "imobiliária corretor de imóveis",
+      "query_term": "imobiliária corretor de imóveis corretora",
       "check_menu": false,
       "priority_multiplier": 1.35,
       "description": "Imobiliárias e corretores locais"
@@ -177,6 +185,14 @@
       "check_menu": false,
       "priority_multiplier": 1.2,
       "description": "Empresas de limpeza e conservação"
+    },
+    {
+      "id": "mentores_palestrantes",
+      "label": "Mentores / Palestrantes",
+      "query_term": "mentor palestrante coach palestras mentoria",
+      "check_menu": false,
+      "priority_multiplier": 1.3,
+      "description": "Mentores, coaches e palestrantes — site e captura de leads"
     },
     {
       "id": "moveis",

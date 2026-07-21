@@ -259,12 +259,13 @@ class LeadScorer:
     _NICHES_ALTO = {
         "odontologia", "advocacia", "clinica_medica", "clinica", "estetica",
         "contabilidade", "imobiliaria", "arquitetura", "fisioterapia", "psicologia",
+        "construtora",
     }
     _NICHES_MEDIO = {
         "comercio", "restaurante", "pet", "oficina", "academia", "farmacia",
         "padaria", "otica", "moveis", "informatica", "evento", "seguranca",
         "limpeza", "eletrica", "construcao", "hotel", "salao_barbearia", "lavanderia",
-        "fotografia", "joalheria", "escola", "acaiteria",
+        "fotografia", "joalheria", "escola", "acaiteria", "mentores_palestrantes",
     }
 
     @staticmethod

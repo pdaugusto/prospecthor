@@ -272,11 +272,33 @@ class LeadScorer:
         "fotografia", "manicure", "lava_rapido",
     }
     _NICHES_C = {
-        "lavanderia",
+        "lavanderia", "foodtruck",
     }
+    # Nome/categoria que indicam carrinho/food truck (não restaurante de salão)
+    _FOODTRUCK_MARKERS = (
+        "food truck", "foodtruck", "food-truck",
+        "carrinho", "trailer", "ambulante",
+        "hot dog", "hotdog", "cachorro quente", "dogão", "dogao",
+        "lanche", "lanches", "lanchinho",
+        "pastel ", "pastelaria", "churros",
+        "quiosque de", "barraca de",
+        "trailer de", "kombi", "food bike", "foodbike",
+    )
     # compat aliases antigos
     _NICHES_ALTO = _NICHES_S
     _NICHES_MEDIO = _NICHES_A | _NICHES_B
+
+    @classmethod
+    def _looks_like_foodtruck(cls, company: dict[str, Any]) -> bool:
+        """True se parece food truck/carrinho/lanche de rua — não restaurante de mesa."""
+        niche = (company.get("niche") or "").strip().lower()
+        if niche in ("foodtruck", "food_truck"):
+            return True
+        blob = " ".join(
+            str(company.get(k) or "")
+            for k in ("name", "category", "address")
+        ).lower()
+        return any(m in blob for m in cls._FOODTRUCK_MARKERS)
 
     @staticmethod
     def _phone_digits(phone: Any) -> str:
@@ -365,7 +387,16 @@ class LeadScorer:
 
         # ── B) Capacidade / nicho 0–100 ──────────────────────────────────
         niche = (company.get("niche") or "").strip().lower()
-        if niche in self._NICHES_S:
+        is_foodtruck = self._looks_like_foodtruck(company)
+        # "Lanche"/carrinho classificado como restaurante → trata como food truck
+        if is_foodtruck:
+            cap = 22
+            problems.append(
+                "Parece food truck/carrinho/lanche (+baixa capacidade) — "
+                "não é restaurante de salão"
+            )
+            services.append("Cardápio digital / Instagram (ticket baixo de site)")
+        elif niche in self._NICHES_S:
             cap = 92
             problems.append(f"Nicho S — alta propensão/ticket ({niche})")
             services.append("Site + agenda / captura de leads")

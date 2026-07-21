@@ -277,10 +277,18 @@
     {
       "id": "restaurante",
       "label": "Restaurante",
-      "query_term": "restaurante lanchonete delivery comida",
+      "query_term": "restaurante churrascaria self service bistrô",
       "check_menu": true,
       "priority_multiplier": 1.2,
-      "description": "Restaurantes, lanchonetes e food service local"
+      "description": "Restaurantes estabelecidos (não carrinho/food truck)"
+    },
+    {
+      "id": "foodtruck",
+      "label": "Food truck / Carrinho / Lanche",
+      "query_term": "food truck carrinho de lanche hot dog pastel",
+      "check_menu": true,
+      "priority_multiplier": 1.0,
+      "description": "Food trucks, carrinhos e lanches ambulantes — ticket baixo de site"
     },
     {
       "id": "seguradora",

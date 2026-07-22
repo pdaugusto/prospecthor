@@ -1325,6 +1325,172 @@
         .orders-empty strong { display: block; font-size: 14px; margin-bottom: 6px; }
         .orders-empty p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.45; }
         #orders-host-panel .orders-panel-head { margin-bottom: 4px; }
+
+        /* —— Admin / Reports SaaS —— */
+        .admin-page, .reports-page {
+            display: flex; flex-direction: column; gap: 16px;
+            max-width: 1100px;
+        }
+        .admin-hero {
+            display: flex; flex-wrap: wrap; justify-content: space-between;
+            align-items: flex-end; gap: 14px;
+            padding: 22px 24px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background:
+                radial-gradient(ellipse 50% 80% at 0% 0%, rgba(0,212,255,0.12), transparent 55%),
+                linear-gradient(145deg, #0e131c, #080a10);
+        }
+        .admin-kicker {
+            font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--neon); margin-bottom: 8px;
+        }
+        .admin-hero h2 {
+            margin: 0; font-size: clamp(22px, 3vw, 28px); font-weight: 900;
+            letter-spacing: -0.035em;
+        }
+        .admin-hero p {
+            margin: 8px 0 0; font-size: 13px; color: var(--muted);
+            max-width: 520px; line-height: 1.5;
+        }
+        .admin-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .admin-grid-2 {
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px;
+        }
+        @media (max-width: 900px) {
+            .admin-grid-2 { grid-template-columns: 1fr; }
+        }
+        .admin-card {
+            padding: 18px 18px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(165deg, #101621, #0a0e16);
+        }
+        .admin-card h3 {
+            margin: 0 0 6px; font-size: 15px; font-weight: 800;
+        }
+        .admin-card-sub {
+            margin: 0 0 14px; font-size: 12px; color: var(--muted); line-height: 1.45;
+        }
+        .admin-form-row {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .admin-form-row input,
+        .admin-form-row select,
+        .report-period-select {
+            padding: 10px 12px; border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.35); color: var(--text);
+            font-size: 13px; font-family: inherit;
+            min-width: 0;
+        }
+        .admin-form-row input { flex: 1; min-width: 110px; }
+        .admin-tips ul {
+            margin: 10px 0 0; padding-left: 0; list-style: none;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .admin-tips li {
+            font-size: 12px; color: var(--muted); line-height: 1.45;
+            padding-left: 12px; border-left: 2px solid rgba(0,212,255,0.25);
+        }
+        .admin-tips strong { color: var(--text); }
+        .admin-table-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .admin-table-head h3 { margin: 0; font-size: 14px; }
+        .admin-table th {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+            color: var(--muted); font-weight: 700;
+        }
+        .admin-hint {
+            font-size: 12px; color: var(--muted);
+            padding: 10px 16px 14px; margin: 0;
+        }
+        .bot-status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 1000px) {
+            .bot-status-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 520px) {
+            .bot-status-grid { grid-template-columns: 1fr; }
+        }
+        .bot-status-card {
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(165deg, #101621, #0a0e16);
+        }
+        .bot-status-card.live {
+            border-color: rgba(0,212,255,0.28);
+            background:
+                radial-gradient(ellipse 80% 60% at 0% 0%, rgba(0,212,255,0.12), transparent 55%),
+                linear-gradient(165deg, #101621, #0a0e16);
+        }
+        .bot-status-card.live.running {
+            border-color: rgba(52,211,153,0.4);
+            box-shadow: 0 0 24px rgba(52,211,153,0.08);
+        }
+        .bot-status-label {
+            font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+        }
+        .bot-status-value {
+            font-size: 26px; font-weight: 900; letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+        .bot-status-value.sm { font-size: 15px; font-weight: 800; }
+        .bot-status-meta {
+            margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.4;
+        }
+        .bot-progress {
+            height: 6px; border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden; margin-top: 10px;
+        }
+        .bot-progress > i {
+            display: block; height: 100%; border-radius: inherit;
+            background: linear-gradient(90deg, #00d4ff, #34d399);
+            transition: width .35s ease;
+        }
+        .bot-checklist {
+            list-style: none; margin: 10px 0 0; padding: 0;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .bot-checklist li {
+            font-size: 12px; color: var(--muted); line-height: 1.45;
+            padding-left: 10px; border-left: 2px solid rgba(0,212,255,0.2);
+        }
+        .bot-checklist strong { color: var(--text); }
+        .bot-kv {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-top: 8px;
+        }
+        .bot-kv div {
+            padding: 10px 12px; border-radius: 10px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .bot-kv span {
+            display: block; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--muted); margin-bottom: 4px;
+        }
+        .bot-kv b { font-size: 12px; font-weight: 700; color: var(--text); word-break: break-word; }
+        .bot-logs {
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 12px; line-height: 1.55; color: var(--muted);
+            max-height: 380px; overflow: auto;
+            padding: 4px 2px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.04);
+            padding: 12px 14px;
+        }
+        .reports-stats .stat { min-height: 110px; }
         .pkg-card__bottom {
             margin-top: auto;
             padding: 16px 20px 18px;
@@ -2874,143 +3040,171 @@
 
         <!-- USERS (Patrão only) -->
         <section id="view-users" class="view">
-            <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
-                <h3 style="margin-bottom:8px;color:var(--neon);">Controle de usuários (Patrão)</h3>
-                <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
-                    <strong style="color:var(--text);">Sua tela (Home/Leads) = só SOBRAS</strong> (leads livres, sem dono) — pra você encaminhar.<br>
-                    Use o filtro <em>Todos</em> ou <em>Por usuário</em> se precisar inspecionar a carteira de alguém.<br>
-                    <strong>Cota 0</strong> = para de receber leads <em>novos</em> do bot (os que já tem continuam com ele).<br>
-                    <strong>Zerar mês</strong> = contagem do mês volta a 0; leads não somem.<br>
-                    <strong>+Trovoedas</strong> = credita moedas SaaS (1 Trovoeda = 1 lead no futuro; por agora só saldo).<br>
-                    <strong>Remover</strong> = apaga a conta; leads dele voltam pro pool de sobras.
-                </p>
-                <h3 style="margin-bottom:12px;font-size:14px;">Novo cliente</h3>
-                <div class="filters" style="margin:0;flex-wrap:wrap;">
-                    <input type="text" id="new-user-name" placeholder="login" style="min-width:120px;">
-                    <input type="password" id="new-user-pass" placeholder="senha" style="min-width:120px;">
-                    <input type="text" id="new-user-label" placeholder="nome exibido" style="min-width:140px;">
-                    <input type="number" id="new-user-quota" placeholder="cota/mês" value="50" style="width:100px;">
-                    <button class="btn btn-primary" type="button" onclick="createUser()">Criar cliente</button>
+            <div class="admin-page">
+                <div class="admin-hero">
+                    <div>
+                        <div class="admin-kicker">Admin · Host</div>
+                        <h2>Clientes &amp; Trovoedas</h2>
+                        <p>Gerencie contas, saldos e quem recebe leads. Sua home mostra sobras; aqui você controla o time.</p>
+                    </div>
+                </div>
+
+                <div class="admin-grid-2">
+                    <div class="admin-card">
+                        <h3>Novo cliente</h3>
+                        <p class="admin-card-sub">Cria login SaaS com cota opcional (legado bot) e saldo em Trovoedas via bônus depois.</p>
+                        <div class="admin-form-row">
+                            <input type="text" id="new-user-name" placeholder="Login" autocomplete="off">
+                            <input type="password" id="new-user-pass" placeholder="Senha">
+                            <input type="text" id="new-user-label" placeholder="Nome exibido">
+                            <input type="number" id="new-user-quota" placeholder="Cota/mês" value="0" title="0 = só Trovoedas / pedidos">
+                            <button class="btn btn-primary" type="button" onclick="createUser()">Criar</button>
+                        </div>
+                    </div>
+                    <div class="admin-card admin-tips">
+                        <h3>Atalhos</h3>
+                        <ul>
+                            <li><strong>Cota 0</strong> — não entra na distribuição automática do bot</li>
+                            <li><strong>+Trovoedas</strong> — credita moedas SaaS (1 = 1 lead)</li>
+                            <li><strong>Remover</strong> — conta some; leads voltam pro pool</li>
+                            <li><strong>Impersonate</strong> — vê o painel como o cliente</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="admin-card" style="padding:0;overflow:hidden;">
+                    <div class="admin-table-head">
+                        <h3>Equipe</h3>
+                        <button class="btn btn-sm" type="button" onclick="loadUsers()">Atualizar</button>
+                    </div>
+                    <div class="table-wrap" style="border:none;border-radius:0;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Recebe leads</th>
+                                    <th>Login</th>
+                                    <th>Nome</th>
+                                    <th>Papel</th>
+                                    <th>Cota/mês</th>
+                                    <th><img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" /> Trovoedas</th>
+                                    <th>Recebidos</th>
+                                    <th style="min-width:280px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody"></tbody>
+                        </table>
+                    </div>
+                    <p id="users-hint" class="admin-hint"></p>
                 </div>
             </div>
-            <div class="table-wrap" style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th title="Só controla se recebe leads do bot/distribuição — não desliga o login">Recebe leads</th>
-                            <th>Login</th>
-                            <th>Nome</th>
-                            <th>Papel</th>
-                            <th title="Legado bot / distribuição">Cota/mês</th>
-                            <th title="Saldo SaaS (compras + bônus)"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" /> Trovoedas</th>
-                            <th>Recebidos</th>
-                            <th style="min-width:320px;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="users-tbody"></tbody>
-                </table>
-            </div>
-            <p id="users-hint" style="font-size:12px;color:var(--muted);margin-top:10px;"></p>
         </section>
 
-        <!-- AUDIT (Patrão) -->
         <section id="view-audit" class="view">
-            <div class="panel" style="margin-bottom:14px;">
-                <h3 style="margin-bottom:10px;">Filtros</h3>
-                <div class="filters" style="margin:0;">
-                    <input type="text" id="audit-user" placeholder="Usuário" style="min-width:120px;">
-                    <input type="text" id="audit-action" placeholder="Ação (ex: status_contactado)" style="min-width:160px;">
-                    <input type="date" id="audit-since" style="min-width:140px;">
-                    <input type="date" id="audit-until" style="min-width:140px;">
-                    <button class="btn btn-primary" type="button" onclick="loadAudit()">Filtrar</button>
+            <div class="admin-page">
+                <div class="admin-hero">
+                    <div>
+                        <div class="admin-kicker">Admin · Host</div>
+                        <h2>Auditoria</h2>
+                        <p>Histórico de ações no sistema — quem fez o quê, em qual lead, e quando.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="table-wrap" style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data/Hora</th>
-                            <th>Usuário</th>
-                            <th>Ação</th>
-                            <th>Lead / Empresa</th>
-                            <th>Detalhes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="audit-tbody"></tbody>
-                </table>
+                <div class="admin-card">
+                    <h3>Filtros</h3>
+                    <div class="admin-form-row">
+                        <input type="text" id="audit-user" placeholder="Usuário">
+                        <input type="text" id="audit-action" placeholder="Ação (ex: order_approve)">
+                        <input type="date" id="audit-since">
+                        <input type="date" id="audit-until">
+                        <button class="btn btn-primary" type="button" onclick="loadAudit()">Filtrar</button>
+                    </div>
+                </div>
+                <div class="admin-card" style="padding:0;overflow:hidden;">
+                    <div class="table-wrap" style="border:none;border-radius:0;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Usuário</th>
+                                    <th>Ação</th>
+                                    <th>Lead / Empresa</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- BOT STATUS (Patrão) -->
         <section id="view-bot" class="view">
-            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-bottom:12px;">
-                <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar status</button>
-                <button class="btn btn-danger btn-sm" type="button" id="btn-bot-force-stop" onclick="forceBotStop()">Marcar como parado</button>
-            </div>
-            <div class="stats" style="margin-bottom:14px;">
-                <div class="stat neon"><h3>Status</h3><div class="value" id="bot-status-label" style="font-size:22px;">--</div></div>
-                <div class="stat"><h3>Última execução</h3><div class="value" id="bot-last-run" style="font-size:14px;">--</div></div>
-                <div class="stat"><h3>Leads última sessão</h3><div class="value" id="bot-last-leads">--</div></div>
-                <div class="stat"><h3>Job atual / último</h3><div class="value" id="bot-last-job" style="font-size:13px;">--</div></div>
-            </div>
-            <p id="bot-status-hint" style="font-size:12px;color:var(--muted);margin:-6px 0 14px;"></p>
+            <div class="admin-page">
+                <div class="admin-hero">
+                    <div>
+                        <div class="admin-kicker">Operação · Cockpit</div>
+                        <h2>Status do robô</h2>
+                        <p>Missões e planos rodam no <strong style="color:var(--text)">Cockpit local</strong>. Aqui você acompanha se está rodando, o progresso da meta e os logs — sem marcar nicho/cidade no painel.</p>
+                    </div>
+                    <div class="admin-hero-actions">
+                        <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar</button>
+                        <button class="btn btn-danger btn-sm" type="button" id="btn-bot-force-stop" onclick="forceBotStop()">Marcar parado</button>
+                    </div>
+                </div>
 
-            <div class="panel" style="margin-bottom:14px;border-color:var(--neon);">
-                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                    <h3 style="margin:0;color:var(--neon);">Plano de busca (sem editar código)</h3>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button class="btn btn-sm" type="button" onclick="loadBotPlan()">Recarregar</button>
-                        <button class="btn btn-primary" type="button" id="btn-save-bot-plan" onclick="saveBotPlan()">Salvar plano</button>
+                <div class="bot-status-grid" id="bot-status-grid">
+                    <div class="bot-status-card live" id="bot-card-live">
+                        <div class="bot-status-label">Estado agora</div>
+                        <div class="bot-status-value" id="bot-status-label">—</div>
+                        <div class="bot-status-meta" id="bot-status-hint">Carregando…</div>
+                    </div>
+                    <div class="bot-status-card">
+                        <div class="bot-status-label">Progresso da meta</div>
+                        <div class="bot-status-value sm" id="bot-meta-progress">—</div>
+                        <div class="bot-progress"><i id="bot-meta-bar" style="width:0%"></i></div>
+                        <div class="bot-status-meta" id="bot-meta-detail">Meta da missão atual</div>
+                    </div>
+                    <div class="bot-status-card">
+                        <div class="bot-status-label">Última execução</div>
+                        <div class="bot-status-value sm" id="bot-last-run">—</div>
+                        <div class="bot-status-meta" id="bot-last-job">Job: —</div>
+                    </div>
+                    <div class="bot-status-card">
+                        <div class="bot-status-label">Leads da sessão</div>
+                        <div class="bot-status-value" id="bot-last-leads">—</div>
+                        <div class="bot-status-meta">Contagem compartilhada Maps + Fonte B</div>
                     </div>
                 </div>
-                <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
-                    Escolha <strong style="color:var(--text);">quantos leads</strong>, <strong style="color:var(--text);">cidades</strong> e <strong style="color:var(--text);">nichos</strong>.
-                    O bot local lê isso ao rodar (<code>python main.py run</code>) e para ao bater a meta.
-                    Sem cidades marcadas = usa as ativas do arquivo (legado).
-                </p>
-                <div class="filters" style="margin:0 0 14px;flex-wrap:wrap;align-items:flex-end;">
-                    <div>
-                        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Meta de leads nesta sessão</label>
-                        <input type="number" id="bot-plan-target" min="0" value="20" style="width:120px;" title="0 = sem limite">
-                    </div>
-                    <div style="flex:1;min-width:180px;">
-                        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Nota (opcional)</label>
-                        <input type="text" id="bot-plan-notes" placeholder="Ex: 20 pro Fafa — Campinas + Santos" style="width:100%;">
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                    <div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <h3 style="margin:0;font-size:14px;">Nichos</h3>
-                            <span>
-                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('niche', true)">Todos</button>
-                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('niche', false)">Nenhum</button>
-                            </span>
-                        </div>
-                        <div id="bot-plan-niches" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto;padding:4px;"></div>
-                    </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <h3 style="margin:0;font-size:14px;">Cidades</h3>
-                            <span>
-                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('city', true)">Todas</button>
-                                <button class="btn btn-sm" type="button" onclick="botPlanToggleAll('city', false)">Nenhuma</button>
-                            </span>
-                        </div>
-                        <input type="search" id="bot-plan-city-filter" placeholder="Filtrar cidade..." style="width:100%;margin-bottom:8px;" oninput="filterBotPlanCities()">
-                        <div id="bot-plan-cities" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow:auto;padding:4px;"></div>
-                    </div>
-                </div>
-                <p id="bot-plan-meta" style="font-size:12px;color:var(--muted);margin-top:12px;"></p>
-            </div>
 
-            <div class="panel">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <h3>Últimos logs</h3>
-                    <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar</button>
+                <div class="admin-grid-2">
+                    <div class="admin-card">
+                        <h3>O que monitorar</h3>
+                        <ul class="bot-checklist">
+                            <li><strong>Rodando</strong> — heartbeat atualiza; se travar &gt;20 min, auto-corrige</li>
+                            <li><strong>Meta</strong> — session_leads / mission_target</li>
+                            <li><strong>Job</strong> — etapa atual (Maps, score, META_OK…)</li>
+                            <li><strong>Cockpit</strong> — cria e enfileira missões no PC local</li>
+                        </ul>
+                        <p class="admin-hint" style="margin-top:12px;">Plano de nichos/cidades: use o Cockpit. Este painel é o radar de produtividade.</p>
+                    </div>
+                    <div class="admin-card">
+                        <h3>Resumo rápido</h3>
+                        <div class="bot-kv" id="bot-kv">
+                            <div><span>Iniciou</span><b id="bot-started">—</b></div>
+                            <div><span>Terminou</span><b id="bot-finished">—</b></div>
+                            <div><span>Heartbeat</span><b id="bot-updated">—</b></div>
+                            <div><span>Stale</span><b id="bot-stale">—</b></div>
+                        </div>
+                        <div id="bot-error" style="color:var(--danger);font-size:13px;margin-top:12px;"></div>
+                    </div>
                 </div>
-                <div id="bot-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;"></div>
-                <div id="bot-logs" style="font-family:Consolas,monospace;font-size:12px;line-height:1.55;color:var(--muted);max-height:420px;overflow:auto;"></div>
+
+                <div class="admin-card">
+                    <div class="admin-table-head">
+                        <h3>Logs ao vivo</h3>
+                        <button class="btn btn-sm" type="button" onclick="loadBotStatus()">Atualizar logs</button>
+                    </div>
+                    <div id="bot-logs" class="bot-logs">Carregando…</div>
+                </div>
             </div>
         </section>
 
@@ -3028,36 +3222,36 @@
                         <input type="text" id="edit-user-username">
                     </div>
                     <div class="form-g">
-                        <label>Nome exibido (é isso que muda na coluna Nome)</label>
-                        <input type="text" id="edit-user-label" placeholder="Ex: João, Amigo, etc.">
+                        <label>Nome exibido</label>
+                        <input type="text" id="edit-user-label" placeholder="Ex: João">
                     </div>
                     <div class="form-g">
                         <label>Papel</label>
                         <select id="edit-user-role">
-                            <option value="client">Cliente (só leads dele)</option>
+                            <option value="client">Cliente</option>
                             <option value="admin" disabled>Admin (só Patrão)</option>
                         </select>
                     </div>
                     <div class="form-g">
-                        <label>Cota mensal (0 = não recebe mais do bot)</label>
+                        <label>Cota mensal (0 = só Trovoedas/pedidos)</label>
                         <input type="number" id="edit-user-quota" min="0">
                     </div>
                     <div class="form-g">
-                        <label>Nova senha (deixe vazio para não mudar)</label>
+                        <label>Nova senha (vazio = não muda)</label>
                         <input type="password" id="edit-user-pass" placeholder="••••••••">
                     </div>
                     <div class="form-g">
                         <label>Recebe leads do bot</label>
                         <select id="edit-user-active">
-                            <option value="1">Sim (entra na distribuição)</option>
-                            <option value="0">Não (login ok, sem leads novos)</option>
+                            <option value="1">Sim</option>
+                            <option value="0">Não</option>
                         </select>
                     </div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
                         <button class="btn btn-primary" onclick="saveUserEdit()">Salvar</button>
-                        <button class="btn" onclick="zeroUserQuota()">Zerar cota (0)</button>
+                        <button class="btn" onclick="zeroUserQuota()">Zerar cota</button>
                         <button class="btn" onclick="resetUserMonth()">Zerar uso do mês</button>
-                        <button class="btn btn-danger" onclick="deleteUserFromEdit()">Remover usuário</button>
+                        <button class="btn btn-danger" onclick="deleteUserFromEdit()">Remover</button>
                     </div>
                 </div>
             </div>
@@ -3105,7 +3299,7 @@
                             <th onclick="sortBy('name')">Empresa</th>
                             <th onclick="sortBy('city')">Cidade</th>
                             <th onclick="sortBy('phone')">Telefone</th>
-                            <th onclick="sortBy('lead_score')" title="Oportunidade 0–100 (blocos ponderados: dor 32% + capacidade 30% + visibilidade 23% + contato 15%) · 90+ ouro · 71–89 roxo · 51–70 verde · 0–50 cinza">Score <span style="font-weight:500;color:var(--muted);font-size:10px;">/100</span></th>
+                            <th onclick="sortBy('lead_score')" title="Score 0–100">Score <span style="font-weight:500;color:var(--muted);font-size:10px;">/100</span></th>
                             <th onclick="sortBy('status')">Status</th>
                             <th>Ações</th>
                         </tr>
@@ -3117,7 +3311,6 @@
             <div class="pagination" id="leads-pagination"></div>
         </section>
 
-        <!-- DETAIL -->
         <section id="view-lead-detail" class="view">
             <div style="margin-bottom:14px;">
                 <button class="btn" onclick="navigateTo('/leads')">← Voltar</button>
@@ -3125,32 +3318,65 @@
             <div id="lead-detail-wrapper" class="detail-grid"></div>
         </section>
 
-        <!-- REPORTS -->
         <section id="view-reports" class="view">
-            <div class="filters">
-                <select id="report-period" onchange="loadReports()">
-                    <option value="daily">Hoje</option>
-                    <option value="weekly" selected>7 dias</option>
-                    <option value="monthly">30 dias</option>
-                </select>
-            </div>
-            <div class="stats">
-                <div class="stat neon"><h3>Leads no período</h3><div class="value" id="report-total">--</div></div>
-                <div class="stat"><h3>% novos / total</h3><div class="value" id="report-rate">--</div></div>
-                <div class="stat ok"><h3>Conversão</h3><div class="value" id="report-conv">--</div></div>
-                <div class="stat warn"><h3>Contactados</h3><div class="value" id="report-contact">--</div></div>
-            </div>
-            <div class="charts">
-                <div class="panel">
-                    <h3>Distribuição</h3>
-                    <div class="chart-box"><canvas id="chart-report"></canvas></div>
+            <div class="reports-page">
+                <div class="admin-hero">
+                    <div>
+                        <div class="admin-kicker">Insights</div>
+                        <h2>Relatórios</h2>
+                        <p id="reports-sub">Performance da sua carteira de leads no período selecionado.</p>
+                    </div>
+                    <div class="admin-hero-actions">
+                        <select id="report-period" onchange="loadReports()" class="report-period-select">
+                            <option value="daily">Hoje</option>
+                            <option value="weekly" selected>7 dias</option>
+                            <option value="monthly">30 dias</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="panel">
-                    <h3>Problemas comuns</h3>
-                    <div class="chart-box"><canvas id="chart-problems"></canvas></div>
+
+                <div class="stats reports-stats">
+                    <div class="stat neon">
+                        <div class="stat-top"><h3>Leads no período</h3></div>
+                        <div class="value" id="report-total">—</div>
+                        <div class="stat-meta">Entraram na sua lista</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-top"><h3>Novos</h3></div>
+                        <div class="value" id="report-novos">—</div>
+                        <div class="stat-meta" id="report-rate">— do total</div>
+                    </div>
+                    <div class="stat warn">
+                        <div class="stat-top"><h3>Contactados</h3></div>
+                        <div class="value" id="report-contact">—</div>
+                        <div class="stat-meta">Com follow-up registrado</div>
+                    </div>
+                    <div class="stat ok">
+                        <div class="stat-top"><h3>Conversão</h3></div>
+                        <div class="value" id="report-conv">—</div>
+                        <div class="stat-meta">Sobre contactados</div>
+                    </div>
+                </div>
+
+                <div class="charts">
+                    <div class="panel">
+                        <h3>Funil do período</h3>
+                        <div class="chart-box"><canvas id="chart-report"></canvas></div>
+                    </div>
+                    <div class="panel">
+                        <h3>Sinais / problemas</h3>
+                        <div class="chart-box"><canvas id="chart-problems"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="admin-card" id="reports-empty-hint" style="display:none;">
+                    <h3>Sem dados neste período</h3>
+                    <p class="admin-card-sub">Peça leads ou aborde a carteira — os gráficos enchem conforme você usa o painel.</p>
+                    <button type="button" class="btn btn-primary" onclick="navigateTo('/orders')">Pedir leads</button>
                 </div>
             </div>
         </section>
+
     </main>
 
     <!-- Distribuir sobra (Patrão) -->
@@ -3976,9 +4202,8 @@
                 homeLoadSeq++;
                 document.getElementById('view-bot').classList.add('active');
                 document.getElementById('nav-bot').classList.add('active');
-                setPageMeta('Status do Robô', 'Plano de busca, meta de leads e logs da sessão.');
+                setPageMeta('Robô', 'Status da missão, meta e logs · planos no Cockpit');
                 loadBotStatus();
-                loadBotPlan();
             } else {
                 navigateTo('/');
             }
@@ -4984,52 +5209,112 @@
         }
 
         async function loadBotStatus() {
+            const fmt = (v) => {
+                if (!v) return '—';
+                return String(v).replace('T', ' ').slice(0, 19);
+            };
             try {
-                const res = await fetch('/api/bot-status?_=' + Date.now());
+                const res = await fetch('/api/bot-status?_=' + Date.now(), {
+                    cache: 'no-store', credentials: 'same-origin',
+                });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const st = await res.json();
                 const status = (st.status || 'desconhecido').toLowerCase();
                 const el = document.getElementById('bot-status-label');
-                el.textContent = status.toUpperCase();
-                el.style.color = status === 'rodando' ? 'var(--neon)'
-                    : status === 'erro' ? 'var(--danger)' : 'var(--text)';
-                const last = st.last_finished_at || st.last_started_at || st.updated_at || '—';
-                document.getElementById('bot-last-run').textContent =
-                    String(last).replace('T', ' ').slice(0, 19);
-                document.getElementById('bot-last-leads').textContent =
-                    st.last_leads_count != null ? st.last_leads_count
-                        : (st.session_leads_count != null ? st.session_leads_count : '—');
-                document.getElementById('bot-last-job').textContent = st.last_job || '—';
-                document.getElementById('bot-error').textContent = st.last_error
-                    ? ('Erro: ' + st.last_error) : '';
+                const cardLive = document.getElementById('bot-card-live');
+                if (el) {
+                    el.textContent = status === 'rodando' ? 'RODANDO'
+                        : status === 'parado' ? 'PARADO'
+                        : status === 'erro' ? 'ERRO'
+                        : status.toUpperCase();
+                    el.style.color = status === 'rodando' ? '#34d399'
+                        : status === 'erro' ? 'var(--danger)' : 'var(--text)';
+                }
+                if (cardLive) cardLive.classList.toggle('running', status === 'rodando');
+
+                const session = Number(st.session_leads_count);
+                const lastLeads = Number(st.last_leads_count);
+                const tgt = Number(st.mission_target) || 0;
+                const got = Number.isFinite(session) ? session
+                    : (Number.isFinite(lastLeads) ? lastLeads : 0);
+                const leadsEl = document.getElementById('bot-last-leads');
+                if (leadsEl) leadsEl.textContent = Number.isFinite(got) ? String(got) : '—';
+
+                const progEl = document.getElementById('bot-meta-progress');
+                const bar = document.getElementById('bot-meta-bar');
+                const detail = document.getElementById('bot-meta-detail');
+                if (tgt > 0) {
+                    const pct = Math.min(100, Math.round((got / tgt) * 100));
+                    if (progEl) progEl.textContent = got + ' / ' + tgt;
+                    if (bar) bar.style.width = pct + '%';
+                    if (detail) detail.textContent = pct + '% da meta · faltam ' + Math.max(0, tgt - got);
+                } else {
+                    if (progEl) progEl.textContent = got + ' leads';
+                    if (bar) bar.style.width = got > 0 ? '12%' : '0%';
+                    if (detail) detail.textContent = 'Sem meta fixa nesta missão (ou meta 0)';
+                }
+
+                const last = st.last_finished_at || st.last_started_at || st.updated_at || '';
+                const runEl = document.getElementById('bot-last-run');
+                if (runEl) runEl.textContent = fmt(last);
+                const jobEl = document.getElementById('bot-last-job');
+                if (jobEl) jobEl.textContent = 'Job: ' + (st.last_job || '—');
+
+                const setTxt = (id, v) => {
+                    const n = document.getElementById(id);
+                    if (n) n.textContent = v;
+                };
+                setTxt('bot-started', fmt(st.last_started_at));
+                setTxt('bot-finished', fmt(st.last_finished_at));
+                setTxt('bot-updated', fmt(st.updated_at));
+                setTxt('bot-stale', st.stale ? 'Sim (corrigido)' : 'Não');
+
+                const errEl = document.getElementById('bot-error');
+                if (errEl) errEl.textContent = st.last_error ? ('Erro: ' + st.last_error) : '';
+
                 const hint = document.getElementById('bot-status-hint');
                 if (hint) {
                     if (status === 'rodando' && st.minutes_since_update != null) {
-                        hint.textContent = `Último heartbeat há ${st.minutes_since_update} min. Se o PowerShell está fechado, clique em "Marcar como parado". Após ~20 min sem update, o painel corrige sozinho.`;
+                        hint.textContent = 'Heartbeat há ' + st.minutes_since_update
+                            + ' min · se o PC fechou, use “Marcar parado”. Auto-corrige ~20 min sem update.';
+                    } else if (status === 'rodando') {
+                        hint.textContent = 'Missão em andamento. Acompanhe logs e meta abaixo.';
                     } else if (status === 'parado') {
-                        hint.textContent = 'Bot parado. Para rodar: no PC use  venv\\Scripts\\python.exe main.py run';
+                        hint.textContent = 'Parado. Suba missões pelo Cockpit no PC (python main.py / cockpit).';
                     } else {
                         hint.textContent = '';
                     }
                 }
                 const stopBtn = document.getElementById('btn-bot-force-stop');
-                if (stopBtn) stopBtn.style.display = status === 'rodando' ? '' : '';
+                if (stopBtn) stopBtn.style.display = status === 'rodando' ? '' : 'none';
+
                 const logs = st.logs || [];
-                document.getElementById('bot-logs').innerHTML = logs.length
-                    ? logs.map(l => {
-                        const c = (l.level || '') === 'ERROR' ? 'var(--danger)'
-                            : (l.level || '') === 'WARN' ? 'var(--warning)' : 'var(--muted)';
-                        return `<div style="color:${c};margin-bottom:6px;">
-                            <span style="opacity:.7">${esc((l.created_at || '').replace('T',' ').slice(0,19))}</span>
-                            [${esc(l.level || 'INFO')}] ${esc(l.message || '')}
-                        </div>`;
-                    }).join('')
-                    : '<div>Nenhum log ainda. Rode o bot no PowerShell para popular.</div>';
+                const logsEl = document.getElementById('bot-logs');
+                if (logsEl) {
+                    logsEl.innerHTML = logs.length
+                        ? logs.map(l => {
+                            const c = (l.level || '') === 'ERROR' ? 'var(--danger)'
+                                : (l.level || '') === 'WARN' ? '#f5c542' : 'var(--muted)';
+                            return `<div style="color:${c};margin-bottom:6px;">
+                                <span style="opacity:.7">${esc((l.created_at || '').replace('T',' ').slice(0,19))}</span>
+                                [${esc(l.level || 'INFO')}] ${esc(l.message || '')}
+                            </div>`;
+                        }).join('')
+                        : '<div>Nenhum log ainda. Rode uma missão no Cockpit para popular.</div>';
+                }
             } catch (e) {
-                document.getElementById('bot-status-label').textContent = 'ERRO';
-                document.getElementById('bot-logs').textContent = String(e);
+                const el = document.getElementById('bot-status-label');
+                if (el) el.textContent = 'ERRO';
+                const logsEl = document.getElementById('bot-logs');
+                if (logsEl) logsEl.textContent = String(e);
             }
         }
+
+        // Plano de busca foi para o Cockpit — stubs seguros
+        async function loadBotPlan() { /* legado: planos no Cockpit */ }
+        async function saveBotPlan() { alert('Planos de busca agora são no Cockpit local.'); }
+        function botPlanToggleAll() {}
+        function filterBotPlanCities() {}
 
         async function forceBotStop() {
             if (!confirm('Marcar o robô como PARADO no painel?\n\nIsso não mata o processo no PC — só corrige o status se ele ficou preso em "rodando".')) return;
@@ -6489,57 +6774,107 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         async function loadReports() {
-            const period = document.getElementById('report-period').value;
+            const periodEl = document.getElementById('report-period');
+            if (!periodEl) return;
+            const period = periodEl.value;
+            const sub = document.getElementById('reports-sub');
+            if (sub) {
+                sub.textContent = isPatraoSession()
+                    ? 'Métricas do escopo atual (sobras ou carteira filtrada).'
+                    : 'Performance da sua carteira de leads no período selecionado.';
+            }
             try {
-                const res = await fetch(`/api/reports/${period}`);
-                const data = await res.json();
-                document.getElementById('report-total').textContent = data.total || 0;
-                document.getElementById('report-rate').textContent = data.total > 0
-                    ? Math.round(((data.quentes || data.total) / data.total) * 100) + '%'
-                    : '0%';
-                document.getElementById('report-conv').textContent = (data.conversao_taxa || 0) + '%';
-                document.getElementById('report-contact').textContent = data.contactados || data.mornos || 0;
-
-                const ctx = document.getElementById('chart-report').getContext('2d');
-                if (chartReport) chartReport.destroy();
-                chartReport = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Novos / ativos', 'Contactados', 'Outros'],
-                        datasets: [{
-                            data: [data.quentes || data.total || 0, data.mornos || 0, data.frios || 0],
-                            backgroundColor: ['#00d4ff', '#f59e0b', '#3b4a63'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } },
-                        cutout: '60%'
-                    }
+                const res = await fetch(`/api/reports/${period}`, {
+                    cache: 'no-store', credentials: 'same-origin',
                 });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const total = Number(data.total) || 0;
+                const contact = Number(data.contactados != null ? data.contactados : data.mornos) || 0;
+                const novos = Math.max(0, total - contact);
+                const rate = total > 0 ? Math.round((novos / total) * 100) : 0;
+
+                const set = (id, v) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = v;
+                };
+                set('report-total', String(total));
+                set('report-novos', String(novos));
+                set('report-rate', rate + '% ainda sem contato');
+                set('report-conv', (data.conversao_taxa || 0) + '%');
+                set('report-contact', String(contact));
+
+                const empty = document.getElementById('reports-empty-hint');
+                if (empty) empty.style.display = total === 0 ? '' : 'none';
+
+                const canvas = document.getElementById('chart-report');
+                if (canvas && typeof Chart !== 'undefined') {
+                    const ctx = canvas.getContext('2d');
+                    if (chartReport) chartReport.destroy();
+                    chartReport = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Sem contato', 'Contactados', 'Convertidos (aprox.)'],
+                            datasets: [{
+                                data: [
+                                    novos,
+                                    contact,
+                                    Math.round((contact * (Number(data.conversao_taxa) || 0)) / 100),
+                                ],
+                                backgroundColor: ['#00d4ff', '#f5c542', '#34d399'],
+                                borderWidth: 0,
+                            }],
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: '#8b9bb4', boxWidth: 12, padding: 14 },
+                                },
+                            },
+                            cutout: '62%',
+                        },
+                    });
+                }
 
                 const labels = Object.keys(data.problemas_comuns || {});
                 const values = Object.values(data.problemas_comuns || {});
-                const ctx2 = document.getElementById('chart-problems').getContext('2d');
-                if (chartProblems) chartProblems.destroy();
-                chartProblems = new Chart(ctx2, {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{ data: values, backgroundColor: '#ff4d6a', borderRadius: 4 }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { color: '#1a2233' }, beginAtZero: true, ticks: { precision: 0 } },
-                            y: { grid: { display: false } }
-                        }
-                    }
-                });
-            } catch (e) { console.error(e); }
+                const canvas2 = document.getElementById('chart-problems');
+                if (canvas2 && typeof Chart !== 'undefined') {
+                    const ctx2 = canvas2.getContext('2d');
+                    if (chartProblems) chartProblems.destroy();
+                    chartProblems = new Chart(ctx2, {
+                        type: 'bar',
+                        data: {
+                            labels: labels.length ? labels : ['Sem sinais'],
+                            datasets: [{
+                                data: values.length ? values : [0],
+                                backgroundColor: '#00d4ff',
+                                borderRadius: 6,
+                            }],
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(26,34,51,0.9)' },
+                                    beginAtZero: true,
+                                    ticks: { precision: 0, color: '#5a6b82' },
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { color: '#8b9bb4' },
+                                },
+                            },
+                        },
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         async function resolveLead(id) {

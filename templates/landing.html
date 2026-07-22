@@ -247,8 +247,8 @@
       <p class="lead">Compre moedas douradas. 1 Trovoeda = 1 lead. <strong style="color:var(--text)">Não expiram.</strong></p>
       <div class="shop-preview">
         {% for p in packages %}
-        <div class="pkg {% if p.slug == 'raio' %}hot{% endif %}">
-          {% if p.slug == 'raio' %}<span class="badge">Mais popular</span>{% endif %}
+        <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %}">
+          {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
           <span class="coin-3d" aria-hidden="true"><img src="/static/trovoeda-coin.svg" alt="" width="56" height="56" /></span>
           <h3>{{ p.name }}</h3>
           <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>

@@ -408,16 +408,16 @@
       background: rgba(0,212,255,0.1);
     }
     .mock-table {
+      position: relative;
       display: flex; flex-direction: column; gap: 0;
       border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px;
       overflow: visible;
       background: rgba(0,0,0,0.2);
-      /* espaço pro tip do score não colidir com a borda do mock */
       padding-bottom: 4px;
     }
     .mock-table.has-score-hover {
-      padding-bottom: 8px;
+      padding-bottom: 10px;
       margin-bottom: 4px;
     }
     .mock-tr {
@@ -442,13 +442,16 @@
     .mock-tr.hot {
       background: linear-gradient(90deg, rgba(245,197,66,0.08), transparent 70%);
     }
-    /* Linha em hover: lista continua visível; só um leve destaque */
-    .mock-table.has-score-hover .mock-tr:not(.head):not(.is-hover) {
-      opacity: 0.72;
+    /* Linha em hover (demo animada): lista continua visível */
+    .mock-table.has-score-hover .mock-tr:not(.head) {
+      transition: opacity .35s ease, background .35s ease;
+    }
+    .mock-table.has-score-hover.is-demo-active .mock-tr:not(.head):not(.is-hover) {
+      opacity: 0.68;
     }
     .mock-tr.is-hover {
-      background: linear-gradient(90deg, rgba(245,197,66,0.1), transparent 75%);
-      z-index: 5;
+      background: linear-gradient(90deg, rgba(245,197,66,0.12), transparent 75%);
+      z-index: 6;
       opacity: 1 !important;
     }
     .mt-name {
@@ -547,14 +550,17 @@
       border-color: rgba(52,211,153,0.55);
       background: rgba(52,211,153,0.08);
     }
+    .mt-score-pill {
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
     .mt-score-pill.is-hover {
-      box-shadow: 0 0 0 2px rgba(245,197,66,0.28), 0 0 14px rgba(245,197,66,0.22);
-      transform: scale(1.04);
+      box-shadow: 0 0 0 2px rgba(245,197,66,0.32), 0 0 16px rgba(245,197,66,0.28);
+      transform: scale(1.06);
     }
 
     /*
-      Tooltip compacto (como no painel real) — flutuando perto do score,
-      pequeno, com pontos que somam a nota. NÃO é um dump da tela de detalhe.
+      Tooltip compacto — abre no “hover” da demo animada.
+      Escondido por padrão; .is-open = mouse passou em cima.
     */
     .score-tip {
       position: absolute;
@@ -569,11 +575,20 @@
       z-index: 20;
       text-align: left;
       pointer-events: none;
-      animation: score-tip-in .28s ease both;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(6px) scale(0.97);
+      transition: opacity .28s ease, transform .28s ease, visibility .28s;
     }
-    @keyframes score-tip-in {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: none; }
+    .score-tip.is-open {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+    /* últimas linhas: tip sobe pra não cortar */
+    .score-tip.tip-up {
+      top: auto;
+      bottom: calc(100% + 10px);
     }
     .score-tip::before {
       content: "";
@@ -584,6 +599,14 @@
       border-left: 1px solid rgba(0,212,255,0.22);
       border-top: 1px solid rgba(0,212,255,0.22);
       transform: rotate(45deg);
+    }
+    .score-tip.tip-up::before {
+      top: auto;
+      bottom: -5px;
+      border-left: none;
+      border-top: none;
+      border-right: 1px solid rgba(0,212,255,0.22);
+      border-bottom: 1px solid rgba(0,212,255,0.22);
     }
     .score-tip-head {
       display: flex;
@@ -666,23 +689,35 @@
       font-variant-numeric: tabular-nums;
     }
     .score-tip-foot {
-      display: none; /* compacto no mock */
+      display: none;
     }
-    /* Cursor “fake hover” no score da linha */
+    /* Cursor único da demo (se move entre scores em loop) */
     .mock-cursor {
       position: absolute;
-      right: 6px;
-      top: 18px;
-      width: 15px;
-      height: 15px;
-      z-index: 22;
+      left: 0; top: 0;
+      width: 18px;
+      height: 18px;
+      z-index: 30;
       pointer-events: none;
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.55));
-      animation: mock-cursor-bob 2s ease-in-out infinite;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));
+      opacity: 0;
+      transition: left .55s cubic-bezier(.4,.0,.2,1), top .55s cubic-bezier(.4,.0,.2,1), opacity .25s ease;
+      will-change: left, top;
     }
-    @keyframes mock-cursor-bob {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(2px, 3px); }
+    .mock-cursor.is-on {
+      opacity: 1;
+    }
+    .mock-cursor.is-click {
+      transform: scale(0.88);
+      transition:
+        left .55s cubic-bezier(.4,.0,.2,1),
+        top .55s cubic-bezier(.4,.0,.2,1),
+        opacity .25s ease,
+        transform .12s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mock-cursor { transition: none; }
+      .score-tip { transition: none; }
     }
     @media (max-width: 520px) {
       .mock-tr { grid-template-columns: 1.15fr 0.55fr 1fr 42px; }
@@ -2046,16 +2081,18 @@
                     <span class="dchip">Contactados</span>
                     <span class="dchip">Convertidos</span>
                   </div>
-                  <!-- Lista normal; em 1 lead o mouse “para” no score e abre tip compacto -->
-                  <div class="mock-table has-score-hover" aria-hidden="false">
+                  <!-- Demo: cursor em loop passa no score e abre “por que esta nota” -->
+                  <div class="mock-table has-score-hover" id="mock-score-demo" aria-hidden="false">
+                    <svg class="mock-cursor" id="mock-score-cursor" viewBox="0 0 24 24" fill="#e8eef7" aria-hidden="true">
+                      <path d="M5.5 3.2 18.8 12.1c.5.3.3 1.1-.3 1.2l-5.1.7 2.3 5.7c.2.5-.1 1.1-.6 1.2l-2.2.5c-.5.1-1-.2-1.2-.7l-2.2-5.5-3.4 3.2c-.5.5-1.3.1-1.3-.6V4c0-.7.8-1.1 1.4-.8z"/>
+                    </svg>
                     <div class="mock-tr head">
                       <span>Empresa</span>
                       <span>Cidade</span>
                       <span>Contato</span>
                       <span style="text-align:right">Score</span>
                     </div>
-                    <!-- 1º: score mais alto + hover com breakdown (pontos somam 92) -->
-                    <div class="mock-tr hot is-hover">
+                    <div class="mock-tr hot" data-score-row>
                       <span class="mt-name">Clínica Odonto Horizonte<small>Odontologia · sem site</small></span>
                       <span class="mt-city">Campinas</span>
                       <span class="mt-actions">
@@ -2069,11 +2106,8 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-gold is-hover">92</span>
-                        <svg class="mock-cursor" viewBox="0 0 24 24" fill="#e8eef7" aria-hidden="true">
-                          <path d="M5.5 3.2 18.8 12.1c.5.3.3 1.1-.3 1.2l-5.1.7 2.3 5.7c.2.5-.1 1.1-.6 1.2l-2.2.5c-.5.1-1-.2-1.2-.7l-2.2-5.5-3.4 3.2c-.5.5-1.3.1-1.3-.6V4c0-.7.8-1.1 1.4-.8z"/>
-                        </svg>
-                        <div class="score-tip" role="tooltip">
+                        <span class="mt-score-pill s-gold" data-score-pill>92</span>
+                        <div class="score-tip" data-score-tip role="tooltip">
                           <div class="score-tip-head">
                             <strong>Por que este score</strong>
                             <b>92<small>/100 · Elite</small></b>
@@ -2086,14 +2120,11 @@
                             <li><span>Volume forte no Maps</span><em>+12</em></li>
                             <li><span>Celular / WhatsApp</span><em>+8</em></li>
                           </ul>
-                          <div class="score-tip-total">
-                            <span>Total</span>
-                            <b>92/100</b>
-                          </div>
+                          <div class="score-tip-total"><span>Total</span><b>92/100</b></div>
                         </div>
                       </span>
                     </div>
-                    <div class="mock-tr">
+                    <div class="mock-tr" data-score-row>
                       <span class="mt-name">Advocacia Mendes &amp; Silva<small>Advocacia · sem site</small></span>
                       <span class="mt-city">São Paulo</span>
                       <span class="mt-actions">
@@ -2103,10 +2134,25 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-purple">87</span>
+                        <span class="mt-score-pill s-purple" data-score-pill>87</span>
+                        <div class="score-tip" data-score-tip role="tooltip">
+                          <div class="score-tip-head">
+                            <strong>Por que este score</strong>
+                            <b style="color:#c4b5fd">87<small>/100 · Alto</small></b>
+                          </div>
+                          <ul class="score-tip-rows">
+                            <li><span>Sem site próprio (dor alta)</span><em>+26</em></li>
+                            <li><span>Nicho S · advocacia</span><em>+22</em></li>
+                            <li><span>Nota excelente (4.8)</span><em>+14</em></li>
+                            <li><span>Volume forte no Maps</span><em>+12</em></li>
+                            <li><span>Celular / WhatsApp</span><em>+8</em></li>
+                            <li><span>Porte saudável</span><em>+5</em></li>
+                          </ul>
+                          <div class="score-tip-total"><span>Total</span><b style="color:#c4b5fd">87/100</b></div>
+                        </div>
                       </span>
                     </div>
-                    <div class="mock-tr">
+                    <div class="mock-tr" data-score-row>
                       <span class="mt-name">Studio Belle Estética<small>Estética · sem site</small></span>
                       <span class="mt-city">Santos</span>
                       <span class="mt-actions">
@@ -2120,10 +2166,25 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-purple">81</span>
+                        <span class="mt-score-pill s-purple" data-score-pill>81</span>
+                        <div class="score-tip tip-up" data-score-tip role="tooltip">
+                          <div class="score-tip-head">
+                            <strong>Por que este score</strong>
+                            <b style="color:#c4b5fd">81<small>/100 · Alto</small></b>
+                          </div>
+                          <ul class="score-tip-rows">
+                            <li><span>Sem site próprio (dor alta)</span><em>+24</em></li>
+                            <li><span>Nicho S · estética</span><em>+20</em></li>
+                            <li><span>Nota alta (4.6)</span><em>+12</em></li>
+                            <li><span>Tração no Maps</span><em>+10</em></li>
+                            <li><span>Instagram ativo</span><em>+8</em></li>
+                            <li><span>Celular / WhatsApp</span><em>+7</em></li>
+                          </ul>
+                          <div class="score-tip-total"><span>Total</span><b style="color:#c4b5fd">81/100</b></div>
+                        </div>
                       </span>
                     </div>
-                    <div class="mock-tr">
+                    <div class="mock-tr" data-score-row>
                       <span class="mt-name">Construtora Vale Norte<small>Construção · sem site</small></span>
                       <span class="mt-city">Ribeirão</span>
                       <span class="mt-actions">
@@ -2133,7 +2194,22 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-green">74</span>
+                        <span class="mt-score-pill s-green" data-score-pill>74</span>
+                        <div class="score-tip tip-up" data-score-tip role="tooltip">
+                          <div class="score-tip-head">
+                            <strong>Por que este score</strong>
+                            <b style="color:#34d399">74<small>/100 · Médio</small></b>
+                          </div>
+                          <ul class="score-tip-rows">
+                            <li><span>Sem site próprio (dor alta)</span><em>+22</em></li>
+                            <li><span>Nicho A · construção</span><em>+18</em></li>
+                            <li><span>Boa reputação (4.2)</span><em>+12</em></li>
+                            <li><span>Volume de avaliações</span><em>+10</em></li>
+                            <li><span>Celular / WhatsApp</span><em>+7</em></li>
+                            <li><span>Porte em crescimento</span><em>+5</em></li>
+                          </ul>
+                          <div class="score-tip-total"><span>Total</span><b style="color:#34d399">74/100</b></div>
+                        </div>
                       </span>
                     </div>
                   </div>
@@ -2654,6 +2730,131 @@
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
       nodes.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+  <script>
+    /* Demo em loop: cursor passa no score e abre “por que esta nota” */
+    (function () {
+      var table = document.getElementById('mock-score-demo');
+      var cursor = document.getElementById('mock-score-cursor');
+      if (!table || !cursor) return;
+
+      var rows = Array.prototype.slice.call(table.querySelectorAll('[data-score-row]'));
+      if (!rows.length) return;
+
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var idx = 0;
+      var timer = null;
+      var running = false;
+
+      // tempo: mover (~0.55s) + ler o tip (~4.2s) + pausa entre (~0.4s)
+      var MOVE_MS = reduce ? 0 : 560;
+      var READ_MS = reduce ? 3200 : 4200;
+      var GAP_MS = reduce ? 200 : 380;
+
+      function clearActive() {
+        rows.forEach(function (row) {
+          row.classList.remove('is-hover');
+          var pill = row.querySelector('[data-score-pill]');
+          var tip = row.querySelector('[data-score-tip]');
+          if (pill) pill.classList.remove('is-hover');
+          if (tip) tip.classList.remove('is-open');
+        });
+        cursor.classList.remove('is-click');
+      }
+
+      function moveCursorTo(pill) {
+        var tRect = table.getBoundingClientRect();
+        var pRect = pill.getBoundingClientRect();
+        // ponta do cursor um pouco abaixo/direita do centro do score
+        var x = pRect.left - tRect.left + pRect.width * 0.55;
+        var y = pRect.top - tRect.top + pRect.height * 0.7;
+        cursor.style.left = x + 'px';
+        cursor.style.top = y + 'px';
+      }
+
+      function showRow(i) {
+        clearActive();
+        var row = rows[i];
+        if (!row) return;
+        var pill = row.querySelector('[data-score-pill]');
+        var tip = row.querySelector('[data-score-tip]');
+        if (!pill) return;
+
+        table.classList.add('is-demo-active');
+        cursor.classList.add('is-on');
+        moveCursorTo(pill);
+
+        // após o cursor chegar: “clique” sutil + abre tip
+        window.setTimeout(function () {
+          if (!running) return;
+          cursor.classList.add('is-click');
+          row.classList.add('is-hover');
+          pill.classList.add('is-hover');
+          if (tip) tip.classList.add('is-open');
+          window.setTimeout(function () {
+            cursor.classList.remove('is-click');
+          }, 140);
+        }, MOVE_MS);
+      }
+
+      function next() {
+        if (!running) return;
+        showRow(idx);
+        idx = (idx + 1) % rows.length;
+        timer = window.setTimeout(next, MOVE_MS + READ_MS + GAP_MS);
+      }
+
+      function start() {
+        if (running) return;
+        // só roda se o mock estiver razoavelmente na viewport
+        var r = table.getBoundingClientRect();
+        var visible = r.bottom > 80 && r.top < window.innerHeight - 40;
+        if (!visible) return;
+        running = true;
+        idx = 0;
+        // posição inicial no 1º score antes de animar
+        var firstPill = rows[0] && rows[0].querySelector('[data-score-pill]');
+        if (firstPill) {
+          cursor.style.transition = 'none';
+          moveCursorTo(firstPill);
+          // reflow
+          void cursor.offsetWidth;
+          cursor.style.transition = '';
+        }
+        next();
+      }
+
+      function stop() {
+        running = false;
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = null;
+        }
+        clearActive();
+        table.classList.remove('is-demo-active');
+        cursor.classList.remove('is-on');
+      }
+
+      // inicia quando o painel entra na tela; pausa se sair
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting && e.intersectionRatio > 0.25) start();
+            else stop();
+          });
+        }, { threshold: [0, 0.25, 0.5] });
+        io.observe(table);
+      } else {
+        start();
+      }
+
+      // reposiciona cursor no resize se estiver ativo
+      window.addEventListener('resize', function () {
+        if (!running) return;
+        var active = table.querySelector('.mock-tr.is-hover [data-score-pill]');
+        if (active) moveCursorTo(active);
+      });
     })();
   </script>
 </body>

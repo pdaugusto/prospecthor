@@ -1690,13 +1690,15 @@
 
         <div class="proof-strip reveal">
           <div class="proof-item">
-            {# Número comercial forte (mínimo de prova social); sobe se o banco passar #}
-            {% set n_emp = [stats.leads_raio or 0, stats.leads_total or 0, 2359]|max %}
+            {# Prova social comercial: mínimo forte; sobe se o banco tiver mais #}
+            {% set n_emp = (stats.leads_raio or 0) if (stats.leads_raio or 0) > (stats.leads_total or 0) else (stats.leads_total or 0) %}
+            {% if n_emp < 2359 %}{% set n_emp = 2359 %}{% endif %}
             <b><em>+{{ '{:,}'.format(n_emp).replace(',', '.') }}</em></b>
             <span>empresas encontradas e qualificadas</span>
           </div>
           <div class="proof-item">
-            {% set n_nic = [stats.niches or 0, 18]|max %}
+            {% set n_nic = stats.niches or 0 %}
+            {% if n_nic < 18 %}{% set n_nic = 18 %}{% endif %}
             <b>+{{ n_nic }}</b>
             <span>nichos de mercado cobertos</span>
           </div>

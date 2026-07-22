@@ -87,6 +87,13 @@ def ensure_schema() -> None:
             "CREATE INDEX IF NOT EXISTS idx_trovoeda_ledger_user ON trovoeda_ledger (user_id, id DESC);"
         )
 
+        # pedidos de lead (cliente → host)
+        try:
+            from src.orders import ensure_schema as _orders_schema
+            _orders_schema()
+        except Exception as _ox:
+            logger.warning("[Trovoeda] orders schema: %s", _ox)
+
         # pacotes (preço futuro Stripe) — seed opcional
         cur.execute(
             """

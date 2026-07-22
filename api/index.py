@@ -778,6 +778,8 @@ def root_or_landing():
 @app.route("/trovoedas")
 @app.route("/wallet")
 @app.route("/carteira")
+@app.route("/orders")
+@app.route("/pedidos")
 @login_required
 def dashboard(lead_id=None):
     return render_template("index.html")
@@ -930,6 +932,213 @@ def api_trovoeda_grant():
 def api_trovoeda_packages():
     """Lista pacotes com preço formatado e % de economia vs base."""
     return jsonify(_packages_for_view())
+
+
+# ─── Pedidos de leads (cliente pede → host aprova) ───────────────────────────
+
+@app.route("/api/orders", methods=["GET"])
+@login_required
+def api_orders_list():
+    """Lista pedidos: cliente vê os dele; host vê todos (ou ?status=pending)."""
+    from src.orders import list_orders, count_pending, ensure_schema
+    ensure_schema()
+    status = (request.args.get("status") or "").strip().lower() or None
+    limit = int(request.args.get("limit") or 50)
+    if _is_real_admin() and not _is_impersonating():
+        rows = list_orders(user_id=None, status=status, limit=limit)
+        return jsonify({
+            "orders": rows,
+            "pending_count": count_pending(),
+            "scope": "all",
+        })
+    uid = _effective_user_id()
+    if not uid:
+        return jsonify({"error": "sem usuário"}), 400
+    rows = list_orders(user_id=int(uid), status=status, limit=limit)
+    return jsonify({"orders": rows, "pending_count": 0, "scope": "mine"})
+
+
+@app.route("/api/orders/pending-count")
+@login_required
+def api_orders_pending_count():
+    if not _is_real_admin() or _is_impersonating():
+        return jsonify({"pending_count": 0})
+    from src.orders import count_pending, ensure_schema
+    ensure_schema()
+    return jsonify({"pending_count": count_pending()})
+
+
+@app.route("/api/orders", methods=["POST"])
+@login_required
+def api_orders_create():
+    """Cliente cria pedido de N leads (reserva Trovoedas)."""
+    if _is_real_admin() and not _is_impersonating():
+        # Patrão não pede leads pra si — pode impersonate se quiser testar
+        return jsonify({"error": "Conta do host não cria pedidos. Entre como cliente ou use impersonate."}), 400
+
+    data = request.get_json(silent=True) or {}
+    try:
+        qty = int(data.get("quantity") or data.get("qty") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"error": "quantity inválida"}), 400
+    niche = (data.get("niche") or "").strip()
+    city = (data.get("city") or "").strip()
+    notes = (data.get("notes") or data.get("note") or "").strip()
+
+    uid = _effective_user_id()
+    if not uid:
+        return jsonify({"error": "sem usuário"}), 400
+
+    from src.orders import create_order, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    result = create_order(
+        int(uid),
+        qty,
+        niche=niche,
+        city=city,
+        notes=notes,
+    )
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha", "balance": result.get("balance")}), 400
+
+    actor_id, actor_name = _audit_actor()
+    log_action(
+        "order_create",
+        user_id=actor_id,
+        username=actor_name,
+        details={
+            "order_id": (result.get("order") or {}).get("id"),
+            "quantity": qty,
+            "city": city,
+            "niche": niche,
+        },
+    )
+    _invalidate_cache()
+    return jsonify(result)
+
+
+@app.route("/api/orders/<int:order_id>/cancel", methods=["POST"])
+@login_required
+def api_orders_cancel(order_id: int):
+    uid = _effective_user_id()
+    if not uid:
+        return jsonify({"error": "sem usuário"}), 400
+    from src.orders import cancel_order, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    result = cancel_order(int(order_id), int(uid))
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha"}), 400
+    actor_id, actor_name = _audit_actor()
+    log_action(
+        "order_cancel",
+        user_id=actor_id,
+        username=actor_name,
+        details={"order_id": order_id},
+    )
+    return jsonify(result)
+
+
+@app.route("/api/orders/<int:order_id>/approve", methods=["POST"])
+@admin_required
+def api_orders_approve(order_id: int):
+    data = request.get_json(silent=True) or {}
+    host_note = (data.get("host_note") or data.get("note") or "").strip()
+    auto = data.get("auto_deliver")
+    if auto is None:
+        auto_deliver = True
+    else:
+        auto_deliver = bool(auto)
+
+    from src.orders import approve_order, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    host = _real_session_user()
+    result = approve_order(
+        int(order_id),
+        host_id=host.get("id"),
+        host_note=host_note,
+        auto_deliver=auto_deliver,
+    )
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha"}), 400
+    actor_id, actor_name = _audit_actor()
+    log_action(
+        "order_approve",
+        user_id=actor_id,
+        username=actor_name,
+        details={
+            "order_id": order_id,
+            "delivered_now": result.get("delivered_now"),
+            "host_note": host_note,
+        },
+    )
+    _invalidate_cache()
+    return jsonify(result)
+
+
+@app.route("/api/orders/<int:order_id>/reject", methods=["POST"])
+@admin_required
+def api_orders_reject(order_id: int):
+    data = request.get_json(silent=True) or {}
+    host_note = (data.get("host_note") or data.get("note") or data.get("reason") or "").strip()
+
+    from src.orders import reject_order, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    host = _real_session_user()
+    result = reject_order(
+        int(order_id),
+        host_id=host.get("id"),
+        host_note=host_note or "Recusado pelo host",
+    )
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha"}), 400
+    actor_id, actor_name = _audit_actor()
+    log_action(
+        "order_reject",
+        user_id=actor_id,
+        username=actor_name,
+        details={"order_id": order_id, "host_note": host_note},
+    )
+    return jsonify(result)
+
+
+@app.route("/api/orders/<int:order_id>/fulfill", methods=["POST"])
+@admin_required
+def api_orders_fulfill(order_id: int):
+    """Host entrega mais leads do pool para pedido já aprovado."""
+    data = request.get_json(silent=True) or {}
+    max_leads = data.get("max_leads") or data.get("quantity")
+    try:
+        max_leads = int(max_leads) if max_leads is not None else None
+    except (TypeError, ValueError):
+        max_leads = None
+
+    from src.orders import fulfill_order, ensure_schema
+    from src.audit import log_action
+    ensure_schema()
+    host = _real_session_user()
+    result = fulfill_order(
+        int(order_id),
+        host_id=host.get("id"),
+        max_leads=max_leads,
+    )
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha"}), 400
+    actor_id, actor_name = _audit_actor()
+    log_action(
+        "order_fulfill",
+        user_id=actor_id,
+        username=actor_name,
+        details={
+            "order_id": order_id,
+            "delivered_now": result.get("delivered_now"),
+        },
+    )
+    _invalidate_cache()
+    return jsonify(result)
 
 
 @app.route("/api/trovoeda/checkout", methods=["POST"])

@@ -885,6 +885,109 @@
         .pkg-card .pkg-per {
             margin-top: 6px; font-size: 12px; color: var(--muted);
         }
+
+        /* —— Pedidos —— */
+        .orders-layout { max-width: 980px; }
+        .orders-create.card-panel,
+        .card-panel {
+            padding: 18px 20px;
+            border-radius: 16px;
+            background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .orders-create h3 { margin: 0 0 6px; font-size: 16px; }
+        .orders-hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; line-height: 1.45; }
+        .orders-form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 720px) {
+            .orders-form-grid { grid-template-columns: 1fr; }
+        }
+        .orders-form-grid label {
+            display: flex; flex-direction: column; gap: 6px;
+            font-size: 12px; font-weight: 600; color: var(--muted);
+        }
+        .orders-form-grid label span { letter-spacing: 0.02em; }
+        .orders-form-grid input {
+            padding: 10px 12px; border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.35); color: var(--text);
+            font-size: 14px; font-weight: 600;
+        }
+        .orders-form-full { grid-column: 1 / -1; }
+        .orders-form-actions {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-top: 14px; flex-wrap: wrap;
+        }
+        .orders-cost {
+            font-size: 13px; font-weight: 700; color: #f5c542;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .orders-msg { margin-top: 10px; font-size: 13px; }
+        .orders-msg.ok { color: #34d399; }
+        .orders-msg.err { color: #f87171; }
+        .orders-panel-head h3 {
+            margin: 0; font-size: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .orders-pending-pill {
+            font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+            background: rgba(245,197,66,0.15); border: 1px solid rgba(245,197,66,0.4);
+            color: #f5c542;
+        }
+        .orders-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .order-card {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px 16px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(16,22,33,0.9);
+            border: 1px solid rgba(255,255,255,0.06);
+            align-items: start;
+        }
+        .order-card h4 {
+            margin: 0 0 4px; font-size: 14px; font-weight: 800;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .order-card .order-meta {
+            font-size: 12px; color: var(--muted); line-height: 1.45;
+        }
+        .order-card .order-meta strong { color: #d4c48a; font-weight: 700; }
+        .order-status {
+            font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+            text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+            border: 1px solid transparent;
+        }
+        .order-status.pending { background: rgba(245,197,66,0.12); color: #f5c542; border-color: rgba(245,197,66,0.35); }
+        .order-status.approved { background: rgba(56,189,248,0.12); color: #38bdf8; border-color: rgba(56,189,248,0.35); }
+        .order-status.fulfilled { background: rgba(52,211,153,0.12); color: #34d399; border-color: rgba(52,211,153,0.35); }
+        .order-status.rejected,
+        .order-status.cancelled { background: rgba(248,113,113,0.1); color: #f87171; border-color: rgba(248,113,113,0.3); }
+        .order-actions {
+            display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 140px;
+        }
+        .order-actions .btn { font-size: 12px; padding: 8px 10px; white-space: nowrap; }
+        .order-actions .btn-approve {
+            background: linear-gradient(135deg, #34d399, #10b981); color: #042f1e;
+            border: none; font-weight: 800; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+        }
+        .order-actions .btn-reject {
+            background: transparent; color: #f87171; border: 1px solid rgba(248,113,113,0.4);
+            font-weight: 700; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+        }
+        .order-actions .btn-fulfill {
+            background: rgba(56,189,248,0.12); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35);
+            font-weight: 700; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+        }
+        .order-actions .btn-cancel-order {
+            background: transparent; color: var(--muted); border: 1px solid var(--border);
+            font-weight: 600; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+        }
+        .order-actions .btn-approve:disabled,
+        .order-actions .btn-reject:disabled,
+        .order-actions .btn-fulfill:disabled { opacity: 0.5; cursor: not-allowed; }
         .pkg-card__bottom {
             margin-top: auto;
             padding: 16px 20px 18px;
@@ -1962,6 +2065,14 @@
                     Carteira
                 </a>
             </li>
+            <li>
+                <a onclick="navigateTo('/orders')" id="nav-orders">
+                    <span class="nav-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/><path d="M14 3v4h4"/></svg>
+                    </span>
+                    Pedidos <span class="nav-badge" id="nav-orders-badge" style="display:none;">0</span>
+                </a>
+            </li>
 
             <li class="nav-sep" id="nav-admin-sep" role="separator" aria-hidden="true" style="display:none;"></li>
             <li class="nav-label" id="nav-admin-label" style="display:none;list-style:none;padding-left:6px;padding-top:2px;">Admin</li>
@@ -2077,8 +2188,82 @@
                     </div>
                 </div>
                 <div class="shop-note">
-                    <span><strong>Como funciona:</strong> compre → peça leads → entregamos na sua conta (1 moeda por lead).</span>
+                    <span><strong>Como funciona:</strong> compre → <a href="/orders" onclick="event.preventDefault();navigateTo('/orders');" style="color:#f5c542;font-weight:700;">peça leads</a> → host aprova e entrega (1 moeda por lead).</span>
                     <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- PEDIDOS DE LEADS -->
+        <section id="view-orders" class="view">
+            <div class="orders-layout">
+                <div class="shop-hero" style="margin-bottom:18px;">
+                    <div class="shop-hero__copy">
+                        <div class="shop-kicker"><i></i> Entrega</div>
+                        <h2>Pedidos de <em>leads</em></h2>
+                        <p id="orders-hero-copy">
+                            Peça quantos leads quiser. 1 Trovoeda = 1 lead. O valor é reservado na hora;
+                            o host aprova e entrega na sua conta.
+                        </p>
+                    </div>
+                    <div class="shop-balance-card">
+                        <span class="coin-3d" aria-hidden="true">
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
+                        </span>
+                        <div>
+                            <div class="lbl">Saldo disponível</div>
+                            <strong id="orders-balance-amt">0</strong>
+                            <div class="sub">Trovoedas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Host: fila de aprovação -->
+                <div id="orders-host-panel" style="display:none;margin-bottom:20px;">
+                    <div class="orders-panel-head">
+                        <h3>Fila do host <span class="orders-pending-pill" id="orders-pending-pill">0 pendentes</span></h3>
+                        <p style="color:var(--muted);font-size:13px;margin:4px 0 0;">
+                            Aprove para entregar sobras do pool, ou recuse para estornar as Trovoedas.
+                            Se faltar lead no pool, rode o robô no cockpit e use “Entregar mais”.
+                        </p>
+                    </div>
+                    <div id="orders-host-list" class="orders-list"></div>
+                </div>
+
+                <!-- Cliente: criar pedido -->
+                <div id="orders-create-panel" class="orders-create card-panel">
+                    <h3>Novo pedido</h3>
+                    <p class="orders-hint">As Trovoedas saem do saldo na hora (reserva). Se o host recusar, o valor volta.</p>
+                    <div class="orders-form-grid">
+                        <label>
+                            <span>Quantidade de leads</span>
+                            <input type="number" id="order-qty" min="1" max="200" value="10" />
+                        </label>
+                        <label>
+                            <span>Cidade (opcional)</span>
+                            <input type="text" id="order-city" placeholder="Ex: Campinas" maxlength="120" />
+                        </label>
+                        <label>
+                            <span>Nicho (opcional)</span>
+                            <input type="text" id="order-niche" placeholder="Ex: odontologia" maxlength="120" />
+                        </label>
+                        <label class="orders-form-full">
+                            <span>Observação (opcional)</span>
+                            <input type="text" id="order-notes" placeholder="Preferências, urgência…" maxlength="500" />
+                        </label>
+                    </div>
+                    <div class="orders-form-actions">
+                        <div class="orders-cost" id="order-cost-hint">Custo: 10 Trovoedas</div>
+                        <button type="button" class="btn btn-primary" id="btn-create-order" onclick="submitOrder()">Pedir leads</button>
+                    </div>
+                    <p id="order-form-msg" class="orders-msg" style="display:none;"></p>
+                </div>
+
+                <div class="orders-panel-head" style="margin-top:22px;">
+                    <h3 id="orders-list-title">Meus pedidos</h3>
+                </div>
+                <div id="orders-my-list" class="orders-list">
+                    <div class="wallet-empty" style="padding:28px;">Carregando…</div>
                 </div>
             </div>
         </section>
@@ -2156,7 +2341,8 @@
                     <p id="home-hero-sub">Leads com contato, saldo em Trovoedas e tudo pronto pra vender — sem cota mensal.</p>
                     <div class="home-cta-row" id="home-cta-row">
                         <button type="button" class="home-cta primary" onclick="navigateTo('/leads')">Ver meus leads</button>
-                        <button type="button" class="home-cta gold" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
+                        <button type="button" class="home-cta gold" onclick="navigateTo('/orders')">Pedir leads</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
                         <button type="button" class="home-cta ghost" onclick="navigateTo('/wallet')">Abrir carteira</button>
                     </div>
                 </div>
@@ -2195,18 +2381,18 @@
                             <p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p>
                         </div>
                     </button>
-                    <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
+                    <button type="button" class="home-quick-card gold" onclick="navigateTo('/orders')">
+                        <div class="hq-ico">☰</div>
+                        <div>
+                            <h4>Pedir leads</h4>
+                            <p>Reserve Trovoedas e o host entrega na sua conta.</p>
+                        </div>
+                    </button>
+                    <button type="button" class="home-quick-card" onclick="navigateTo('/shop')">
                         <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></div>
                         <div>
                             <h4>Comprar Trovoedas</h4>
                             <p>Pacotes a partir de 10 moedas. Pague só o que usar.</p>
-                        </div>
-                    </button>
-                    <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">
-                        <div class="hq-ico">◈</div>
-                        <div>
-                            <h4>Ver extrato</h4>
-                            <p>Créditos, bônus e cada lead consumido na carteira.</p>
                         </div>
                     </button>
                 </div>
@@ -3047,6 +3233,7 @@
                     const el = document.getElementById(id);
                     if (el) el.style.display = showAdmin ? '' : 'none';
                 });
+                try { refreshPendingOrdersBadge(); } catch (_) {}
 
                 const trovo = (currentUser.trovoedas != null && currentUser.trovoedas !== '')
                     ? Number(currentUser.trovoedas)
@@ -3289,6 +3476,15 @@
                 if (navW) navW.classList.add('active');
                 setPageMeta('Carteira', 'Saldo e extrato de Trovoedas');
                 loadWallet();
+            } else if (path === '/orders' || path === '/pedidos') {
+                destroyHomeCharts();
+                destroySparks();
+                homeLoadSeq++;
+                document.getElementById('view-orders').classList.add('active');
+                const navO = document.getElementById('nav-orders');
+                if (navO) navO.classList.add('active');
+                setPageMeta('Pedidos', 'Peça leads · host aprova · 1 Trovoeda = 1 lead');
+                loadOrders();
             } else if (path === '/reports') {
                 destroyHomeCharts();
                 destroySparks();
@@ -3479,9 +3675,274 @@
                 purchase: 'Compra',
                 spend: 'Lead entregue',
                 reserve: 'Reserva pedido',
-                release: 'Estorno',
+                release: 'Estorno pedido',
             };
             return m[reason] || reason || '—';
+        }
+
+        function orderStatusLabel(st) {
+            const m = {
+                pending: 'Pendente',
+                approved: 'Aprovado',
+                fulfilled: 'Entregue',
+                rejected: 'Recusado',
+                cancelled: 'Cancelado',
+            };
+            return m[st] || st || '—';
+        }
+
+        function updateOrdersBadge(n) {
+            const badge = document.getElementById('nav-orders-badge');
+            if (!badge) return;
+            const c = Number(n) || 0;
+            if (c > 0 && isPatraoSession()) {
+                badge.style.display = '';
+                badge.textContent = String(c);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function refreshOrderCostHint() {
+            const qtyEl = document.getElementById('order-qty');
+            const hint = document.getElementById('order-cost-hint');
+            if (!qtyEl || !hint) return;
+            const q = Math.max(1, Math.min(200, parseInt(qtyEl.value, 10) || 0));
+            hint.innerHTML = 'Custo: <img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /> <strong>' + q + '</strong> Trovoeda' + (q === 1 ? '' : 's');
+        }
+
+        function renderOrderCard(o, isHost) {
+            const id = o.id;
+            const st = o.status || 'pending';
+            const qty = Number(o.quantity) || 0;
+            const del = Number(o.delivered) || 0;
+            const rem = Math.max(0, qty - del);
+            const when = String(o.created_at || '').replace('T', ' ').slice(0, 16);
+            const who = o.user_label || o.username || ('#' + (o.user_id || ''));
+            const city = (o.city || '').trim();
+            const niche = (o.niche || '').trim();
+            const notes = (o.notes || '').trim();
+            const hostNote = (o.host_note || '').trim();
+            let meta = `<strong>${qty}</strong> lead(s) · entregues <strong>${del}</strong>`;
+            if (rem > 0 && (st === 'approved' || st === 'pending')) meta += ` · faltam <strong>${rem}</strong>`;
+            if (city) meta += ` · ${esc(city)}`;
+            if (niche) meta += ` · ${esc(niche)}`;
+            meta += `<br><span class="ledger-muted">${esc(when)}</span>`;
+            if (isHost) meta += ` · cliente <strong>${esc(who)}</strong>`;
+            if (notes) meta += `<br>Obs: ${esc(notes)}`;
+            if (hostNote && st !== 'pending') meta += `<br>Host: ${esc(hostNote)}`;
+
+            let actions = '';
+            if (isHost && st === 'pending') {
+                actions = `
+                    <button type="button" class="btn-approve" data-act="approve" data-id="${id}">Aprovar e entregar</button>
+                    <button type="button" class="btn-reject" data-act="reject" data-id="${id}">Recusar</button>`;
+            } else if (isHost && st === 'approved' && rem > 0) {
+                actions = `
+                    <button type="button" class="btn-fulfill" data-act="fulfill" data-id="${id}">Entregar mais (${rem})</button>`;
+            } else if (!isHost && st === 'pending') {
+                actions = `<button type="button" class="btn-cancel-order" data-act="cancel" data-id="${id}">Cancelar</button>`;
+            }
+
+            return `
+                <article class="order-card" data-order-id="${id}">
+                    <div>
+                        <h4>Pedido #${id} <span class="order-status ${esc(st)}">${esc(orderStatusLabel(st))}</span></h4>
+                        <div class="order-meta">${meta}</div>
+                    </div>
+                    <div class="order-actions">${actions}</div>
+                </article>`;
+        }
+
+        async function loadOrders() {
+            const bal = (currentUser && currentUser.trovoedas != null)
+                ? Number(currentUser.trovoedas) : 0;
+            updateWalletUI(bal, false);
+            const balEl = document.getElementById('orders-balance-amt');
+            if (balEl) balEl.textContent = String(Number.isFinite(bal) ? bal : 0);
+
+            const isHost = isPatraoSession();
+            const createPanel = document.getElementById('orders-create-panel');
+            const hostPanel = document.getElementById('orders-host-panel');
+            const hero = document.getElementById('orders-hero-copy');
+            const listTitle = document.getElementById('orders-list-title');
+            if (createPanel) createPanel.style.display = isHost ? 'none' : '';
+            if (hostPanel) hostPanel.style.display = isHost ? '' : 'none';
+            if (hero) {
+                hero.textContent = isHost
+                    ? 'Aprove pedidos dos clientes, entregue sobras do pool ou rode o robô no cockpit se faltar lead.'
+                    : 'Peça quantos leads quiser. 1 Trovoeda = 1 lead. O valor é reservado na hora; o host aprova e entrega na sua conta.';
+            }
+            if (listTitle) listTitle.textContent = isHost ? 'Todos os pedidos' : 'Meus pedidos';
+
+            refreshOrderCostHint();
+            const qtyEl = document.getElementById('order-qty');
+            if (qtyEl && !qtyEl._bound) {
+                qtyEl.addEventListener('input', refreshOrderCostHint);
+                qtyEl._bound = true;
+            }
+
+            const myList = document.getElementById('orders-my-list');
+            const hostList = document.getElementById('orders-host-list');
+            if (myList) myList.innerHTML = '<div class="wallet-empty" style="padding:20px;">Carregando…</div>';
+            if (hostList) hostList.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/orders?limit=80', { cache: 'no-store', credentials: 'same-origin' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const orders = Array.isArray(data.orders) ? data.orders : [];
+                const pending = Number(data.pending_count) || orders.filter(o => o.status === 'pending').length;
+                updateOrdersBadge(pending);
+                const pill = document.getElementById('orders-pending-pill');
+                if (pill) pill.textContent = pending + ' pendente' + (pending === 1 ? '' : 's');
+
+                if (isHost) {
+                    const pendingOrders = orders.filter(o => o.status === 'pending');
+                    const rest = orders.filter(o => o.status !== 'pending');
+                    if (hostList) {
+                        hostList.innerHTML = pendingOrders.length
+                            ? pendingOrders.map(o => renderOrderCard(o, true)).join('')
+                            : '<div class="wallet-empty" style="padding:18px;">Nenhum pedido pendente 🎉</div>';
+                    }
+                    if (myList) {
+                        myList.innerHTML = rest.length
+                            ? rest.map(o => renderOrderCard(o, true)).join('')
+                            : '<div class="wallet-empty" style="padding:18px;">Sem histórico ainda.</div>';
+                    }
+                } else {
+                    if (myList) {
+                        myList.innerHTML = orders.length
+                            ? orders.map(o => renderOrderCard(o, false)).join('')
+                            : `<div class="wallet-empty" style="padding:28px;">
+                                <div style="font-weight:700;margin-bottom:6px;">Nenhum pedido ainda</div>
+                                <div style="color:var(--muted);font-size:13px;">Use o formulário acima para pedir leads com suas Trovoedas.</div>
+                               </div>`;
+                    }
+                }
+
+                document.querySelectorAll('#view-orders [data-act]').forEach(btn => {
+                    btn.addEventListener('click', () => handleOrderAction(btn));
+                });
+            } catch (e) {
+                console.error(e);
+                if (myList) myList.innerHTML = '<div class="wallet-empty" style="color:var(--danger);">Erro ao carregar pedidos.</div>';
+            }
+        }
+
+        async function submitOrder() {
+            const msg = document.getElementById('order-form-msg');
+            const btn = document.getElementById('btn-create-order');
+            const qty = parseInt(document.getElementById('order-qty')?.value || '0', 10);
+            const city = (document.getElementById('order-city')?.value || '').trim();
+            const niche = (document.getElementById('order-niche')?.value || '').trim();
+            const notes = (document.getElementById('order-notes')?.value || '').trim();
+            if (msg) { msg.style.display = 'none'; msg.className = 'orders-msg'; }
+            if (!qty || qty < 1) {
+                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Informe a quantidade.'; }
+                return;
+            }
+            if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: qty, city, niche, notes }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data.error || ('HTTP ' + res.status));
+                }
+                if (data.balance != null && currentUser) {
+                    currentUser.trovoedas = data.balance;
+                    updateWalletUI(data.balance, false);
+                }
+                if (msg) {
+                    msg.style.display = '';
+                    msg.className = 'orders-msg ok';
+                    msg.textContent = 'Pedido #' + ((data.order && data.order.id) || '') + ' criado. Aguardando aprovação do host.';
+                }
+                ['order-city', 'order-niche', 'order-notes'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                await loadMe();
+                await loadOrders();
+            } catch (e) {
+                if (msg) {
+                    msg.style.display = '';
+                    msg.className = 'orders-msg err';
+                    msg.textContent = String(e.message || e);
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Pedir leads'; }
+            }
+        }
+
+        async function handleOrderAction(btn) {
+            const act = btn.getAttribute('data-act');
+            const id = btn.getAttribute('data-id');
+            if (!act || !id) return;
+            let url = '';
+            let body = {};
+            if (act === 'approve') {
+                if (!confirm('Aprovar pedido #' + id + ' e tentar entregar sobras do pool agora?')) return;
+                url = '/api/orders/' + id + '/approve';
+                body = { auto_deliver: true };
+            } else if (act === 'reject') {
+                const reason = prompt('Motivo da recusa (opcional):', '');
+                if (reason === null) return;
+                if (!confirm('Recusar pedido #' + id + '? As Trovoedas serão estornadas.')) return;
+                url = '/api/orders/' + id + '/reject';
+                body = { host_note: reason || 'Recusado pelo host' };
+            } else if (act === 'fulfill') {
+                url = '/api/orders/' + id + '/fulfill';
+                body = {};
+            } else if (act === 'cancel') {
+                if (!confirm('Cancelar pedido #' + id + '? Suas Trovoedas voltam ao saldo.')) return;
+                url = '/api/orders/' + id + '/cancel';
+                body = {};
+            } else {
+                return;
+            }
+            btn.disabled = true;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+                if (data.balance != null && currentUser) {
+                    currentUser.trovoedas = data.balance;
+                    updateWalletUI(data.balance, false);
+                }
+                if (data.message) {
+                    try { alert(data.message); } catch (_) {}
+                }
+                await loadMe();
+                await loadOrders();
+                if (typeof clearLeadsCache === 'function') clearLeadsCache();
+            } catch (e) {
+                alert(String(e.message || e));
+                btn.disabled = false;
+            }
+        }
+
+        async function refreshPendingOrdersBadge() {
+            if (!isPatraoSession()) {
+                updateOrdersBadge(0);
+                return;
+            }
+            try {
+                const res = await fetch('/api/orders/pending-count', { cache: 'no-store', credentials: 'same-origin' });
+                if (!res.ok) return;
+                const data = await res.json();
+                updateOrdersBadge(data.pending_count || 0);
+            } catch (_) {}
         }
 
         async function loadWallet() {
@@ -4236,8 +4697,8 @@
                 if (cta) {
                     cta.innerHTML = `
                         <button type="button" class="home-cta primary" onclick="navigateTo('/leads')">Ver meus leads</button>
-                        <button type="button" class="home-cta gold" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
-                        <button type="button" class="home-cta ghost" onclick="navigateTo('/wallet')">Abrir carteira</button>`;
+                        <button type="button" class="home-cta gold" onclick="navigateTo('/orders')">Pedir leads</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>`;
                 }
                 if (quick) {
                     quick.innerHTML = `
@@ -4245,13 +4706,13 @@
                             <div class="hq-ico">☰</div>
                             <div><h4>Abordar leads</h4><p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p></div>
                         </button>
-                        <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
+                        <button type="button" class="home-quick-card gold" onclick="navigateTo('/orders')">
+                            <div class="hq-ico">☰</div>
+                            <div><h4>Pedir leads</h4><p>Reserve Trovoedas e o host entrega na sua conta.</p></div>
+                        </button>
+                        <button type="button" class="home-quick-card" onclick="navigateTo('/shop')">
                             <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></div>
                             <div><h4>Comprar Trovoedas</h4><p>Pacotes a partir de 10 moedas. Pague só o que usar.</p></div>
-                        </button>
-                        <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">
-                            <div class="hq-ico">◈</div>
-                            <div><h4>Ver extrato</h4><p>Créditos, bônus e cada lead consumido na carteira.</p></div>
                         </button>`;
                 }
             }

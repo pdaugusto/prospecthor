@@ -1243,18 +1243,20 @@
         }
         .tour-spotlight::after {
             content: '';
-            position: absolute; inset: -6px;
-            border-radius: 18px;
-            border: 1px solid rgba(0, 212, 255, 0.35);
+            position: absolute; inset: -4px;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            /* sem scale — scale esticava a área e “inchava” tabelas grandes */
             animation: tour-pulse 1.6s ease-in-out infinite;
+            pointer-events: none;
         }
         @keyframes tour-pulse {
-            0%, 100% { opacity: 0.35; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.02); }
+            0%, 100% { opacity: 0.4; box-shadow: 0 0 0 0 rgba(0,212,255,0); }
+            50% { opacity: 1; box-shadow: 0 0 18px 2px rgba(0,212,255,0.25); }
         }
         .tour-card {
             position: fixed;
-            z-index: 12002;
+            z-index: 12050; /* sempre acima do spotlight e do conteúdo */
             width: min(340px, calc(100vw - 28px));
             background: linear-gradient(165deg, #121c2e 0%, #0a1220 100%);
             border: 1px solid rgba(0, 212, 255, 0.28);
@@ -1263,6 +1265,7 @@
             padding: 16px 16px 14px;
             color: var(--text);
             transition: top .22s ease, left .22s ease, opacity .18s ease;
+            pointer-events: auto;
         }
         .tour-card__head {
             display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
@@ -1318,11 +1321,7 @@
             background: rgba(255,255,255,0.1);
         }
         .tour-progress i.on { background: #00d4ff; }
-        .tour-target-elevate {
-            position: relative !important;
-            z-index: 12003 !important;
-            pointer-events: none !important;
-        }
+        /* NÃO elevar o alvo com z-index alto: tabelas de leads “crescem” e cobrem o card */
 
         .orders-summary {
             display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -7573,9 +7572,11 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                     body: 'Ache por nome, cidade ou telefone. Filtre o ramo do negócio pra montar a lista do dia.',
                 },
                 {
-                    sel: '#leads-table-wrap, #leads-mobile',
+                    // alvo compacto (não a tabela inteira) — evita spotlight gigante
+                    sel: '#leads-table-wrap thead, #leads-mobile .mobile-card, #leads-table-wrap, #leads-mobile',
                     title: 'Sua lista',
                     body: 'Toque no lead para abrir a ficha, ver score e copiar a abordagem no WhatsApp.',
+                    maxH: 120,
                 },
             ],
             shop: [
@@ -7678,10 +7679,14 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         function tourClearElevate() {
+            // legado: remove classe se alguma sessão antiga deixou no DOM
             if (tourState.elevateEl) {
-                tourState.elevateEl.classList.remove('tour-target-elevate');
+                try { tourState.elevateEl.classList.remove('tour-target-elevate'); } catch (_) {}
                 tourState.elevateEl = null;
             }
+            document.querySelectorAll('.tour-target-elevate').forEach(n => {
+                n.classList.remove('tour-target-elevate');
+            });
         }
 
         function tourPosition(step) {
@@ -7698,13 +7703,17 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
 
             let rect;
             if (el) {
-                try { el.scrollIntoView({ block: 'center', behavior: 'smooth', inline: 'nearest' }); } catch (_) {}
+                // só rola alvos pequenos; tabela inteira no center “explode” a tela
+                const pre = el.getBoundingClientRect();
+                const big = pre.height > vh * 0.45 || pre.width > vw * 0.92;
+                if (!big) {
+                    try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth', inline: 'nearest' }); } catch (_) {}
+                } else {
+                    try { el.scrollIntoView({ block: 'start', behavior: 'smooth', inline: 'nearest' }); } catch (_) {}
+                }
                 rect = el.getBoundingClientRect();
-                // re-measure after scroll settle is handled by caller timeout; use current
-                tourState.elevateEl = el;
-                el.classList.add('tour-target-elevate');
+                // NÃO elevar o DOM (z-index alto cobria o card e “inchava” a lista)
             } else {
-                // fallback: centro da tela sem highlight de elemento
                 rect = {
                     top: vh * 0.28, left: vw * 0.5 - 80,
                     width: 160, height: 40,
@@ -7713,10 +7722,16 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             }
 
             const pad = TOUR_PAD;
-            const top = Math.max(8, rect.top - pad);
-            const left = Math.max(8, rect.left - pad);
-            const width = Math.min(vw - 16, rect.width + pad * 2);
-            const height = Math.min(vh - 16, rect.height + pad * 2);
+            // limita spotlight — alvos enormes (tabela de leads) não engolem a tela
+            const maxSpotH = Math.min(
+                step.maxH || Math.round(vh * 0.38),
+                Math.round(vh * 0.42)
+            );
+            const maxSpotW = Math.min(vw - 24, Math.round(vw * 0.96));
+            let width = Math.min(maxSpotW, Math.max(48, rect.width + pad * 2));
+            let height = Math.min(maxSpotH, Math.max(36, rect.height + pad * 2));
+            let top = Math.max(10, Math.min(rect.top - pad, vh - height - 10));
+            let left = Math.max(10, Math.min(rect.left - pad, vw - width - 10));
 
             spot.hidden = false;
             spot.style.top = top + 'px';
@@ -7724,21 +7739,29 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             spot.style.width = width + 'px';
             spot.style.height = height + 'px';
 
-            // card: abaixo do alvo se couber; senão acima; senão centro
-            const cardH = card.offsetHeight || 200;
-            let cardTop = rect.bottom + 14;
-            if (cardTop + cardH > vh - 12) {
-                cardTop = rect.top - cardH - 14;
+            // card sempre legível: se o alvo for grande, fixa o card embaixo
+            const cardH = card.offsetHeight || 220;
+            const spotBottom = top + height;
+            const targetIsLarge = height > vh * 0.28 || (rect.height > vh * 0.4);
+            let cardTop;
+            if (targetIsLarge) {
+                cardTop = Math.max(12, vh - cardH - 18);
+            } else {
+                cardTop = spotBottom + 14;
+                if (cardTop + cardH > vh - 12) {
+                    cardTop = top - cardH - 14;
+                }
+                if (cardTop < 12) cardTop = Math.max(12, (vh - cardH) / 2);
             }
-            if (cardTop < 12) cardTop = Math.max(12, (vh - cardH) / 2);
 
-            let cardLeft = rect.left + (rect.width / 2) - (cardW / 2);
+            let cardLeft = left + (width / 2) - (cardW / 2);
             cardLeft = Math.max(14, Math.min(cardLeft, vw - cardW - 14));
 
             card.hidden = false;
             card.style.top = cardTop + 'px';
             card.style.left = cardLeft + 'px';
             card.style.width = cardW + 'px';
+            card.style.zIndex = '12050';
         }
 
         function tourRenderStep() {

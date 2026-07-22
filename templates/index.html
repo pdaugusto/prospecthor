@@ -763,6 +763,7 @@
             margin-left: 4px;
         }
         .pkg-card .btn-buy {
+            position: relative;
             margin-top: 12px; width: 100%;
             padding: 12px 14px; border-radius: 12px;
             font-size: 13px; font-weight: 800;
@@ -771,10 +772,82 @@
             background: linear-gradient(135deg, #ffe08a, #f5c542 50%, #e09a18);
             box-shadow: 0 4px 16px rgba(245, 197, 66, 0.22);
             transition: filter .15s, transform .15s, box-shadow .15s;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .pkg-card .btn-buy .btn-buy-label {
+            position: relative;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        /* faísca / raio no hover */
+        .pkg-card .btn-buy .bolt-fx {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .15s;
+            overflow: hidden;
+            border-radius: inherit;
+        }
+        .pkg-card .btn-buy:hover .bolt-fx,
+        .pkg-card .btn-buy:focus-visible .bolt-fx {
+            opacity: 1;
+        }
+        .pkg-card .btn-buy .bolt-fx::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            left: -30%;
+            width: 45%;
+            height: 180%;
+            background: linear-gradient(
+                105deg,
+                transparent 0%,
+                rgba(255,255,255,0.05) 35%,
+                rgba(255,255,255,0.55) 50%,
+                rgba(255,248,200,0.35) 58%,
+                transparent 72%
+            );
+            transform: translateX(-120%) skewX(-18deg);
+        }
+        .pkg-card .btn-buy:hover .bolt-fx::before,
+        .pkg-card .btn-buy:focus-visible .bolt-fx::before {
+            animation: buy-bolt-sweep 0.7s ease-out 1;
+        }
+        .pkg-card .btn-buy .bolt-ico {
+            display: inline-block;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0;
+            transform: scale(0.4) translateY(4px);
+            filter: drop-shadow(0 0 6px rgba(255, 220, 80, 0.9));
+            transition: opacity .12s, transform .2s cubic-bezier(.2,.9,.2,1);
+        }
+        .pkg-card .btn-buy:hover .bolt-ico,
+        .pkg-card .btn-buy:focus-visible .bolt-ico {
+            opacity: 1;
+            transform: scale(1.15) translateY(0);
+            animation: buy-bolt-flash 0.55s ease-out 1;
+        }
+        @keyframes buy-bolt-sweep {
+            0% { transform: translateX(-120%) skewX(-18deg); }
+            100% { transform: translateX(280%) skewX(-18deg); }
+        }
+        @keyframes buy-bolt-flash {
+            0% { opacity: 0; transform: scale(0.3) translateY(6px); filter: drop-shadow(0 0 0 transparent); }
+            35% { opacity: 1; transform: scale(1.35) translateY(0); filter: drop-shadow(0 0 10px #fff59a); }
+            100% { opacity: 1; transform: scale(1.1) translateY(0); filter: drop-shadow(0 0 6px rgba(255,220,80,0.85)); }
         }
         .pkg-card .btn-buy:hover {
-            filter: brightness(1.06);
-            box-shadow: 0 6px 20px rgba(245, 197, 66, 0.35);
+            filter: brightness(1.08);
+            box-shadow:
+                0 6px 22px rgba(245, 197, 66, 0.4),
+                0 0 24px rgba(255, 220, 100, 0.25);
             transform: translateY(-1px);
         }
         .pkg-card .btn-buy:active { transform: translateY(0); }
@@ -782,6 +855,8 @@
             opacity: 0.55; cursor: not-allowed; filter: grayscale(0.25);
             transform: none;
         }
+        .pkg-card .btn-buy:disabled .bolt-fx,
+        .pkg-card .btn-buy:disabled .bolt-ico { display: none; }
         .pkg-card:not(.featured) .btn-buy {
             background: transparent;
             color: #f5c542;
@@ -789,9 +864,20 @@
             box-shadow: none;
         }
         .pkg-card:not(.featured) .btn-buy:hover {
-            background: rgba(245,197,66,0.1);
-            border-color: rgba(245,197,66,0.55);
+            background: rgba(245,197,66,0.12);
+            border-color: rgba(245,197,66,0.65);
             filter: none;
+            box-shadow: 0 0 20px rgba(245,197,66,0.18);
+        }
+        .pkg-card:not(.featured) .btn-buy .bolt-fx::before {
+            background: linear-gradient(
+                105deg,
+                transparent 0%,
+                rgba(245,197,66,0.05) 35%,
+                rgba(255,230,140,0.45) 50%,
+                rgba(245,197,66,0.15) 58%,
+                transparent 72%
+            );
         }
         .shop-note {
             display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
@@ -3255,7 +3341,11 @@
                             <div class="pkg-card__bottom">
                                 <div class="pkg-price">${formatBRL(cents)} <span>pagamento único</span></div>
                                 <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
-                                    ${featured ? 'Escolher pacote' : 'Comprar'}
+                                    <span class="bolt-fx" aria-hidden="true"></span>
+                                    <span class="btn-buy-label">
+                                        <span class="bolt-ico" aria-hidden="true">⚡</span>
+                                        <span>${featured ? 'Escolher pacote' : 'Comprar'}</span>
+                                    </span>
                                 </button>
                             </div>
                         </article>`;

@@ -1,25 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
   <defs>
-    <linearGradient id="g" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE08A"/>
-      <stop offset="0.45" stop-color="#F5C542"/>
-      <stop offset="1" stop-color="#C48912"/>
+    <linearGradient id="face" x1="18" y1="12" x2="62" y2="68" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0B8"/>
+      <stop offset="0.35" stop-color="#F5C542"/>
+      <stop offset="0.7" stop-color="#D4A017"/>
+      <stop offset="1" stop-color="#A67C12"/>
     </linearGradient>
-    <linearGradient id="rim" x1="32" y1="4" x2="32" y2="60" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF3C4"/>
-      <stop offset="1" stop-color="#A66B0A"/>
+    <linearGradient id="edge" x1="0" y1="40" x2="80" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B6914"/>
+      <stop offset="0.5" stop-color="#E8B923"/>
+      <stop offset="1" stop-color="#5C4010"/>
     </linearGradient>
-    <!-- Raio: dourado escuro (no lugar do azul) -->
-    <linearGradient id="bolt" x1="28" y1="12" x2="38" y2="50" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D4A017"/>
-      <stop offset="0.5" stop-color="#A67C00"/>
-      <stop offset="1" stop-color="#6B4F0A"/>
+    <linearGradient id="rim" x1="40" y1="8" x2="40" y2="72" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8D6"/>
+      <stop offset="1" stop-color="#8B6914"/>
     </linearGradient>
+    <linearGradient id="bolt" x1="34" y1="16" x2="48" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C9A227"/>
+      <stop offset="0.45" stop-color="#8B6914"/>
+      <stop offset="1" stop-color="#4A3508"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="32%" cy="28%" r="55%">
+      <stop stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="0.4" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
   </defs>
-  <circle cx="32" cy="32" r="28" fill="url(#g)" stroke="url(#rim)" stroke-width="3"/>
-  <circle cx="32" cy="32" r="22" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
-  <!-- sombra do raio -->
-  <path d="M36 12 L22 34 H32 L28 52 L46 28 H34 L36 12Z" fill="#5C4010" opacity="0.55"/>
-  <!-- raio dourado escuro -->
-  <path d="M35 14 L23 33.5 H32.5 L29 49 L44.5 28.5 H33.5 L35 14Z" fill="url(#bolt)"/>
+  <!-- borda/espessura 3D (elipse de trás) -->
+  <ellipse cx="42" cy="41" rx="30" ry="30" fill="url(#edge)" opacity="0.95"/>
+  <!-- face principal -->
+  <g filter="url(#soft)">
+    <circle cx="38" cy="38" r="30" fill="url(#face)" stroke="url(#rim)" stroke-width="2.5"/>
+    <circle cx="38" cy="38" r="24" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"/>
+    <circle cx="38" cy="38" r="30" fill="url(#shine)"/>
+    <!-- raio dourado escuro -->
+    <path d="M42 14 L26 38 H37 L32 60 L54 34 H41 L42 14Z" fill="#5C4010" opacity="0.4"/>
+    <path d="M41 16 L27 37.5 H37.5 L33 57 L52.5 34.5 H40.5 L41 16Z" fill="url(#bolt)"/>
+  </g>
 </svg>

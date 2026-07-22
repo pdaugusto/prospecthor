@@ -493,8 +493,8 @@
             flex-shrink: 0;
         }
         .wallet-chip {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 5px 10px 5px 6px;
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 5px 12px 5px 7px;
             border-radius: 999px;
             background: linear-gradient(145deg, rgba(245,197,66,0.16), rgba(20,16,8,0.65));
             border: 1px solid rgba(245, 197, 66, 0.45);
@@ -508,11 +508,29 @@
             box-shadow: 0 0 22px rgba(245, 197, 66, 0.22);
             transform: translateY(-1px);
         }
-        .wallet-chip .coin-ico {
-            width: 28px; height: 28px; border-radius: 50%;
+        /* Moeda 3D inclinada (estilo render) */
+        .coin-3d {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 520px;
             flex-shrink: 0;
-            object-fit: cover;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+        }
+        .coin-3d__face {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: rotateY(-28deg) rotateX(14deg) rotateZ(-6deg);
+            transform-style: preserve-3d;
+            filter: drop-shadow(4px 6px 8px rgba(0,0,0,0.45));
+            transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .25s;
+            will-change: transform;
+        }
+        .wallet-chip .coin-3d { width: 30px; height: 30px; }
+        .wallet-chip:hover .coin-3d__face {
+            transform: rotateY(-18deg) rotateX(10deg) rotateZ(-4deg) scale(1.06);
+            filter: drop-shadow(5px 8px 10px rgba(0,0,0,0.5));
         }
         .wallet-chip .wallet-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
         .wallet-chip .wallet-label {
@@ -544,120 +562,236 @@
         }
         .btn-recharge:active { transform: translateY(0); }
 
-        /* —— Loja Trovoedas —— */
+        /* —— Loja Trovoedas (profissional) —— */
+        .shop-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1100px;
+        }
         .shop-hero {
             position: relative;
-            padding: 22px 24px;
-            border-radius: 16px;
-            margin-bottom: 18px;
-            border: 1px solid rgba(245, 197, 66, 0.28);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: center;
+            padding: 28px 28px 26px;
+            border-radius: 20px;
+            border: 1px solid rgba(245, 197, 66, 0.22);
             background:
-                radial-gradient(ellipse 70% 80% at 10% 20%, rgba(245,197,66,0.18), transparent 55%),
-                radial-gradient(ellipse 50% 60% at 90% 80%, rgba(0,212,255,0.08), transparent 50%),
-                linear-gradient(160deg, #0c1018, #080a10);
+                radial-gradient(ellipse 55% 90% at 0% 50%, rgba(245,197,66,0.14), transparent 55%),
+                radial-gradient(ellipse 40% 70% at 100% 0%, rgba(0,212,255,0.07), transparent 50%),
+                linear-gradient(145deg, #0e131c 0%, #080a10 100%);
             overflow: hidden;
         }
+        .shop-hero::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%);
+            pointer-events: none;
+        }
+        .shop-hero__copy { position: relative; z-index: 1; min-width: 0; }
+        .shop-kicker {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; color: #c9a227;
+            margin-bottom: 10px;
+        }
+        .shop-kicker i {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #f5c542; box-shadow: 0 0 8px #f5c542;
+        }
         .shop-hero h2 {
-            font-size: 22px; font-weight: 900; letter-spacing: -0.03em;
-            background: linear-gradient(90deg, #ffe8a3, #f5c542);
+            font-size: clamp(22px, 3vw, 28px); font-weight: 900; letter-spacing: -0.035em;
+            color: #fff; margin: 0;
+        }
+        .shop-hero h2 em {
+            font-style: normal;
+            background: linear-gradient(90deg, #ffe8a3, #f5c542 60%, #e09a18);
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .shop-hero p { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 520px; line-height: 1.5; }
-        .shop-hero .shop-balance {
-            margin-top: 14px; display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 14px; border-radius: 12px;
-            background: rgba(0,0,0,0.35); border: 1px solid rgba(245,197,66,0.25);
+        .shop-hero p {
+            margin-top: 10px; color: var(--muted); font-size: 14px;
+            max-width: 480px; line-height: 1.55;
         }
-        .shop-hero .shop-balance img { width: 32px; height: 32px; }
-        .shop-hero .shop-balance strong { font-size: 20px; color: #ffe8a3; }
-        .shop-hero .shop-balance span { font-size: 12px; color: var(--muted); }
+        .shop-hero__pills {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+        }
+        .shop-pill {
+            font-size: 11px; font-weight: 600; color: #d4c48a;
+            padding: 6px 11px; border-radius: 999px;
+            background: rgba(245,197,66,0.08);
+            border: 1px solid rgba(245,197,66,0.2);
+        }
+        .shop-balance-card {
+            position: relative; z-index: 1;
+            min-width: 200px;
+            padding: 18px 20px;
+            border-radius: 16px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(245,197,66,0.28);
+            backdrop-filter: blur(8px);
+            display: flex; align-items: center; gap: 14px;
+        }
+        .shop-balance-card .coin-3d { width: 56px; height: 56px; }
+        .shop-balance-card .coin-3d__face {
+            animation: coin-float 4.5s ease-in-out infinite;
+        }
+        @keyframes coin-float {
+            0%, 100% { transform: rotateY(-28deg) rotateX(14deg) rotateZ(-6deg) translateY(0); }
+            50% { transform: rotateY(-22deg) rotateX(12deg) rotateZ(-5deg) translateY(-4px); }
+        }
+        .shop-balance-card .lbl {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #a89040;
+        }
+        .shop-balance-card strong {
+            display: block; font-size: 28px; font-weight: 900;
+            color: #ffe8a3; letter-spacing: -0.03em; line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        .shop-balance-card .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
         .shop-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
         }
+        @media (max-width: 1100px) {
+            .shop-grid { grid-template-columns: repeat(2, 1fr); }
+            .shop-hero { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 560px) {
+            .shop-grid { grid-template-columns: 1fr; }
+        }
+
         .pkg-card {
             position: relative;
             display: flex; flex-direction: column;
-            padding: 20px 18px 16px;
-            border-radius: 16px;
-            background: var(--card, #0c111a);
-            border: 1px solid var(--border);
-            transition: border-color .15s, box-shadow .15s, transform .12s;
+            padding: 0;
+            border-radius: 18px;
+            background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
+            border: 1px solid rgba(255,255,255,0.06);
+            overflow: hidden;
+            transition: border-color .2s, box-shadow .25s, transform .25s cubic-bezier(.2,.8,.2,1);
+            cursor: default;
+        }
+        .pkg-card::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 42%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .2s;
         }
         .pkg-card:hover {
-            border-color: rgba(245, 197, 66, 0.4);
-            box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,197,66,0.08);
-            transform: translateY(-2px);
+            border-color: rgba(245, 197, 66, 0.35);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,197,66,0.08);
+            transform: translateY(-4px);
+        }
+        .pkg-card:hover::after { opacity: 1; }
+        .pkg-card:hover .coin-3d__face {
+            transform: rotateY(-12deg) rotateX(8deg) rotateZ(-3deg) scale(1.08);
         }
         .pkg-card.featured {
-            border-color: rgba(245, 197, 66, 0.55);
+            border-color: rgba(245, 197, 66, 0.5);
             background:
-                radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245,197,66,0.14), transparent 60%),
-                var(--card, #0c111a);
-            box-shadow: 0 0 32px rgba(245, 197, 66, 0.1);
+                radial-gradient(ellipse 100% 60% at 50% -10%, rgba(245,197,66,0.2), transparent 55%),
+                linear-gradient(165deg, #141a28 0%, #0a0e16 100%);
+            box-shadow: 0 0 40px rgba(245, 197, 66, 0.12), 0 12px 32px rgba(0,0,0,0.35);
+        }
+        .pkg-card.featured:hover {
+            box-shadow: 0 0 48px rgba(245, 197, 66, 0.18), 0 18px 40px rgba(0,0,0,0.4);
         }
         .pkg-badge {
-            position: absolute; top: 12px; right: 12px;
-            font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+            position: absolute; top: 14px; right: 14px; z-index: 2;
+            font-size: 10px; font-weight: 800; letter-spacing: 0.05em;
             text-transform: uppercase;
-            padding: 4px 8px; border-radius: 999px;
-            background: linear-gradient(135deg, #f5c542, #e09a18);
+            padding: 5px 10px; border-radius: 999px;
+            background: linear-gradient(135deg, #ffe08a, #f5c542, #e09a18);
             color: #1a1408;
+            box-shadow: 0 2px 10px rgba(245,197,66,0.35);
         }
-        .pkg-card .pkg-coin {
-            width: 56px; height: 56px; margin-bottom: 12px;
-            border-radius: 50%;
-            object-fit: cover;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+        .pkg-card__top {
+            padding: 22px 20px 8px;
+            display: flex; flex-direction: column; align-items: flex-start;
+            gap: 12px;
         }
+        .pkg-card .coin-3d { width: 72px; height: 72px; }
         .pkg-card h3 {
-            font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 4px;
+            font-size: 15px; font-weight: 700; color: var(--muted);
+            margin: 0; letter-spacing: 0.02em;
         }
         .pkg-card .pkg-coins {
-            font-size: 28px; font-weight: 900; color: #f5c542;
-            letter-spacing: -0.03em; line-height: 1.1;
+            font-size: 32px; font-weight: 900; color: #fff;
+            letter-spacing: -0.04em; line-height: 1;
         }
         .pkg-card .pkg-coins small {
-            font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px;
+            font-size: 13px; font-weight: 600; color: #c9a227; margin-left: 6px;
+            letter-spacing: 0;
         }
         .pkg-card .pkg-per {
             margin-top: 6px; font-size: 12px; color: var(--muted);
         }
-        .pkg-card .pkg-price {
-            margin-top: 14px; font-size: 22px; font-weight: 900; color: var(--text);
-            letter-spacing: -0.02em;
+        .pkg-card__bottom {
+            margin-top: auto;
+            padding: 16px 20px 18px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
         }
-        .pkg-card .pkg-price span { font-size: 13px; font-weight: 600; color: var(--muted); }
+        .pkg-card .pkg-price {
+            font-size: 24px; font-weight: 900; color: #fff;
+            letter-spacing: -0.03em;
+        }
+        .pkg-card .pkg-price span {
+            font-size: 12px; font-weight: 600; color: var(--muted);
+            margin-left: 4px;
+        }
         .pkg-card .btn-buy {
-            margin-top: 14px; width: 100%;
-            padding: 11px 14px; border-radius: 12px;
+            margin-top: 12px; width: 100%;
+            padding: 12px 14px; border-radius: 12px;
             font-size: 13px; font-weight: 800;
             border: none; cursor: pointer;
             color: #0b1220;
             background: linear-gradient(135deg, #ffe08a, #f5c542 50%, #e09a18);
-            box-shadow: 0 4px 16px rgba(245, 197, 66, 0.25);
-            transition: filter .12s, transform .12s;
+            box-shadow: 0 4px 16px rgba(245, 197, 66, 0.22);
+            transition: filter .15s, transform .15s, box-shadow .15s;
         }
-        .pkg-card .btn-buy:hover { filter: brightness(1.05); }
+        .pkg-card .btn-buy:hover {
+            filter: brightness(1.06);
+            box-shadow: 0 6px 20px rgba(245, 197, 66, 0.35);
+            transform: translateY(-1px);
+        }
+        .pkg-card .btn-buy:active { transform: translateY(0); }
         .pkg-card .btn-buy:disabled {
-            opacity: 0.55; cursor: not-allowed; filter: grayscale(0.3);
+            opacity: 0.55; cursor: not-allowed; filter: grayscale(0.25);
+            transform: none;
         }
-        .pkg-card .btn-buy.secondary {
+        .pkg-card:not(.featured) .btn-buy {
             background: transparent;
             color: #f5c542;
-            border: 1px solid rgba(245, 197, 66, 0.4);
+            border: 1px solid rgba(245, 197, 66, 0.35);
             box-shadow: none;
         }
+        .pkg-card:not(.featured) .btn-buy:hover {
+            background: rgba(245,197,66,0.1);
+            border-color: rgba(245,197,66,0.55);
+            filter: none;
+        }
         .shop-note {
-            margin-top: 18px; padding: 14px 16px; border-radius: 12px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+            padding: 16px 18px; border-radius: 14px;
             font-size: 13px; color: var(--muted); line-height: 1.5;
-            border: 1px dashed rgba(245, 197, 66, 0.25);
-            background: rgba(245, 197, 66, 0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
         }
         .shop-note strong { color: #f5c542; }
+        .shop-note a {
+            color: var(--neon); font-weight: 600; text-decoration: none;
+            margin-left: auto;
+        }
+        .shop-note a:hover { text-decoration: underline; }
 
         .avatar {
             width: 38px; height: 38px; border-radius: 50%;
@@ -1480,7 +1614,9 @@
             <div class="header-right">
                 <div class="wallet-bar" id="wallet-bar">
                     <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/shop')" title="Seu saldo de Trovoedas">
-                        <img class="coin-ico" src="/static/trovoeda-coin.svg" alt="" width="28" height="28" />
+                        <span class="coin-3d" aria-hidden="true">
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="30" height="30" />
+                        </span>
                         <div class="wallet-meta">
                             <span class="wallet-label">Trovoedas</span>
                             <span class="wallet-amt" id="wallet-amt">0</span>
@@ -1498,45 +1634,64 @@
 
         <!-- LOJA TROVOEDAS -->
         <section id="view-shop" class="view">
-            <div class="shop-hero">
-                <h2>Loja de Trovoedas</h2>
-                <p>
-                    1 Trovoeda = 1 lead com contato. <strong style="color:#f5c542;">Não expiram.</strong>
-                    Compre o pacote e use quando quiser. Pagamento seguro via Stripe (em ativação).
-                </p>
-                <div class="shop-balance">
-                    <img src="/static/trovoeda-coin.svg" alt="" width="32" height="32" />
-                    <div>
-                        <div><strong id="shop-balance-amt">0</strong> <span>no saldo</span></div>
+            <div class="shop-layout">
+                <div class="shop-hero">
+                    <div class="shop-hero__copy">
+                        <div class="shop-kicker"><i></i> Créditos</div>
+                        <h2>Loja de <em>Trovoedas</em></h2>
+                        <p>
+                            1 Trovoeda = 1 lead com contato utilizável. Escolha o pacote, recarregue o saldo
+                            e use quando quiser — as moedas <strong style="color:#e8d48a;">não expiram</strong>.
+                        </p>
+                        <div class="shop-hero__pills">
+                            <span class="shop-pill">Sem mensalidade</span>
+                            <span class="shop-pill">1 moeda = 1 lead</span>
+                            <span class="shop-pill">Saldo permanente</span>
+                        </div>
+                    </div>
+                    <div class="shop-balance-card">
+                        <span class="coin-3d" aria-hidden="true">
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
+                        </span>
+                        <div>
+                            <div class="lbl">Seu saldo</div>
+                            <strong id="shop-balance-amt">0</strong>
+                            <div class="sub">Trovoedas disponíveis</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="shop-grid" id="shop-packages">
-                <div class="pkg-card" style="grid-column:1/-1;opacity:0.7;text-align:center;padding:32px;">
-                    Carregando pacotes…
+                <div class="shop-grid" id="shop-packages">
+                    <div class="pkg-card" style="grid-column:1/-1;opacity:0.7;text-align:center;padding:40px;">
+                        Carregando pacotes…
+                    </div>
                 </div>
-            </div>
-            <div class="shop-note">
-                <strong>Como funciona:</strong> compre Trovoedas → peça leads → o time processa e entrega na sua conta
-                (1 moeda por lead entregue). <strong style="color:var(--text);">Trovoedas não expiram.</strong>
-                <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');" style="color:var(--neon);margin-left:6px;">Ver extrato →</a>
+                <div class="shop-note">
+                    <span><strong>Como funciona:</strong> compre → peça leads → entregamos na sua conta (1 moeda por lead).</span>
+                    <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
+                </div>
             </div>
         </section>
 
         <!-- CARTEIRA / EXTRATO -->
         <section id="view-wallet" class="view">
-            <div class="shop-hero">
-                <h2>Carteira</h2>
-                <p>Saldo de Trovoedas e extrato de crédito e consumo (1 moeda = 1 lead entregue).</p>
-                <div class="shop-balance">
-                    <img src="/static/trovoeda-coin.svg" alt="" width="40" height="40" />
-                    <div>
-                        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">Saldo atual</div>
-                        <div><strong id="wallet-page-amt" style="font-size:32px;">0</strong> <span>Trovoedas</span></div>
+            <div class="shop-hero" style="margin-bottom:18px;">
+                <div class="shop-hero__copy">
+                    <div class="shop-kicker"><i></i> Conta</div>
+                    <h2>Carteira</h2>
+                    <p>Saldo e extrato de crédito e consumo. Cada lead entregue consome 1 Trovoeda.</p>
+                    <div style="margin-top:16px;">
+                        <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar na loja</button>
                     </div>
                 </div>
-                <div style="margin-top:16px;">
-                    <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar na loja</button>
+                <div class="shop-balance-card">
+                    <span class="coin-3d" aria-hidden="true">
+                        <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
+                    </span>
+                    <div>
+                        <div class="lbl">Saldo atual</div>
+                        <strong id="wallet-page-amt">0</strong>
+                        <div class="sub">Trovoedas</div>
+                    </div>
                 </div>
             </div>
             <div class="panel">
@@ -2906,7 +3061,6 @@
                     grid.innerHTML = '<div class="pkg-card" style="grid-column:1/-1;text-align:center;">Nenhum pacote cadastrado.</div>';
                     return;
                 }
-                // destaque no pacote "raio" ou o do meio
                 const featureSlug = 'raio';
                 grid.innerHTML = pkgs.map(p => {
                     const coins = Number(p.coins) || 0;
@@ -2914,20 +3068,28 @@
                     const per = coins > 0 ? (cents / 100) / coins : 0;
                     const featured = (p.slug || '') === featureSlug;
                     const perTxt = per > 0
-                        ? ('≈ ' + per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' / lead')
+                        ? (per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' por lead')
                         : '';
                     return `
-                        <div class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
+                        <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
                             ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
-                            <img class="pkg-coin" src="/static/trovoeda-coin.svg" alt="" width="48" height="48" />
-                            <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
-                            <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
-                            <div class="pkg-per">${perTxt} · 1 moeda = 1 lead</div>
-                            <div class="pkg-price">${formatBRL(cents)} <span>à vista</span></div>
-                            <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
-                                Comprar agora
-                            </button>
-                        </div>`;
+                            <div class="pkg-card__top">
+                                <span class="coin-3d" aria-hidden="true">
+                                    <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="72" height="72" />
+                                </span>
+                                <div>
+                                    <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
+                                    <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
+                                    <div class="pkg-per">${perTxt}</div>
+                                </div>
+                            </div>
+                            <div class="pkg-card__bottom">
+                                <div class="pkg-price">${formatBRL(cents)} <span>pagamento único</span></div>
+                                <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
+                                    ${featured ? 'Escolher pacote' : 'Comprar'}
+                                </button>
+                            </div>
+                        </article>`;
                 }).join('');
                 grid.querySelectorAll('.btn-buy').forEach(btn => {
                     btn.addEventListener('click', () => {

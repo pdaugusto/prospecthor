@@ -1,120 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <!-- Face principal (metal dourado) -->
-    <radialGradient id="faceMetal" cx="38%" cy="32%" r="72%">
-      <stop offset="0%" stop-color="#FFF6D0"/>
-      <stop offset="22%" stop-color="#FFE08A"/>
-      <stop offset="48%" stop-color="#F0C040"/>
-      <stop offset="72%" stop-color="#C99218"/>
-      <stop offset="100%" stop-color="#8A6410"/>
-    </radialGradient>
-    <!-- Borda interna -->
-    <linearGradient id="innerRim" x1="28" y1="20" x2="88" y2="96" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF3C4" stop-opacity="0.9"/>
-      <stop offset="0.45" stop-color="#D4A017" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="#5C4010" stop-opacity="0.85"/>
+    <linearGradient id="g" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE08A"/>
+      <stop offset="0.45" stop-color="#F5C542"/>
+      <stop offset="1" stop-color="#C48912"/>
     </linearGradient>
-    <!-- Espessura / side wall (anel 3D) -->
-    <linearGradient id="sideWall" x1="18" y1="40" x2="102" y2="72" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5C4010"/>
-      <stop offset="0.2" stop-color="#B8860B"/>
-      <stop offset="0.45" stop-color="#E8C04A"/>
-      <stop offset="0.7" stop-color="#8B6914"/>
-      <stop offset="1" stop-color="#3D2A08"/>
+    <linearGradient id="rim" x1="32" y1="4" x2="32" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF3C4"/>
+      <stop offset="1" stop-color="#A66B0A"/>
     </linearGradient>
-    <!-- Brilho especular -->
-    <radialGradient id="spec" cx="32%" cy="26%" r="42%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
-      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
-    <!-- Sombra sob a moeda -->
-    <radialGradient id="floorShadow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#000" stop-opacity="0.45"/>
-      <stop offset="70%" stop-color="#000" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-    </radialGradient>
-    <!-- Raio em relevo (dourado escuro) -->
-    <linearGradient id="boltFace" x1="48" y1="28" x2="68" y2="88" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E8C040"/>
-      <stop offset="0.4" stop-color="#A67C00"/>
-      <stop offset="1" stop-color="#4A3508"/>
+    <linearGradient id="bolt" x1="28" y1="12" x2="38" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4A017"/>
+      <stop offset="0.5" stop-color="#A67C00"/>
+      <stop offset="1" stop-color="#6B4F0A"/>
     </linearGradient>
-    <linearGradient id="boltEdge" x1="40" y1="30" x2="72" y2="86" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3D2A08"/>
-      <stop offset="1" stop-color="#1A1204"/>
-    </linearGradient>
-    <linearGradient id="boltHi" x1="52" y1="26" x2="58" y2="70" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF0B0" stop-opacity="0.65"/>
-      <stop offset="1" stop-color="#FFF0B0" stop-opacity="0"/>
-    </linearGradient>
-    <!-- Textura circular -->
-    <linearGradient id="textGrad" x1="30" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5C4010" stop-opacity="0.55"/>
-      <stop offset="1" stop-color="#2A1C06" stop-opacity="0.4"/>
-    </linearGradient>
-    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="2" dy="5" stdDeviation="3.5" flood-color="#000" flood-opacity="0.4"/>
-    </filter>
-    <filter id="innerSoft">
-      <feGaussianBlur stdDeviation="0.4"/>
-    </filter>
   </defs>
-
-  <!-- sombra no chão (perspectiva) -->
-  <ellipse cx="64" cy="98" rx="38" ry="9" fill="url(#floorShadow)"/>
-
-  <!-- grupo moeda: levemente em perspectiva via SVG (skew sutil no side) -->
-  <g filter="url(#softShadow)">
-    <!-- parede lateral (anel deslocado = espessura) -->
-    <ellipse cx="66" cy="62" rx="42" ry="42" fill="url(#sideWall)"/>
-    <!-- face frontal -->
-    <circle cx="56" cy="56" r="42" fill="url(#faceMetal)"/>
-    <!-- anel externo gravado -->
-    <circle cx="56" cy="56" r="42" fill="none" stroke="url(#innerRim)" stroke-width="3.2"/>
-    <circle cx="56" cy="56" r="36.5" fill="none" stroke="rgba(90,64,16,0.35)" stroke-width="1.1"/>
-    <circle cx="56" cy="56" r="33" fill="none" stroke="rgba(255,243,196,0.22)" stroke-width="0.8"/>
-
-    <!-- pontilhado / milled edge suggestion -->
-    <g opacity="0.35" stroke="#6B4F0A" stroke-width="0.9">
-      <line x1="56" y1="15.5" x2="56" y2="18.5"/>
-      <line x1="76" y1="20" x2="74.5" y2="22.5"/>
-      <line x1="90" y1="34" x2="87.2" y2="35.2"/>
-      <line x1="95.5" y1="56" x2="92.5" y2="56"/>
-      <line x1="90" y1="78" x2="87.2" y2="76.8"/>
-      <line x1="76" y1="92" x2="74.5" y2="89.5"/>
-      <line x1="56" y1="96.5" x2="56" y2="93.5"/>
-      <line x1="36" y1="92" x2="37.5" y2="89.5"/>
-      <line x1="22" y1="78" x2="24.8" y2="76.8"/>
-      <line x1="16.5" y1="56" x2="19.5" y2="56"/>
-      <line x1="22" y1="34" x2="24.8" y2="35.2"/>
-      <line x1="36" y1="20" x2="37.5" y2="22.5"/>
-    </g>
-
-    <!-- micro textura (arcos) -->
-    <path d="M28 48 Q56 28 84 48" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" fill="none"/>
-    <path d="M30 68 Q56 84 82 66" stroke="rgba(90,64,16,0.18)" stroke-width="1.4" fill="none"/>
-
-    <!-- legenda circular sutil -->
-    <path id="arcTop" d="M30 50 A26 26 0 0 1 82 50" fill="none"/>
-    <text fill="url(#textGrad)" font-size="5.5" font-family="system-ui,Segoe UI,sans-serif" font-weight="700" letter-spacing="1.6">
-      <textPath href="#arcTop" startOffset="8%">T R O V O E D A</textPath>
-    </text>
-
-    <!-- RAIO em relevo -->
-    <!-- sombra do raio -->
-    <path d="M62 26 L42 56 H55 L48 86 L76 52 H62 L62 26Z" fill="#2A1C06" opacity="0.35" transform="translate(1.5 2)"/>
-    <!-- corpo do raio -->
-    <path d="M60 24 L40 54 H54 L46 84 L76 50 H61 L60 24Z" fill="url(#boltEdge)"/>
-    <path d="M59 26 L42 53.5 H54 L48 80 L73 50.5 H60 L59 26Z" fill="url(#boltFace)"/>
-    <!-- highlight no raio -->
-    <path d="M57 30 L48 48 H54 L51 62 L62 48 H56 L57 30Z" fill="url(#boltHi)"/>
-
-    <!-- brilho especular na face -->
-    <circle cx="56" cy="56" r="42" fill="url(#spec)"/>
-    <!-- borda fina clara no top-left -->
-    <path d="M28 40 A36 36 0 0 1 72 24" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-    <!-- contato de luz inferior -->
-    <path d="M34 82 A30 18 0 0 0 78 78" stroke="rgba(60,40,8,0.25)" stroke-width="2" fill="none"/>
-  </g>
+  <circle cx="32" cy="32" r="28" fill="url(#g)" stroke="url(#rim)" stroke-width="3"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+  <path d="M36 12 L22 34 H32 L28 52 L46 28 H34 L36 12Z" fill="#5C4010" opacity="0.55"/>
+  <path d="M35 14 L23 33.5 H32.5 L29 49 L44.5 28.5 H33.5 L35 14Z" fill="url(#bolt)"/>
 </svg>

@@ -103,35 +103,17 @@
       padding: 3px 8px; border-radius: 999px; background: var(--gold); color: #1a1408;
     }
     .pkg .coin-3d {
-      width: 72px; height: 72px; margin-bottom: 14px;
-      perspective: 720px; display: inline-flex;
+      width: 64px; height: 64px; margin-bottom: 12px;
+      perspective: 800px; display: inline-flex;
     }
-    .pkg .coin-3d__spin {
-      position: relative; width: 100%; height: 100%;
-      transform-style: preserve-3d;
-      transform: rotateX(16deg) rotateY(-24deg);
-      filter: drop-shadow(3px 6px 8px rgba(0,0,0,0.5));
+    .pkg .coin-3d img {
+      width: 100%; height: 100%; object-fit: contain;
+      transform: rotateY(-18deg) rotateX(10deg) rotateZ(-3deg);
+      filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.4));
+      transition: transform .3s ease;
     }
-    .pkg .coin-3d__rim {
-      position: absolute; inset: 3%; border-radius: 50%;
-      background: linear-gradient(90deg, #3d2a08, #e8c04a 50%, #2a1c06);
-      transform: translateZ(0);
-    }
-    .pkg .coin-3d__disk {
-      position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    }
-    .pkg .coin-3d__disk img { width: 100%; height: 100%; display: block; object-fit: contain; }
-    .pkg .coin-3d__front { transform: translateZ(3.5px); }
-    .pkg .coin-3d__back { transform: rotateY(180deg) translateZ(3.5px); filter: brightness(0.9); }
-    .pkg:hover .coin-3d__spin {
-      animation: coin-flip-land 1.15s cubic-bezier(0.15, 0.7, 0.2, 1) 1;
-    }
-    @keyframes coin-flip-land {
-      0% { transform: rotateX(16deg) rotateY(-24deg); }
-      25% { transform: rotateX(12deg) rotateY(180deg); }
-      50% { transform: rotateX(14deg) rotateY(540deg); }
-      100% { transform: rotateX(16deg) rotateY(1056deg); }
+    .pkg:hover .coin-3d img {
+      transform: rotateY(-10deg) rotateX(8deg) scale(1.08);
     }
 
 
@@ -268,11 +250,7 @@
         <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %}">
           {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
           <span class="coin-3d" aria-hidden="true">
-            <span class="coin-3d__spin">
-              <span class="coin-3d__rim"></span>
-              <span class="coin-3d__disk coin-3d__front"><img src="/static/trovoeda-coin.svg" alt="" /></span>
-              <span class="coin-3d__disk coin-3d__back"><img src="/static/trovoeda-coin.svg" alt="" /></span>
-            </span>
+            <img src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
           </span>
           <h3>{{ p.name }}</h3>
           <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>

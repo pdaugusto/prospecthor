@@ -22,8 +22,11 @@
       --muted-2: #5a6b82;
       --neon: #00d4ff;
       --neon-dim: rgba(0,212,255,0.12);
-      --gold: #f5c542;
-      --gold2: #e09a18;
+      /* Trovoeda gold — moeda realista (img 15) */
+      --gold: #C9A060;
+      --gold2: #8F6232;
+      --gold-light: #E8C994;
+      --gold-deep: #6B4520;
       --font: Inter, system-ui, -apple-system, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,7 +48,7 @@
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background:
         radial-gradient(ellipse 50% 40% at 15% 0%, rgba(0,212,255,0.09), transparent 55%),
-        radial-gradient(ellipse 40% 35% at 90% 10%, rgba(245,197,66,0.06), transparent 50%),
+        radial-gradient(ellipse 40% 35% at 90% 10%, rgba(201,160,96,0.06), transparent 50%),
         var(--bg);
     }
     .bg-fx::after {
@@ -178,9 +181,9 @@
       box-shadow: 0 0 0 1px rgba(0,212,255,0.35), 0 10px 36px rgba(0,212,255,0.4);
     }
     .btn-gold {
-      background: linear-gradient(135deg, #fff0b0, var(--gold) 45%, var(--gold2));
+      background: linear-gradient(135deg, #F0D4A8, var(--gold) 45%, var(--gold2));
       border: none; color: #1a1408; font-weight: 800;
-      box-shadow: 0 8px 28px rgba(245,197,66,0.28);
+      box-shadow: 0 8px 28px rgba(201,160,96,0.28);
     }
     .btn-gold:hover { filter: brightness(1.05); }
     .btn-ghost { color: var(--muted); border-color: transparent; background: transparent; }
@@ -286,7 +289,7 @@
     }
     .mock-glow.gold {
       width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(245,197,66,0.18), transparent 70%);
+      background: radial-gradient(circle, rgba(201,160,96,0.18), transparent 70%);
       top: auto; bottom: 5%; left: 5%; right: auto;
     }
     .dash-shot {
@@ -440,7 +443,7 @@
       border-radius: 12px 12px 0 0;
     }
     .mock-tr.hot {
-      background: linear-gradient(90deg, rgba(245,197,66,0.08), transparent 70%);
+      background: linear-gradient(90deg, rgba(201,160,96,0.08), transparent 70%);
     }
     /* Linha em hover (demo animada): lista continua visível */
     .mock-table.has-score-hover .mock-tr:not(.head) {
@@ -450,7 +453,7 @@
       opacity: 0.68;
     }
     .mock-tr.is-hover {
-      background: linear-gradient(90deg, rgba(245,197,66,0.12), transparent 75%);
+      background: linear-gradient(90deg, rgba(201,160,96,0.12), transparent 75%);
       z-index: 6;
       opacity: 1 !important;
     }
@@ -535,10 +538,10 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
     .mt-score-pill.s-gold {
-      color: #f5c542;
-      border-color: rgba(245,197,66,0.85);
-      background: rgba(245,197,66,0.06);
-      box-shadow: 0 0 12px rgba(245,197,66,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+      color: #C9A060;
+      border-color: rgba(201,160,96,0.85);
+      background: rgba(201,160,96,0.06);
+      box-shadow: 0 0 12px rgba(201,160,96,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
     }
     .mt-score-pill.s-purple {
       color: #c4b5fd;
@@ -554,7 +557,7 @@
       transition: transform .25s ease, box-shadow .25s ease;
     }
     .mt-score-pill.is-hover {
-      box-shadow: 0 0 0 2px rgba(245,197,66,0.32), 0 0 16px rgba(245,197,66,0.28);
+      box-shadow: 0 0 0 2px rgba(201,160,96,0.32), 0 0 16px rgba(201,160,96,0.28);
       transform: scale(1.06);
     }
 
@@ -626,7 +629,7 @@
     .score-tip-head b {
       font-size: 11px;
       font-weight: 900;
-      color: #f5c542;
+      color: #C9A060;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
@@ -681,7 +684,7 @@
       color: var(--muted-2);
     }
     .score-tip-total b {
-      color: #f5c542;
+      color: #C9A060;
       font-weight: 900;
       font-size: 12px;
       letter-spacing: 0;
@@ -758,9 +761,9 @@
       display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px;
       padding: 16px 18px;
       border-radius: 16px;
-      border: 1px solid rgba(245,197,66,0.28);
+      border: 1px solid rgba(201,160,96,0.28);
       background:
-        radial-gradient(ellipse 50% 100% at 0% 50%, rgba(245,197,66,0.1), transparent 55%),
+        radial-gradient(ellipse 50% 100% at 0% 50%, rgba(201,160,96,0.1), transparent 55%),
         rgba(0,0,0,0.25);
     }
     .trovo-bar-item {
@@ -772,7 +775,7 @@
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
     }
     .trovo-bar-item strong {
-      display: block; font-size: 13px; color: #ffe8a3; font-weight: 800;
+      display: block; font-size: 13px; color: #E8C994; font-weight: 800;
     }
     .trovo-bar-item span {
       font-size: 11px; color: var(--muted);
@@ -785,9 +788,9 @@
       display: inline-flex; align-items: center; gap: 5px;
       padding: 5px 10px 5px 6px;
       border-radius: 999px;
-      border: 1px solid rgba(245,197,66,0.4);
-      background: rgba(245,197,66,0.1);
-      font-size: 11px; font-weight: 800; color: #ffe8a3;
+      border: 1px solid rgba(201,160,96,0.4);
+      background: rgba(201,160,96,0.1);
+      font-size: 11px; font-weight: 800; color: #E8C994;
     }
     .wallet-pill img { width: 16px; height: 16px; }
     .kpi-row {
@@ -819,8 +822,8 @@
       background: rgba(0,0,0,0.28);
     }
     .mock-lead.hot {
-      border-color: rgba(245,197,66,0.32);
-      background: linear-gradient(90deg, rgba(245,197,66,0.1), rgba(0,0,0,0.25));
+      border-color: rgba(201,160,96,0.32);
+      background: linear-gradient(90deg, rgba(201,160,96,0.1), rgba(0,0,0,0.25));
     }
     .mock-lead h4 {
       font-size: 12px; font-weight: 800; margin-bottom: 2px;
@@ -884,7 +887,7 @@
     }
     .mock-float.coin div { line-height: 1.2; }
     .mock-float.coin strong {
-      display: block; font-size: 12px; color: #ffe8a3;
+      display: block; font-size: 12px; color: #E8C994;
     }
     .mock-float.coin span { font-size: 11px; color: var(--muted); }
     .mock-float.scan {
@@ -916,7 +919,7 @@
       padding: 18px 20px;
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.07);
-      background: linear-gradient(90deg, rgba(0,212,255,0.06), rgba(245,197,66,0.04), rgba(0,212,255,0.04));
+      background: linear-gradient(90deg, rgba(0,212,255,0.06), rgba(201,160,96,0.04), rgba(0,212,255,0.04));
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
@@ -1093,8 +1096,8 @@
       display: flex; align-items: center; gap: 16px;
       padding: 16px;
       border-radius: 14px;
-      border: 1px solid rgba(245,197,66,0.28);
-      background: linear-gradient(90deg, rgba(245,197,66,0.12), rgba(0,0,0,0.2));
+      border: 1px solid rgba(201,160,96,0.28);
+      background: linear-gradient(90deg, rgba(201,160,96,0.12), rgba(0,0,0,0.2));
     }
     .score-big .ring {
       width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
@@ -1102,7 +1105,7 @@
       background:
         radial-gradient(circle at 50% 50%, rgba(0,0,0,0.55) 58%, transparent 59%),
         conic-gradient(var(--gold) 0 92%, rgba(255,255,255,0.08) 0);
-      box-shadow: 0 0 24px rgba(245,197,66,0.2);
+      box-shadow: 0 0 24px rgba(201,160,96,0.2);
     }
     .score-big .ring b {
       font-size: 22px; font-weight: 900; color: var(--gold); letter-spacing: -0.03em;
@@ -1129,7 +1132,7 @@
       background: linear-gradient(90deg, var(--neon), #7ddfff);
     }
     .score-bar-row .fill.gold {
-      background: linear-gradient(90deg, var(--gold), #ffe08a);
+      background: linear-gradient(90deg, var(--gold), #E8C994);
     }
     .score-bar-row b { font-size: 11px; color: #fff; text-align: right; }
     .pedido-list, .report-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
@@ -1161,8 +1164,8 @@
       background: rgba(0,212,255,0.1);
     }
     .status-pill.wait {
-      color: #ffe8a3; border: 1px solid rgba(245,197,66,0.3);
-      background: rgba(245,197,66,0.1);
+      color: #E8C994; border: 1px solid rgba(201,160,96,0.3);
+      background: rgba(201,160,96,0.1);
     }
     .report-item .val {
       font-size: 16px; font-weight: 900; letter-spacing: -0.03em; color: var(--neon);
@@ -1340,7 +1343,7 @@
       border: 1px solid rgba(0,212,255,0.22);
       background:
         radial-gradient(ellipse 90% 70% at 0% 0%, rgba(0,212,255,0.14), transparent 55%),
-        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(245,197,66,0.06), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(201,160,96,0.06), transparent 50%),
         linear-gradient(165deg, #101621, #0a0e16);
       display: flex;
       flex-direction: column;
@@ -1395,8 +1398,8 @@
       flex-shrink: 0;
     }
     .why-card .wc-ico.gold {
-      border-color: rgba(245,197,66,0.3);
-      background: rgba(245,197,66,0.1);
+      border-color: rgba(201,160,96,0.3);
+      background: rgba(201,160,96,0.1);
       color: var(--gold);
     }
     .why-card .wc-ico.warn {
@@ -1453,11 +1456,11 @@
       position: relative;
       padding: 28px 24px;
       border-radius: 22px;
-      border: 1px solid rgba(245,197,66,0.32);
+      border: 1px solid rgba(201,160,96,0.32);
       background:
-        radial-gradient(ellipse 100% 70% at 50% -20%, rgba(245,197,66,0.2), transparent 55%),
+        radial-gradient(ellipse 100% 70% at 50% -20%, rgba(201,160,96,0.2), transparent 55%),
         linear-gradient(165deg, #161c2c 0%, #0a0e16 100%);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 40px rgba(245,197,66,0.08);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 40px rgba(201,160,96,0.08);
       overflow: hidden;
     }
     .trovo-card::before {
@@ -1480,7 +1483,7 @@
     }
     .trovo-card h3 {
       font-size: 16px; font-weight: 800;
-      color: #ffe8a3; margin-bottom: 14px;
+      color: #E8C994; margin-bottom: 14px;
     }
     .trovo-rules {
       list-style: none;
@@ -1531,16 +1534,16 @@
       transition: border-color .2s, box-shadow .25s, transform .25s cubic-bezier(.2,.8,.2,1);
     }
     .pkg:hover {
-      border-color: rgba(245,197,66,0.35);
+      border-color: rgba(201,160,96,0.35);
       box-shadow: 0 16px 40px rgba(0,0,0,0.4);
       transform: translateY(-5px);
     }
     .pkg.hot {
-      border-color: rgba(245,197,66,0.5);
+      border-color: rgba(201,160,96,0.5);
       background:
-        radial-gradient(ellipse 100% 55% at 50% -8%, rgba(245,197,66,0.2), transparent 55%),
+        radial-gradient(ellipse 100% 55% at 50% -8%, rgba(201,160,96,0.2), transparent 55%),
         linear-gradient(165deg, #141a28 0%, #0a0e16 100%);
-      box-shadow: 0 0 40px rgba(245,197,66,0.12), 0 14px 32px rgba(0,0,0,0.35);
+      box-shadow: 0 0 40px rgba(201,160,96,0.12), 0 14px 32px rgba(0,0,0,0.35);
       transform: scale(1.02);
     }
     .pkg.hot:hover { transform: scale(1.02) translateY(-4px); }
@@ -1549,9 +1552,9 @@
       font-size: 9px; font-weight: 800;
       letter-spacing: 0.04em; text-transform: uppercase;
       padding: 4px 8px; border-radius: 999px;
-      background: linear-gradient(135deg, #ffe08a, var(--gold), var(--gold2));
+      background: linear-gradient(135deg, #E8C994, var(--gold), var(--gold2));
       color: #1a1408;
-      box-shadow: 0 2px 10px rgba(245,197,66,0.3);
+      box-shadow: 0 2px 10px rgba(201,160,96,0.3);
     }
     .pkg .badge.save {
       right: auto; left: 10px; top: 10px;
@@ -1588,7 +1591,7 @@
     }
     .pkg .coins small {
       font-size: 12px; font-weight: 600;
-      color: #c9a227; margin-left: 5px;
+      color: #A67C3D; margin-left: 5px;
     }
     .pkg .price {
       font-size: 22px; font-weight: 900;
@@ -1608,7 +1611,7 @@
       padding: 10px 12px;
     }
     .pkg.hot .pkg-cta {
-      background: linear-gradient(135deg, #fff0b0, var(--gold), var(--gold2));
+      background: linear-gradient(135deg, #F0D4A8, var(--gold), var(--gold2));
       border: none; color: #1a1408; font-weight: 800;
     }
     .shop-cta {
@@ -1810,7 +1813,7 @@
       letter-spacing: 0.04em;
       line-height: 1;
     }
-    .t-stars span { filter: drop-shadow(0 0 6px rgba(245,197,66,0.25)); }
+    .t-stars span { filter: drop-shadow(0 0 6px rgba(201,160,96,0.25)); }
     .t-quote {
       font-size: 13.5px;
       line-height: 1.6;
@@ -1898,7 +1901,7 @@
       overflow: hidden;
       background:
         radial-gradient(ellipse 60% 80% at 50% -10%, rgba(0,212,255,0.18), transparent 55%),
-        radial-gradient(ellipse 40% 50% at 90% 100%, rgba(245,197,66,0.1), transparent 50%),
+        radial-gradient(ellipse 40% 50% at 90% 100%, rgba(201,160,96,0.1), transparent 50%),
         linear-gradient(165deg, #101621, #080a10);
       box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 60px rgba(0,212,255,0.06);
     }
@@ -1932,7 +1935,7 @@
     }
     .cta-bonus {
       margin-top: 18px;
-      font-size: 13px; color: #c9a227; font-weight: 600;
+      font-size: 13px; color: #A67C3D; font-weight: 600;
     }
 
     /* Footer */
@@ -2040,7 +2043,7 @@
             <div class="mock-glow gold"></div>
 
             <div class="mock-float coin">
-              <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="36" height="36" />
+              <img src="/static/trovoeda-coin.png?v=15" alt="" width="36" height="36" />
               <div>
                 <strong>1 Trovoeda</strong>
                 <span>= 1 lead na conta</span>
@@ -2071,7 +2074,7 @@
                   <div class="dash-toolbar">
                     <div class="dash-search">⌕ Buscar empresa, cidade…</div>
                     <div class="wallet-pill">
-                      <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="14" height="14" />
+                      <img src="/static/trovoeda-coin.png?v=15" alt="" width="14" height="14" />
                       24
                     </div>
                   </div>
@@ -2408,7 +2411,7 @@
 
         <div class="trovo-bar reveal">
           <div class="trovo-bar-item">
-            <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="28" height="28" />
+            <img src="/static/trovoeda-coin.png?v=15" alt="" width="28" height="28" />
             <div>
               <strong>5 Trovoedas grátis</strong>
               <span>no cadastro · sem cartão</span>
@@ -2448,7 +2451,7 @@
             {% endif %}
             {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
             <span class="coin-3d" aria-hidden="true">
-              <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="58" height="58" />
+              <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
             </span>
             <h3>{{ p.name }}</h3>
             <div class="coins">{{ p.coins }}<small>Trovoedas</small></div>

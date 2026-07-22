@@ -17,7 +17,9 @@
       --muted: #8b9bb4;
       --muted-2: #5a6b82;
       --neon: #00d4ff;
-      --gold: #f5c542;
+      --gold: #C9A060;
+      --gold2: #8F6232;
+      --gold-light: #E8C994;
       --danger: #ff4d6a;
       --font: Inter, system-ui, -apple-system, sans-serif;
     }
@@ -39,7 +41,7 @@
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background:
         radial-gradient(ellipse 50% 40% at 50% 0%, rgba(0,212,255,0.1), transparent 55%),
-        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(245,197,66,0.07), transparent 50%),
+        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(201,160,96,0.07), transparent 50%),
         var(--bg);
     }
     .bg::after {
@@ -115,9 +117,9 @@
     .bonus {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 14px; border-radius: 12px; margin-bottom: 18px;
-      background: rgba(245,197,66,0.1);
-      border: 1px solid rgba(245,197,66,0.35);
-      font-size: 12px; font-weight: 600; color: #ffe8a3; line-height: 1.4;
+      background: rgba(201,160,96,0.1);
+      border: 1px solid rgba(201,160,96,0.35);
+      font-size: 12px; font-weight: 600; color: #E8C994; line-height: 1.4;
     }
     .bonus img { width: 22px; height: 22px; flex-shrink: 0; }
     .bonus strong { color: #fff; font-weight: 800; }
@@ -229,7 +231,7 @@
       <p class="sub">Menos de 1 minuto. Você já sai com bônus pra testar.</p>
 
       <div class="bonus">
-        <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="22" height="22" />
+        <img src="/static/trovoeda-coin.png?v=15" alt="" width="22" height="22" />
         <span>Bônus: <strong>5 Trovoedas grátis</strong> · 1 moeda = 1 lead · sem cartão</span>
       </div>
 

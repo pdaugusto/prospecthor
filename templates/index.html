@@ -594,6 +594,21 @@
             box-shadow: 0 0 0 1px rgba(245,197,66,0.1), 0 0 20px rgba(245,197,66,0.06);
         }
         .stat.gold-kpi .value { color: #f5c542; }
+        /* mini moeda no lugar de ⚡ (símbolo de Trovoeda) */
+        .coin-mini {
+            display: inline-block;
+            width: 1.1em; height: 1.1em;
+            vertical-align: -0.15em;
+            object-fit: contain;
+            margin-right: 0.2em;
+        }
+        .coin-mini.lg { width: 22px; height: 22px; vertical-align: middle; margin-right: 6px; }
+        .stat-ico .coin-mini { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
+        .hq-ico .coin-mini { width: 20px; height: 20px; margin: 0; }
+        .btn-buy .bolt-ico .coin-mini {
+            width: 14px; height: 14px; margin: 0;
+            filter: drop-shadow(0 0 4px rgba(255,220,80,0.7));
+        }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
             color: var(--muted) !important;
@@ -2108,7 +2123,7 @@
                 <div class="wallet-stats">
                     <div class="wallet-stat">
                         <div class="ws-label">Saldo</div>
-                        <div class="ws-value gold" id="wallet-stat-bal">⚡ 0</div>
+                        <div class="ws-value gold" id="wallet-stat-bal"><img class="coin-mini lg" src="/static/trovoeda-coin.svg" alt="" />0</div>
                         <div class="ws-hint">Disponível agora</div>
                     </div>
                     <div class="wallet-stat">
@@ -2153,7 +2168,7 @@
 
                 <div class="stats">
                     <div class="stat gold-kpi" id="kpi-trovoedas">
-                        <div class="stat-top"><h3 id="home-trovo-label">Trovoedas</h3><div class="stat-ico">⚡</div></div>
+                        <div class="stat-top"><h3 id="home-trovo-label">Trovoedas</h3><div class="stat-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div></div>
                         <div class="value" id="home-trovoedas">0</div>
                         <div class="stat-meta" id="home-trovo-meta">1 moeda = 1 lead · não expiram</div>
                     </div>
@@ -2186,7 +2201,7 @@
                         </div>
                     </button>
                     <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
-                        <div class="hq-ico">⚡</div>
+                        <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div>
                         <div>
                             <h4>Comprar Trovoedas</h4>
                             <p>Pacotes a partir de 10 moedas. Pague só o que usar.</p>
@@ -2248,7 +2263,7 @@
                             <th>Nome</th>
                             <th>Papel</th>
                             <th title="Legado bot / distribuição">Cota/mês</th>
-                            <th title="Saldo SaaS (compras + bônus)">⚡ Trovoedas</th>
+                            <th title="Saldo SaaS (compras + bônus)"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> Trovoedas</th>
                             <th>Recebidos</th>
                             <th style="min-width:320px;">Ações</th>
                         </tr>
@@ -3037,9 +3052,9 @@
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
                     if (quotaBadge) {
                         quotaBadge.style.display = '';
-                        quotaBadge.textContent = 'Modo cliente · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
+                        quotaBadge.innerHTML = 'Modo cliente · <img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
                     }
-                    if (roleEl) roleEl.textContent = 'Impersonate · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
+                    if (roleEl) roleEl.textContent = 'Impersonate · ' + (Number.isFinite(trovo) ? trovo : 0) + ' Trovoedas';
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
@@ -3360,7 +3375,7 @@
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${u.monthly_quota ?? 0}</td>
-                        <td style="font-weight:700;color:#f5c542;">⚡ ${trovo}</td>
+                        <td style="font-weight:700;color:#f5c542;"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> ${trovo}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
                     </tr>`;
@@ -3426,7 +3441,7 @@
                     alert(data.error || 'Falha ao creditar Trovoedas');
                     return;
                 }
-                alert('OK: ' + (data.username || userId) + ' agora tem ⚡ ' + (data.trovoedas ?? '?') + ' Trovoedas');
+                alert('OK: ' + (data.username || userId) + ' agora tem ' + (data.trovoedas ?? '?') + ' Trovoedas');
                 await loadUsers();
                 await loadMe();
             } catch (e) {
@@ -3467,7 +3482,9 @@
             const statBal = document.getElementById('wallet-stat-bal');
             const statIn = document.getElementById('wallet-stat-in');
             const statOut = document.getElementById('wallet-stat-out');
-            if (statBal) statBal.textContent = '⚡ ' + (Number.isFinite(bal) ? bal : 0);
+            if (statBal) {
+                statBal.innerHTML = '<img class="coin-mini lg" src="/static/trovoeda-coin.svg" alt="" />' + (Number.isFinite(bal) ? bal : 0);
+            }
             if (!body) return;
             body.innerHTML = '<div class="wallet-empty">Carregando extrato…</div>';
             try {
@@ -3515,7 +3532,7 @@
                             <div class="lg-date ledger-muted">${esc(when)}</div>
                             <div class="ledger-type"><span class="ledger-dot ${dot}"></span>${esc(ledgerReasonLabel(r.reason))}</div>
                             <div class="ledger-delta ${cls}">${dTxt}</div>
-                            <div>⚡ ${esc(String(r.balance_after ?? '—'))}</div>
+                            <div><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> ${esc(String(r.balance_after ?? '—'))}</div>
                             <div class="lg-detail ledger-muted">${esc(r.note || r.ref_id || '—')}</div>
                         </div>`;
                 }).join('');
@@ -3577,7 +3594,7 @@
                                 <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
                                     <span class="bolt-fx" aria-hidden="true"></span>
                                     <span class="btn-buy-label">
-                                        <span class="bolt-ico" aria-hidden="true">⚡</span>
+                                        <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></span>
                                         <span>${featured ? 'Escolher pacote' : 'Comprar'}</span>
                                     </span>
                                 </button>
@@ -4206,7 +4223,7 @@
                             <div><h4>Abordar leads</h4><p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p></div>
                         </button>
                         <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
-                            <div class="hq-ico">⚡</div>
+                            <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div>
                             <div><h4>Comprar Trovoedas</h4><p>Pacotes a partir de 10 moedas. Pague só o que usar.</p></div>
                         </button>
                         <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">

@@ -889,78 +889,258 @@
             margin-top: 6px; font-size: 12px; color: var(--muted);
         }
 
-        /* —— Pedidos —— */
-        .orders-layout { max-width: 980px; }
-        .orders-create.card-panel,
-        .card-panel {
-            padding: 18px 20px;
-            border-radius: 16px;
-            background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .orders-create h3 { margin: 0 0 6px; font-size: 16px; }
-        .orders-hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; line-height: 1.45; }
-        .orders-form-grid {
+        /* —— Pedidos (UX guiada) —— */
+        .orders-layout { max-width: 920px; display: flex; flex-direction: column; gap: 18px; }
+        .orders-howto {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
         @media (max-width: 720px) {
-            .orders-form-grid { grid-template-columns: 1fr; }
+            .orders-howto { grid-template-columns: 1fr; }
         }
-        .orders-form-grid label {
-            display: flex; flex-direction: column; gap: 6px;
-            font-size: 12px; font-weight: 600; color: var(--muted);
+        .orders-howto-step {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 14px 14px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(165deg, rgba(16,22,33,0.9), rgba(10,14,22,0.95));
         }
-        .orders-form-grid label span { letter-spacing: 0.02em; }
-        .orders-form-grid input {
-            padding: 10px 12px; border-radius: 10px;
+        .orders-howto-step .n {
+            width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
+            display: grid; place-items: center;
+            font-size: 12px; font-weight: 900; color: #031018;
+            background: linear-gradient(135deg, #00d4ff, #0a8ec4);
+            box-shadow: 0 0 12px rgba(0,212,255,0.22);
+        }
+        .orders-howto-step strong {
+            display: block; font-size: 13px; font-weight: 800; margin-bottom: 2px;
+        }
+        .orders-howto-step span {
+            font-size: 12px; color: var(--muted); line-height: 1.4;
+        }
+
+        .orders-create.card-panel,
+        .card-panel {
+            padding: 0;
+            border-radius: 18px;
+            background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
+            border: 1px solid rgba(255,255,255,0.07);
+            overflow: hidden;
+        }
+        .orders-create-head {
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background:
+                radial-gradient(ellipse 60% 80% at 0% 0%, rgba(0,212,255,0.08), transparent 55%),
+                transparent;
+        }
+        .orders-create-head h3 {
+            margin: 0 0 6px; font-size: 17px; font-weight: 900; letter-spacing: -0.02em;
+        }
+        .orders-create-head p {
+            margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; max-width: 560px;
+        }
+        .orders-create-body { padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 22px; }
+
+        .order-field { display: flex; flex-direction: column; gap: 10px; }
+        .order-field-label {
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px;
+        }
+        .order-field-label strong {
+            font-size: 13px; font-weight: 800; color: var(--text);
+        }
+        .order-field-label .opt {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase; color: #5a6b82;
+            padding: 2px 8px; border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .order-field-label .opt.req {
+            color: #00d4ff; border-color: rgba(0,212,255,0.28);
+            background: rgba(0,212,255,0.08);
+        }
+        .order-field-help {
+            font-size: 12px; color: var(--muted); line-height: 1.45; margin: -4px 0 0;
+        }
+
+        .chip-row {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .chip {
+            appearance: none; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.28); color: var(--muted);
+            font-size: 13px; font-weight: 700; font-family: inherit;
+            padding: 9px 14px; border-radius: 999px; cursor: pointer;
+            transition: border-color .15s, background .15s, color .15s, box-shadow .15s, transform .12s;
+        }
+        .chip:hover {
+            border-color: rgba(0,212,255,0.3); color: var(--text);
+            transform: translateY(-1px);
+        }
+        .chip.active {
+            border-color: rgba(0,212,255,0.55);
+            background: rgba(0,212,255,0.12);
+            color: #7ddfff;
+            box-shadow: 0 0 16px rgba(0,212,255,0.12);
+        }
+        .chip.gold.active {
+            border-color: rgba(245,197,66,0.55);
+            background: rgba(245,197,66,0.12);
+            color: #ffe08a;
+            box-shadow: 0 0 16px rgba(245,197,66,0.12);
+        }
+        .chip-row.niches .chip { font-size: 12px; padding: 8px 12px; }
+
+        .order-custom-input {
+            display: none;
+            margin-top: 2px;
+        }
+        .order-custom-input.show { display: block; }
+        .order-custom-input input,
+        .orders-create input[type="text"],
+        .orders-create input[type="number"],
+        .orders-create textarea {
+            width: 100%; max-width: 360px;
+            padding: 11px 13px; border-radius: 12px;
             border: 1px solid var(--border);
             background: rgba(0,0,0,0.35); color: var(--text);
-            font-size: 14px; font-weight: 600;
+            font-size: 14px; font-weight: 600; font-family: inherit;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
         }
-        .orders-form-full { grid-column: 1 / -1; }
-        .orders-form-actions {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; margin-top: 14px; flex-wrap: wrap;
+        .orders-create textarea {
+            max-width: 100%; min-height: 72px; resize: vertical; font-weight: 500;
         }
-        .orders-cost {
-            font-size: 13px; font-weight: 700; color: #f5c542;
+        .order-custom-input input:focus,
+        .orders-create input:focus,
+        .orders-create textarea:focus {
+            border-color: rgba(0,212,255,0.45);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+        }
+
+        .order-notes-toggle {
+            background: none; border: none; color: var(--muted);
+            font-size: 12px; font-weight: 700; font-family: inherit;
+            cursor: pointer; padding: 0; text-align: left;
             display: inline-flex; align-items: center; gap: 6px;
         }
-        .orders-msg { margin-top: 10px; font-size: 13px; }
-        .orders-msg.ok { color: #34d399; }
-        .orders-msg.err { color: #f87171; }
+        .order-notes-toggle:hover { color: var(--text); }
+        .order-notes-box { display: none; margin-top: 10px; }
+        .order-notes-box.show { display: block; }
+
+        .orders-summary {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            gap: 14px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(245,197,66,0.22);
+            background:
+                radial-gradient(ellipse 50% 100% at 0% 50%, rgba(245,197,66,0.1), transparent 60%),
+                rgba(0,0,0,0.28);
+        }
+        .orders-summary .sum-main {
+            font-size: 14px; font-weight: 700; color: #ffe8a3;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .orders-summary .sum-sub {
+            font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4;
+        }
+        .orders-summary .sum-sub b { color: #c9a227; }
+        .orders-summary .btn-order-submit {
+            padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer;
+            font-size: 13px; font-weight: 800; font-family: inherit;
+            color: #031018;
+            background: linear-gradient(135deg, #00d4ff, #0a8ec4);
+            box-shadow: 0 4px 18px rgba(0,212,255,0.25);
+            transition: filter .15s, transform .12s;
+            white-space: nowrap;
+        }
+        .orders-summary .btn-order-submit:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        .orders-summary .btn-order-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .orders-summary .btn-order-submit.need-coins {
+            background: linear-gradient(135deg, #ffe08a, #f5c542, #e09a18);
+            color: #1a1408;
+            box-shadow: 0 4px 18px rgba(245,197,66,0.25);
+        }
+
+        .orders-msg {
+            margin: 0; font-size: 13px; line-height: 1.45;
+            padding: 10px 12px; border-radius: 10px;
+        }
+        .orders-msg.ok {
+            color: #34d399; background: rgba(52,211,153,0.08);
+            border: 1px solid rgba(52,211,153,0.25);
+        }
+        .orders-msg.err {
+            color: #f87171; background: rgba(248,113,113,0.08);
+            border: 1px solid rgba(248,113,113,0.25);
+        }
+
+        .orders-panel-head {
+            display: flex; flex-wrap: wrap; align-items: flex-end;
+            justify-content: space-between; gap: 10px;
+        }
         .orders-panel-head h3 {
-            margin: 0; font-size: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin: 0; font-size: 15px; font-weight: 800;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .orders-panel-head p {
+            margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45;
+            max-width: 520px;
         }
         .orders-pending-pill {
             font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
             background: rgba(245,197,66,0.15); border: 1px solid rgba(245,197,66,0.4);
             color: #f5c542;
         }
-        .orders-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .orders-list { display: flex; flex-direction: column; gap: 12px; }
         .order-card {
             display: grid;
             grid-template-columns: 1fr auto;
-            gap: 12px 16px;
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: rgba(16,22,33,0.9);
+            gap: 14px 18px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: linear-gradient(165deg, rgba(16,22,33,0.95), rgba(8,10,16,0.98));
             border: 1px solid rgba(255,255,255,0.06);
             align-items: start;
+            transition: border-color .15s, box-shadow .2s;
+        }
+        .order-card:hover {
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
         }
         .order-card h4 {
-            margin: 0 0 4px; font-size: 14px; font-weight: 800;
+            margin: 0 0 8px; font-size: 14px; font-weight: 800;
             display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .order-card .order-meta {
-            font-size: 12px; color: var(--muted); line-height: 1.45;
+            font-size: 12px; color: var(--muted); line-height: 1.5;
         }
         .order-card .order-meta strong { color: #d4c48a; font-weight: 700; }
+        .order-tags {
+            display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px;
+        }
+        .order-tag {
+            font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            color: #a8b8d0;
+        }
+        .order-progress {
+            height: 5px; border-radius: 999px; background: rgba(255,255,255,0.06);
+            overflow: hidden; max-width: 280px; margin-top: 4px;
+        }
+        .order-progress > i {
+            display: block; height: 100%; border-radius: inherit;
+            background: linear-gradient(90deg, #00d4ff, #34d399);
+            transition: width .3s ease;
+        }
+        .order-progress-label {
+            font-size: 11px; color: var(--muted); margin-top: 5px;
+        }
         .order-status {
             font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
-            text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+            text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
             border: 1px solid transparent;
         }
         .order-status.pending { background: rgba(245,197,66,0.12); color: #f5c542; border-color: rgba(245,197,66,0.35); }
@@ -969,28 +1149,39 @@
         .order-status.rejected,
         .order-status.cancelled { background: rgba(248,113,113,0.1); color: #f87171; border-color: rgba(248,113,113,0.3); }
         .order-actions {
-            display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 140px;
+            display: flex; flex-direction: column; gap: 7px; align-items: stretch; min-width: 148px;
         }
-        .order-actions .btn { font-size: 12px; padding: 8px 10px; white-space: nowrap; }
         .order-actions .btn-approve {
             background: linear-gradient(135deg, #34d399, #10b981); color: #042f1e;
-            border: none; font-weight: 800; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+            border: none; font-weight: 800; border-radius: 11px; cursor: pointer;
+            padding: 9px 12px; font-size: 12px; font-family: inherit;
         }
         .order-actions .btn-reject {
             background: transparent; color: #f87171; border: 1px solid rgba(248,113,113,0.4);
-            font-weight: 700; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+            font-weight: 700; border-radius: 11px; cursor: pointer;
+            padding: 9px 12px; font-size: 12px; font-family: inherit;
         }
         .order-actions .btn-fulfill {
             background: rgba(56,189,248,0.12); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35);
-            font-weight: 700; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+            font-weight: 700; border-radius: 11px; cursor: pointer;
+            padding: 9px 12px; font-size: 12px; font-family: inherit;
         }
         .order-actions .btn-cancel-order {
             background: transparent; color: var(--muted); border: 1px solid var(--border);
-            font-weight: 600; border-radius: 10px; cursor: pointer; padding: 8px 10px; font-size: 12px;
+            font-weight: 600; border-radius: 11px; cursor: pointer;
+            padding: 9px 12px; font-size: 12px; font-family: inherit;
         }
         .order-actions .btn-approve:disabled,
         .order-actions .btn-reject:disabled,
         .order-actions .btn-fulfill:disabled { opacity: 0.5; cursor: not-allowed; }
+        .orders-empty {
+            text-align: center; padding: 36px 20px;
+            border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+        }
+        .orders-empty strong { display: block; font-size: 14px; margin-bottom: 6px; }
+        .orders-empty p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.45; }
+        #orders-host-panel .orders-panel-head { margin-bottom: 4px; }
         .pkg-card__bottom {
             margin-top: auto;
             padding: 16px 20px 18px;
@@ -2200,13 +2391,13 @@
         <!-- PEDIDOS DE LEADS -->
         <section id="view-orders" class="view">
             <div class="orders-layout">
-                <div class="shop-hero" style="margin-bottom:18px;">
+                <div class="shop-hero">
                     <div class="shop-hero__copy">
                         <div class="shop-kicker"><i></i> Entrega</div>
-                        <h2>Pedidos de <em>leads</em></h2>
+                        <h2>Pedir <em>leads</em></h2>
                         <p id="orders-hero-copy">
-                            Peça quantos leads quiser. 1 Trovoeda = 1 lead. O valor é reservado na hora;
-                            o host aprova e entrega na sua conta.
+                            Escolha quantos quer, diga o mercado (se souber) e envie.
+                            1 Trovoeda = 1 lead — o valor fica reservado até a entrega ou o estorno.
                         </p>
                     </div>
                     <div class="shop-balance-card">
@@ -2221,52 +2412,150 @@
                     </div>
                 </div>
 
+                <!-- Cliente: como funciona (rápido) -->
+                <div id="orders-howto" class="orders-howto">
+                    <div class="orders-howto-step">
+                        <div class="n">1</div>
+                        <div>
+                            <strong>Você pede</strong>
+                            <span>Quantidade + preferência de cidade/nicho (pode pular).</span>
+                        </div>
+                    </div>
+                    <div class="orders-howto-step">
+                        <div class="n">2</div>
+                        <div>
+                            <strong>Moedas reservadas</strong>
+                            <span>Saem do saldo na hora. Se recusarem, voltam.</span>
+                        </div>
+                    </div>
+                    <div class="orders-howto-step">
+                        <div class="n">3</div>
+                        <div>
+                            <strong>Leads na conta</strong>
+                            <span>Aprovado → contato pronto em Meus leads.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Host: fila de aprovação -->
-                <div id="orders-host-panel" style="display:none;margin-bottom:20px;">
+                <div id="orders-host-panel" style="display:none;">
                     <div class="orders-panel-head">
-                        <h3>Fila do host <span class="orders-pending-pill" id="orders-pending-pill">0 pendentes</span></h3>
-                        <p style="color:var(--muted);font-size:13px;margin:4px 0 0;">
-                            Aprove para entregar sobras do pool, ou recuse para estornar as Trovoedas.
-                            Se faltar lead no pool, rode o robô no cockpit e use “Entregar mais”.
-                        </p>
+                        <div>
+                            <h3>Fila de aprovação <span class="orders-pending-pill" id="orders-pending-pill">0 pendentes</span></h3>
+                            <p>Aprove para entregar sobras do pool, ou recuse para estornar. Se faltar lead, rode o robô no cockpit e use “Entregar mais”.</p>
+                        </div>
                     </div>
                     <div id="orders-host-list" class="orders-list"></div>
                 </div>
 
-                <!-- Cliente: criar pedido -->
+                <!-- Cliente: criar pedido guiado -->
                 <div id="orders-create-panel" class="orders-create card-panel">
-                    <h3>Novo pedido</h3>
-                    <p class="orders-hint">As Trovoedas saem do saldo na hora (reserva). Se o host recusar, o valor volta.</p>
-                    <div class="orders-form-grid">
-                        <label>
-                            <span>Quantidade de leads</span>
-                            <input type="number" id="order-qty" min="1" max="200" value="10" />
-                        </label>
-                        <label>
-                            <span>Cidade (opcional)</span>
-                            <input type="text" id="order-city" placeholder="Ex: Campinas" maxlength="120" />
-                        </label>
-                        <label>
-                            <span>Nicho (opcional)</span>
-                            <input type="text" id="order-niche" placeholder="Ex: odontologia" maxlength="120" />
-                        </label>
-                        <label class="orders-form-full">
-                            <span>Observação (opcional)</span>
-                            <input type="text" id="order-notes" placeholder="Preferências, urgência…" maxlength="500" />
-                        </label>
+                    <div class="orders-create-head">
+                        <h3>Novo pedido</h3>
+                        <p>Não precisa saber termo técnico. Se não souber cidade ou nicho, escolha <strong style="color:var(--text)">Tanto faz</strong> — a gente prioriza as melhores oportunidades.</p>
                     </div>
-                    <div class="orders-form-actions">
-                        <div class="orders-cost" id="order-cost-hint">Custo: 10 Trovoedas</div>
-                        <button type="button" class="btn btn-primary" id="btn-create-order" onclick="submitOrder()">Pedir leads</button>
+                    <div class="orders-create-body">
+                        <!-- Qtd -->
+                        <div class="order-field">
+                            <div class="order-field-label">
+                                <strong>1. Quantos leads você quer?</strong>
+                                <span class="opt req">Obrigatório</span>
+                            </div>
+                            <p class="order-field-help">Cada lead custa 1 Trovoeda. Comece pequeno se for a primeira vez.</p>
+                            <div class="chip-row" id="order-qty-chips" role="group" aria-label="Quantidade">
+                                <button type="button" class="chip gold" data-qty="5">5</button>
+                                <button type="button" class="chip gold active" data-qty="10">10</button>
+                                <button type="button" class="chip gold" data-qty="25">25</button>
+                                <button type="button" class="chip gold" data-qty="50">50</button>
+                                <button type="button" class="chip gold" data-qty="custom">Outro…</button>
+                            </div>
+                            <div class="order-custom-input" id="order-qty-custom-wrap">
+                                <input type="number" id="order-qty" min="1" max="200" value="10" inputmode="numeric" aria-label="Quantidade personalizada" />
+                            </div>
+                        </div>
+
+                        <!-- Cidade -->
+                        <div class="order-field">
+                            <div class="order-field-label">
+                                <strong>2. Em qual cidade?</strong>
+                                <span class="opt">Opcional</span>
+                            </div>
+                            <p class="order-field-help">Pode deixar em “Tanto faz”. Se tiver região preferida, toque nela ou digite o nome.</p>
+                            <div class="chip-row" id="order-city-chips" role="group" aria-label="Cidade">
+                                <button type="button" class="chip active" data-city="">Tanto faz</button>
+                                <button type="button" class="chip" data-city="São Paulo">São Paulo</button>
+                                <button type="button" class="chip" data-city="Campinas">Campinas</button>
+                                <button type="button" class="chip" data-city="Santos">Santos</button>
+                                <button type="button" class="chip" data-city="Ribeirão Preto">Ribeirão Preto</button>
+                                <button type="button" class="chip" data-city="custom">Outra…</button>
+                            </div>
+                            <div class="order-custom-input" id="order-city-custom-wrap">
+                                <input type="text" id="order-city" placeholder="Ex: Jundiaí, Sorocaba…" maxlength="120" autocomplete="address-level2" />
+                            </div>
+                        </div>
+
+                        <!-- Nicho -->
+                        <div class="order-field">
+                            <div class="order-field-label">
+                                <strong>3. Qual tipo de negócio (nicho)?</strong>
+                                <span class="opt">Opcional</span>
+                            </div>
+                            <p class="order-field-help">
+                                Nicho = o ramo que você vende (ex.: dentista, advogado).
+                                <strong style="color:#c5d0e0">Não sabe?</strong> Deixe “Tanto faz”.
+                            </p>
+                            <div class="chip-row niches" id="order-niche-chips" role="group" aria-label="Nicho">
+                                <button type="button" class="chip active" data-niche="">Tanto faz</button>
+                                <button type="button" class="chip" data-niche="odontologia">Odontologia</button>
+                                <button type="button" class="chip" data-niche="advocacia">Advocacia</button>
+                                <button type="button" class="chip" data-niche="clínica médica">Clínica médica</button>
+                                <button type="button" class="chip" data-niche="estética">Estética</button>
+                                <button type="button" class="chip" data-niche="imobiliária">Imobiliária</button>
+                                <button type="button" class="chip" data-niche="contabilidade">Contabilidade</button>
+                                <button type="button" class="chip" data-niche="academia">Academia</button>
+                                <button type="button" class="chip" data-niche="restaurante">Restaurante</button>
+                                <button type="button" class="chip" data-niche="pet shop">Pet shop</button>
+                                <button type="button" class="chip" data-niche="autoescola">Autoescola</button>
+                                <button type="button" class="chip" data-niche="custom">Outro…</button>
+                            </div>
+                            <div class="order-custom-input" id="order-niche-custom-wrap">
+                                <input type="text" id="order-niche" placeholder="Ex: despachante, oficina, loja de roupas…" maxlength="120" />
+                            </div>
+                        </div>
+
+                        <!-- Notas -->
+                        <div class="order-field">
+                            <button type="button" class="order-notes-toggle" id="order-notes-toggle" aria-expanded="false">
+                                ▸ Observação opcional (urgência, preferências…)
+                            </button>
+                            <div class="order-notes-box" id="order-notes-box">
+                                <textarea id="order-notes" placeholder="Ex: prefiro zona sul · urgência alta · só com WhatsApp" maxlength="500"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Resumo + CTA -->
+                        <div class="orders-summary">
+                            <div>
+                                <div class="sum-main" id="order-cost-hint">
+                                    <img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" />
+                                    Vai reservar <strong>10</strong> Trovoedas
+                                </div>
+                                <div class="sum-sub" id="order-summary-sub">Saldo depois do pedido: —</div>
+                            </div>
+                            <button type="button" class="btn-order-submit" id="btn-create-order" onclick="submitOrder()">Pedir 10 leads</button>
+                        </div>
+                        <p id="order-form-msg" class="orders-msg" style="display:none;"></p>
                     </div>
-                    <p id="order-form-msg" class="orders-msg" style="display:none;"></p>
                 </div>
 
-                <div class="orders-panel-head" style="margin-top:22px;">
-                    <h3 id="orders-list-title">Meus pedidos</h3>
+                <div class="orders-panel-head">
+                    <div>
+                        <h3 id="orders-list-title">Meus pedidos</h3>
+                        <p id="orders-list-sub">Acompanhe status, entrega e o que ainda falta.</p>
+                    </div>
                 </div>
                 <div id="orders-my-list" class="orders-list">
-                    <div class="wallet-empty" style="padding:28px;">Carregando…</div>
+                    <div class="orders-empty"><strong>Carregando…</strong></div>
                 </div>
             </div>
         </section>
@@ -3685,9 +3974,9 @@
 
         function orderStatusLabel(st) {
             const m = {
-                pending: 'Pendente',
-                approved: 'Aprovado',
-                fulfilled: 'Entregue',
+                pending: 'Aguardando',
+                approved: 'Em entrega',
+                fulfilled: 'Completo',
                 rejected: 'Recusado',
                 cancelled: 'Cancelado',
             };
@@ -3706,12 +3995,163 @@
             }
         }
 
+        function getOrderQty() {
+            const el = document.getElementById('order-qty');
+            const q = parseInt(el && el.value, 10);
+            if (!Number.isFinite(q) || q < 1) return 0;
+            return Math.min(200, q);
+        }
+
+        function getOrderCity() {
+            const active = document.querySelector('#order-city-chips .chip.active');
+            if (!active) return (document.getElementById('order-city')?.value || '').trim();
+            const v = active.getAttribute('data-city');
+            if (v === 'custom') return (document.getElementById('order-city')?.value || '').trim();
+            return (v || '').trim();
+        }
+
+        function getOrderNiche() {
+            const active = document.querySelector('#order-niche-chips .chip.active');
+            if (!active) return (document.getElementById('order-niche')?.value || '').trim();
+            const v = active.getAttribute('data-niche');
+            if (v === 'custom') return (document.getElementById('order-niche')?.value || '').trim();
+            return (v || '').trim();
+        }
+
         function refreshOrderCostHint() {
-            const qtyEl = document.getElementById('order-qty');
             const hint = document.getElementById('order-cost-hint');
-            if (!qtyEl || !hint) return;
-            const q = Math.max(1, Math.min(200, parseInt(qtyEl.value, 10) || 0));
-            hint.innerHTML = 'Custo: <img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" /> <strong>' + q + '</strong> Trovoeda' + (q === 1 ? '' : 's');
+            const sub = document.getElementById('order-summary-sub');
+            const btn = document.getElementById('btn-create-order');
+            const q = getOrderQty() || 0;
+            const bal = (currentUser && currentUser.trovoedas != null)
+                ? Number(currentUser.trovoedas) : 0;
+            if (hint) {
+                hint.innerHTML = q > 0
+                    ? `<img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" /> Vai reservar <strong>${q}</strong> Trovoeda${q === 1 ? '' : 's'}`
+                    : 'Escolha quantos leads quer';
+            }
+            if (sub) {
+                if (q <= 0) {
+                    sub.innerHTML = 'Saldo atual: <b>' + bal + '</b>';
+                } else if (bal >= q) {
+                    sub.innerHTML = 'Saldo depois: <b>' + (bal - q) + '</b> · 1 moeda = 1 lead';
+                } else {
+                    sub.innerHTML = 'Saldo insuficiente (<b>' + bal + '</b>). <a href="/shop" onclick="event.preventDefault();navigateTo(\'/shop\');" style="color:#f5c542;font-weight:700;">Recarregar →</a>';
+                }
+            }
+            if (btn) {
+                if (q <= 0) {
+                    btn.textContent = 'Escolha a quantidade';
+                    btn.disabled = true;
+                    btn.classList.remove('need-coins');
+                } else if (bal < q) {
+                    btn.textContent = 'Recarregar Trovoedas';
+                    btn.disabled = false;
+                    btn.classList.add('need-coins');
+                    btn.onclick = () => navigateTo('/shop');
+                } else {
+                    btn.textContent = 'Pedir ' + q + ' lead' + (q === 1 ? '' : 's');
+                    btn.disabled = false;
+                    btn.classList.remove('need-coins');
+                    btn.onclick = () => submitOrder();
+                }
+            }
+        }
+
+        function bindOrderFormUI() {
+            if (bindOrderFormUI._done) {
+                refreshOrderCostHint();
+                return;
+            }
+            bindOrderFormUI._done = true;
+
+            // quantidade
+            document.querySelectorAll('#order-qty-chips .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#order-qty-chips .chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const v = chip.getAttribute('data-qty');
+                    const wrap = document.getElementById('order-qty-custom-wrap');
+                    const input = document.getElementById('order-qty');
+                    if (v === 'custom') {
+                        if (wrap) wrap.classList.add('show');
+                        if (input) { input.focus(); refreshOrderCostHint(); }
+                    } else {
+                        if (wrap) wrap.classList.remove('show');
+                        if (input) input.value = v;
+                        refreshOrderCostHint();
+                    }
+                });
+            });
+            const qtyInput = document.getElementById('order-qty');
+            if (qtyInput) {
+                qtyInput.addEventListener('input', () => {
+                    document.querySelectorAll('#order-qty-chips .chip').forEach(c => {
+                        c.classList.toggle('active', c.getAttribute('data-qty') === 'custom'
+                            || String(c.getAttribute('data-qty')) === String(qtyInput.value));
+                    });
+                    const customChip = document.querySelector('#order-qty-chips .chip[data-qty="custom"]');
+                    const presets = ['5', '10', '25', '50'];
+                    if (!presets.includes(String(qtyInput.value)) && customChip) {
+                        document.querySelectorAll('#order-qty-chips .chip').forEach(c => c.classList.remove('active'));
+                        customChip.classList.add('active');
+                        document.getElementById('order-qty-custom-wrap')?.classList.add('show');
+                    }
+                    refreshOrderCostHint();
+                });
+            }
+
+            // cidade
+            document.querySelectorAll('#order-city-chips .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#order-city-chips .chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const v = chip.getAttribute('data-city');
+                    const wrap = document.getElementById('order-city-custom-wrap');
+                    const input = document.getElementById('order-city');
+                    if (v === 'custom') {
+                        if (wrap) wrap.classList.add('show');
+                        if (input) { input.value = ''; input.focus(); }
+                    } else {
+                        if (wrap) wrap.classList.remove('show');
+                        if (input) input.value = v || '';
+                    }
+                });
+            });
+
+            // nicho
+            document.querySelectorAll('#order-niche-chips .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#order-niche-chips .chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const v = chip.getAttribute('data-niche');
+                    const wrap = document.getElementById('order-niche-custom-wrap');
+                    const input = document.getElementById('order-niche');
+                    if (v === 'custom') {
+                        if (wrap) wrap.classList.add('show');
+                        if (input) { input.value = ''; input.focus(); }
+                    } else {
+                        if (wrap) wrap.classList.remove('show');
+                        if (input) input.value = v || '';
+                    }
+                });
+            });
+
+            // notas
+            const notesToggle = document.getElementById('order-notes-toggle');
+            const notesBox = document.getElementById('order-notes-box');
+            if (notesToggle && notesBox) {
+                notesToggle.addEventListener('click', () => {
+                    const open = notesBox.classList.toggle('show');
+                    notesToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    notesToggle.textContent = open
+                        ? '▾ Observação opcional'
+                        : '▸ Observação opcional (urgência, preferências…)';
+                    if (open) document.getElementById('order-notes')?.focus();
+                });
+            }
+
+            refreshOrderCostHint();
         }
 
         function renderOrderCard(o, isHost) {
@@ -3720,20 +4160,30 @@
             const qty = Number(o.quantity) || 0;
             const del = Number(o.delivered) || 0;
             const rem = Math.max(0, qty - del);
+            const pct = qty > 0 ? Math.min(100, Math.round((del / qty) * 100)) : 0;
             const when = String(o.created_at || '').replace('T', ' ').slice(0, 16);
             const who = o.user_label || o.username || ('#' + (o.user_id || ''));
             const city = (o.city || '').trim();
             const niche = (o.niche || '').trim();
             const notes = (o.notes || '').trim();
             const hostNote = (o.host_note || '').trim();
-            let meta = `<strong>${qty}</strong> lead(s) · entregues <strong>${del}</strong>`;
-            if (rem > 0 && (st === 'approved' || st === 'pending')) meta += ` · faltam <strong>${rem}</strong>`;
-            if (city) meta += ` · ${esc(city)}`;
-            if (niche) meta += ` · ${esc(niche)}`;
-            meta += `<br><span class="ledger-muted">${esc(when)}</span>`;
-            if (isHost) meta += ` · cliente <strong>${esc(who)}</strong>`;
-            if (notes) meta += `<br>Obs: ${esc(notes)}`;
-            if (hostNote && st !== 'pending') meta += `<br>Host: ${esc(hostNote)}`;
+
+            const tags = [];
+            tags.push(`<span class="order-tag">${qty} lead${qty === 1 ? '' : 's'}</span>`);
+            tags.push(`<span class="order-tag">${city ? esc(city) : 'Qualquer cidade'}</span>`);
+            tags.push(`<span class="order-tag">${niche ? esc(niche) : 'Qualquer nicho'}</span>`);
+
+            let progress = '';
+            if (st === 'approved' || st === 'fulfilled' || (st === 'pending' && del > 0)) {
+                progress = `
+                    <div class="order-progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
+                    <div class="order-progress-label">${del} de ${qty} entregues${rem > 0 && st !== 'fulfilled' ? ' · faltam ' + rem : ''}</div>`;
+            }
+
+            let metaExtra = `<span class="ledger-muted">${esc(when)}</span>`;
+            if (isHost) metaExtra += ` · <strong>${esc(who)}</strong>`;
+            if (notes) metaExtra += `<br>Obs: ${esc(notes)}`;
+            if (hostNote && st !== 'pending') metaExtra += `<br>Host: ${esc(hostNote)}`;
 
             let actions = '';
             if (isHost && st === 'pending') {
@@ -3744,14 +4194,18 @@
                 actions = `
                     <button type="button" class="btn-fulfill" data-act="fulfill" data-id="${id}">Entregar mais (${rem})</button>`;
             } else if (!isHost && st === 'pending') {
-                actions = `<button type="button" class="btn-cancel-order" data-act="cancel" data-id="${id}">Cancelar</button>`;
+                actions = `<button type="button" class="btn-cancel-order" data-act="cancel" data-id="${id}">Cancelar pedido</button>`;
+            } else if (!isHost && st === 'fulfilled') {
+                actions = `<button type="button" class="btn-cancel-order" onclick="navigateTo('/leads')">Ver leads →</button>`;
             }
 
             return `
                 <article class="order-card" data-order-id="${id}">
                     <div>
                         <h4>Pedido #${id} <span class="order-status ${esc(st)}">${esc(orderStatusLabel(st))}</span></h4>
-                        <div class="order-meta">${meta}</div>
+                        <div class="order-tags">${tags.join('')}</div>
+                        ${progress}
+                        <div class="order-meta" style="margin-top:8px;">${metaExtra}</div>
                     </div>
                     <div class="order-actions">${actions}</div>
                 </article>`;
@@ -3767,27 +4221,31 @@
             const isHost = isPatraoSession();
             const createPanel = document.getElementById('orders-create-panel');
             const hostPanel = document.getElementById('orders-host-panel');
+            const howto = document.getElementById('orders-howto');
             const hero = document.getElementById('orders-hero-copy');
             const listTitle = document.getElementById('orders-list-title');
+            const listSub = document.getElementById('orders-list-sub');
             if (createPanel) createPanel.style.display = isHost ? 'none' : '';
+            if (howto) howto.style.display = isHost ? 'none' : '';
             if (hostPanel) hostPanel.style.display = isHost ? '' : 'none';
             if (hero) {
                 hero.textContent = isHost
                     ? 'Aprove pedidos dos clientes, entregue sobras do pool ou rode o robô no cockpit se faltar lead.'
-                    : 'Peça quantos leads quiser. 1 Trovoeda = 1 lead. O valor é reservado na hora; o host aprova e entrega na sua conta.';
+                    : 'Escolha quantos quer, diga o mercado (se souber) e envie. 1 Trovoeda = 1 lead — o valor fica reservado até a entrega ou o estorno.';
             }
-            if (listTitle) listTitle.textContent = isHost ? 'Todos os pedidos' : 'Meus pedidos';
+            if (listTitle) listTitle.textContent = isHost ? 'Histórico de pedidos' : 'Seus pedidos';
+            if (listSub) {
+                listSub.textContent = isHost
+                    ? 'Pedidos já processados (aprovados, entregues ou recusados).'
+                    : 'Acompanhe status, entrega e o que ainda falta.';
+            }
 
+            bindOrderFormUI();
             refreshOrderCostHint();
-            const qtyEl = document.getElementById('order-qty');
-            if (qtyEl && !qtyEl._bound) {
-                qtyEl.addEventListener('input', refreshOrderCostHint);
-                qtyEl._bound = true;
-            }
 
             const myList = document.getElementById('orders-my-list');
             const hostList = document.getElementById('orders-host-list');
-            if (myList) myList.innerHTML = '<div class="wallet-empty" style="padding:20px;">Carregando…</div>';
+            if (myList) myList.innerHTML = '<div class="orders-empty"><strong>Carregando…</strong></div>';
             if (hostList) hostList.innerHTML = '';
 
             try {
@@ -3806,20 +4264,20 @@
                     if (hostList) {
                         hostList.innerHTML = pendingOrders.length
                             ? pendingOrders.map(o => renderOrderCard(o, true)).join('')
-                            : '<div class="wallet-empty" style="padding:18px;">Nenhum pedido pendente 🎉</div>';
+                            : '<div class="orders-empty"><strong>Fila limpa</strong><p>Nenhum pedido esperando aprovação.</p></div>';
                     }
                     if (myList) {
                         myList.innerHTML = rest.length
                             ? rest.map(o => renderOrderCard(o, true)).join('')
-                            : '<div class="wallet-empty" style="padding:18px;">Sem histórico ainda.</div>';
+                            : '<div class="orders-empty"><strong>Sem histórico ainda</strong><p>Pedidos processados aparecem aqui.</p></div>';
                     }
                 } else {
                     if (myList) {
                         myList.innerHTML = orders.length
                             ? orders.map(o => renderOrderCard(o, false)).join('')
-                            : `<div class="wallet-empty" style="padding:28px;">
-                                <div style="font-weight:700;margin-bottom:6px;">Nenhum pedido ainda</div>
-                                <div style="color:var(--muted);font-size:13px;">Use o formulário acima para pedir leads com suas Trovoedas.</div>
+                            : `<div class="orders-empty">
+                                <strong>Nenhum pedido ainda</strong>
+                                <p>Use o formulário acima — escolha a quantidade e toque em Pedir. Cidade e nicho são opcionais.</p>
                                </div>`;
                     }
                 }
@@ -3829,22 +4287,43 @@
                 });
             } catch (e) {
                 console.error(e);
-                if (myList) myList.innerHTML = '<div class="wallet-empty" style="color:var(--danger);">Erro ao carregar pedidos.</div>';
+                if (myList) myList.innerHTML = '<div class="orders-empty"><strong style="color:var(--danger)">Erro ao carregar pedidos</strong></div>';
             }
         }
 
         async function submitOrder() {
             const msg = document.getElementById('order-form-msg');
             const btn = document.getElementById('btn-create-order');
-            const qty = parseInt(document.getElementById('order-qty')?.value || '0', 10);
-            const city = (document.getElementById('order-city')?.value || '').trim();
-            const niche = (document.getElementById('order-niche')?.value || '').trim();
+            const qty = getOrderQty();
+            const city = getOrderCity();
+            const niche = getOrderNiche();
             const notes = (document.getElementById('order-notes')?.value || '').trim();
+            const bal = (currentUser && currentUser.trovoedas != null)
+                ? Number(currentUser.trovoedas) : 0;
+
             if (msg) { msg.style.display = 'none'; msg.className = 'orders-msg'; }
             if (!qty || qty < 1) {
-                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Informe a quantidade.'; }
+                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Escolha quantos leads você quer (mínimo 1).'; }
                 return;
             }
+            if (bal < qty) {
+                navigateTo('/shop');
+                return;
+            }
+            // se escolheu "Outro" mas não preencheu, avisa de leve
+            const cityChip = document.querySelector('#order-city-chips .chip.active');
+            const nicheChip = document.querySelector('#order-niche-chips .chip.active');
+            if (cityChip && cityChip.getAttribute('data-city') === 'custom' && !city) {
+                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite a cidade ou escolha “Tanto faz”.'; }
+                document.getElementById('order-city')?.focus();
+                return;
+            }
+            if (nicheChip && nicheChip.getAttribute('data-niche') === 'custom' && !niche) {
+                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite o nicho ou escolha “Tanto faz”.'; }
+                document.getElementById('order-niche')?.focus();
+                return;
+            }
+
             if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
             try {
                 const res = await fetch('/api/orders', {
@@ -3864,12 +4343,23 @@
                 if (msg) {
                     msg.style.display = '';
                     msg.className = 'orders-msg ok';
-                    msg.textContent = 'Pedido #' + ((data.order && data.order.id) || '') + ' criado. Aguardando aprovação do host.';
+                    msg.textContent = 'Pedido #' + ((data.order && data.order.id) || '') + ' enviado. Aguarde a aprovação — as Trovoedas já estão reservadas.';
                 }
-                ['order-city', 'order-niche', 'order-notes'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
+                // reset preferências opcionais (mantém qty)
+                document.querySelectorAll('#order-city-chips .chip').forEach(c => {
+                    c.classList.toggle('active', c.getAttribute('data-city') === '');
                 });
+                document.querySelectorAll('#order-niche-chips .chip').forEach(c => {
+                    c.classList.toggle('active', c.getAttribute('data-niche') === '');
+                });
+                document.getElementById('order-city-custom-wrap')?.classList.remove('show');
+                document.getElementById('order-niche-custom-wrap')?.classList.remove('show');
+                const cityIn = document.getElementById('order-city');
+                const nicheIn = document.getElementById('order-niche');
+                const notesIn = document.getElementById('order-notes');
+                if (cityIn) cityIn.value = '';
+                if (nicheIn) nicheIn.value = '';
+                if (notesIn) notesIn.value = '';
                 await loadMe();
                 await loadOrders();
             } catch (e) {
@@ -3879,7 +4369,7 @@
                     msg.textContent = String(e.message || e);
                 }
             } finally {
-                if (btn) { btn.disabled = false; btn.textContent = 'Pedir leads'; }
+                refreshOrderCostHint();
             }
         }
 

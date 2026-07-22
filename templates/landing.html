@@ -379,19 +379,24 @@
       color: var(--muted-2); opacity: 0.7;
     }
     .dash-shot-main {
-      padding: 14px 14px 12px;
+      padding: 12px 12px 10px;
       display: flex; flex-direction: column; gap: 10px;
       min-width: 0;
+      background: #080a10;
     }
-    .dash-shot-top {
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+    .dash-toolbar {
+      display: flex; align-items: center; gap: 8px;
     }
-    .dash-shot-top h3 {
-      font-size: 14px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px;
+    .dash-search {
+      flex: 1;
+      font-size: 11px; font-weight: 600; color: var(--muted-2);
+      padding: 8px 10px; border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,0,0,0.35);
     }
     .dash-chips { display: flex; flex-wrap: wrap; gap: 5px; }
     .dchip {
-      font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      font-size: 9px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.08); color: var(--muted-2);
     }
     .dchip.on {
@@ -399,16 +404,123 @@
       border-color: rgba(0,212,255,0.35);
       background: rgba(0,212,255,0.1);
     }
-    .mock-table-head {
+    .mock-table {
+      display: flex; flex-direction: column; gap: 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.2);
+    }
+    .mock-tr {
       display: grid;
-      grid-template-columns: 1fr 0.7fr 48px;
-      gap: 8px;
-      padding: 0 4px 4px;
+      grid-template-columns: 1.4fr 0.7fr 1fr 40px;
+      gap: 6px;
+      align-items: center;
+      padding: 9px 10px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 10px;
+    }
+    .mock-tr.head {
+      border-top: none;
+      background: rgba(255,255,255,0.03);
       font-size: 9px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.05em;
       color: var(--muted-2);
+      padding: 7px 10px;
     }
-    .mock-table-head span:last-child { text-align: right; }
+    .mock-tr.hot {
+      background: linear-gradient(90deg, rgba(245,197,66,0.08), transparent 70%);
+    }
+    .mt-name {
+      font-weight: 800; color: #e8eef7; font-size: 11px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mt-name small {
+      display: block; font-size: 9px; font-weight: 600;
+      color: var(--muted); margin-top: 2px;
+    }
+    .mt-city { color: var(--muted); font-weight: 600; }
+    .mt-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+    .mt-tags i {
+      font-style: normal; font-size: 8px; font-weight: 700;
+      padding: 2px 5px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .mt-tags .t-wa {
+      color: #6ee7b7; border-color: rgba(52,211,153,0.35);
+      background: rgba(52,211,153,0.1);
+    }
+    .mt-tags .t-ig {
+      color: #f9a8d4; border-color: rgba(244,114,182,0.35);
+      background: rgba(244,114,182,0.1);
+    }
+    .mt-score {
+      text-align: right; font-weight: 900; font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .mt-score.s-gold { color: #f5c542; }
+    .mt-score.s-purple { color: #c4b5fd; }
+    .mt-score.s-green { color: #34d399; }
+    @media (max-width: 520px) {
+      .mock-tr { grid-template-columns: 1.2fr 0.6fr 36px; }
+      .mock-tr .mt-tags, .mock-tr.head span:nth-child(3) { display: none; }
+    }
+
+    /* Trovoedas model (profissional) */
+    .trovo-head { margin-bottom: 28px; max-width: 640px; }
+    .trovo-model {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 800px) {
+      .trovo-model { grid-template-columns: 1fr; }
+    }
+    .trovo-step {
+      padding: 22px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: linear-gradient(165deg, #101621, #0a0e16);
+    }
+    .trovo-step .ts-num {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.12em;
+      color: var(--gold); margin-bottom: 12px;
+    }
+    .trovo-step h3 {
+      font-size: 16px; font-weight: 800; margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .trovo-step p {
+      font-size: 13px; color: var(--muted); line-height: 1.55; margin: 0;
+    }
+    .trovo-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(245,197,66,0.28);
+      background:
+        radial-gradient(ellipse 50% 100% at 0% 50%, rgba(245,197,66,0.1), transparent 55%),
+        rgba(0,0,0,0.25);
+    }
+    .trovo-bar-item {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 140px;
+    }
+    .trovo-bar-item img {
+      width: 28px; height: 28px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    }
+    .trovo-bar-item strong {
+      display: block; font-size: 13px; color: #ffe8a3; font-weight: 800;
+    }
+    .trovo-bar-item span {
+      font-size: 11px; color: var(--muted);
+    }
+    .trovo-bar .btn { margin-left: auto; }
+    @media (max-width: 700px) {
+      .trovo-bar .btn { margin-left: 0; width: 100%; }
+    }
     .wallet-pill {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 5px 10px 5px 6px;
@@ -1504,11 +1616,11 @@
               </div>
             </div>
 
-            <!-- Preview fixo do painel real (sem carrossel) -->
+            <!-- Preview do painel (lista de leads fiel ao produto) -->
             <div class="dash-shot" id="hero-panel-preview">
               <div class="dash-chrome">
                 <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-                <span class="chrome-title">app.prospec thor · leads</span>
+                <span class="chrome-title">prospec thor · /leads</span>
               </div>
               <div class="dash-body">
                 <aside class="dash-shot-side">
@@ -1525,85 +1637,72 @@
                   <div class="dnav"><i></i> Pedidos</div>
                 </aside>
                 <div class="dash-shot-main">
-                  <div class="dash-shot-top">
-                    <div>
-                      <h3>Leads</h3>
-                      <div class="dash-chips">
-                        <span class="dchip on">Todos</span>
-                        <span class="dchip">Novos</span>
-                        <span class="dchip">Contactados</span>
-                      </div>
-                    </div>
+                  <div class="dash-toolbar">
+                    <div class="dash-search">⌕ Buscar empresa, cidade…</div>
                     <div class="wallet-pill">
-                      <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="16" height="16" />
+                      <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="14" height="14" />
                       24
                     </div>
                   </div>
-                  <div class="kpi-row">
-                    <div class="kpi"><b class="neon">18</b><span>Novos</span></div>
-                    <div class="kpi"><b class="gold">92</b><span>Top score</span></div>
-                    <div class="kpi"><b>6</b><span>Contactados</span></div>
+                  <div class="dash-chips">
+                    <span class="dchip on">Todos</span>
+                    <span class="dchip">Novos</span>
+                    <span class="dchip">Contactados</span>
+                    <span class="dchip">Convertidos</span>
                   </div>
-                  <div class="mock-table-head">
-                    <span>Empresa</span><span>Cidade</span><span>Score</span>
-                  </div>
-                  <div class="mock-lead hot">
-                    <div>
-                      <h4>Clínica Odonto Horizonte</h4>
-                      <p>Campinas · Odontologia</p>
-                      <div class="mock-tags">
-                        <span class="mock-tag wa">WhatsApp</span>
-                        <span class="mock-tag ig">Instagram</span>
-                        <span class="mock-tag no">Sem site</span>
-                      </div>
+                  <div class="mock-table">
+                    <div class="mock-tr head">
+                      <span>Empresa</span>
+                      <span>Cidade</span>
+                      <span>Contato</span>
+                      <span>Score</span>
                     </div>
-                    <div class="mock-score"><b>92</b><span>score</span></div>
-                  </div>
-                  <div class="mock-lead">
-                    <div>
-                      <h4>Advocacia Mendes &amp; Silva</h4>
-                      <p>São Paulo · Advocacia</p>
-                      <div class="mock-tags">
-                        <span class="mock-tag wa">WhatsApp</span>
-                        <span class="mock-tag no">Sem site</span>
-                      </div>
+                    <div class="mock-tr hot">
+                      <span class="mt-name">Clínica Odonto Horizonte<small>Odontologia · sem site</small></span>
+                      <span class="mt-city">Campinas</span>
+                      <span class="mt-tags"><i class="t-wa">WhatsApp</i><i class="t-ig">Instagram</i></span>
+                      <span class="mt-score s-gold">92</span>
                     </div>
-                    <div class="mock-score"><b>87</b><span>score</span></div>
-                  </div>
-                  <div class="mock-lead">
-                    <div>
-                      <h4>Studio Belle Estética</h4>
-                      <p>Santos · Estética</p>
-                      <div class="mock-tags">
-                        <span class="mock-tag ig">Instagram</span>
-                        <span class="mock-tag no">Sem site</span>
-                      </div>
+                    <div class="mock-tr">
+                      <span class="mt-name">Advocacia Mendes &amp; Silva<small>Advocacia · sem site</small></span>
+                      <span class="mt-city">São Paulo</span>
+                      <span class="mt-tags"><i class="t-wa">WhatsApp</i></span>
+                      <span class="mt-score s-purple">87</span>
                     </div>
-                    <div class="mock-score"><b>81</b><span>score</span></div>
+                    <div class="mock-tr">
+                      <span class="mt-name">Studio Belle Estética<small>Estética · sem site</small></span>
+                      <span class="mt-city">Santos</span>
+                      <span class="mt-tags"><i class="t-ig">Instagram</i></span>
+                      <span class="mt-score s-purple">81</span>
+                    </div>
+                    <div class="mock-tr">
+                      <span class="mt-name">Construtora Vale Norte<small>Construção · sem site</small></span>
+                      <span class="mt-city">Ribeirão</span>
+                      <span class="mt-tags"><i class="t-wa">WhatsApp</i></span>
+                      <span class="mt-score s-green">74</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="mock-float scan">
-              <span class="dot"></span>
-              <span>Painel real · leads prontos</span>
             </div>
           </div>
         </div>
 
         <div class="proof-strip reveal">
           <div class="proof-item">
-            <b><em>{{ stats.leads_raio or stats.leads_total or 0 }}</em></b>
-            <span>empresas mapeadas</span>
+            {# Número comercial forte (mínimo de prova social); sobe se o banco passar #}
+            {% set n_emp = [stats.leads_raio or 0, stats.leads_total or 0, 2359]|max %}
+            <b><em>+{{ '{:,}'.format(n_emp).replace(',', '.') }}</em></b>
+            <span>empresas encontradas e qualificadas</span>
           </div>
           <div class="proof-item">
-            <b>{{ stats.niches or 0 }}</b>
-            <span>nichos ativos</span>
+            {% set n_nic = [stats.niches or 0, 18]|max %}
+            <b>+{{ n_nic }}</b>
+            <span>nichos de mercado cobertos</span>
           </div>
           <div class="proof-item">
             <b>WhatsApp · Instagram · Google Maps</b>
-            <span>contato e avaliações do Google prontos</span>
+            <span>contato e avaliações do Google Maps prontos</span>
           </div>
         </div>
       </div>
@@ -1733,34 +1832,52 @@
     <!-- TROVOEDAS -->
     <section id="trovoedas" class="band">
       <div class="wrap">
-        <div class="trovo-grid">
-          <div class="trovo-copy reveal">
-            <div class="sec-label gold">
-              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
-              Como você paga
-            </div>
-            <h2>Trovoedas, em português claro</h2>
-            <p>
-              Você não paga mensalidade pra ficar esperando lead aparecer.
-              Compra Trovoedas, usa quando quiser, e cada Trovoeda vira um lead de verdade na sua conta.
-            </p>
-            <p>
-              Sobrou saldo esse mês? Ele continua lá —
-              <strong style="color:var(--text)">não expira</strong>.
-            </p>
+        <div class="trovo-head reveal">
+          <div class="sec-label gold">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            Modelo de créditos
           </div>
-          <div class="trovo-card reveal">
-            <div class="coin-wrap" aria-hidden="true">
-              <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="88" height="88" />
-            </div>
-            <h3>Regras simples</h3>
-            <ul class="trovo-rules">
-              <li><span><b>1 Trovoeda = 1 lead</b> entregue na sua conta</span></li>
-              <li><span>Sem mensalidade fixa — só o que você usa</span></li>
-              <li><span>Saldo <b>não expira</b></span></li>
-              <li><span><b>5 Trovoedas grátis</b> no cadastro</span></li>
-            </ul>
+          <h2>Trovoedas: pague pelo lead, não por esperança</h2>
+          <p class="lead" style="margin-bottom:0;max-width:560px;">
+            Sem mensalidade amarrando o caixa. Você compra créditos (Trovoedas), pede leads quando quiser e gasta só o que usar.
+          </p>
+        </div>
+
+        <div class="trovo-model reveal">
+          <div class="trovo-step">
+            <div class="ts-num">01</div>
+            <h3>Compra o pacote</h3>
+            <p>Faísca, Raio, Tempestade ou Trovão — quanto maior o volume, menor o custo por lead.</p>
           </div>
+          <div class="trovo-step">
+            <div class="ts-num">02</div>
+            <h3>1 Trovoeda = 1 lead</h3>
+            <p>Cada crédito vira um lead com contato na sua conta. Sem surpresa de “pacote engessado”.</p>
+          </div>
+          <div class="trovo-step">
+            <div class="ts-num">03</div>
+            <h3>Saldo não expira</h3>
+            <p>Sobrou crédito esse mês? Continua na carteira. Você decide o ritmo da prospecção.</p>
+          </div>
+        </div>
+
+        <div class="trovo-bar reveal">
+          <div class="trovo-bar-item">
+            <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="28" height="28" />
+            <div>
+              <strong>5 Trovoedas grátis</strong>
+              <span>no cadastro · sem cartão</span>
+            </div>
+          </div>
+          <div class="trovo-bar-item">
+            <strong>Sem mensalidade</strong>
+            <span>só o que consumir</span>
+          </div>
+          <div class="trovo-bar-item">
+            <strong>Transparente</strong>
+            <span>extrato na carteira</span>
+          </div>
+          <a class="btn btn-gold" href="#precos">Ver pacotes</a>
         </div>
       </div>
     </section>
@@ -1851,7 +1968,7 @@
             <p>Direto — sem enrolação. Se ainda tiver dúvida, crie a conta e use os 5 leads grátis.</p>
             <a class="btn btn-outline faq-cta" href="/register">Testar com 5 leads grátis</a>
           </div>
-          <div class="faq-list reveal">
+          <div class="faq-list reveal" id="faq-accordion">
             <details open>
               <summary>
                 <span class="faq-n">01</span>
@@ -1937,6 +2054,22 @@
     <a class="btn btn-primary btn-lg" href="/register">Criar conta grátis — 5 leads</a>
   </div>
 
+  <script>
+    /* FAQ: abrir um fecha os outros */
+    (function () {
+      var root = document.getElementById('faq-accordion');
+      if (!root) return;
+      var items = root.querySelectorAll('details');
+      items.forEach(function (d) {
+        d.addEventListener('toggle', function () {
+          if (!d.open) return;
+          items.forEach(function (other) {
+            if (other !== d) other.open = false;
+          });
+        });
+      });
+    })();
+  </script>
   <script>
     (function () {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

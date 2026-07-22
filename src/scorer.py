@@ -604,10 +604,7 @@ class LeadScorer:
                 problems.append("Pouca prova social no Maps")
         elif partial_source:
             # mesma fórmula de blocos; sem punir por “0 reviews” se nunca teve Maps
-            problems.append(
-                "Sem nota/avaliações Google ainda (origem mapa/CNPJ) — "
-                "score usa dor + nicho + contato iguais ao Maps"
-            )
+            problems.append("Sem nota/avaliações no Google ainda")
 
         # ── C) Visibilidade 0–100 ────────────────────────────────────────
         # nota Maps (0–55) + volume (0–35) + social (0–10)
@@ -693,19 +690,16 @@ class LeadScorer:
         )
         score = int(round(max(0.0, min(100.0, raw))))
 
-        # detalhe no tooltip: contribuição de cada bloco (em pontos do total)
-        problems.append(
-            f"Blocos /100: dor={dor:.0f}·cap={cap:.0f}·vis={vis:.0f}·contato={ab:.0f} "
-            f"→ {score}/100"
-        )
+        # NÃO gravar fórmula de blocos (dor/cap/vis) em lead_problems —
+        # isso polui UI, relatórios e "problemas comuns". Score já está em lead_score.
 
         # sem telefone e sem IG: não fica no topo dourado
         if not has_mobile and not has_landline and not has_ig_contact and score > 58:
-            problems.append(f"Teto 58 sem telefone/IG (era {score})")
+            problems.append("Sem telefone/WhatsApp nem Instagram — contato fraco")
             score = 58
         # food truck/carrinho: raramente fecha site "completo" → teto
         if is_foodtruck and score > 62:
-            problems.append(f"Teto 62 food truck/carrinho (era {score})")
+            problems.append("Perfil food truck/carrinho — ticket de site costuma ser menor")
             score = 62
 
         # ── Classificação ────────────────────────────────────────────────

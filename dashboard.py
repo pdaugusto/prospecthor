@@ -452,11 +452,31 @@ def api_reports(period):
                 filtered.append(l)
         except Exception:
             filtered.append(l)
+    def _is_score_meta(text: str) -> bool:
+        s = (text or "").strip().lower()
+        if not s:
+            return True
+        if s.startswith("blocos /100") or s.startswith("blocos/100"):
+            return True
+        if "dor=" in s and ("cap=" in s or "vis=" in s):
+            return True
+        if "→" in s and "/100" in s and ("dor" in s or "bloco" in s):
+            return True
+        if s.startswith("teto 58") or s.startswith("teto 62"):
+            return True
+        if "score usa dor" in s:
+            return True
+        return False
+
     problemas = {}
     for l in filtered:
         try:
             for p in json.loads(l.get("lead_problems") or "[]"):
-                k = p.split(" (")[0]
+                if _is_score_meta(str(p)):
+                    continue
+                k = str(p).split(" (")[0].split(" — ")[0].strip()
+                if not k or _is_score_meta(k):
+                    continue
                 problemas[k] = problemas.get(k, 0) + 1
         except Exception:
             pass

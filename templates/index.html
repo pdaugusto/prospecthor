@@ -3642,15 +3642,30 @@
             return 'Baixo';
         }
 
-        /** Extrai linhas {label, pts} de lead_problems: "Motivo (+20) — detalhe" */
-        function parseScoreBreakdown(problemsRaw) {
+        /** Cálculo interno do score — não é "problema" de negócio */
+        function isScoreMetaProblem(text) {
+            const s = String(text || '').trim().toLowerCase();
+            if (!s) return true;
+            if (s.startsWith('blocos /100') || s.startsWith('blocos/100')) return true;
+            if (s.includes('dor=') && (s.includes('cap=') || s.includes('vis='))) return true;
+            if (s.includes('→') && s.includes('/100') && (s.includes('dor') || s.includes('bloco'))) return true;
+            if (s.startsWith('teto 58') || s.startsWith('teto 62')) return true;
+            if (s.includes('score usa dor')) return true;
+            return false;
+        }
+
+        function filterBusinessProblems(problemsRaw) {
             let list = problemsRaw;
             if (typeof list === 'string') {
                 try { list = JSON.parse(list || '[]'); } catch (_) { list = []; }
             }
             if (!Array.isArray(list)) list = [];
-            return list.map(raw => {
-                const s = String(raw || '');
+            return list.map(p => String(p || '').trim()).filter(p => p && !isScoreMetaProblem(p));
+        }
+
+        /** Extrai linhas {label, pts} de lead_problems: "Motivo (+20) — detalhe" */
+        function parseScoreBreakdown(problemsRaw) {
+            return filterBusinessProblems(problemsRaw).map(s => {
                 const m = s.match(/^(.+?)\s*\(([+-]?\d+)\)(?:\s*[—–\-].*)?$/);
                 if (m) {
                     return { label: m[1].trim(), pts: parseInt(m[2], 10) };
@@ -6542,8 +6557,9 @@
                 if (idx >= 0) allLeads[idx] = lead;
 
                 let problems = [], services = [];
-                try { problems = JSON.parse(lead.lead_problems || '[]'); } catch (_) {}
+                try { problems = filterBusinessProblems(lead.lead_problems || '[]'); } catch (_) { problems = []; }
                 try { services = JSON.parse(lead.lead_services || '[]'); } catch (_) {}
+                if (!Array.isArray(services)) services = [];
                 const st = getStatus(lead);
                 const wa = waLink(lead.phone);
                 const tel = phoneDigits(lead.phone);
@@ -6754,8 +6770,9 @@
                 const res = await fetch(`/api/leads/${id}`);
                 const lead = await res.json();
                 let problems = [], services = [];
-                try { problems = JSON.parse(lead.lead_problems || '[]'); } catch (_) {}
+                try { problems = filterBusinessProblems(lead.lead_problems || '[]'); } catch (_) { problems = []; }
                 try { services = JSON.parse(lead.lead_services || '[]'); } catch (_) {}
+                if (!Array.isArray(services)) services = [];
                 const text = `ProspecTHOR — ${lead.name}
 Score: ${lead.lead_score || 0}
 Cidade: ${lead.city || ''} / ${lead.state || ''}

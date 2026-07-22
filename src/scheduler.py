@@ -326,7 +326,7 @@ class LeadGenerationPipeline:
 
         logger.info(
             f"[Pipeline] {niche} | {city}-{state} | área={area or 'cidade'} "
-            f"| meta {max_results} NOVAS | instagram={'off' if skip_instagram else 'on'}"
+            f"| meta {max_results} NOVAS | magro | instagram={'off' if skip_instagram else 'on'}"
         )
 
         companies = self.maps.search(
@@ -346,30 +346,25 @@ class LeadGenerationPipeline:
             )
             return 0
 
-        logger.info(f"[Pipeline] {total_found} NOVAS sem site — pós-processamento rápido")
-
+        # Magro: Maps já filtrou "com site" (early-skip). Só marca residual no banco
+        # e score leve — sem HTTP em massa nem Instagram (off por padrão).
+        logger.info(
+            f"[Pipeline] {total_found} NOVAS sem site — score na hora (sem web/IG em massa)"
+        )
         self._skip_companies_with_website()
-        self.web.check_all(limit=max(total_found * 2, 20), delay_between_s=0.2)
 
         if not skip_instagram:
             logger.info("[Pipeline] Instagram (enriquecimento)...")
             self.insta.check_all(limit=max(total_found * 2, 20), delay_between_s=0.8)
-            for c in companies:
-                cid = c.get("id")
-                if cid:
-                    try:
-                        self.scorer.score_one(int(cid))
-                    except Exception:
-                        pass
-        else:
-            # Score já veio no save; garante pendentes do lote
-            for c in companies:
-                cid = c.get("id")
-                if cid:
-                    try:
-                        self.scorer.score_one(int(cid))
-                    except Exception:
-                        pass
+
+        # Score já vem no save do Maps; reforça pendentes do lote (rápido)
+        for c in companies:
+            cid = c.get("id")
+            if cid:
+                try:
+                    self.scorer.score_one(int(cid))
+                except Exception:
+                    pass
 
         logger.info(
             f"[Pipeline] OK {niche} | {city} | {area or 'cidade'} → {total_found} leads"

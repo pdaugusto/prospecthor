@@ -191,11 +191,10 @@ def list_pending_jobs(
     return interleave_jobs_by_niche(jobs)
 
 
-def interleave_jobs_by_niche(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Round-robin por nicho: n1, n2, n3, n1, n2, ...
-    Assim o robô não varre vários bairros do mesmo nicho em sequência.
-    """
+def _interleave_by_key(
+    jobs: list[dict[str, Any]], key_fn
+) -> list[dict[str, Any]]:
+    """Round-robin genérico por chave (preserva ordem de 1ª aparição)."""
     if not jobs:
         return []
     from collections import defaultdict, deque
@@ -203,17 +202,62 @@ def interleave_jobs_by_niche(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]
     buckets: dict[str, deque] = defaultdict(deque)
     order: list[str] = []
     for j in jobs:
-        nid = j.get("niche") or ""
-        if nid not in buckets:
-            order.append(nid)
-        buckets[nid].append(j)
+        k = key_fn(j)
+        if k not in buckets:
+            order.append(k)
+        buckets[k].append(j)
 
     if len(order) <= 1:
         return list(jobs)
 
     out: list[dict[str, Any]] = []
-    while any(buckets[n] for n in order):
-        for nid in order:
+    while any(buckets[k] for k in order):
+        for k in order:
+            if buckets[k]:
+                out.append(buckets[k].popleft())
+    return out
+
+
+def interleave_jobs_by_niche(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Missão completa em um processo: round-robin por nicho E por cidade.
+
+    1) Dentro de cada nicho, intercala cidades (não esgota cidade A antes da B).
+    2) Depois intercala nichos: n1, n2, n3, n1, n2, ...
+
+    Assim 4 nichos × N cidades andam juntos — não para um nicho e
+    “reinicia” outro processo.
+    """
+    if not jobs:
+        return []
+    from collections import defaultdict
+
+    by_niche: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    niche_order: list[str] = []
+    for j in jobs:
+        nid = j.get("niche") or ""
+        if nid not in by_niche:
+            niche_order.append(nid)
+        by_niche[nid].append(j)
+
+    if len(niche_order) <= 1 and len({j.get("city") for j in jobs}) <= 1:
+        return list(jobs)
+
+    # Por nicho: intercala cidades (e áreas já na ordem original)
+    for nid in niche_order:
+        by_niche[nid] = _interleave_by_key(
+            by_niche[nid], lambda j: (j.get("city") or "").strip().lower()
+        )
+
+    if len(niche_order) <= 1:
+        return by_niche[niche_order[0]] if niche_order else list(jobs)
+
+    from collections import deque
+
+    buckets = {nid: deque(by_niche[nid]) for nid in niche_order}
+    out: list[dict[str, Any]] = []
+    while any(buckets[n] for n in niche_order):
+        for nid in niche_order:
             if buckets[nid]:
                 out.append(buckets[nid].popleft())
     return out

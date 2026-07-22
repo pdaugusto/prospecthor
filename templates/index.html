@@ -487,6 +487,175 @@
             border-radius: 999px;
             margin-right: 0 !important;
         }
+        /* —— Wallet SaaS (Trovoeda) —— */
+        .wallet-bar {
+            display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0;
+        }
+        .wallet-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 5px 10px 5px 6px;
+            border-radius: 999px;
+            background: linear-gradient(145deg, rgba(245,197,66,0.16), rgba(20,16,8,0.65));
+            border: 1px solid rgba(245, 197, 66, 0.45);
+            box-shadow: 0 0 18px rgba(245, 197, 66, 0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+            cursor: pointer;
+            transition: border-color .15s, box-shadow .15s, transform .12s;
+            user-select: none;
+        }
+        .wallet-chip:hover {
+            border-color: rgba(245, 197, 66, 0.75);
+            box-shadow: 0 0 22px rgba(245, 197, 66, 0.22);
+            transform: translateY(-1px);
+        }
+        .wallet-chip .coin-ico {
+            width: 28px; height: 28px; border-radius: 50%;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+        }
+        .wallet-chip .wallet-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+        .wallet-chip .wallet-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #c9a227;
+        }
+        .wallet-chip .wallet-amt {
+            font-size: 14px; font-weight: 800; color: #ffe8a3;
+            font-variant-numeric: tabular-nums;
+        }
+        .btn-recharge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12px; font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #0b1220 !important;
+            background: linear-gradient(135deg, #ffe08a, #f5c542 45%, #e09a18);
+            border: 1px solid rgba(255, 224, 138, 0.5);
+            box-shadow: 0 0 16px rgba(245, 197, 66, 0.28);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform .12s, box-shadow .15s, filter .15s;
+        }
+        .btn-recharge:hover {
+            filter: brightness(1.06);
+            box-shadow: 0 0 24px rgba(245, 197, 66, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-recharge:active { transform: translateY(0); }
+
+        /* —— Loja Trovoedas —— */
+        .shop-hero {
+            position: relative;
+            padding: 22px 24px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(245, 197, 66, 0.28);
+            background:
+                radial-gradient(ellipse 70% 80% at 10% 20%, rgba(245,197,66,0.18), transparent 55%),
+                radial-gradient(ellipse 50% 60% at 90% 80%, rgba(0,212,255,0.08), transparent 50%),
+                linear-gradient(160deg, #0c1018, #080a10);
+            overflow: hidden;
+        }
+        .shop-hero h2 {
+            font-size: 22px; font-weight: 900; letter-spacing: -0.03em;
+            background: linear-gradient(90deg, #ffe8a3, #f5c542);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .shop-hero p { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 520px; line-height: 1.5; }
+        .shop-hero .shop-balance {
+            margin-top: 14px; display: inline-flex; align-items: center; gap: 10px;
+            padding: 8px 14px; border-radius: 12px;
+            background: rgba(0,0,0,0.35); border: 1px solid rgba(245,197,66,0.25);
+        }
+        .shop-hero .shop-balance img { width: 32px; height: 32px; }
+        .shop-hero .shop-balance strong { font-size: 20px; color: #ffe8a3; }
+        .shop-hero .shop-balance span { font-size: 12px; color: var(--muted); }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .pkg-card {
+            position: relative;
+            display: flex; flex-direction: column;
+            padding: 20px 18px 16px;
+            border-radius: 16px;
+            background: var(--card, #0c111a);
+            border: 1px solid var(--border);
+            transition: border-color .15s, box-shadow .15s, transform .12s;
+        }
+        .pkg-card:hover {
+            border-color: rgba(245, 197, 66, 0.4);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,197,66,0.08);
+            transform: translateY(-2px);
+        }
+        .pkg-card.featured {
+            border-color: rgba(245, 197, 66, 0.55);
+            background:
+                radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245,197,66,0.14), transparent 60%),
+                var(--card, #0c111a);
+            box-shadow: 0 0 32px rgba(245, 197, 66, 0.1);
+        }
+        .pkg-badge {
+            position: absolute; top: 12px; right: 12px;
+            font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 4px 8px; border-radius: 999px;
+            background: linear-gradient(135deg, #f5c542, #e09a18);
+            color: #1a1408;
+        }
+        .pkg-card .pkg-coin {
+            width: 48px; height: 48px; margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+        }
+        .pkg-card h3 {
+            font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 4px;
+        }
+        .pkg-card .pkg-coins {
+            font-size: 28px; font-weight: 900; color: #f5c542;
+            letter-spacing: -0.03em; line-height: 1.1;
+        }
+        .pkg-card .pkg-coins small {
+            font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px;
+        }
+        .pkg-card .pkg-per {
+            margin-top: 6px; font-size: 12px; color: var(--muted);
+        }
+        .pkg-card .pkg-price {
+            margin-top: 14px; font-size: 22px; font-weight: 900; color: var(--text);
+            letter-spacing: -0.02em;
+        }
+        .pkg-card .pkg-price span { font-size: 13px; font-weight: 600; color: var(--muted); }
+        .pkg-card .btn-buy {
+            margin-top: 14px; width: 100%;
+            padding: 11px 14px; border-radius: 12px;
+            font-size: 13px; font-weight: 800;
+            border: none; cursor: pointer;
+            color: #0b1220;
+            background: linear-gradient(135deg, #ffe08a, #f5c542 50%, #e09a18);
+            box-shadow: 0 4px 16px rgba(245, 197, 66, 0.25);
+            transition: filter .12s, transform .12s;
+        }
+        .pkg-card .btn-buy:hover { filter: brightness(1.05); }
+        .pkg-card .btn-buy:disabled {
+            opacity: 0.55; cursor: not-allowed; filter: grayscale(0.3);
+        }
+        .pkg-card .btn-buy.secondary {
+            background: transparent;
+            color: #f5c542;
+            border: 1px solid rgba(245, 197, 66, 0.4);
+            box-shadow: none;
+        }
+        .shop-note {
+            margin-top: 18px; padding: 14px 16px; border-radius: 12px;
+            font-size: 13px; color: var(--muted); line-height: 1.5;
+            border: 1px dashed rgba(245, 197, 66, 0.25);
+            background: rgba(245, 197, 66, 0.04);
+        }
+        .shop-note strong { color: #f5c542; }
+
         .avatar {
             width: 38px; height: 38px; border-radius: 50%;
             background: linear-gradient(135deg, var(--neon), var(--neon-soft));
@@ -939,12 +1108,75 @@
             max-height: 90vh; overflow: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0, 212, 255, 0.06);
         }
+        .modal.modal-wide { max-width: 640px; }
         .modal-head {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px 18px; border-bottom: 1px solid var(--border);
         }
         .modal-head h3 { font-size: 15px; font-weight: 700; }
         .modal-body { padding: 18px; }
+        .dist-toolbar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 10px;
+        }
+        .dist-list {
+            max-height: min(42vh, 360px); overflow: auto;
+            border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(0,0,0,0.22); margin-bottom: 12px;
+        }
+        .dist-row {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 8px; align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(26, 34, 51, 0.9);
+            font-size: 12px;
+        }
+        .dist-row:last-child { border-bottom: none; }
+        .dist-row:hover { background: rgba(0, 212, 255, 0.04); }
+        .dist-row .d-name { font-weight: 600; color: var(--text); }
+        .dist-row .d-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+        .dist-row .d-score {
+            font-family: var(--mono); font-size: 11px; color: var(--neon);
+            white-space: nowrap;
+        }
+        .dist-row.no-phone { opacity: 0.55; }
+        .dist-count { font-size: 12px; color: var(--muted); }
+        .icon-btn.del {
+            border-color: rgba(255, 77, 106, 0.35);
+            color: var(--danger);
+            background: rgba(255, 77, 106, 0.08);
+        }
+        .icon-btn.del:hover {
+            border-color: var(--danger);
+            color: #fff;
+            background: rgba(255, 77, 106, 0.35);
+        }
+        .icon-btn.ig {
+            border-color: rgba(225, 48, 108, 0.4);
+            color: #e1306c;
+            background: rgba(225, 48, 108, 0.1);
+        }
+        .icon-btn.ig:hover {
+            border-color: #e1306c;
+            color: #fff;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+        .contact-badge {
+            display: inline-block; font-size: 10px; font-weight: 800;
+            padding: 2px 6px; border-radius: 6px; letter-spacing: .04em;
+            margin-left: 6px; vertical-align: middle;
+        }
+        .contact-badge.wa { background: rgba(37,211,102,.15); color: #25d366; border: 1px solid rgba(37,211,102,.35); }
+        .contact-badge.ig { background: rgba(225,48,108,.12); color: #e1306c; border: 1px solid rgba(225,48,108,.35); }
+        .contact-badge.tel { background: rgba(56,189,248,.12); color: #38bdf8; border: 1px solid rgba(56,189,248,.35); }
+        .contact-badge.none { background: rgba(122,139,163,.12); color: var(--muted); border: 1px solid var(--border); }
+        .btn-ig {
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            border: none; color: #fff;
+            box-shadow: 0 0 16px rgba(225, 48, 108, 0.3);
+        }
+        .btn-ig:hover { color: #fff; filter: brightness(1.08); }
         .form-g { margin-bottom: 14px; }
         .form-g label {
             display: block; font-size: 11px; font-weight: 600;
@@ -1008,12 +1240,6 @@
             padding: 8px 0 4px; letter-spacing: .02em;
         }
 
-        /* Pool / bot panels with neon accent */
-        #home-pool-panel {
-            border-color: var(--border-glow) !important;
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.04);
-        }
-
         /* Overlay mobile sidebar */
         .sidebar-overlay {
             display: none; position: fixed; inset: 0;
@@ -1065,9 +1291,16 @@
             body.on-home header { margin-bottom: 8px; }
             header h1 { font-size: 17px; line-height: 1.2; }
             .page-sub { font-size: 11px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-            .header-right { gap: 8px; }
+            .header-right { gap: 6px; }
             .header-right .avatar { width: 34px; height: 34px; font-size: 12px; }
             #quota-badge { display: none; }
+            .btn-recharge { padding: 7px 10px; font-size: 11px; }
+            .btn-recharge .recharge-txt { display: none; }
+            .wallet-chip .wallet-label { display: none; }
+            .wallet-chip .wallet-amt { font-size: 13px; }
+            .wallet-chip .coin-ico { width: 24px; height: 24px; }
+            .shop-grid { grid-template-columns: 1fr; }
+
 
             .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
             .stat { padding: 12px; }
@@ -1211,6 +1444,8 @@
         <ul class="sidebar-menu">
             <li><a onclick="navigateTo('/')" class="active" id="nav-home"><span class="nav-ico">⌂</span> Visão geral</a></li>
             <li><a onclick="navigateTo('/leads')" id="nav-leads"><span class="nav-ico">☰</span> Leads <span class="nav-badge" id="nav-leads-badge" style="display:none;">0</span></a></li>
+            <li><a onclick="navigateTo('/shop')" id="nav-shop"><span class="nav-ico">⚡</span> Loja</a></li>
+            <li><a onclick="navigateTo('/wallet')" id="nav-wallet"><span class="nav-ico">◈</span> Carteira</a></li>
             <li><a onclick="navigateTo('/reports')" id="nav-reports"><span class="nav-ico">▦</span> Relatórios</a></li>
             <li id="nav-users-wrap" style="display:none;"><a onclick="navigateTo('/users')" id="nav-users"><span class="nav-ico">◎</span> Usuários</a></li>
             <li id="nav-audit-wrap" style="display:none;"><a onclick="navigateTo('/audit')" id="nav-audit"><span class="nav-ico">◎</span> Auditoria</a></li>
@@ -1240,10 +1475,87 @@
                 </div>
             </div>
             <div class="header-right">
+                <div class="wallet-bar" id="wallet-bar">
+                    <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/shop')" title="Seu saldo de Trovoedas">
+                        <img class="coin-ico" src="/static/trovoeda-coin.svg" alt="" width="28" height="28" />
+                        <div class="wallet-meta">
+                            <span class="wallet-label">Trovoedas</span>
+                            <span class="wallet-amt" id="wallet-amt">0</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-recharge" id="btn-recharge" onclick="navigateTo('/shop')">
+                        <span aria-hidden="true">＋</span>
+                        <span class="recharge-txt">Recarregar</span>
+                    </button>
+                </div>
                 <span id="quota-badge">—</span>
                 <div class="avatar" id="user-avatar">A</div>
             </div>
         </header>
+
+        <!-- LOJA TROVOEDAS -->
+        <section id="view-shop" class="view">
+            <div class="shop-hero">
+                <h2>Loja de Trovoedas</h2>
+                <p>
+                    1 Trovoeda = 1 lead com contato. <strong style="color:#f5c542;">Não expiram.</strong>
+                    Compre o pacote e use quando quiser. Pagamento seguro via Stripe (em ativação).
+                </p>
+                <div class="shop-balance">
+                    <img src="/static/trovoeda-coin.svg" alt="" width="32" height="32" />
+                    <div>
+                        <div><strong id="shop-balance-amt">0</strong> <span>no saldo</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-grid" id="shop-packages">
+                <div class="pkg-card" style="grid-column:1/-1;opacity:0.7;text-align:center;padding:32px;">
+                    Carregando pacotes…
+                </div>
+            </div>
+            <div class="shop-note">
+                <strong>Como funciona:</strong> compre Trovoedas → peça leads → o time processa e entrega na sua conta
+                (1 moeda por lead entregue). <strong style="color:var(--text);">Trovoedas não expiram.</strong>
+                <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');" style="color:var(--neon);margin-left:6px;">Ver extrato →</a>
+            </div>
+        </section>
+
+        <!-- CARTEIRA / EXTRATO -->
+        <section id="view-wallet" class="view">
+            <div class="shop-hero">
+                <h2>Carteira</h2>
+                <p>Saldo de Trovoedas e extrato de crédito e consumo (1 moeda = 1 lead entregue).</p>
+                <div class="shop-balance">
+                    <img src="/static/trovoeda-coin.svg" alt="" width="40" height="40" />
+                    <div>
+                        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">Saldo atual</div>
+                        <div><strong id="wallet-page-amt" style="font-size:32px;">0</strong> <span>Trovoedas</span></div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar na loja</button>
+                </div>
+            </div>
+            <div class="panel">
+                <h3 style="margin-bottom:12px;">Extrato</h3>
+                <div class="table-wrap" style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Δ</th>
+                                <th>Saldo após</th>
+                                <th>Detalhe</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wallet-ledger-body">
+                            <tr><td colspan="5" class="empty">Carregando…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
         <!-- HOME -->
         <section id="view-home" class="view active">
@@ -1278,14 +1590,6 @@
                     <div class="stat-meta" id="home-desc-meta">Fora do funil</div>
                 </div>
             </div>
-            <div class="panel" id="home-pool-panel" style="display:none;margin-bottom:14px;border-color:var(--neon);">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-                    <h3 style="margin:0;color:var(--neon);">Pool do Patrão</h3>
-                    <button type="button" class="btn btn-primary" id="btn-distribute-free" onclick="distributeFreeLeads()">Distribuir sobra</button>
-                </div>
-                <p id="home-pool-summary" style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;"></p>
-                <div id="home-pool-users" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-            </div>
             <div class="charts">
                 <div class="panel">
                     <h3 id="home-chart-status-title">Status dos leads</h3>
@@ -1311,6 +1615,7 @@
                     Use o filtro <em>Todos</em> ou <em>Por usuário</em> se precisar inspecionar a carteira de alguém.<br>
                     <strong>Cota 0</strong> = para de receber leads <em>novos</em> do bot (os que já tem continuam com ele).<br>
                     <strong>Zerar mês</strong> = contagem do mês volta a 0; leads não somem.<br>
+                    <strong>+Trovoedas</strong> = credita moedas SaaS (1 Trovoeda = 1 lead no futuro; por agora só saldo).<br>
                     <strong>Remover</strong> = apaga a conta; leads dele voltam pro pool de sobras.
                 </p>
                 <h3 style="margin-bottom:12px;font-size:14px;">Novo cliente</h3>
@@ -1330,9 +1635,10 @@
                             <th>Login</th>
                             <th>Nome</th>
                             <th>Papel</th>
-                            <th>Cota/mês</th>
+                            <th title="Legado bot / distribuição">Cota/mês</th>
+                            <th title="Saldo SaaS (compras + bônus)">⚡ Trovoedas</th>
                             <th>Recebidos</th>
-                            <th style="min-width:280px;">Ações</th>
+                            <th style="min-width:320px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="users-tbody"></tbody>
@@ -1494,7 +1800,7 @@
         <!-- LEADS -->
         <section id="view-leads" class="view">
             <div class="leads-head-actions">
-                <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="distributeFreeLeads()">Distribuir sobra</button>
+                <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="openDistributeModal()">Distribuir sobra</button>
                 <a class="btn btn-secondary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
             </div>
             <div class="chip-filters" id="status-chips">
@@ -1580,6 +1886,54 @@
             </div>
         </section>
     </main>
+
+    <!-- Distribuir sobra (Patrão) -->
+    <div class="modal-bg" id="distribute-modal" onclick="if(event.target===this)closeDistributeModal()">
+        <div class="modal modal-wide" role="dialog" aria-labelledby="dist-title">
+            <div class="modal-head">
+                <h3 id="dist-title">Distribuir sobra</h3>
+                <button type="button" class="btn btn-sm" onclick="closeDistributeModal()">Fechar</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;">
+                    Escolha <strong style="color:var(--text)">quais sobras</strong> e
+                    <strong style="color:var(--text)">para quem</strong> enviar.
+                    Só saem do pool os marcados. Leads sem telefone não vão pro cliente.
+                </p>
+                <div class="form-g">
+                    <label>Enviar para</label>
+                    <select id="dist-user-select">
+                        <option value="">— Escolha o cliente —</option>
+                    </select>
+                </div>
+                <div class="dist-toolbar">
+                    <button type="button" class="btn btn-sm" onclick="distSelectAll(true)">Marcar todos (com tel.)</button>
+                    <button type="button" class="btn btn-sm" onclick="distSelectAll(false)">Limpar</button>
+                    <span class="dist-count" id="dist-count">0 selecionados</span>
+                </div>
+                <div class="form-g" style="margin-bottom:8px;">
+                    <label>Buscar na lista</label>
+                    <input type="search" id="dist-search" placeholder="Nome, cidade, telefone…" oninput="renderDistList()">
+                </div>
+                <div class="dist-list" id="dist-list">
+                    <p class="empty" style="padding:18px;">Carregando sobras…</p>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:14px;cursor:pointer;">
+                    <input type="checkbox" id="dist-respect-quota" checked style="width:auto;">
+                    Respeitar cota mensal do cliente
+                </label>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button type="button" class="btn btn-primary" style="width:100%;" id="btn-dist-confirm" onclick="confirmDistributeSelected()">
+                        Enviar selecionados
+                    </button>
+                    <button type="button" class="btn" style="width:100%;" onclick="confirmDistributeAuto()">
+                        Distribuir automático (round-robin / cota)
+                    </button>
+                </div>
+                <p id="dist-status" style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4;"></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Prompt modal -->
     <div class="modal-bg" id="prompt-modal">
@@ -2059,8 +2413,12 @@
 
                 const used = currentUser.assigned_this_month || 0;
                 const q = currentUser.monthly_quota || 0;
+                const trovo = (currentUser.trovoedas != null && currentUser.trovoedas !== '')
+                    ? Number(currentUser.trovoedas)
+                    : 0;
                 const roleEl = document.getElementById('sidebar-user-role');
                 const banner = document.getElementById('impersonate-banner');
+                updateWalletUI(Number.isFinite(trovo) ? trovo : 0, showAdmin && !imp);
                 if (imp) {
                     document.body.classList.add('impersonating');
                     banner.classList.add('show');
@@ -2068,7 +2426,8 @@
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
                     document.getElementById('quota-badge').textContent =
                         'Modo cliente · Cota: ' + used + '/' + q;
-                    if (roleEl) roleEl.textContent = 'Impersonate · Cota ' + used + '/' + q;
+                    if (roleEl) roleEl.textContent = 'Impersonate · Cota ' + used + '/' + q
+                        + ' · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
@@ -2078,7 +2437,9 @@
                     } else {
                         document.getElementById('quota-badge').textContent =
                             q ? `Cota: ${used}/${q} este mês` : (currentUser.username || '');
-                        if (roleEl) roleEl.textContent = q ? `Cliente · ${used}/${q}` : 'Cliente';
+                        if (roleEl) roleEl.textContent = q
+                            ? `Cliente · ${used}/${q}`
+                            : 'Cliente';
                     }
                 }
                 setupPatraoScopeFilters(showAdmin);
@@ -2263,6 +2624,30 @@
                     navigateTo('/leads');
                 }
                 return;
+            } else if (path === '/shop' || path === '/trovoedas') {
+                destroyHomeCharts();
+                destroySparks();
+                homeLoadSeq++;
+                document.getElementById('view-shop').classList.add('active');
+                const navShop = document.getElementById('nav-shop');
+                if (navShop) navShop.classList.add('active');
+                setPageMeta('Loja', 'Compre Trovoedas · 1 moeda = 1 lead · não expiram');
+                loadShop();
+                if (new URLSearchParams(location.search).get('welcome') === '1') {
+                    setTimeout(() => {
+                        alert('Conta criada! Você ganhou 5 Trovoedas de bônus. Explore a loja e seu saldo no topo.');
+                        try { history.replaceState({}, '', '/shop'); } catch (e) {}
+                    }, 400);
+                }
+            } else if (path === '/wallet' || path === '/carteira') {
+                destroyHomeCharts();
+                destroySparks();
+                homeLoadSeq++;
+                document.getElementById('view-wallet').classList.add('active');
+                const navW = document.getElementById('nav-wallet');
+                if (navW) navW.classList.add('active');
+                setPageMeta('Carteira', 'Saldo e extrato de Trovoedas');
+                loadWallet();
             } else if (path === '/reports') {
                 destroyHomeCharts();
                 destroySparks();
@@ -2309,7 +2694,7 @@
         async function loadUsers() {
             const tbody = document.getElementById('users-tbody');
             const hint = document.getElementById('users-hint');
-            tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty">Carregando...</td></tr>';
             if (hint) hint.textContent = '';
             try {
                 const res = await fetch('/api/users?_=' + Date.now());
@@ -2319,7 +2704,7 @@
                 }
                 usersCache = await res.json();
                 if (!Array.isArray(usersCache) || !usersCache.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum usuário.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty">Nenhum usuário.</td></tr>';
                     return;
                 }
                 // Mostra ativos primeiro, depois inativos
@@ -2330,6 +2715,7 @@
                     const roleLabel = isPatrao ? 'Patrão' : 'Cliente';
                     const uid = Number(u.id);
                     const active = !!u.active;
+                    const trovo = Number(u.trovoedas_balance || 0);
                     const check = isPatrao
                         ? '<span style="color:var(--muted);font-size:11px;">—</span>'
                         : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Só para receber leads — login continua funcionando se OFF">
@@ -2346,6 +2732,7 @@
                             <div style="display:flex;flex-wrap:wrap;gap:6px;">
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-label="${esc(u.label || uname)}" data-act="impersonate" style="border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.12);">Ver como</button>
                                 <button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar</button>
+                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="trovoeda" style="border-color:#e8a317;color:#f5c542;background:rgba(245,197,66,0.12);">+Trovoedas</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="quota0" style="border-color:var(--warning);color:var(--warning);">Cota 0</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="reset" style="border-color:var(--neon);color:var(--neon);">Zerar mês</button>
                                 <button type="button" class="btn btn-sm btn-danger" data-uid="${uid}" data-uname="${esc(uname)}" data-act="del">Remover</button>
@@ -2357,6 +2744,7 @@
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${u.monthly_quota ?? 0}</td>
+                        <td style="font-weight:700;color:#f5c542;">⚡ ${trovo}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
                     </tr>`;
@@ -2371,6 +2759,7 @@
                         else if (act === 'reset') quickResetMonth(id);
                         else if (act === 'del') quickDeleteUser(id, btn.getAttribute('data-uname') || '');
                         else if (act === 'impersonate') startImpersonate(id, btn.getAttribute('data-label') || '');
+                        else if (act === 'trovoeda') quickGrantTrovoeda(id);
                     });
                 });
                 tbody.querySelectorAll('input.active-toggle').forEach(cb => {
@@ -2397,7 +2786,199 @@
                 }
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
+            }
+        }
+
+        async function quickGrantTrovoeda(userId) {
+            const raw = prompt('Quantas Trovoedas creditar? (use número negativo para debitar)', '20');
+            if (raw == null || raw === '') return;
+            const amount = parseInt(String(raw).trim(), 10);
+            if (!Number.isFinite(amount) || amount === 0) {
+                alert('Informe um número diferente de zero.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/trovoeda/grant', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, amount, note: 'crédito manual Patrão' }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao creditar Trovoedas');
+                    return;
+                }
+                alert('OK: ' + (data.username || userId) + ' agora tem ⚡ ' + (data.trovoedas ?? '?') + ' Trovoedas');
+                await loadUsers();
+                await loadMe();
+            } catch (e) {
+                alert('Erro: ' + (e.message || e));
+            }
+        }
+
+        function updateWalletUI(balance, hideForPatrao) {
+            const bar = document.getElementById('wallet-bar');
+            const amt = document.getElementById('wallet-amt');
+            const shopAmt = document.getElementById('shop-balance-amt');
+            const pageAmt = document.getElementById('wallet-page-amt');
+            const n = Number(balance) || 0;
+            if (amt) amt.textContent = String(n);
+            if (shopAmt) shopAmt.textContent = String(n);
+            if (pageAmt) pageAmt.textContent = String(n);
+            if (bar) bar.style.display = '';
+        }
+
+        function ledgerReasonLabel(reason) {
+            const m = {
+                welcome_bonus: 'Bônus de boas-vindas',
+                admin_grant: 'Crédito do suporte',
+                admin_debit: 'Ajuste (débito)',
+                purchase: 'Compra',
+                spend: 'Lead entregue',
+                reserve: 'Reserva pedido',
+                release: 'Estorno',
+            };
+            return m[reason] || reason || '—';
+        }
+
+        async function loadWallet() {
+            const bal = (currentUser && currentUser.trovoedas != null)
+                ? Number(currentUser.trovoedas) : 0;
+            updateWalletUI(bal, false);
+            const tbody = document.getElementById('wallet-ledger-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">Carregando extrato…</td></tr>';
+            try {
+                const res = await fetch('/api/trovoeda/ledger?limit=80', {
+                    cache: 'no-store', credentials: 'same-origin',
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const rows = await res.json();
+                if (!Array.isArray(rows) || !rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhum movimento ainda. Compre na Loja ou aguarde o bônus de cadastro.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(r => {
+                    const d = Number(r.delta) || 0;
+                    const dColor = d > 0 ? '#4ade80' : (d < 0 ? '#f87171' : 'var(--muted)');
+                    const dTxt = (d > 0 ? '+' : '') + d;
+                    const when = String(r.created_at || '').replace('T', ' ').slice(0, 19);
+                    return `<tr>
+                        <td style="white-space:nowrap;font-size:12px;">${esc(when)}</td>
+                        <td>${esc(ledgerReasonLabel(r.reason))}</td>
+                        <td style="font-weight:800;color:${dColor};">${dTxt}</td>
+                        <td>⚡ ${esc(String(r.balance_after ?? '—'))}</td>
+                        <td style="font-size:12px;color:var(--muted);">${esc(r.note || r.ref_id || '—')}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">Erro: ' + esc(String(e.message || e)) + '</td></tr>';
+            }
+        }
+
+        function formatBRL(cents) {
+            const v = (Number(cents) || 0) / 100;
+            try {
+                return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            } catch (e) {
+                return 'R$ ' + v.toFixed(2).replace('.', ',');
+            }
+        }
+
+        async function loadShop() {
+            const grid = document.getElementById('shop-packages');
+            if (!grid) return;
+            const bal = (currentUser && currentUser.trovoedas != null)
+                ? Number(currentUser.trovoedas)
+                : 0;
+            updateWalletUI(bal, false);
+            grid.innerHTML = '<div class="pkg-card" style="grid-column:1/-1;text-align:center;opacity:0.7;">Carregando pacotes…</div>';
+            try {
+                const res = await fetch('/api/trovoeda/packages', { cache: 'no-store', credentials: 'same-origin' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const pkgs = await res.json();
+                if (!Array.isArray(pkgs) || !pkgs.length) {
+                    grid.innerHTML = '<div class="pkg-card" style="grid-column:1/-1;text-align:center;">Nenhum pacote cadastrado.</div>';
+                    return;
+                }
+                // destaque no pacote "raio" ou o do meio
+                const featureSlug = 'raio';
+                grid.innerHTML = pkgs.map(p => {
+                    const coins = Number(p.coins) || 0;
+                    const cents = Number(p.price_cents) || 0;
+                    const per = coins > 0 ? (cents / 100) / coins : 0;
+                    const featured = (p.slug || '') === featureSlug;
+                    const perTxt = per > 0
+                        ? ('≈ ' + per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' / lead')
+                        : '';
+                    return `
+                        <div class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
+                            ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
+                            <img class="pkg-coin" src="/static/trovoeda-coin.svg" alt="" width="48" height="48" />
+                            <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
+                            <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
+                            <div class="pkg-per">${perTxt} · 1 moeda = 1 lead</div>
+                            <div class="pkg-price">${formatBRL(cents)} <span>à vista</span></div>
+                            <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
+                                Comprar agora
+                            </button>
+                        </div>`;
+                }).join('');
+                grid.querySelectorAll('.btn-buy').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const slug = btn.getAttribute('data-slug') || '';
+                        const coins = btn.getAttribute('data-coins') || '';
+                        const name = btn.getAttribute('data-name') || slug;
+                        buyTrovoedaPackage(slug, name, coins, btn);
+                    });
+                });
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = '<div class="pkg-card" style="grid-column:1/-1;color:var(--danger);text-align:center;">Erro ao carregar: ' + esc(String(e.message || e)) + '</div>';
+            }
+        }
+
+        async function buyTrovoedaPackage(slug, name, coins, btn) {
+            // Stripe entra na próxima fase — UI pronta
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Abrindo…';
+            }
+            try {
+                const res = await fetch('/api/trovoeda/checkout', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ package: slug }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.status === 501 || data.status === 'not_configured') {
+                    alert(
+                        'Pacote «' + name + '» (' + coins + ' Trovoedas)\n\n' +
+                        'Checkout Stripe ainda não está ligado neste ambiente.\n' +
+                        'Por enquanto o Patrão credita em Usuários → +Trovoedas.\n\n' +
+                        'A loja e os preços já estão no ar — pagamento na próxima etapa.'
+                    );
+                    return;
+                }
+                if (data.url) {
+                    window.location.href = data.url;
+                    return;
+                }
+                if (!res.ok) {
+                    alert(data.error || 'Não foi possível iniciar o pagamento.');
+                    return;
+                }
+                alert(data.message || 'Pedido registrado.');
+            } catch (e) {
+                alert('Erro: ' + (e.message || e));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Comprar agora';
+                }
             }
         }
 
@@ -2889,7 +3470,7 @@
                 setHtml('home-novos-meta', 'Sobras novas no funil');
                 setHtml('home-contact-meta', 'Já distribuídos');
                 setText('home-desc-meta', 'Raios no sistema');
-                setText('home-hero-sub', 'Pool do Patrão · sobras e distribuição em tempo real');
+                setText('home-hero-sub', 'Visão geral · sobras e raios do sistema');
                 setText('home-chart-status-title', 'Status das sobras');
                 setText('home-top-title', '🔥 Hot leads — top sobras');
                 if (quotaBar) quotaBar.style.display = 'none';
@@ -2944,8 +3525,6 @@
                 }
                 setText('home-chart-status-title', 'Status dos leads');
                 setText('home-top-title', '🔥 Hot leads — top 5');
-                const poolPanel = document.getElementById('home-pool-panel');
-                if (poolPanel) poolPanel.style.display = 'none';
             }
         }
 
@@ -3024,7 +3603,7 @@
                 applyHomeNumbers(snap, true);
 
                 if (patrao) {
-                    try { renderPoolPanel(stats); } catch (e) { console.error(e); }
+
                     renderSparks(freeN, novos, assignedN);
                 } else {
                     renderSparks(total, novos, contactados);
@@ -3140,54 +3719,232 @@
             }
         }
 
-        function renderPoolPanel(stats) {
-            const panel = document.getElementById('home-pool-panel');
-            const sum = document.getElementById('home-pool-summary');
-            const box = document.getElementById('home-pool-users');
-            if (!panel || !sum || !box) return;
-            panel.style.display = '';
-            const free = stats.free != null ? stats.free : 0;
-            const assigned = stats.assigned_total != null ? stats.assigned_total : 0;
-            const all = stats.all_total != null ? stats.all_total : free + assigned;
-            sum.innerHTML = `<strong style="color:var(--text);">${free} sobras</strong> pra encaminhar · `
-                + `${assigned} já com clientes · ${all} raios no total. `
-                + `Use <strong>Distribuir sobra</strong> para mandar automaticamente a quem tem vaga (ATIVO + cota).`;
-            const distHome = document.getElementById('btn-distribute-free');
-            if (distHome) distHome.disabled = free <= 0;
-            const users = (stats.pool && stats.pool.users) || [];
-            if (!users.length) {
-                box.innerHTML = '<span style="font-size:12px;color:var(--muted);">Nenhum cliente cadastrado.</span>';
-                return;
-            }
-            box.innerHTML = users.map(u => {
-                const full = u.full ? ' · COTA CHEIA' : '';
-                const on = u.active ? '' : ' · off';
-                const color = u.full ? 'var(--warning)' : (u.active ? 'var(--text)' : 'var(--muted)');
-                return `<span style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;color:${color};">
-                    ${esc(u.label || u.username)}: ${u.used}/${u.quota}${full}${on}
-                </span>`;
-            }).join('');
+        let distFreeLeads = [];
+        let distSelected = new Set();
+
+        function hasPhoneLead(l) {
+            return phoneDigits(l && l.phone).length >= 10;
         }
 
-        async function distributeFreeLeads() {
+        function hasInstagramLead(l) {
+            if (!l) return false;
+            if ((l.instagram_url || '').trim() || (l.instagram_username || '').trim()) return true;
+            const w = String(l.website || '').toLowerCase();
+            return w.includes('instagram.com');
+        }
+
+        /** Canal principal: whatsapp | instagram | phone | none */
+        function primaryContactChannel(l) {
+            if (hasPhoneLead(l)) {
+                const d = phoneDigits(l.phone);
+                // celular BR costuma ter 11 dígitos com 9 após DDD
+                const local = d.startsWith('55') ? d.slice(2) : d;
+                if (local.length >= 11 && local.charAt(2) === '9') return 'whatsapp';
+                return 'phone';
+            }
+            if (hasInstagramLead(l)) return 'instagram';
+            return 'none';
+        }
+
+        function contactBadgeHtml(l) {
+            const ch = primaryContactChannel(l);
+            if (ch === 'whatsapp') return '<span class="contact-badge wa" title="WhatsApp/celular">WA</span>';
+            if (ch === 'instagram') return '<span class="contact-badge ig" title="Instagram">IG</span>';
+            if (ch === 'phone') return '<span class="contact-badge tel" title="Telefone">Tel</span>';
+            return '<span class="contact-badge none" title="Sem contato">—</span>';
+        }
+
+        function instagramHref(l) {
+            if (!l) return '';
+            if ((l.instagram_url || '').trim()) return l.instagram_url.trim();
+            if ((l.instagram_username || '').trim()) {
+                return 'https://www.instagram.com/' + String(l.instagram_username).replace(/^@/, '') + '/';
+            }
+            const w = String(l.website || '');
+            if (w.toLowerCase().includes('instagram.com')) return w.startsWith('http') ? w : ('https://' + w);
+            return '';
+        }
+
+        async function openDistributeModal() {
             if (!isPatraoSession()) return;
-            const msg = 'Distribuir sobras agora?\n\n'
-                + '• Só clientes ATIVO com vaga na cota\n'
-                + '• Round-robin (quem tem menos no mês primeiro)\n'
-                + '• Leads sem dono saem do seu pool e vão pra eles\n'
-                + '• Não fura cota; o que não couber continua livre';
-            if (!confirm(msg)) return;
-            const btns = [
-                document.getElementById('btn-distribute-free'),
-                document.getElementById('btn-distribute-leads')
-            ].filter(Boolean);
-            btns.forEach(b => { b.disabled = true; b.textContent = 'Distribuindo…'; });
+            const modal = document.getElementById('distribute-modal');
+            if (!modal) return;
+            modal.classList.add('active');
+            distSelected = new Set();
+            document.getElementById('dist-status').textContent = '';
+            document.getElementById('dist-search').value = '';
+            document.getElementById('dist-list').innerHTML = '<p class="empty" style="padding:18px;">Carregando sobras…</p>';
+            updateDistCount();
+
+            // usuários
+            if (!usersCache.length) {
+                try {
+                    const ur = await fetch('/api/users?_=' + Date.now(), { credentials: 'same-origin' });
+                    if (ur.ok) usersCache = await ur.json();
+                } catch (_) {}
+            }
+            const sel = document.getElementById('dist-user-select');
+            const clients = (usersCache || []).filter(u =>
+                u.active && (u.username || '').toLowerCase() !== 'patrao'
+            );
+            let preselect = '';
+            if (leadsScope === 'user' && leadsOwnerId) preselect = String(leadsOwnerId);
+            sel.innerHTML = '<option value="">— Escolha o cliente —</option>' +
+                clients.map(u => {
+                    const used = u.assigned_this_month || 0;
+                    const q = u.monthly_quota || 0;
+                    return `<option value="${u.id}" ${preselect === String(u.id) ? 'selected' : ''}>${esc(u.label || u.username)} (@${esc(u.username)}) · ${used}/${q}</option>`;
+                }).join('');
+
+            // sobras
             try {
-                const body = {};
-                // se na aba Leads o filtro for "Por usuário", manda só pra ele
-                if (leadsScope === 'user' && leadsOwnerId && location.pathname === '/leads') {
-                    body.user_id = parseInt(leadsOwnerId, 10);
+                const res = await fetch('/api/leads?scope=free&_=' + Date.now(), {
+                    cache: 'no-store', credentials: 'same-origin'
+                });
+                let data = await res.json().catch(() => []);
+                if (!Array.isArray(data)) data = [];
+                distFreeLeads = data
+                    .filter(l => l.assigned_to == null)
+                    .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0));
+                renderDistList();
+            } catch (e) {
+                document.getElementById('dist-list').innerHTML =
+                    `<p class="empty" style="padding:18px;">Erro ao carregar: ${esc(String(e))}</p>`;
+            }
+        }
+
+        function closeDistributeModal() {
+            document.getElementById('distribute-modal')?.classList.remove('active');
+        }
+
+        function renderDistList() {
+            const box = document.getElementById('dist-list');
+            if (!box) return;
+            const q = (document.getElementById('dist-search')?.value || '').trim().toLowerCase();
+            let list = distFreeLeads;
+            if (q) {
+                list = list.filter(l => {
+                    const hay = `${l.name || ''} ${l.city || ''} ${l.phone || ''} ${l.niche || ''}`.toLowerCase();
+                    return hay.includes(q);
+                });
+            }
+            if (!list.length) {
+                box.innerHTML = '<p class="empty" style="padding:18px;">Nenhuma sobra neste filtro.</p>';
+                updateDistCount();
+                return;
+            }
+            box.innerHTML = list.map(l => {
+                const id = Number(l.id);
+                const ok = hasPhoneLead(l);
+                const checked = distSelected.has(id) ? 'checked' : '';
+                const dis = ok ? '' : 'disabled';
+                const cls = ok ? '' : ' no-phone';
+                return `
+                    <label class="dist-row${cls}">
+                        <input type="checkbox" data-dist-id="${id}" ${checked} ${dis}
+                            onchange="toggleDistLead(${id}, this.checked)" style="width:auto;">
+                        <div>
+                            <div class="d-name">${esc(l.name || '—')}</div>
+                            <div class="d-meta">${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''} · ${esc((l.niche || '—').toString())}
+                                ${ok ? ' · ' + esc(l.phone || '') : ' · <span style="color:var(--danger)">sem telefone</span>'}
+                            </div>
+                        </div>
+                        <div class="d-score">${l.lead_score != null ? l.lead_score : '—'}</div>
+                    </label>`;
+            }).join('');
+            updateDistCount();
+        }
+
+        function toggleDistLead(id, on) {
+            id = Number(id);
+            if (on) distSelected.add(id);
+            else distSelected.delete(id);
+            updateDistCount();
+        }
+
+        function distSelectAll(on) {
+            const q = (document.getElementById('dist-search')?.value || '').trim().toLowerCase();
+            distFreeLeads.forEach(l => {
+                if (!hasPhoneLead(l)) return;
+                if (q) {
+                    const hay = `${l.name || ''} ${l.city || ''} ${l.phone || ''} ${l.niche || ''}`.toLowerCase();
+                    if (!hay.includes(q)) return;
                 }
+                if (on) distSelected.add(Number(l.id));
+                else distSelected.delete(Number(l.id));
+            });
+            if (!on) distSelected = new Set();
+            renderDistList();
+        }
+
+        function updateDistCount() {
+            const el = document.getElementById('dist-count');
+            if (el) el.textContent = `${distSelected.size} selecionado(s)`;
+        }
+
+        async function confirmDistributeSelected() {
+            if (!isPatraoSession()) return;
+            const uid = document.getElementById('dist-user-select')?.value;
+            if (!uid) {
+                alert('Escolha o cliente destinatário.');
+                return;
+            }
+            const ids = [...distSelected];
+            if (!ids.length) {
+                alert('Marque ao menos um lead com telefone.');
+                return;
+            }
+            const respect = !!document.getElementById('dist-respect-quota')?.checked;
+            const btn = document.getElementById('btn-dist-confirm');
+            if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+            document.getElementById('dist-status').textContent = 'Enviando…';
+            try {
+                const res = await fetch('/api/leads/distribute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({
+                        lead_ids: ids,
+                        user_id: parseInt(uid, 10),
+                        respect_quota: respect
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok && !data.message) {
+                    alert(data.error || 'Falha ao distribuir');
+                    return;
+                }
+                clearLeadsCache();
+                const msg = data.message || `Distribuídos: ${data.distributed || 0}`;
+                document.getElementById('dist-status').textContent = msg;
+                alert(msg);
+                closeDistributeModal();
+                if (location.pathname === '/leads') await loadLeads();
+                else await loadHome();
+            } catch (e) {
+                alert('Falha: ' + e);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Enviar selecionados'; }
+            }
+        }
+
+        async function confirmDistributeAuto() {
+            if (!isPatraoSession()) return;
+            const msg = 'Distribuir sobras AUTOMATICAMENTE?\n\n'
+                + '• Clientes ATIVOS com vaga na cota\n'
+                + '• Round-robin (quem tem menos no mês primeiro)\n'
+                + '• Ou só pro cliente escolhido no seletor (se houver)\n'
+                + '• Leads sem telefone não vão';
+            if (!confirm(msg)) return;
+            const body = {};
+            const uid = document.getElementById('dist-user-select')?.value;
+            if (uid) body.user_id = parseInt(uid, 10);
+            else if (leadsScope === 'user' && leadsOwnerId && location.pathname === '/leads') {
+                body.user_id = parseInt(leadsOwnerId, 10);
+            }
+            document.getElementById('dist-status').textContent = 'Distribuindo automático…';
+            try {
                 const res = await fetch('/api/leads/distribute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3202,12 +3959,64 @@
                 }
                 clearLeadsCache();
                 alert(data.message || (`Distribuídos: ${data.distributed || 0}`));
+                closeDistributeModal();
                 if (location.pathname === '/leads') await loadLeads();
                 else await loadHome();
             } catch (e) {
                 alert('Falha: ' + e);
-            } finally {
-                btns.forEach(b => { b.disabled = false; b.textContent = 'Distribuir sobra'; });
+            }
+        }
+
+        /** Compat: atalhos antigos ainda chamam distributeFreeLeads */
+        async function distributeFreeLeads() {
+            return openDistributeModal();
+        }
+
+        async function deleteLead(id, fromDetail) {
+            if (!isPatraoSession()) {
+                alert('Só o Patrão pode apagar leads.');
+                return;
+            }
+            id = parseInt(id, 10);
+            if (!id) return;
+            const lead = (allLeads || []).find(x => Number(x.id) === id);
+            const name = lead?.name || ('#' + id);
+            if (!confirm(
+                'Apagar este lead de vez?\n\n'
+                + name + '\n\n'
+                + 'Some do banco para todo mundo (incluindo se estiver com um cliente).\n'
+                + 'Não dá pra desfazer.'
+            )) return;
+            try {
+                let res = await fetch('/api/leads/' + id + '/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({})
+                });
+                if (res.status === 404 || res.status === 405) {
+                    res = await fetch('/api/leads/' + id, {
+                        method: 'DELETE',
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                }
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao apagar');
+                    return;
+                }
+                clearLeadsCache();
+                allLeads = (allLeads || []).filter(x => Number(x.id) !== id);
+                if (fromDetail || location.pathname.indexOf('/leads/') === 0) {
+                    navigateTo('/leads');
+                } else {
+                    applyFilters();
+                    if (location.pathname === '/' || location.pathname === '/home') await loadHome();
+                }
+            } catch (e) {
+                alert('Falha: ' + e);
             }
         }
 
@@ -3332,12 +4141,23 @@
             const tel = phoneDigits(l.phone);
             const stop = stopProp ? 'event.stopPropagation();' : '';
             const id = Number(l.id);
-            // Ordem: 1) Prompt (branco) 2) WhatsApp c/ texto 3) Ligar 4) Abrir
+            const canDel = isPatraoSession() && currentUser.is_real_admin && !currentUser.impersonating;
+            const ch = primaryContactChannel(l);
+            const ig = instagramHref(l);
+            // Ordem: 1) Prompt 2) WA ou IG (canal principal) 3) Ligar 4) Abrir 5) X
+            let primaryBtn = '';
+            if (ch === 'whatsapp' || (ch === 'phone' && tel)) {
+                primaryBtn = `<button class="icon-btn wa" type="button" title="WhatsApp" aria-label="WhatsApp" onclick="${stop}openWhatsAppForLead(${id})">${ICO_WA}</button>`;
+            } else if (ch === 'instagram' && ig) {
+                primaryBtn = `<a class="icon-btn ig" href="${esc(ig)}" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram" onclick="${stop}">IG</a>`;
+            }
             return `
                 <button class="icon-btn prompt" type="button" title="Montar mensagem (seu nome)" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
-                ${tel ? `<button class="icon-btn wa" type="button" title="WhatsApp com mensagem pronta" aria-label="WhatsApp" onclick="${stop}openWhatsAppForLead(${id})">${ICO_WA}</button>` : ''}
-                ${tel ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
+                ${primaryBtn}
+                ${tel && ch !== 'whatsapp' ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
+                ${tel && ch === 'whatsapp' ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
                 <button class="icon-btn" type="button" title="Abrir" onclick="${stop}openLead(${id})">→</button>
+                ${canDel ? `<button class="icon-btn del" type="button" title="Apagar lead" aria-label="Apagar" onclick="${stop}deleteLead(${id})">✕</button>` : ''}
             `;
         }
 
@@ -3393,11 +4213,12 @@
                             <div class="name-row">
                                 ${fireIcoHtml(rank)}
                                 <strong>${esc(l.name)}</strong>
+                                ${contactBadgeHtml(l)}
                             </div>
                             <small>${esc((l.niche || '').replace(/^./, c => c.toUpperCase()))}</small>
                         </td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
-                        <td class="phone-cell">${esc(l.phone || '—')}</td>
+                        <td class="phone-cell">${esc(l.phone || (hasInstagramLead(l) ? '@' + (l.instagram_username || 'instagram') : '—'))}</td>
                         <td onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</td>
                         <td><span class="badge-status ${st}">${statusLabel(st)}</span></td>
                         <td onclick="event.stopPropagation()"><div class="actions-cell">${actionButtons(l, true)}</div></td>
@@ -3413,10 +4234,10 @@
                 return `
                     <div class="m-card">
                         <div class="row">
-                            <div class="name" onclick="openLead(${id})">${fireIcoHtml(rank)}${esc(l.name)}</div>
+                            <div class="name" onclick="openLead(${id})">${fireIcoHtml(rank)}${esc(l.name)}${contactBadgeHtml(l)}</div>
                             <div onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</div>
                         </div>
-                        <div class="meta" onclick="openLead(${id})">${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}<br>${esc(l.phone || 'Sem telefone')}</div>
+                        <div class="meta" onclick="openLead(${id})">${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}<br>${esc(l.phone || (hasInstagramLead(l) ? 'Instagram' : 'Sem contato'))}</div>
                         <div class="m-status"><span class="badge-status ${st}">${statusLabel(st)}</span></div>
                         <div class="actions" onclick="event.stopPropagation()">${actionButtons(l, true)}</div>
                     </div>
@@ -3527,12 +4348,13 @@
                                 ${scoreBadgeHtml(lead.lead_score || 0, lead.lead_problems)} <span style="font-size:11px;color:var(--muted);margin-left:4px;">/100</span>
                             </div>
                             <ul class="meta-list">
+                                <li><strong>Contato</strong> ${contactBadgeHtml(lead)} <span style="color:var(--muted);font-size:12px;">${esc(primaryContactChannel(lead))}</span></li>
                                 <li><strong>Telefone</strong> ${lead.phone ? `<a href="tel:${tel}">${esc(lead.phone)}</a>` : '—'}</li>
                                 <li><strong>Cidade</strong> ${esc(lead.city || '—')}${lead.state ? ' / ' + esc(lead.state) : ''}</li>
                                 <li><strong>Nicho</strong> ${esc((lead.niche || '—').toUpperCase())}</li>
                                 <li><strong>Dono</strong> <span id="lead-owner-label">${lead.assigned_to ? ('ID ' + lead.assigned_to) : 'Livre'}</span></li>
                                 <li><strong>Google</strong> ${lead.rating != null ? esc(lead.rating) + ' (' + (lead.review_count || 0) + ' avaliações)' : '—'}</li>
-                                <li><strong>Instagram</strong> ${lead.instagram_url ? `<a href="${esc(lead.instagram_url)}" target="_blank" rel="noopener">@${esc(lead.instagram_username || 'perfil')}</a>` : 'Não encontrado'}</li>
+                                <li><strong>Instagram</strong> ${instagramHref(lead) ? `<a href="${esc(instagramHref(lead))}" target="_blank" rel="noopener">@${esc(lead.instagram_username || 'perfil')}</a>` : 'Não encontrado'}</li>
                                 <li><strong>Site</strong> <span style="color:var(--danger);">Sem site próprio</span></li>
                                 <li><strong>Maps</strong> ${lead.maps_url ? `<a href="${esc(lead.maps_url)}" target="_blank" rel="noopener">Abrir no Maps</a>` : '—'}</li>
                             </ul>
@@ -3560,13 +4382,24 @@
                             </div>
                             <div class="action-stack">
                                 <button class="btn btn-prompt-white" type="button" onclick="openPrompt(${lead.id})">✎ Montar mensagem (seu nome)</button>
-                                ${tel ? `<button class="btn btn-wa" type="button" onclick="openWhatsAppForLead(${lead.id})">${ICO_WA} WhatsApp com mensagem</button>` : ''}
-                                ${tel ? `<a class="btn btn-call" href="tel:${tel}">${ICO_CALL} Ligar agora</a>` : ''}
+                                ${(() => {
+                                    const ch = primaryContactChannel(lead);
+                                    const ig = instagramHref(lead);
+                                    if (ch === 'whatsapp' || (ch === 'phone' && tel)) {
+                                        return `<button class="btn btn-wa" type="button" onclick="openWhatsAppForLead(${lead.id})">${ICO_WA} WhatsApp com mensagem</button>`
+                                            + (tel ? `<a class="btn btn-call" href="tel:${tel}">${ICO_CALL} Ligar agora</a>` : '');
+                                    }
+                                    if (ch === 'instagram' && ig) {
+                                        return `<a class="btn btn-ig" href="${esc(ig)}" target="_blank" rel="noopener">Instagram · @${esc(lead.instagram_username || 'perfil')}</a>`;
+                                    }
+                                    return `<p style="font-size:12px;color:var(--muted);">Sem WhatsApp nem Instagram para abordar.</p>`;
+                                })()}
                                 <button class="btn" onclick="updateStatus(${lead.id}, 'contactado')">Marcar contactado</button>
                                 <button class="btn btn-success" onclick="updateStatus(${lead.id}, 'convertido')">Marcar convertido</button>
                                 ${st === 'descartado'
                                     ? `<button class="btn btn-success" id="btn-discard-toggle" onclick="updateStatus(${lead.id}, 'novo')">↩ Recuperar</button>`
                                     : `<button class="btn btn-danger" id="btn-discard-toggle" onclick="updateStatus(${lead.id}, 'descartado')">Descartar</button>`}
+                                ${canAssign ? `<button class="btn btn-danger" type="button" onclick="deleteLead(${lead.id}, true)">✕ Apagar lead de vez</button>` : ''}
                                 <button class="btn" onclick="copySummary(${lead.id})">Copiar resumo</button>
                             </div>
                         </div>
@@ -3760,11 +4593,17 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         function setupPrompt() {
             const saved = getSellerName();
             document.getElementById('seller-name').value = saved;
+            // canal padrão = contato principal do lead
+            const chSel = document.getElementById('prompt-channel');
+            if (chSel && activePromptLead) {
+                const ch = primaryContactChannel(activePromptLead);
+                if (ch === 'instagram') chSel.value = 'instagram';
+                else chSel.value = 'whatsapp';
+            }
             document.getElementById('prompt-modal').classList.add('active');
             generatePrompt();
             updatePromptWaHint();
             refreshSellerNameStatus();
-            // foca no nome só se ainda não configurou
             if (!saved) {
                 setTimeout(() => document.getElementById('seller-name')?.focus(), 80);
             }
@@ -3809,9 +4648,24 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             if (!hint) return;
             const lead = activePromptLead;
             const hasPhone = lead && phoneDigits(lead.phone);
+            const ig = lead ? instagramHref(lead) : '';
             const hasName = !!getSellerName();
+            const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
+            if (channel === 'instagram' || (!hasPhone && ig)) {
+                if (btn) {
+                    btn.disabled = !ig;
+                    btn.textContent = ig ? 'Abrir Instagram do lead' : 'Sem Instagram';
+                }
+                hint.textContent = ig
+                    ? 'Sem WhatsApp válido — use Instagram (copie a mensagem e cole no Direct).'
+                    : 'Sem telefone e sem Instagram neste lead.';
+                return;
+            }
+            if (btn) btn.textContent = 'Abrir WhatsApp com esta mensagem';
             if (!hasPhone) {
-                hint.textContent = 'Este lead não tem telefone — use Copiar e mande por outro canal.';
+                hint.textContent = ig
+                    ? 'Sem telefone — mude o canal para Instagram ou use Copiar.'
+                    : 'Este lead não tem telefone — use Copiar e mande por outro canal.';
                 if (btn) btn.disabled = true;
                 return;
             }
@@ -3823,12 +4677,17 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             }
         }
 
-        /** WhatsApp direto (lista/detalhe) com texto pronto; se não tem nome, abre o modal primeiro */
+        /** WhatsApp direto; se só tem IG, abre Instagram */
         async function openWhatsAppForLead(id) {
             const lead = await resolveLead(id);
             if (!lead) { alert('Lead não encontrado.'); return; }
             if (!phoneDigits(lead.phone)) {
-                alert('Este lead não tem telefone.');
+                const ig = instagramHref(lead);
+                if (ig) {
+                    openExternalUrl(ig);
+                    return;
+                }
+                alert('Este lead não tem WhatsApp/telefone nem Instagram.');
                 return;
             }
             if (!getSellerName()) {
@@ -3845,6 +4704,16 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         /** Do modal: usa o texto da caixa (editável) */
         function openWhatsAppFromPrompt() {
             if (!activePromptLead) return;
+            const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
+            const ig = instagramHref(activePromptLead);
+            if (channel === 'instagram' || !phoneDigits(activePromptLead.phone)) {
+                if (ig) {
+                    openExternalUrl(ig);
+                    return;
+                }
+                alert('Este lead não tem Instagram nem telefone.');
+                return;
+            }
             const phone = activePromptLead.phone;
             if (!phoneDigits(phone)) {
                 alert('Este lead não tem telefone.');

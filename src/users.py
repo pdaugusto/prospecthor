@@ -195,6 +195,12 @@ def ensure_schema() -> None:
         cur.close()
     finally:
         conn.close()
+    # Trovoeda (saldo SaaS) — não quebra se falhar
+    try:
+        from src.trovoeda import ensure_schema as _trovoeda_schema
+        _trovoeda_schema()
+    except Exception as exc:
+        logger.warning("[Users] trovoeda schema: %s", exc)
 
 
 def authenticate(username: str, password: str) -> dict[str, Any] | None:
@@ -286,12 +292,19 @@ def _parse_json_list(raw: Any) -> list[str]:
 
 
 def get_user_by_username(username: str) -> dict[str, Any] | None:
+    try:
+        ensure_schema()
+    except Exception:
+        pass
     conn = _connect()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
-            SELECT id, username, role, monthly_quota, active, cities, niches, label
+            SELECT id, username, role, monthly_quota, active, cities, niches, label,
+                   COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
+                   COALESCE(email, '') AS email,
+                   COALESCE(display_name, '') AS display_name
             FROM app_users WHERE username = %s LIMIT 1;
             """,
             (username,),
@@ -303,6 +316,7 @@ def get_user_by_username(username: str) -> dict[str, Any] | None:
         u = dict(row)
         u["cities"] = _parse_json_list(u.get("cities"))
         u["niches"] = _parse_json_list(u.get("niches"))
+        u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
         return u
     finally:
         conn.close()
@@ -311,12 +325,19 @@ def get_user_by_username(username: str) -> dict[str, Any] | None:
 def get_user_by_id(user_id: int) -> dict[str, Any] | None:
     if not user_id:
         return None
+    try:
+        ensure_schema()
+    except Exception:
+        pass
     conn = _connect()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
-            SELECT id, username, role, monthly_quota, active, cities, niches, label
+            SELECT id, username, role, monthly_quota, active, cities, niches, label,
+                   COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
+                   COALESCE(email, '') AS email,
+                   COALESCE(display_name, '') AS display_name
             FROM app_users WHERE id = %s LIMIT 1;
             """,
             (user_id,),
@@ -328,6 +349,7 @@ def get_user_by_id(user_id: int) -> dict[str, Any] | None:
         u = dict(row)
         u["cities"] = _parse_json_list(u.get("cities"))
         u["niches"] = _parse_json_list(u.get("niches"))
+        u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
         return u
     finally:
         conn.close()
@@ -340,7 +362,10 @@ def list_users() -> list[dict[str, Any]]:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
-            SELECT id, username, role, monthly_quota, active, cities, niches, label, created_at
+            SELECT id, username, role, monthly_quota, active, cities, niches, label, created_at,
+                   COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
+                   COALESCE(email, '') AS email,
+                   COALESCE(display_name, '') AS display_name
             FROM app_users
             ORDER BY role DESC, username;
             """
@@ -352,6 +377,7 @@ def list_users() -> list[dict[str, Any]]:
             u["cities"] = _parse_json_list(u.get("cities"))
             u["niches"] = _parse_json_list(u.get("niches"))
             u["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
+            u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
         return rows
     finally:
         conn.close()
@@ -390,6 +416,11 @@ def create_user(
     cities: list[str] | None = None,
     niches: list[str] | None = None,
     label: str = "",
+    email: str = "",
+    whatsapp: str = "",
+    display_name: str = "",
+    terms_accepted: bool = False,
+    welcome_bonus: bool = False,
 ) -> dict[str, Any]:
     ensure_schema()
     username = (username or "").strip().lower()
@@ -400,15 +431,22 @@ def create_user(
         role = "admin"
     else:
         role = "client"
+    email_n = (email or "").strip().lower()
+    wa = re.sub(r"\D", "", str(whatsapp or ""))
+    dname = (display_name or label or username).strip()
+    terms_at = datetime.now().isoformat() if terms_accepted else None
     conn = _connect()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
             INSERT INTO app_users
-                (username, password_hash, role, monthly_quota, active, cities, niches, label)
-            VALUES (%s, %s, %s, %s, 1, %s, %s, %s)
-            RETURNING id, username, role, monthly_quota, active, cities, niches, label;
+                (username, password_hash, role, monthly_quota, active, cities, niches, label,
+                 email, whatsapp, display_name, terms_accepted_at)
+            VALUES (%s, %s, %s, %s, 1, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, username, role, monthly_quota, active, cities, niches, label,
+                      COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
+                      COALESCE(email, '') AS email;
             """,
             (
                 username,
@@ -417,7 +455,11 @@ def create_user(
                 int(monthly_quota or 50),
                 json.dumps(cities or [], ensure_ascii=False),
                 json.dumps(niches or [], ensure_ascii=False),
-                label or username,
+                label or dname or username,
+                email_n or None,
+                wa or "",
+                dname,
+                terms_at,
             ),
         )
         row = dict(cur.fetchone())
@@ -426,7 +468,16 @@ def create_user(
         row["cities"] = cities or []
         row["niches"] = niches or []
         row["assigned_this_month"] = 0
+        row["trovoedas_balance"] = int(row.get("trovoedas_balance") or 0)
         logger.warning("[Users] Criado: %s quota=%s", username, monthly_quota)
+        if welcome_bonus and role == "client":
+            try:
+                from src.trovoeda import grant_welcome_bonus
+                bonus = grant_welcome_bonus(int(row["id"]))
+                row["trovoedas_balance"] = int(bonus.get("balance") or 0)
+                row["welcome_bonus"] = int(bonus.get("delta") or 0)
+            except Exception as exc:
+                logger.warning("[Users] welcome bonus: %s", exc)
         return row
     except Exception:
         conn.rollback()
@@ -611,13 +662,25 @@ def has_contact_phone(phone: Any) -> bool:
     Telefone utilizável para o cliente ligar/WhatsApp.
     Exige ao menos 10 dígitos (DDD + número) ou 12+ com código 55.
     """
-    digits = re.sub(r"\D", "", str(phone or ""))
-    if not digits:
-        return False
-    # remove zeros à esquerda inúteis
-    if digits.startswith("55") and len(digits) >= 12:
-        return True
-    return len(digits) >= 10
+    try:
+        from src.contact import has_contact_phone as _h
+        return _h(phone)
+    except Exception:
+        digits = re.sub(r"\D", "", str(phone or ""))
+        if not digits:
+            return False
+        if digits.startswith("55") and len(digits) >= 12:
+            return True
+        return len(digits) >= 10
+
+
+def lead_has_client_contact(company: dict[str, Any] | None) -> bool:
+    """Tel OU Instagram — critério para mandar ao cliente / contar lead."""
+    try:
+        from src.contact import has_usable_contact
+        return has_usable_contact(company or {})
+    except Exception:
+        return has_contact_phone((company or {}).get("phone"))
 
 
 def _user_accepts_lead(user: dict[str, Any], company: dict[str, Any]) -> bool:
@@ -684,6 +747,26 @@ def unassign_leads_without_phone() -> int:
         conn.close()
 
 
+def _try_spend_trovoeda(user_id: int, company_id: int) -> None:
+    """Debita 1 Trovoeda se o usuário tiver saldo (SaaS). Sem saldo = fluxo legado (cota)."""
+    try:
+        from src.trovoeda import get_balance, spend_for_lead
+        if get_balance(int(user_id)) <= 0:
+            return
+        r = spend_for_lead(int(user_id), company_id=int(company_id))
+        if r.get("ok"):
+            logger.info(
+                "[Trovoeda] -1 lead=%s user=%s saldo=%s",
+                company_id,
+                user_id,
+                r.get("balance"),
+            )
+        else:
+            logger.warning("[Trovoeda] debit falhou user=%s: %s", user_id, r.get("error"))
+    except Exception as exc:
+        logger.warning("[Trovoeda] spend: %s", exc)
+
+
 def assign_raio_lead(company_id: int) -> int | None:
     """
     Atribui lead Raio a um cliente com vaga na cota do mês.
@@ -705,10 +788,26 @@ def assign_raio_lead(company_id: int) -> int | None:
             return None
         company = dict(company)
 
-        # sem telefone útil → não manda pra cliente (fica livre pro Patrão)
-        if not has_contact_phone(company.get("phone")):
+        # precisa WA (celular) ou Instagram — fixo sozinho / gigante não vai
+        try:
+            from src.contact import has_usable_contact, is_giant_enterprise
+            ok_contact = has_usable_contact(company)
+            giant = is_giant_enterprise(company)
+        except Exception:
+            ok_contact = has_contact_phone(company.get("phone"))
+            giant = False
+        if giant:
             logger.warning(
-                "[Users] Lead %s (%r) SEM telefone — não atribuído a cliente",
+                "[Users] Lead %s (%r) empresa GIGANTE — não atribuído",
+                company_id,
+                company.get("name"),
+            )
+            cur.close()
+            conn.close()
+            return None
+        if not ok_contact:
+            logger.warning(
+                "[Users] Lead %s (%r) sem celular/WA nem Instagram — não atribuído",
                 company_id,
                 company.get("name"),
             )
@@ -736,7 +835,10 @@ def assign_raio_lead(company_id: int) -> int | None:
             conn.close()
             return None
 
-        # Cockpit / missão: força dono (se setado e ainda tem cota)
+        # Cockpit / missão: dono escolhido na mão.
+        # SEMPRE atribui ao dono da missão (não bloqueia na cota mensal):
+        # a meta da missão é o teto real; se a cota mensal barrasse o 20º,
+        # a meta batia 20/20 no claim e o cliente ficava com 19.
         force_raw = (os.getenv("PROSPECTHOR_FORCE_ASSIGN_TO") or "").strip()
         if force_raw.isdigit():
             force_uid = int(force_raw)
@@ -752,31 +854,37 @@ def assign_raio_lead(company_id: int) -> int | None:
                 fu = dict(fu)
                 used = count_assigned_this_month(force_uid)
                 quota = int(fu.get("monthly_quota") or 0)
-                # Missão do cockpit: dono escolhido na mão (active só afeta round-robin normal)
-                if used < quota or quota <= 0:
-                    # quota 0 = não força (sem vaga)
-                    if quota > 0 and used < quota:
-                        cur.execute(
-                            """
-                            UPDATE companies SET assigned_to = %s, assigned_at = %s
-                            WHERE id = %s AND (assigned_to IS NULL);
-                            """,
-                            (force_uid, datetime.now().isoformat(), company_id),
-                        )
-                        conn.commit()
-                        cur.close()
-                        conn.close()
-                        logger.info(
-                            "[Users] Lead %s → missão/cockpit user_id=%s (%s)",
-                            company_id,
-                            force_uid,
-                            fu.get("username"),
-                        )
-                        return force_uid
-                logger.warning(
-                    "[Users] FORCE_ASSIGN %s sem vaga na cota — cai no round-robin",
-                    force_uid,
+                cur.execute(
+                    """
+                    UPDATE companies SET assigned_to = %s, assigned_at = %s
+                    WHERE id = %s AND (assigned_to IS NULL);
+                    """,
+                    (force_uid, datetime.now().isoformat(), company_id),
                 )
+                assigned_ok = cur.rowcount > 0
+                conn.commit()
+                cur.close()
+                conn.close()
+                if assigned_ok:
+                    _try_spend_trovoeda(force_uid, company_id)
+                if quota > 0 and used >= quota:
+                    logger.warning(
+                        "[Users] Lead %s → missão user_id=%s (%s) "
+                        "MESMO com cota mensal cheia %s/%s (missão manda)",
+                        company_id,
+                        force_uid,
+                        fu.get("username"),
+                        used,
+                        quota,
+                    )
+                else:
+                    logger.info(
+                        "[Users] Lead %s → missão/cockpit user_id=%s (%s)",
+                        company_id,
+                        force_uid,
+                        fu.get("username"),
+                    )
+                return force_uid
 
         # Só clientes ativos (ex.: amigo "admin") — nunca o patrao
         cur.execute(
@@ -828,10 +936,13 @@ def assign_raio_lead(company_id: int) -> int | None:
             """,
             (user_id, now, company_id),
         )
+        assigned_ok = cur.rowcount > 0
         conn.commit()
         cur.close()
         conn.close()
 
+        if assigned_ok:
+            _try_spend_trovoeda(user_id, company_id)
         logger.warning(
             "[Users] Lead %s (%r) → %s (id=%s)",
             company_id,
@@ -860,19 +971,40 @@ def manual_assign(company_id: int, user_id: int | None) -> bool:
                 (int(company_id),),
             )
             row = cur.fetchone()
-            if not row or not has_contact_phone(dict(row).get("phone")):
+            row_d = dict(row) if row else {}
+            # tenta carregar IG do banco se existir
+            try:
+                cur.execute(
+                    "SELECT phone, instagram_url, instagram_username, website "
+                    "FROM companies WHERE id = %s LIMIT 1;",
+                    (int(company_id),),
+                )
+                row2 = cur.fetchone()
+                if row2:
+                    row_d = dict(row2)
+            except Exception:
+                pass
+            if not lead_has_client_contact(row_d):
                 logger.warning(
-                    "[Users] manual_assign bloqueado: lead %s sem telefone",
+                    "[Users] manual_assign bloqueado: lead %s sem tel/IG",
                     company_id,
                 )
                 cur.close()
                 return False
+            # só debita se estava livre e agora ganhou dono
+            cur.execute("SELECT assigned_to FROM companies WHERE id = %s;", (int(company_id),))
+            prev = cur.fetchone()
+            if isinstance(prev, dict):
+                prev_owner = prev.get("assigned_to")
+            else:
+                prev_owner = prev[0] if prev else None
             cur.execute(
                 """
                 UPDATE companies SET assigned_to = %s, assigned_at = %s WHERE id = %s;
                 """,
                 (user_id, datetime.now().isoformat(), company_id),
             )
+            should_spend = prev_owner is None
         else:
             cur.execute(
                 """
@@ -880,12 +1012,239 @@ def manual_assign(company_id: int, user_id: int | None) -> bool:
                 """,
                 (company_id,),
             )
+            should_spend = False
         conn.commit()
         cur.close()
+        if user_id and should_spend:
+            try:
+                _try_spend_trovoeda(int(user_id), int(company_id))
+            except Exception:
+                pass
         return True
     except Exception as exc:
         logger.warning("[Users] manual_assign: %s", exc)
         return False
+    finally:
+        conn.close()
+
+
+def delete_company_lead(company_id: int) -> bool:
+    """Apaga o lead (empresa) do banco. Só deve ser chamado pelo Patrão na API."""
+    if not _DATABASE_URL:
+        return False
+    ensure_schema()
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM companies WHERE id = %s;", (int(company_id),))
+        n = cur.rowcount
+        conn.commit()
+        cur.close()
+        if n:
+            logger.warning("[Users] Lead id=%s apagado do banco", company_id)
+        return bool(n)
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.warning("[Users] delete_company_lead: %s", exc)
+        return False
+    finally:
+        conn.close()
+
+
+def distribute_selected_leads(
+    lead_ids: list[int],
+    user_id: int,
+    respect_quota: bool = True,
+) -> dict[str, Any]:
+    """
+    Patrão escolhe sobras específicas e manda para UM cliente.
+
+    - Só leads com assigned_to IS NULL
+    - Exige telefone de contato
+    - respect_quota=True: não fura cota mensal do destinatário
+    """
+    ensure_schema()
+    result: dict[str, Any] = {
+        "distributed": 0,
+        "skipped": 0,
+        "skipped_no_phone": 0,
+        "skipped_not_free": 0,
+        "skipped_quota": 0,
+        "by_user": {},
+        "message": "",
+        "user_id": int(user_id),
+        "remaining_free": 0,
+    }
+    if not _DATABASE_URL:
+        result["message"] = "DATABASE_URL não configurada"
+        return result
+
+    ids: list[int] = []
+    seen: set[int] = set()
+    for x in lead_ids or []:
+        try:
+            i = int(x)
+        except (TypeError, ValueError):
+            continue
+        if i in seen:
+            continue
+        seen.add(i)
+        ids.append(i)
+    if not ids:
+        result["message"] = "Nenhum lead selecionado."
+        return result
+
+    conn = _connect()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, username, monthly_quota, cities, niches, active, label, role
+            FROM app_users
+            WHERE id = %s
+            LIMIT 1;
+            """,
+            (int(user_id),),
+        )
+        urow = cur.fetchone()
+        if not urow:
+            result["message"] = "Usuário destinatário não encontrado."
+            cur.close()
+            return result
+        user = dict(urow)
+        uname = (user.get("username") or "").lower()
+        if uname == "patrao" or (user.get("role") or "").lower() == "admin":
+            result["message"] = "Não envie sobras para a conta do Patrão. Escolha um cliente."
+            cur.close()
+            return result
+        if user.get("active") not in (1, True, "1"):
+            result["message"] = "Cliente inativo — ative-o para receber leads."
+            cur.close()
+            return result
+
+        user["cities"] = _parse_json_list(user.get("cities"))
+        user["niches"] = _parse_json_list(user.get("niches"))
+        used = count_assigned_this_month(int(user_id))
+        quota = int(user.get("monthly_quota") or 0)
+        slots = max(0, quota - used) if respect_quota else len(ids)
+
+        try:
+            cur.execute(
+                """
+                SELECT id, name, city, niche, phone, website, assigned_to, lead_score,
+                       instagram_url, instagram_username
+                FROM companies
+                WHERE id = ANY(%s);
+                """,
+                (ids,),
+            )
+        except Exception:
+            conn.rollback()
+            cur.execute(
+                """
+                SELECT id, name, city, niche, phone, website, assigned_to, lead_score
+                FROM companies
+                WHERE id = ANY(%s);
+                """,
+                (ids,),
+            )
+        rows = {int(r["id"]): dict(r) for r in cur.fetchall()}
+        now = datetime.now().isoformat()
+        distributed = 0
+        skipped = 0
+        skipped_no_phone = 0
+        skipped_not_free = 0
+        skipped_quota = 0
+
+        for lid in ids:
+            company = rows.get(lid)
+            if not company:
+                skipped += 1
+                continue
+            if company.get("assigned_to") is not None:
+                skipped_not_free += 1
+                skipped += 1
+                continue
+            if not lead_has_client_contact(company):
+                skipped_no_phone += 1
+                skipped += 1
+                continue
+            if not _user_accepts_lead(user, company):
+                skipped += 1
+                continue
+            if respect_quota and distributed >= slots:
+                skipped_quota += 1
+                skipped += 1
+                continue
+
+            cur.execute(
+                """
+                UPDATE companies
+                SET assigned_to = %s, assigned_at = %s
+                WHERE id = %s AND assigned_to IS NULL;
+                """,
+                (int(user_id), now, lid),
+            )
+            if cur.rowcount:
+                distributed += 1
+            else:
+                skipped_not_free += 1
+                skipped += 1
+
+        conn.commit()
+
+        cur.execute(
+            """
+            SELECT COUNT(*) AS n FROM companies
+            WHERE assigned_to IS NULL
+              AND (
+                lead_class = 'raio'
+                OR website_status IN ('sem_site', 'so_social')
+                OR website IS NULL
+                OR TRIM(COALESCE(website, '')) = ''
+              );
+            """
+        )
+        remaining = int((cur.fetchone() or {}).get("n") or 0)
+        cur.close()
+
+        label = user.get("label") or user.get("username") or str(user_id)
+        result["distributed"] = distributed
+        result["skipped"] = skipped
+        result["skipped_no_phone"] = skipped_no_phone
+        result["skipped_not_free"] = skipped_not_free
+        result["skipped_quota"] = skipped_quota
+        result["remaining_free"] = remaining
+        result["by_user"] = {str(user.get("username") or label): distributed} if distributed else {}
+        if distributed == 0:
+            parts = []
+            if skipped_no_phone:
+                parts.append(f"{skipped_no_phone} sem telefone")
+            if skipped_not_free:
+                parts.append(f"{skipped_not_free} já tinham dono")
+            if skipped_quota:
+                parts.append(f"{skipped_quota} sem vaga na cota")
+            if not parts:
+                parts.append("nenhum lead elegível")
+            result["message"] = "Nada distribuído: " + ", ".join(parts) + "."
+        else:
+            result["message"] = (
+                f"Enviados {distributed} lead(s) para {label}."
+                + (f" {skipped} ignorado(s)." if skipped else "")
+                + (f" Cota: {used + distributed}/{quota}." if respect_quota else "")
+            )
+        return result
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.warning("[Users] distribute_selected_leads: %s", exc)
+        result["message"] = f"Erro: {exc}"
+        return result
     finally:
         conn.close()
 
@@ -978,8 +1337,9 @@ def distribute_free_leads(
         # Sobras (raio / sem site), melhor score primeiro
         cur.execute(
             """
-            SELECT id, name, city, niche, lead_score, assigned_to,
-                   website, website_status, lead_class
+            SELECT id, name, city, niche, phone, lead_score, assigned_to,
+                   website, website_status, lead_class,
+                   instagram_url, instagram_username
             FROM companies
             WHERE assigned_to IS NULL
               AND (
@@ -1010,8 +1370,8 @@ def distribute_free_leads(
         now = datetime.now().isoformat()
 
         for company in free_leads:
-            # Cliente não recebe lead sem telefone
-            if not has_contact_phone(company.get("phone")):
+            # Cliente não recebe lead sem tel/IG
+            if not lead_has_client_contact(company):
                 skipped += 1
                 continue
             candidates: list[tuple[int, dict]] = []

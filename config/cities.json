@@ -194,6 +194,143 @@
       ]
     },
     {
+      "id": "cachoeiro_de_itapemirim_es",
+      "nome": "Cachoeiro de Itapemirim",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Aquidaban",
+        "Gilberto Machado",
+        "Independência",
+        "Recanto"
+      ]
+    },
+    {
+      "id": "cariacica_es",
+      "nome": "Cariacica",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Campo Grande",
+        "Itacibá",
+        "Porto de Santana",
+        "Nova Rosa da Penha",
+        "Jardim América"
+      ]
+    },
+    {
+      "id": "colatina_es",
+      "nome": "Colatina",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "São Silvano",
+        "Maria das Graças",
+        "Esplanada",
+        "Honório Fraga"
+      ]
+    },
+    {
+      "id": "guarapari_es",
+      "nome": "Guarapari",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Muquiçaba",
+        "Praia do Morro",
+        "Enseada Azul",
+        "Itapebussu"
+      ]
+    },
+    {
+      "id": "linhares_es",
+      "nome": "Linhares",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Shell",
+        "Interlagos",
+        "Novo Horizonte",
+        "Araçá"
+      ]
+    },
+    {
+      "id": "serra_es",
+      "nome": "Serra",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Laranjeiras",
+        "Jacaraípe",
+        "Portal de Jacaraípe",
+        "Barcelona",
+        "Feu Rosa",
+        "Serra Dourada",
+        "Manguinhos"
+      ]
+    },
+    {
+      "id": "vila_velha_es",
+      "nome": "Vila Velha",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Praia da Costa",
+        "Itapoã",
+        "Coqueiral de Itaparica",
+        "Glória",
+        "Soteco",
+        "Araçás",
+        "Santa Mônica"
+      ]
+    },
+    {
+      "id": "vitoria_es",
+      "nome": "Vitória",
+      "estado": "ES",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Praia do Canto",
+        "Jardim da Penha",
+        "Jardim Camburi",
+        "Enseada do Suá",
+        "Mata da Praia",
+        "Goiabeiras",
+        "Santa Lúcia",
+        "Bento Ferreira"
+      ]
+    },
+    {
       "id": "goiania_go",
       "nome": "Goiânia",
       "estado": "GO",
@@ -297,6 +434,136 @@
       ]
     },
     {
+      "id": "acailandia_ma",
+      "nome": "Açailândia",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Vila Ildemar",
+        "Vila Nova",
+        "Parque das Palmeiras"
+      ]
+    },
+    {
+      "id": "bacabal_ma",
+      "nome": "Bacabal",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Alto da Esperança",
+        "Areal",
+        "Santo Antônio"
+      ]
+    },
+    {
+      "id": "balsas_ma",
+      "nome": "Balsas",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Catulão",
+        "Loteamento Novo Horizonte",
+        "Setor Aeroporto"
+      ]
+    },
+    {
+      "id": "caxias_ma",
+      "nome": "Caxias",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Campo de Belém",
+        "Ponte",
+        "Caldeirões"
+      ]
+    },
+    {
+      "id": "codo_ma",
+      "nome": "Codó",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "São Sebastião",
+        "São Raimundo",
+        "Santa Luzia"
+      ]
+    },
+    {
+      "id": "imperatriz_ma",
+      "nome": "Imperatriz",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Bacuri",
+        "Três Poderes",
+        "Nova Imperatriz",
+        "Jardim Oriental",
+        "Parque Santa Lúcia",
+        "Vila Lobão",
+        "Beira Rio"
+      ]
+    },
+    {
+      "id": "sao_luis_ma",
+      "nome": "São Luís",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Cohama",
+        "Renascença",
+        "Calhau",
+        "Ponta d'Areia",
+        "São Francisco",
+        "Turú",
+        "Cohatrac",
+        "Vinhais",
+        "Turu"
+      ]
+    },
+    {
+      "id": "timon_ma",
+      "nome": "Timon",
+      "estado": "MA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Parque Piauí",
+        "Formosa",
+        "São Marcos"
+      ]
+    },
+    {
       "id": "maringa_pr",
       "nome": "Maringá",
       "estado": "PR",
@@ -339,6 +606,27 @@
         "Austin",
         "Posse",
         "Cabuçu"
+      ]
+    },
+    {
+      "id": "sao_goncalo_rj",
+      "nome": "São Gonçalo",
+      "estado": "RJ",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Alcântara",
+        "Zé Garoto",
+        "Neves",
+        "Porto da Pedra",
+        "Tribobó",
+        "Colubandê",
+        "Mutondo",
+        "Boa Vista",
+        "Patronato"
       ]
     },
     {

@@ -362,14 +362,59 @@ class Database:
             slug = re.sub(r"\s+", "_", slug)
             company["place_id"] = f"synthetic:{slug}"
 
+        # garante chaves do SQL
+        for k in (
+            "category", "address", "phone", "website", "rating", "review_count",
+            "is_open_now", "opening_hours", "latitude", "longitude", "maps_url",
+            "business_status", "source", "scraped_at", "name", "niche", "city", "state",
+        ):
+            company.setdefault(k, None if k in ("rating", "is_open_now", "latitude", "longitude") else "")
+        if company.get("review_count") is None:
+            company["review_count"] = 0
+        if not company.get("scraped_at"):
+            company["scraped_at"] = datetime.now().isoformat()
+        if not company.get("business_status"):
+            company["business_status"] = "OPERATIONAL"
+        if not company.get("source"):
+            company["source"] = "playwright"
+
+        try:
+            from src.contact import enrich_contact_fields
+            enrich_contact_fields(company)
+        except Exception:
+            pass
+
         conn = self._connect()
         try:
             cur = conn.cursor()
             cur.execute(_UPSERT_COMPANY_SQL, company)
             row = cur.fetchone()
+            row_id = row[0] if row else 0
+            # Instagram se colunas existirem
+            if row_id and (company.get("instagram_url") or company.get("instagram_username")):
+                try:
+                    cur.execute(
+                        """
+                        UPDATE companies SET
+                            instagram_url = COALESCE(NULLIF(%s, ''), instagram_url),
+                            instagram_username = COALESCE(NULLIF(%s, ''), instagram_username),
+                            instagram_status = CASE
+                                WHEN COALESCE(NULLIF(%s, ''), '') <> '' THEN 'tem_instagram'
+                                ELSE instagram_status END
+                        WHERE id = %s;
+                        """,
+                        (
+                            company.get("instagram_url") or "",
+                            company.get("instagram_username") or "",
+                            company.get("instagram_url") or "",
+                            int(row_id),
+                        ),
+                    )
+                except Exception:
+                    pass
             conn.commit()
             cur.close()
-            return row[0] if row else 0
+            return int(row_id or 0)
         finally:
             conn.close()
 
@@ -727,7 +772,14 @@ class PlaywrightScraper:
         known_ids: set[str] = set(known_place_ids or [])
         skipped_known = 0
         skipped_has_site = 0
+        skipped_no_contact = 0
         inspected = 0
+
+        from src import site_cache
+        from src.contact import enrich_contact_fields, has_usable_contact
+
+        # place_ids com site em cache → nunca reabrir
+        known_ids |= site_cache.as_set()
 
         encoded_query = urllib.parse.quote_plus(query)
         maps_url = f"https://www.google.com/maps/search/{encoded_query}"
@@ -736,7 +788,7 @@ class PlaywrightScraper:
         try:
             logger.info(
                 f"[Playwright] Abrindo: {maps_url} "
-                f"(meta: {target_new} NOVAS sem site)"
+                f"(meta: {target_new} leads contatáveis sem site)"
             )
             page.goto(maps_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
             _random_delay(1.5, 3.0)
@@ -813,26 +865,75 @@ class PlaywrightScraper:
                     )
                     continue
 
-                # Tem site próprio → não conta na cota de leads
-                if _has_own_website(company.get("website")):
+                if pid and site_cache.has_site(pid):
                     skipped_has_site += 1
-                    if pid:
-                        known_ids.add(pid)  # não reabrir se aparecer de novo
+                    known_ids.add(pid)
                     logger.info(
-                        f"[Playwright] ⏭ {company['name']!r} tem site — "
-                        f"não conta ({len(companies)}/{target_new} novas)"
+                        f"[Playwright] ⏭ cache tem site {company.get('name')!r} — pula"
                     )
-                    _random_delay(0.4, 1.0)
+                    _random_delay(0.08, 0.2)
                     continue
 
-                # NOVA sem site → conta na cota
+                # Tem site próprio → já abortou no painel (só nome+url); não conta
+                if _has_own_website(company.get("website")) or company.get("_skip_has_site"):
+                    skipped_has_site += 1
+                    if pid:
+                        known_ids.add(pid)
+                        site_cache.mark_has_site(pid)
+                    logger.info(
+                        f"[Playwright] ⏭ {company['name']!r} tem site — "
+                        f"pula sem extrair ({len(companies)}/{target_new})"
+                    )
+                    _random_delay(0.12, 0.35)
+                    continue
+
+                # IG no website do Maps (sem site próprio)
+                enrich_contact_fields(company)
+
+                # Sem telefone e sem Instagram → NÃO conta como lead
+                if not has_usable_contact(company):
+                    skipped_no_contact += 1
+                    logger.info(
+                        f"[Playwright] ⏭ {company['name']!r} sem tel/IG — "
+                        f"não conta na meta ({len(companies)}/{target_new})"
+                    )
+                    _random_delay(0.15, 0.4)
+                    # parar cedo também conta inspeções sem contato
+                    early_n = int(os.getenv("EARLY_STOP_INSPECT", "40"))
+                    early_min = int(os.getenv("EARLY_STOP_MIN_LEADS", "2"))
+                    if inspected >= early_n and len(companies) < early_min:
+                        logger.info(
+                            f"[Playwright] ⏹ parar cedo: {inspected} painéis e só "
+                            f"{len(companies)} lead(s) — área fraca"
+                        )
+                        break
+                    continue
+
+                # NOVA sem site + com contato → candidato (claim real só no save)
                 companies.append(company)
                 if pid:
                     known_ids.add(pid)
                 logger.info(
-                    f"[Playwright] ✓ NOVA sem site "
-                    f"[{len(companies)}/{target_new}]: {company['name']!r}"
+                    f"[Playwright] ✓ lead contatável "
+                    f"[{len(companies)}/{target_new}]: {company['name']!r} "
+                    f"({company.get('contact_channel') or 'contato'})"
                 )
+
+                # Se a meta compartilhada já encheu, para de extrair painéis
+                try:
+                    from src.bot_status import (
+                        should_stop_for_meta,
+                        get_session_leads,
+                        get_mission_target,
+                    )
+                    if should_stop_for_meta():
+                        logger.info(
+                            f"[Playwright] 🛑 META BATEU "
+                            f"{get_session_leads()}/{get_mission_target()} — para extração."
+                        )
+                        break
+                except Exception:
+                    pass
 
                 if idx % 10 == 0 and _is_blocked(page):
                     logger.error(
@@ -840,12 +941,24 @@ class PlaywrightScraper:
                     )
                     time.sleep(60)
 
-                _random_delay(_DELAY_MIN, _DELAY_MAX)
+                _random_delay(
+                    max(0.8, _DELAY_MIN * 0.6),
+                    max(1.5, _DELAY_MAX * 0.7),
+                )
+
+                early_n = int(os.getenv("EARLY_STOP_INSPECT", "40"))
+                early_min = int(os.getenv("EARLY_STOP_MIN_LEADS", "2"))
+                if inspected >= early_n and len(companies) < early_min:
+                    logger.info(
+                        f"[Playwright] ⏹ parar cedo: {inspected} painéis e só "
+                        f"{len(companies)} lead(s) — área fraca, próximo job"
+                    )
+                    break
 
             logger.info(
-                f"[Playwright] Fim da query: {len(companies)}/{target_new} novas sem site | "
-                f"{skipped_known} já no banco | {skipped_has_site} com site | "
-                f"{inspected} painéis abertos"
+                f"[Playwright] Fim: {len(companies)}/{target_new} contatáveis | "
+                f"{skipped_known} banco | {skipped_has_site} site | "
+                f"{skipped_no_contact} sem contato | {inspected} painéis"
             )
 
         except Exception as exc:
@@ -975,7 +1088,7 @@ class PlaywrightScraper:
 
         # Navega até a página de detalhes
         page.goto(full_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
-        _random_delay(1.0, 2.0)
+        _random_delay(0.35, 0.8)
 
         # Aguarda o painel de detalhes carregar (pelo nome h1)
         try:
@@ -994,8 +1107,15 @@ class PlaywrightScraper:
             company["latitude"] = lat
             company["longitude"] = lon
 
-        # ── Nome ────────────────────────────────────────────────────────
+        # ── Nome + Website PRIMEIRO ─────────────────────────────────────
+        # Busca magra: se tem site próprio, abandona SEM telefone/horário/etc.
         company["name"] = self._get_text(page, _SEL_PANEL_NAME)
+        company["website"] = self._get_href_fast(page, _SEL_PANEL_WEBSITE)
+        if _has_own_website(company.get("website")):
+            company["scraped_at"] = datetime.now().isoformat()
+            company["source"] = "playwright"
+            company["_skip_has_site"] = True
+            return company
 
         # ── Avaliação ───────────────────────────────────────────────────
         rating_raw = self._get_text(page, _SEL_PANEL_RATING)
@@ -1011,9 +1131,6 @@ class PlaywrightScraper:
         # ── Telefone ────────────────────────────────────────────────────
         raw_phone = self._get_button_text(page, _SEL_PANEL_PHONE)
         company["phone"] = _normalize_phone(raw_phone)
-
-        # ── Website ─────────────────────────────────────────────────────
-        company["website"] = self._get_href(page, _SEL_PANEL_WEBSITE)
 
         # ── Categoria ───────────────────────────────────────────────────
         company["category"] = self._get_text(page, _SEL_PANEL_CATEGORY)
@@ -1106,17 +1223,21 @@ class PlaywrightScraper:
         except Exception:
             return ""
 
-    def _get_href(self, page: Page, selector: str) -> str:
+    def _get_href(self, page: Page, selector: str, timeout_ms: int = 3000) -> str:
         """Retorna o href do primeiro link que bate com o seletor."""
         try:
             el = page.locator(selector).first
-            href = el.get_attribute("href", timeout=3000) or ""
+            href = el.get_attribute("href", timeout=timeout_ms) or ""
             # Remove prefixo de redirecionamento do Google (/url?q=...)
             if href.startswith("/url?q="):
                 href = urllib.parse.unquote(href.split("q=", 1)[1].split("&")[0])
             return href.strip()
         except Exception:
             return ""
+
+    def _get_href_fast(self, page: Page, selector: str) -> str:
+        """Peek rápido de website (~1.2s) para early-skip quando tem site."""
+        return self._get_href(page, selector, timeout_ms=1200)
 
     def _extract_hours(self, page: Page) -> str:
         """
@@ -1207,16 +1328,21 @@ class GoogleMapsSearcher:
         - Sem foco: bairros da lista + poucas genéricas
         """
         term = term.strip()
+        # query "magra": prioriza termo curto (mais chance de negócio local sem site)
+        lean = term.split()[0] if term else term
+        if len(term.split()) > 3:
+            # mantém as 3 primeiras palavras se o termo for longo
+            lean = " ".join(term.split()[:3])
         base: list[str] = []
         area = (focus_area or "").strip()
         if area and area != "_cidade":
             base = [
+                f"{lean} {area} {city}",
                 f"{term} {area} {city}",
-                f"{term} em {area} {city} {state}",
-                f"{term} {area} {state}",
+                f"{lean} em {area} {city} {state}",
             ]
         else:
-            base = [f"{term} em {city} {state}"]
+            base = [f"{lean} em {city} {state}", f"{term} em {city} {state}"]
             for b in (bairros or [])[:6]:
                 b = (b or "").strip()
                 if b:
@@ -1270,17 +1396,65 @@ class GoogleMapsSearcher:
 
         kept: list[dict[str, Any]] = []
         saved_total = 0
+        sobras_total = 0
         skipped_exists = 0
         skipped_has_site = 0
+        stop_all = False  # meta/nicho → não abre NOVA variação (lote atual vira sobra)
+
+        from src.contact import enrich_contact_fields, has_usable_contact
+        from src import site_cache
+        from src.bot_status import (
+            try_claim_one_lead,
+            release_one_lead,
+            meta_reached,
+            remaining_to_meta,
+            get_session_leads,
+            get_mission_target,
+            should_stop_for_meta,
+        )
 
         for v_idx, query in enumerate(variants, start=1):
+            if stop_all:
+                break
             if saved_total >= target_new:
                 break
 
+            # Meta total cheia → não abre NOVA busca (lote atual se houver → sobras)
+            try:
+                if should_stop_for_meta() or meta_reached():
+                    shared = get_session_leads()
+                    tgt = get_mission_target()
+                    logger.info(
+                        f"[GoogleMapsSearcher] 🛑 META BATEU {shared}/{tgt} "
+                        f"— sem nova busca (lote atual se houver → sobras)."
+                    )
+                    stop_all = True
+                    break
+                rem_shared = remaining_to_meta()
+            except Exception:
+                rem_shared = None
+
             remaining = target_new - saved_total
+            if rem_shared is not None:
+                remaining = min(remaining, rem_shared)
+            if remaining <= 0:
+                stop_all = True
+                break
+
+            # pede um pouco a mais que a meta → extras viram SOBRA (não joga fora)
+            fetch_n = min(max(remaining + 6, remaining * 2), max(remaining, 24))
+
+            shared_now = 0
+            tgt_now = 0
+            try:
+                shared_now = get_session_leads()
+                tgt_now = get_mission_target()
+            except Exception:
+                pass
             logger.info(
                 f"[GoogleMapsSearcher] Variação {v_idx}/{len(variants)}: {query!r} "
-                f"(faltam {remaining} novas)"
+                f"| missão {remaining} · busca até {fetch_n} (extras→sobra) | meta "
+                f"{shared_now}{('/' + str(tgt_now)) if tgt_now else '/∞'}"
             )
 
             batch: list[dict[str, Any]] = []
@@ -1288,11 +1462,11 @@ class GoogleMapsSearcher:
             # API se disponível
             if self._api_client:
                 batch = self._search_via_api(
-                    query, niche, city, state, remaining, known_ids=known_ids
+                    query, niche, city, state, fetch_n, known_ids=known_ids
                 )
 
             # Playwright (primário ou se API não encheu)
-            if len(batch) < remaining:
+            if len(batch) < fetch_n and not stop_all:
                 if self._api_client and batch:
                     logger.info(
                         f"[GoogleMapsSearcher] API trouxe {len(batch)}; "
@@ -1302,36 +1476,146 @@ class GoogleMapsSearcher:
                     logger.warning(
                         "[GoogleMapsSearcher] API vazia — Playwright..."
                     )
-                pw_batch = self._search_via_playwright(
-                    query,
-                    niche,
-                    city,
-                    state,
-                    remaining - len(batch),
-                    known_place_ids=known_ids,
-                )
-                # evita duplicar place_id no batch
-                seen_batch = {c.get("place_id") for c in batch if c.get("place_id")}
-                for c in pw_batch:
-                    pid = c.get("place_id")
-                    if pid and pid in seen_batch:
-                        continue
-                    batch.append(c)
-                    if pid:
-                        seen_batch.add(pid)
+                # re-checa meta (Fonte B pode ter enchido durante a API)
+                try:
+                    if should_stop_for_meta() or meta_reached():
+                        logger.info(
+                            "[GoogleMapsSearcher] 🛑 META BATEU antes do Playwright — "
+                            "salva o que já tem no batch como sobra se couber."
+                        )
+                        # não break ainda: processa batch abaixo em modo sobra
+                        stop_all = True
+                    rem2 = remaining_to_meta()
+                    if rem2 is not None and rem2 > 0:
+                        remaining = min(remaining, rem2)
+                        fetch_n = min(max(remaining + 6, remaining * 2), max(remaining, 24))
+                except Exception:
+                    pass
+                if len(batch) >= fetch_n:
+                    pass  # já tem o suficiente no batch
+                elif stop_all:
+                    pass  # meta/nicho cheio — não abre Playwright; processa batch → sobras
+                else:
+                    need_pw = max(0, fetch_n - len(batch))
+                    pw_batch = (
+                        self._search_via_playwright(
+                            query,
+                            niche,
+                            city,
+                            state,
+                            need_pw,
+                            known_place_ids=known_ids,
+                        )
+                        if need_pw > 0
+                        else []
+                    )
+                    seen_batch = {c.get("place_id") for c in batch if c.get("place_id")}
+                    for c in pw_batch:
+                        pid = c.get("place_id")
+                        if pid and pid in seen_batch:
+                            continue
+                        batch.append(c)
+                        if pid:
+                            seen_batch.add(pid)
 
+            dump_sobras = False  # meta total cheia → resto do batch vira sobra
             for company in batch:
-                if saved_total >= target_new:
-                    break
                 place_id = company.get("place_id", "")
                 if place_id and (place_id in known_ids or self.db.place_id_exists(place_id)):
                     skipped_exists += 1
+                    known_ids.add(place_id)
+                    continue
+                if place_id and site_cache.has_site(place_id):
+                    skipped_has_site += 1
                     known_ids.add(place_id)
                     continue
                 if _has_own_website(company.get("website")):
                     skipped_has_site += 1
                     if place_id:
                         known_ids.add(place_id)
+                        site_cache.mark_has_site(place_id)
+                    continue
+                enrich_contact_fields(company)
+                if not has_usable_contact(company):
+                    logger.info(
+                        f"[GoogleMapsSearcher] ⏭ {company.get('name')!r} "
+                        f"sem tel/IG — não conta"
+                    )
+                    continue
+
+                # modo sobra: grava sem claim/assign
+                if dump_sobras or saved_total >= target_new:
+                    try:
+                        row_id = self.db.upsert_company(company)
+                        company["id"] = row_id
+                        if place_id:
+                            known_ids.add(place_id)
+                        if row_id:
+                            sobras_total += 1
+                            self._score_immediately(row_id, assign=False)
+                            logger.info(
+                                f"[GoogleMapsSearcher] 📦 SOBRA (sem dono): "
+                                f"{company.get('name')!r}"
+                            )
+                    except Exception as exc:
+                        logger.error(
+                            f"[DB] Erro sobra {company.get('name', '?')!r}: {exc}"
+                        )
+                    stop_all = True
+                    continue
+
+                try:
+                    if should_stop_for_meta() or meta_reached():
+                        dump_sobras = True
+                        stop_all = True
+                        logger.info(
+                            "[GoogleMapsSearcher] 🛑 META BATEU — resto do lote → SOBRAS"
+                        )
+                        # grava ESTE também como sobra
+                        try:
+                            row_id = self.db.upsert_company(company)
+                            company["id"] = row_id
+                            if place_id:
+                                known_ids.add(place_id)
+                            if row_id:
+                                sobras_total += 1
+                                self._score_immediately(row_id, assign=False)
+                                logger.info(
+                                    f"[GoogleMapsSearcher] 📦 SOBRA: "
+                                    f"{company.get('name')!r}"
+                                )
+                        except Exception as exc:
+                            logger.error(f"[DB] sobra: {exc}")
+                        continue
+                except Exception:
+                    pass
+
+                # Reserva vaga na meta + cota do nicho (Fonte B vê o mesmo contador)
+                try:
+                    ok, shared_total, shared_tgt = try_claim_one_lead(niche=niche)
+                except Exception:
+                    ok, shared_total, shared_tgt = True, saved_total + 1, 0
+                if not ok:
+                    # meta total cheia → este e o resto do batch viram SOBRA
+                    dump_sobras = True
+                    stop_all = True
+                    logger.info(
+                        f"[GoogleMapsSearcher] 🛑 META {shared_total}/{shared_tgt} "
+                        f"— lote restante → SOBRAS (não joga fora)"
+                    )
+                    try:
+                        row_id = self.db.upsert_company(company)
+                        company["id"] = row_id
+                        if place_id:
+                            known_ids.add(place_id)
+                        if row_id:
+                            sobras_total += 1
+                            self._score_immediately(row_id, assign=False)
+                            logger.info(
+                                f"[GoogleMapsSearcher] 📦 SOBRA: {company.get('name')!r}"
+                            )
+                    except Exception as exc:
+                        logger.error(f"[DB] sobra: {exc}")
                     continue
                 try:
                     row_id = self.db.upsert_company(company)
@@ -1341,19 +1625,40 @@ class GoogleMapsSearcher:
                     if place_id:
                         known_ids.add(place_id)
                     logger.info(
-                        f"[GoogleMapsSearcher] Salva NOVA "
-                        f"[{saved_total}/{target_new}]: {company.get('name')!r}"
+                        f"[GoogleMapsSearcher] Salva contatável "
+                        f"[maps +{saved_total}] meta {shared_total}"
+                        f"{('/' + str(shared_tgt)) if shared_tgt else ''}: "
+                        f"{company.get('name')!r}"
                     )
-                    # Score na hora → se parar o bot, lead já aparece no dashboard
-                    self._score_immediately(row_id)
+                    self._score_immediately(row_id, assign=True)
+                    # se essa gravação encheu a meta → resto do batch vira sobra
+                    if shared_tgt and shared_total >= shared_tgt:
+                        logger.info(
+                            f"[GoogleMapsSearcher] 🛑 META BATEU {shared_total}/{shared_tgt} "
+                            f"— resto do lote → SOBRAS"
+                        )
+                        dump_sobras = True
+                        stop_all = True
                 except Exception as exc:
+                    try:
+                        release_one_lead(niche=niche)
+                    except Exception:
+                        pass
                     logger.error(
                         f"[DB] Erro ao salvar {company.get('name', '?')!r}: {exc}"
                     )
 
+        try:
+            shared_end = get_session_leads()
+            tgt_end = get_mission_target()
+        except Exception:
+            shared_end, tgt_end = saved_total, 0
         logger.info(
-            f"[GoogleMapsSearcher] Concluído: {saved_total}/{target_new} NOVAS sem site | "
+            f"[GoogleMapsSearcher] Concluído: +{saved_total} missão | "
+            f"+{sobras_total} sobras | meta {shared_end}"
+            f"{('/' + str(tgt_end)) if tgt_end else ''} | "
             f"{skipped_has_site} com site | {skipped_exists} já no banco"
+            + (" | parou novas buscas (meta/nicho)" if stop_all else "")
         )
         return kept
 
@@ -1361,19 +1666,33 @@ class GoogleMapsSearcher:
     # Busca via Places API
     # ------------------------------------------------------------------
 
-    def _score_immediately(self, company_id: int) -> None:
-        """Classifica o lead assim que é salvo (sem esperar o fim do lote)."""
+    def _score_immediately(self, company_id: int, *, assign: bool = True) -> None:
+        """Classifica o lead assim que é salvo (sem esperar o fim do lote).
+
+        assign=False → sobra livre (sem dono).
+        Se score falhar e assign=True, tenta assign direto (evita 19/20).
+        """
         if not company_id:
             return
+        scored_ok = False
         try:
             if not hasattr(self, "_scorer") or self._scorer is None:
                 from src.scorer import LeadScorer
                 self._scorer = LeadScorer()
-            self._scorer.score_one(company_id)
+            self._scorer.score_one(company_id, assign=assign)
+            scored_ok = True
         except Exception as exc:
             logger.warning(
                 f"[GoogleMapsSearcher] Score imediato falhou id={company_id}: {exc}"
             )
+        if not scored_ok and assign:
+            try:
+                from src.users import assign_raio_lead
+                assign_raio_lead(int(company_id))
+            except Exception as exc:
+                logger.warning(
+                    f"[GoogleMapsSearcher] assign fallback falhou id={company_id}: {exc}"
+                )
 
     def _search_via_api(
         self,

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProspecTHOR — Prospecção automática de leads Raio</title>
+  <meta name="description" content="Robô varre Google Maps + CNPJ, filtra quem não tem site e entrega leads com WhatsApp, Instagram e score de propensão. Pague só o que usar com Trovoedas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070b; --card: #0c111a; --border: #1a2233;
+      --text: #e8eef7; --muted: #8b9bb4;
+      --neon: #00d4ff; --gold: #f5c542; --gold2: #e09a18;
+      --font: Inter, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(14px); background: rgba(5,7,11,0.88);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; letter-spacing: -0.03em; }
+    .brand span { color: var(--neon); }
+    .brand img { width: 36px; height: 36px; border-radius: 10px; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 13px;
+      border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon), #0a8ec4);
+      border-color: transparent; color: #031018;
+      box-shadow: 0 0 20px rgba(0,212,255,0.25);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #ffe08a, var(--gold), var(--gold2));
+      border: none; color: #1a1408; font-weight: 800;
+      box-shadow: 0 0 18px rgba(245,197,66,0.3);
+    }
+    .btn-ghost { color: var(--muted); }
+    .hero {
+      padding: 64px 0 48px;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 10%, rgba(0,212,255,0.14), transparent 55%),
+        radial-gradient(ellipse 45% 40% at 90% 30%, rgba(245,197,66,0.1), transparent 50%);
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 44px); font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1.12; max-width: 720px;
+    }
+    .hero h1 em { font-style: normal; color: var(--neon); }
+    .hero .sub {
+      margin-top: 16px; font-size: 16px; color: var(--muted); max-width: 560px; line-height: 1.55;
+    }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-top: 40px; max-width: 560px;
+    }
+    .stat {
+      padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: rgba(12,17,26,0.8);
+    }
+    .stat .n { font-size: 22px; font-weight: 900; color: var(--neon); }
+    .stat .l { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    section { padding: 56px 0; }
+    section h2 {
+      font-size: 24px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px;
+    }
+    section .lead { color: var(--muted); margin-bottom: 28px; max-width: 520px; line-height: 1.5; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .step {
+      padding: 20px; border-radius: 16px; border: 1px solid var(--border); background: var(--card);
+    }
+    .step .ico {
+      width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+      background: rgba(0,212,255,0.1); color: var(--neon); font-size: 18px; margin-bottom: 12px;
+    }
+    .step h3 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--muted); line-height: 1.45; }
+    .diffs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .diff {
+      padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border);
+      background: linear-gradient(160deg, rgba(0,212,255,0.06), transparent);
+    }
+    .diff strong { display: block; margin-bottom: 6px; font-size: 14px; }
+    .diff span { font-size: 13px; color: var(--muted); line-height: 1.45; }
+    .shop-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .pkg {
+      position: relative; padding: 20px; border-radius: 16px;
+      border: 1px solid var(--border); background: var(--card);
+    }
+    .pkg.hot { border-color: rgba(245,197,66,0.5); box-shadow: 0 0 28px rgba(245,197,66,0.12); }
+    .pkg .badge {
+      position: absolute; top: 12px; right: 12px; font-size: 10px; font-weight: 800;
+      padding: 3px 8px; border-radius: 999px; background: var(--gold); color: #1a1408;
+    }
+    .pkg img { width: 40px; height: 40px; margin-bottom: 10px; }
+    .pkg h3 { font-size: 16px; font-weight: 800; }
+    .pkg .coins { font-size: 26px; font-weight: 900; color: var(--gold); margin: 6px 0; }
+    .pkg .coins small { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .pkg .price { font-size: 20px; font-weight: 900; }
+    .pkg .per { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .faq details {
+      border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+      margin-bottom: 10px; background: var(--card);
+    }
+    .faq summary { font-weight: 700; cursor: pointer; }
+    .faq p { margin-top: 10px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .cta-final {
+      text-align: center; padding: 48px 24px; border-radius: 20px;
+      border: 1px solid rgba(0,212,255,0.25);
+      background: radial-gradient(ellipse 70% 80% at 50% 0%, rgba(0,212,255,0.12), transparent 60%), var(--card);
+    }
+    .cta-final h2 { margin-bottom: 10px; }
+    .cta-final p { color: var(--muted); margin-bottom: 20px; }
+    footer { padding: 32px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+    footer a { color: var(--neon); }
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+      .hero { padding-top: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/">
+        <img src="/static/thor-mask.png" alt="" width="36" height="36" />
+        Prospec<span>THOR</span>
+      </a>
+      <div class="nav-actions">
+        <a class="btn btn-ghost" href="#como">Como funciona</a>
+        <a class="btn btn-ghost" href="#precos">Preços</a>
+        <a class="btn" href="/login">Entrar</a>
+        <a class="btn btn-primary" href="/register">Criar conta grátis</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <h1>Prospecção automática.<br/><em>Você só recebe o lead pronto pra fechar.</em></h1>
+      <p class="sub">
+        O robô varre Google Maps + CNPJ, filtra quem <strong style="color:#cde">não tem presença digital</strong>
+        e entrega com WhatsApp, Instagram, nota do Google e score de propensão à venda.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/register">Criar conta grátis</a>
+        <a class="btn" href="#como">Ver como funciona</a>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="n">+{{ stats.leads_raio or stats.leads_total or 0 }}</div>
+          <div class="l">Leads no sistema</div>
+        </div>
+        <div class="stat">
+          <div class="n">{{ stats.niches or 0 }}</div>
+          <div class="l">Nichos mapeados</div>
+        </div>
+        <div class="stat">
+          <div class="n">{{ stats.cities or 0 }}</div>
+          <div class="l">Cidades cobertas</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="como">
+    <div class="wrap">
+      <h2>Como funciona</h2>
+      <p class="lead">Do nicho ao WhatsApp em quatro passos — sem lista genérica.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="ico">1</div>
+          <h3>Escolha nicho e cidade</h3>
+          <p>Defina o mercado que quer atacar. O ProspecTHOR monta a varredura.</p>
+        </div>
+        <div class="step">
+          <div class="ico">2</div>
+          <h3>Robô varre Maps + CNPJ</h3>
+          <p>Busca estabelecimentos reais e cruza sinais de presença digital.</p>
+        </div>
+        <div class="step">
+          <div class="ico">3</div>
+          <h3>Score 0–100</h3>
+          <p>Cada lead recebe propensão à venda — não só volume de nomes.</p>
+        </div>
+        <div class="step">
+          <div class="ico">4</div>
+          <h3>WhatsApp / Instagram</h3>
+          <p>Você recebe contato utilizável, pronto pra abordar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="porque">
+    <div class="wrap">
+      <h2>Por que ProspecTHOR</h2>
+      <p class="lead">Diferenciais que importam na hora de ligar.</p>
+      <div class="diffs">
+        <div class="diff">
+          <strong>Dados verificados</strong>
+          <span>Não é lista genérica raspada. Vem de fontes reais e passa por filtro de site/contato.</span>
+        </div>
+        <div class="diff">
+          <strong>Score de propensão</strong>
+          <span>Priorize quem tem mais dor (sem site, com tração no Maps) — não só quantidade.</span>
+        </div>
+        <div class="diff">
+          <strong>Nicho + região</strong>
+          <span>Foque no seu mercado. Cidade e vertical definidos por você.</span>
+        </div>
+        <div class="diff">
+          <strong>Sem mensalidade fixa</strong>
+          <span>Pague só pelos leads que usar, com <strong style="color:var(--gold)">Trovoedas</strong> — 1 moeda = 1 lead.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="precos">
+    <div class="wrap">
+      <h2>Loja de Trovoedas</h2>
+      <p class="lead">Compre moedas douradas. 1 Trovoeda = 1 lead. <strong style="color:var(--text)">Não expiram.</strong></p>
+      <div class="shop-preview">
+        {% for p in packages %}
+        <div class="pkg {% if p.slug == 'raio' %}hot{% endif %}">
+          {% if p.slug == 'raio' %}<span class="badge">Mais popular</span>{% endif %}
+          <img src="/static/trovoeda-coin.svg" alt="" width="40" height="40" />
+          <h3>{{ p.name }}</h3>
+          <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>
+          <div class="price">R$ {{ p.price_brl }}</div>
+          <div class="per">{% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}</div>
+        </div>
+        {% else %}
+        <div class="pkg"><h3>Em breve</h3><p class="per">Pacotes em configuração.</p></div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:22px;">
+        <a class="btn btn-gold" href="/register">Começar com 5 Trovoedas grátis</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <div class="wrap">
+      <h2>Perguntas frequentes</h2>
+      <p class="lead">Tudo o que importa antes de criar a conta.</p>
+      <details open>
+        <summary>O que é uma Trovoeda?</summary>
+        <p>É a moeda do ProspecTHOR. <strong>1 Trovoeda = 1 lead entregue</strong> na sua conta. Você compra pacotes e gasta conforme usa — sem mensalidade fixa.</p>
+      </details>
+      <details>
+        <summary>Os leads são exclusivos pra mim?</summary>
+        <p>Quando um lead é atribuído à sua conta, ele fica na sua lista. O pool de sobras do sistema é gerido internamente para redistribuir oportunidades não reivindicadas.</p>
+      </details>
+      <details>
+        <summary>Como funciona a entrega?</summary>
+        <p>Você pede leads (nicho/cidade). Nossa operação processa com o robô local e entrega na sua conta. No painel você vê status como “em processamento” e “entregue”.</p>
+      </details>
+      <details>
+        <summary>Trovoedas expiram?</summary>
+        <p><strong>Não.</strong> O que você comprar fica no saldo até usar. Zero pressão de “vou perder o que paguei”.</p>
+      </details>
+      <details>
+        <summary>Quanto custa por lead?</summary>
+        <p>Depende do pacote — a partir de cerca de R$ 1,80 a R$ 3,90 por lead nos pacotes atuais. Quanto maior o pacote, menor o custo unitário.</p>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta-final">
+        <h2>Pronto pra achar quem ainda não tem site?</h2>
+        <p>Crie a conta, ganhe 5 Trovoedas de bônus e teste o fluxo completo.</p>
+        <a class="btn btn-primary" href="/register">Criar conta grátis</a>
+        <a class="btn" href="/login" style="margin-left:8px;">Já tenho conta</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>© ProspecTHOR · <a href="/termos">Termos</a> · <a href="/privacidade">Privacidade</a> · <a href="/login">Entrar</a></p>
+    </div>
+  </footer>
+</body>
+</html>

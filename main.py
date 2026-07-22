@@ -163,10 +163,10 @@ def run_now(
         except Exception as exc:
             logger.warning(f"Plano do painel indisponível, usando JSON puro: {exc}")
 
-        from src.coverage import interleave_jobs_by_niche, niche_quotas
+        from src.coverage import interleave_jobs_by_niche
 
         jobs = list_pending_jobs(cities_data, niches_data)
-        # list_pending_jobs já intercala nichos; reforça se vier de outro caminho
+        # intercalá nichos só pra variedade na fila — SEM teto por nicho
         jobs = interleave_jobs_by_niche(jobs)
         if limit_jobs and limit_jobs > 0:
             jobs = jobs[:limit_jobs]
@@ -184,43 +184,52 @@ def run_now(
             if nid and nid not in _seen_n:
                 _seen_n.add(nid)
                 niche_order.append(nid)
-        quotas = niche_quotas(target_leads, niche_order) if target_leads else {}
         per_niche_found: dict[str, int] = {n: 0 for n in niche_order}
 
         from src.scheduler import LeadGenerationPipeline
+        from src.bot_status import (
+            get_session_leads,
+            set_mission_meta,
+            remaining_to_meta,
+            should_stop_for_meta,
+        )
         pipeline = LeadGenerationPipeline()
 
-        if quotas:
-            qtxt = ", ".join(f"{k}={v}" for k, v in quotas.items())
-            logger.info(f"Cota por nicho (meta {target_leads} dividida): {qtxt}")
-            add_log(f"Revezamento de nichos | cotas: {qtxt}")
-
         logger.info(
-            f"Fila: {len(jobs)} jobs (bairro×nicho, round-robin) | "
+            f"Fila: {len(jobs)} jobs (nicho×cidade×bairro) | "
             f"1º: {jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']} | "
-            f"meta_leads={target_leads or '∞'} | Instagram off por padrão"
+            f"meta_leads={target_leads or '∞'} | SEM cota por nicho "
+            f"(pode encher de qualquer nicho) | meta total Maps+Fonte B"
         )
+        add_log(
+            f"Sem divisão por nicho — meta total {target_leads or '∞'} "
+            f"(Maps+CNPJ joga livre em todos os nichos)"
+        )
+        set_mission_meta(int(target_leads or 0), reset_leads=False)
         set_status(
             "rodando",
             last_job=f"{jobs[0]['city']}/{jobs[0]['area']}/{jobs[0]['niche']}",
-            session_leads=0,
         )
+        shared0 = get_session_leads()
         add_log(
-            f"Sessão iniciada: {len(jobs)} jobs | meta {target_leads or '∞'} leads | "
-            f"nicho(s) revezando: {','.join(niche_order) or '—'}"
+            f"Sessão Maps: {len(jobs)} jobs | meta {shared0}/{target_leads or '∞'} "
+            f"(Maps+Fonte B) | nichos={','.join(niche_order) or '—'}"
         )
 
         ran = 0
-        total_leads = 0
+        total_leads = 0  # só o que ESTE processo Maps achou
         stopped_by_target = False
         try:
             for idx, job in enumerate(jobs, start=1):
-                if target_leads and total_leads >= target_leads:
+                # Só para na META TOTAL (sem cota por nicho)
+                if target_leads and should_stop_for_meta():
                     stopped_by_target = True
+                    shared = get_session_leads()
                     logger.info(
-                        f"Meta de {target_leads} leads atingida ({total_leads}). Encerrando sessão."
+                        f"🛑 META BATEU {shared}/{target_leads} — Maps PARA "
+                        f"(Maps+Fonte B; local maps +{total_leads})."
                     )
-                    add_log(f"Meta atingida: {total_leads}/{target_leads} leads — parando")
+                    add_log(f"🛑 META BATEU {shared}/{target_leads} — Maps parando")
                     break
 
                 n_id = job["niche"]
@@ -230,38 +239,32 @@ def run_now(
                 q_term = job["query_term"]
                 max_r = int(job.get("max_results", 12) or 12)
 
-                # Cota do nicho já cheia → pula (vai pro próximo nicho no round-robin)
-                if quotas:
-                    q_lim = int(quotas.get(n_id, 0) or 0)
-                    got = int(per_niche_found.get(n_id, 0) or 0)
-                    if q_lim <= 0 or got >= q_lim:
-                        logger.info(
-                            f"[{idx}/{len(jobs)}] ⏭ cota do nicho {n_id} cheia "
-                            f"({got}/{q_lim})"
-                        )
-                        continue
-                    # não pede mais leads do que falta pra esse nicho (e pra meta total)
-                    remain_niche = q_lim - got
-                    remain_total = max(0, target_leads - total_leads) if target_leads else remain_niche
-                    max_r = max(1, min(max_r, remain_niche, remain_total))
+                # Quanto ainda cabe na meta GLOBAL (ex.: 19/20 → falta 1 → pede 1)
+                rem_global = remaining_to_meta()
+                if rem_global is not None:
+                    if rem_global <= 0:
+                        if should_stop_for_meta():
+                            stopped_by_target = True
+                            break
+                        rem_global = 1
+                    max_r = max(1, min(max_r, rem_global))
 
                 if is_done(n_id, c_name, c_state, area):
                     logger.info(f"[{idx}/{len(jobs)}] ⏭ já coberto: {c_name}/{area}/{n_id}")
                     continue
 
+                shared = get_session_leads()
                 job_label = f"{n_id} | {c_name}/{area}"
                 try:
                     logger.info(
                         f"[{idx}/{len(jobs)}] ▶ {n_id} | {c_name}-{c_state} | "
-                        f"bairro={area} | meta={max_r} | leads_sessão={total_leads}"
-                        + (f"/{target_leads}" if target_leads else "")
-                        + (
-                            f" | nicho {per_niche_found.get(n_id, 0)}/{quotas.get(n_id, '∞')}"
-                            if quotas else ""
-                        )
+                        f"bairro={area} | pede={max_r} | meta "
+                        f"{shared}/{target_leads or '∞'}"
                     )
-                    set_status("rodando", last_job=job_label, session_leads=total_leads)
-                    add_log(f"[{idx}/{len(jobs)}] {job_label}")
+                    set_status("rodando", last_job=job_label)
+                    add_log(
+                        f"[{idx}/{len(jobs)}] {job_label} · meta {shared}/{target_leads or '∞'}"
+                    )
                     found = pipeline.execute_flow(
                         niche=n_id,
                         city=c_name,
@@ -273,19 +276,24 @@ def run_now(
                     )
                     mark_done(n_id, c_name, c_state, area, leads_found=found)
                     ran += 1
-                    total_leads += found
+                    total_leads += int(found or 0)
                     per_niche_found[n_id] = int(per_niche_found.get(n_id, 0) or 0) + int(found or 0)
+                    shared_after = get_session_leads()
                     if found:
-                        increment_session_leads(found)
                         add_log(
-                            f"+{found} leads em {job_label} (sessão {total_leads}"
-                            + (f"/{target_leads}" if target_leads else "")
-                            + (
-                                f" | {n_id} {per_niche_found.get(n_id, 0)}/{quotas.get(n_id, '?')}"
-                                if quotas else ""
-                            )
-                            + ")"
+                            f"+{found} Maps em {job_label} → meta "
+                            f"{shared_after}/{target_leads or '∞'}"
                         )
+                    if target_leads and should_stop_for_meta():
+                        stopped_by_target = True
+                        logger.info(
+                            f"🛑 META BATEU {shared_after}/{target_leads} após job — "
+                            f"Maps PARA (Fonte B também para)."
+                        )
+                        add_log(
+                            f"🛑 META BATEU {shared_after}/{target_leads} — os 2 param"
+                        )
+                        break
                 except Exception as exc:
                     logger.error(
                         f"Falha {n_id} | {c_name}/{area}: {exc} "
@@ -293,30 +301,46 @@ def run_now(
                     )
                     add_log(f"ERRO {job_label}: {exc}", level="ERROR")
 
+            shared_final = get_session_leads()
+            niche_summary = ", ".join(
+                f"{n}={per_niche_found.get(n, 0)}" for n in niche_order
+            ) or "—"
             end_job = (
-                f"meta {total_leads}/{target_leads}" if stopped_by_target and target_leads
-                else f"ok: {ran} áreas, {total_leads} leads"
+                f"maps ok: {ran} áreas, +{total_leads} maps | "
+                f"meta {shared_final}/{target_leads or '∞'}"
             )
+            if stopped_by_target:
+                end_job = (
+                    f"meta {shared_final}/{target_leads or '∞'} | "
+                    f"maps +{total_leads} | {niche_summary}"
+                )
             set_status(
                 "parado",
-                last_leads=total_leads,
-                session_leads=total_leads,
+                last_leads=shared_final,
+                session_leads=shared_final,
                 last_job=end_job,
             )
-            add_log(f"Sessão finalizada: {ran} áreas | {total_leads} leads novos"
-                    + (f" (meta {target_leads})" if target_leads else ""))
+            add_log(
+                f"Maps finalizado: {ran} áreas | +{total_leads} deste processo | "
+                f"meta compartilhada {shared_final}/{target_leads or '∞'} | nichos: {niche_summary}"
+            )
             logger.info(
-                f"Sessão ok: {ran} áreas | {total_leads} leads NOVOS sem site. "
-                f"Pode parar a qualquer momento; o que entrou já tem score."
+                f"Maps ok: {ran} áreas | +{total_leads} Maps | "
+                f"meta compartilhada {shared_final}/{target_leads or '∞'} | "
+                f"por nicho (maps): {niche_summary}."
             )
         except KeyboardInterrupt:
+            shared_final = get_session_leads()
             set_status(
                 "parado",
-                last_leads=total_leads,
-                session_leads=total_leads,
-                last_job=f"interrompido: {total_leads} leads",
+                last_leads=shared_final,
+                session_leads=shared_final,
+                last_job=f"interrompido: meta {shared_final}/{target_leads or '∞'}",
             )
-            add_log(f"Interrompido pelo usuário ({total_leads} leads na sessão)", level="WARN")
+            add_log(
+                f"Interrompido · meta compartilhada {shared_final}/{target_leads or '∞'}",
+                level="WARN",
+            )
             raise
         except Exception as exc:
             set_status("erro", last_error=str(exc), last_job="falha na sessão")
@@ -365,6 +389,100 @@ def run_now(
             set_status("erro", last_error=str(exc), last_job=f"manual {cidade}")
             add_log(f"Erro manual: {exc}", level="ERROR")
             sys.exit(1)
+
+
+# ── COMANDO: fonte-b / cnpj (paralelo ao Maps, grátis) ─────────────────────
+
+@cli.command("fonte-b")
+@click.option("--cidade", "-c", default=None, help="Cidade única (senão usa plano).")
+@click.option("--estado", "-e", default=None, help="UF.")
+@click.option("--niche", "-n", default=None, help="Nicho id único.")
+@click.option("--meta", default=0, type=int, help="Meta de leads (0 = plano/sem teto).")
+def run_fonte_b(
+    cidade: str | None,
+    estado: str | None,
+    niche: str | None,
+    meta: int,
+) -> None:
+    """Fonte B grátis (OSM + CNPJ BrasilAPI se houver tag).
+
+    Só grava SEM site próprio E com telefone ou Instagram.
+    Pode rodar em paralelo ao `run` (Maps).
+    """
+    from src.bot_status import set_status, add_log
+    from src.cnpj_source import run_fonte_b_for_plan, run_from_bot_plan
+
+    logger.info("[Fonte B] ========== INÍCIO ==========")
+    logger.info(
+        "[Fonte B] Só grava se: SEM site próprio e COM telefone ou Instagram."
+    )
+    try:
+        # NÃO zera session_leads — roda em paralelo com o Maps e soma na mesma meta
+        set_status("rodando", last_job="fonte-b")
+        add_log("Fonte B iniciada (OpenStreetMap + CNPJ se houver)")
+    except Exception:
+        pass
+
+    try:
+        if cidade and niche:
+            logger.info(
+                "[Fonte B] Modo manual: {} / {} · nicho {}",
+                cidade,
+                estado or "?",
+                niche,
+            )
+            stats = run_fonte_b_for_plan(
+                [{"nome": cidade, "estado": estado or "", "ativo": True}],
+                [{"id": niche}],
+                target_leads=meta or 0,
+                max_per_pair=30,
+            )
+        else:
+            stats = run_from_bot_plan()
+        saved = int(stats.get("saved") or 0)
+        logger.info(
+            "[Fonte B] Resultado: {} lead(s) salvos · {} no mapa · {} sem contato · {} erros",
+            saved,
+            stats.get("raw_found", 0),
+            stats.get("skipped_no_contact", 0),
+            stats.get("errors", 0),
+        )
+        try:
+            add_log(
+                f"Fonte B fim: {saved} salvos | mapa={stats.get('raw_found')} | "
+                f"sem contato={stats.get('skipped_no_contact')}"
+            )
+            # não sobrescreve contagem da sessão (Maps + Fonte B somados)
+            set_status(
+                "parado",
+                last_job=f"fonte-b: +{saved} leads",
+            )
+        except Exception:
+            pass
+    except Exception as exc:
+        logger.error("[Fonte B] Falhou: {}", exc)
+        try:
+            set_status("erro", last_error=str(exc), last_job="fonte-b")
+            add_log(f"Fonte B erro: {exc}", level="ERROR")
+        except Exception:
+            pass
+        sys.exit(1)
+
+
+@cli.command("cnpj")
+@click.option("--cidade", "-c", default=None)
+@click.option("--estado", "-e", default=None)
+@click.option("--niche", "-n", default=None)
+@click.option("--meta", default=0, type=int)
+def run_cnpj_alias(
+    cidade: str | None,
+    estado: str | None,
+    niche: str | None,
+    meta: int,
+) -> None:
+    """Alias de `fonte-b` (OSM + enriquecimento CNPJ quando houver)."""
+    ctx = click.get_current_context()
+    ctx.invoke(run_fonte_b, cidade=cidade, estado=estado, niche=niche, meta=meta)
 
 
 # ── COMANDO: schedule ──────────────────────────────────────────────────────

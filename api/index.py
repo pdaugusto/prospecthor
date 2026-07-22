@@ -250,7 +250,7 @@ def _apply_patrao_scope(leads: list, scope: str, owner_id: int | None) -> list:
 def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | None = None) -> list:
     """
     Isolamento final:
-    - Cliente / impersonate → só assigned_to == user_id E com telefone
+    - Cliente / impersonate → só assigned_to == user_id E com tel OU Instagram
     - Patrão → aplica scope (default free = sobras para encaminhar)
     """
     if _is_patrao_view():
@@ -259,15 +259,15 @@ def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | 
     if not uid:
         return []
     try:
-        from src.users import has_contact_phone
+        from src.users import lead_has_client_contact
     except Exception:
-        def has_contact_phone(p):  # type: ignore
-            return bool(p and str(p).strip())
+        def lead_has_client_contact(c):  # type: ignore
+            return bool((c or {}).get("phone"))
     out = []
     for l in leads or []:
         try:
             owner = l.get("assigned_to")
-            if owner is not None and int(owner) == uid and has_contact_phone(l.get("phone")):
+            if owner is not None and int(owner) == uid and lead_has_client_contact(l):
                 out.append(l)
         except (TypeError, ValueError):
             continue
@@ -517,6 +517,143 @@ def _login_register_fail(ip: str) -> None:
     _login_attempts[ip].append(time.time())
 
 
+def _packages_for_view():
+    """Pacotes com preço formatado pra landing/loja."""
+    try:
+        from src.trovoeda import list_packages, ensure_schema
+        ensure_schema()
+        pkgs = list_packages(active_only=True)
+    except Exception:
+        pkgs = []
+    out = []
+    for p in pkgs:
+        coins = int(p.get("coins") or 0)
+        cents = int(p.get("price_cents") or 0)
+        reais = cents / 100.0
+        per = (reais / coins) if coins else 0
+        item = dict(p)
+        item["price_brl"] = f"{reais:.2f}".replace(".", ",")
+        item["per_lead"] = f"{per:.2f}".replace(".", ",") if coins else ""
+        out.append(item)
+    return out
+
+
+@app.route("/landing")
+@app.route("/home")
+def landing_page():
+    """Landing pública (visitante)."""
+    if session.get("logged_in"):
+        return redirect("/leads")
+    try:
+        from src.trovoeda import public_stats, ensure_schema
+        ensure_schema()
+        stats = public_stats()
+    except Exception:
+        stats = {"leads_total": 0, "leads_raio": 0, "cities": 0, "niches": 0}
+    return render_template(
+        "landing.html",
+        packages=_packages_for_view(),
+        stats=stats,
+    )
+
+
+@app.route("/termos")
+def page_termos():
+    return render_template("termos.html")
+
+
+@app.route("/privacidade")
+def page_privacidade():
+    return render_template("privacidade.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Cadastro público + bônus de Trovoedas."""
+    if session.get("logged_in"):
+        return redirect("/")
+    form = {
+        "display_name": "",
+        "username": "",
+        "email": "",
+        "whatsapp": "",
+        "terms": False,
+    }
+    error = None
+    if request.method == "POST":
+        form["display_name"] = (request.form.get("display_name") or "").strip()
+        form["username"] = (request.form.get("username") or "").strip().lower()
+        form["email"] = (request.form.get("email") or "").strip().lower()
+        form["whatsapp"] = (request.form.get("whatsapp") or "").strip()
+        form["terms"] = bool(request.form.get("terms"))
+        password = request.form.get("password") or ""
+
+        if not form["terms"]:
+            error = "Aceite os Termos e a Privacidade para continuar."
+        elif len(password) < 8:
+            error = "Senha deve ter no mínimo 8 caracteres."
+        elif not form["username"] or not form["email"] or not form["whatsapp"]:
+            error = "Preencha nome de usuário, e-mail e WhatsApp."
+        elif form["username"] in ("patrao", "admin", "root", "sistema"):
+            error = "Este nome de usuário não está disponível."
+        else:
+            try:
+                from src.users import create_user, get_user_by_username
+                from src.trovoeda import ensure_schema as t_schema
+                t_schema()
+                if get_user_by_username(form["username"]):
+                    error = "Usuário já existe. Escolha outro login."
+                else:
+                    import psycopg2
+                    # check email
+                    try:
+                        conn = psycopg2.connect(os.getenv("DATABASE_URL") or "")
+                        cur = conn.cursor()
+                        cur.execute(
+                            "SELECT 1 FROM app_users WHERE lower(COALESCE(email,'')) = %s LIMIT 1;",
+                            (form["email"],),
+                        )
+                        if cur.fetchone():
+                            error = "Este e-mail já está cadastrado."
+                        cur.close()
+                        conn.close()
+                    except Exception:
+                        pass
+                    if not error:
+                        user = create_user(
+                            username=form["username"],
+                            password=password,
+                            monthly_quota=0,  # SaaS: usa Trovoedas, não cota mensal
+                            label=form["display_name"] or form["username"],
+                            email=form["email"],
+                            whatsapp=form["whatsapp"],
+                            display_name=form["display_name"],
+                            terms_accepted=True,
+                            welcome_bonus=True,
+                        )
+                        # login automático
+                        session.clear()
+                        session.permanent = True
+                        session["logged_in"] = True
+                        session["login_at"] = datetime.now().isoformat()
+                        session["username"] = user.get("username")
+                        session["role"] = "client"
+                        session["label"] = user.get("label") or form["display_name"]
+                        session["user_id"] = user.get("id")
+                        return redirect("/shop?welcome=1")
+            except Exception as exc:
+                msg = str(exc)
+                if "unique" in msg.lower() or "duplicate" in msg.lower():
+                    error = "Usuário ou e-mail já cadastrado."
+                else:
+                    error = "Não foi possível criar a conta. Tente de novo."
+                    try:
+                        app.logger.warning("register fail: %s", exc)
+                    except Exception:
+                        pass
+    return render_template("register.html", error=error, form=form)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("logged_in"):
@@ -608,6 +745,13 @@ def logout():
 
 
 @app.route("/")
+def root_or_landing():
+    """Visitante → landing; logado → painel."""
+    if session.get("logged_in"):
+        return render_template("index.html")
+    return landing_page()
+
+
 @app.route("/leads")
 @app.route("/lead/<int:lead_id>")
 @app.route("/reports")
@@ -615,6 +759,10 @@ def logout():
 @app.route("/users")
 @app.route("/audit")
 @app.route("/bot")
+@app.route("/shop")
+@app.route("/trovoedas")
+@app.route("/wallet")
+@app.route("/carteira")
 @login_required
 def dashboard(lead_id=None):
     return render_template("index.html")
@@ -653,17 +801,183 @@ def api_me():
     if u.get("id") and (not is_adm or imp):
         try:
             from src.users import count_assigned_this_month, get_user_by_id
+            from src.trovoeda import get_balance
             full = get_user_by_id(int(u["id"])) or {}
             payload["monthly_quota"] = full.get("monthly_quota", 0)
             payload["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
             payload["label"] = full.get("label") or u.get("username")
+            payload["trovoedas"] = int(full.get("trovoedas_balance") or get_balance(int(u["id"])) or 0)
             if imp:
                 payload["impersonate_label"] = payload["label"]
         except Exception:
-            pass
+            payload.setdefault("trovoedas", 0)
     elif is_adm and not imp:
         payload["label"] = "Patrão"
+        payload["trovoedas"] = None  # patrão não usa saldo de cliente
+    else:
+        payload.setdefault("trovoedas", 0)
     return jsonify(payload)
+
+
+@app.route("/api/trovoeda/balance")
+@login_required
+def api_trovoeda_balance():
+    """Saldo do usuário efetivo (cliente ou impersonate)."""
+    from src.trovoeda import get_balance, ensure_schema
+    ensure_schema()
+    uid = _effective_user_id()
+    if not uid:
+        return jsonify({"trovoedas": 0})
+    return jsonify({"trovoedas": get_balance(int(uid)), "user_id": int(uid)})
+
+
+@app.route("/api/trovoeda/ledger")
+@login_required
+def api_trovoeda_ledger():
+    """Extrato do usuário efetivo; patrao pode passar ?user_id=."""
+    from src.trovoeda import list_ledger, ensure_schema
+    ensure_schema()
+    uid = _effective_user_id()
+    if _is_real_admin() and not _is_impersonating():
+        q = request.args.get("user_id")
+        if q and str(q).isdigit():
+            uid = int(q)
+    if not uid:
+        return jsonify([])
+    limit = int(request.args.get("limit") or 50)
+    return jsonify(list_ledger(int(uid), limit=limit))
+
+
+@app.route("/api/trovoeda/grant", methods=["POST"])
+@login_required
+@admin_required
+def api_trovoeda_grant():
+    """Patrão credita (ou debita se amount negativo) Trovoedas em um cliente."""
+    if not _is_real_admin() or _is_impersonating():
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        target_id = int(data.get("user_id") or 0)
+        amount = int(data.get("amount") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"error": "user_id e amount inválidos"}), 400
+    if not target_id:
+        return jsonify({"error": "user_id obrigatório"}), 400
+    if amount == 0:
+        return jsonify({"error": "amount não pode ser 0"}), 400
+
+    from src.trovoeda import admin_grant, admin_debit, ensure_schema
+    from src.users import get_user_by_id
+    from src.audit import log_action
+
+    ensure_schema()
+    target = get_user_by_id(target_id)
+    if not target:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+
+    su = _session_user()
+    note = (data.get("note") or "").strip()
+    if amount > 0:
+        result = admin_grant(
+            target_id, amount, created_by=su.get("id"), note=note
+        )
+    else:
+        result = admin_debit(
+            target_id, abs(amount), created_by=su.get("id"), note=note
+        )
+
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error") or "falha", **result}), 400
+
+    log_action(
+        "trovoeda_grant",
+        user_id=su.get("id"),
+        username=su.get("username"),
+        details={
+            "target_id": target_id,
+            "target": target.get("username"),
+            "amount": amount,
+            "balance": result.get("balance"),
+            "note": note,
+        },
+    )
+    return jsonify({
+        "success": True,
+        "user_id": target_id,
+        "username": target.get("username"),
+        "amount": amount,
+        "trovoedas": result.get("balance"),
+    })
+
+
+@app.route("/api/trovoeda/packages")
+@login_required
+def api_trovoeda_packages():
+    """Lista pacotes (preços futuros Stripe)."""
+    from src.trovoeda import list_packages, ensure_schema
+    ensure_schema()
+    return jsonify(list_packages(active_only=True))
+
+
+@app.route("/api/trovoeda/checkout", methods=["POST"])
+@login_required
+def api_trovoeda_checkout():
+    """
+    Inicia checkout Stripe do pacote.
+    Fase atual: retorna 501 se Stripe não configurado (UI da loja já funciona).
+    """
+    data = request.get_json(silent=True) or {}
+    slug = (data.get("package") or data.get("slug") or "").strip().lower()
+    if not slug:
+        return jsonify({"error": "package obrigatório"}), 400
+
+    from src.trovoeda import list_packages, ensure_schema
+    ensure_schema()
+    pkgs = {p.get("slug"): p for p in list_packages(active_only=True)}
+    pkg = pkgs.get(slug)
+    if not pkg:
+        return jsonify({"error": "pacote não encontrado"}), 404
+
+    secret = (os.getenv("STRIPE_SECRET_KEY") or "").strip()
+    price_id = (pkg.get("stripe_price_id") or "").strip() or (
+        os.getenv(f"STRIPE_PRICE_{slug.upper()}") or ""
+    ).strip()
+
+    if not secret or not price_id:
+        return jsonify({
+            "status": "not_configured",
+            "message": "Stripe ainda não configurado",
+            "package": pkg,
+        }), 501
+
+    # Stripe real — fases seguintes; mantém stub seguro
+    try:
+        import stripe  # type: ignore
+        stripe.api_key = secret
+        uid = _effective_user_id()
+        success = request.host_url.rstrip("/") + "/shop?paid=1"
+        cancel = request.host_url.rstrip("/") + "/shop?canceled=1"
+        session_obj = stripe.checkout.Session.create(
+            mode="payment",
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=success,
+            cancel_url=cancel,
+            client_reference_id=str(uid or ""),
+            metadata={
+                "user_id": str(uid or ""),
+                "package": slug,
+                "coins": str(pkg.get("coins") or 0),
+            },
+        )
+        return jsonify({"url": session_obj.url, "session_id": session_obj.id})
+    except ImportError:
+        return jsonify({
+            "status": "not_configured",
+            "message": "Pacote stripe não instalado no servidor",
+            "package": pkg,
+        }), 501
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 400
 
 
 @app.route("/api/impersonate", methods=["POST"])
@@ -1157,23 +1471,23 @@ def api_lead_assign(lead_id):
     from src.users import manual_assign
     from src.audit import log_action
     data = request.get_json(silent=True) or {}
-    from src.users import has_contact_phone
+    from src.users import lead_has_client_contact
     aid = data.get("assigned_to")
     lead = get_lead_by_id(lead_id) or {}
     if aid in (None, "", 0, "0", "null"):
         ok = manual_assign(lead_id, None)
         assigned = None
     else:
-        if not has_contact_phone(lead.get("phone")):
+        if not lead_has_client_contact(lead):
             return jsonify({
                 "success": False,
-                "error": "Lead sem telefone de contato — não envia para cliente.",
+                "error": "Lead sem WhatsApp/telefone nem Instagram — não envia para cliente.",
             }), 400
         ok = manual_assign(lead_id, int(aid))
         if not ok:
             return jsonify({
                 "success": False,
-                "error": "Não foi possível atribuir (sem telefone ou erro).",
+                "error": "Não foi possível atribuir (sem contato ou erro).",
             }), 400
         assigned = int(aid)
     audit_uid, audit_uname = _audit_actor()
@@ -1194,12 +1508,53 @@ def api_lead_assign(lead_id):
 @admin_required
 def api_leads_distribute():
     """
-    Patrão distribui sobras (livres) para clientes ATIVOS com vaga na cota.
-    Body opcional: { "limit": N, "user_id": id } — user_id manda só pra um cliente.
+    Patrão distribui sobras.
+
+    Modo seletivo (preferido):
+      { "lead_ids": [1,2,3], "user_id": 5, "respect_quota": true }
+
+    Modo automático (legado):
+      { "limit": N, "user_id": id? } — round-robin em clientes ativos com vaga.
     """
-    from src.users import distribute_free_leads
+    from src.users import distribute_free_leads, distribute_selected_leads
     from src.audit import log_action
     data = request.get_json(silent=True) or {}
+    lead_ids = data.get("lead_ids") or data.get("ids") or []
+    if isinstance(lead_ids, (int, str)):
+        lead_ids = [lead_ids]
+
+    # —— seleção manual: leads escolhidos + destinatário ——
+    if lead_ids and data.get("user_id") not in (None, "", "null"):
+        try:
+            only = int(data.get("user_id"))
+        except (TypeError, ValueError):
+            return jsonify({"error": "user_id inválido"}), 400
+        respect = data.get("respect_quota", True)
+        if isinstance(respect, str):
+            respect = respect.lower() in ("1", "true", "yes", "sim")
+        result = distribute_selected_leads(
+            lead_ids=[int(x) for x in lead_ids if str(x).strip().isdigit() or isinstance(x, int)],
+            user_id=only,
+            respect_quota=bool(respect),
+        )
+        audit_uid, audit_uname = _audit_actor()
+        log_action(
+            "distribute_selected",
+            user_id=audit_uid,
+            username=audit_uname,
+            details={
+                "distributed": result.get("distributed"),
+                "skipped": result.get("skipped"),
+                "lead_ids_count": len(lead_ids),
+                "user_id": only,
+                "by_user": result.get("by_user"),
+            },
+        )
+        _invalidate_cache()
+        ok = int(result.get("distributed") or 0) > 0
+        return jsonify({"success": ok, **result}), (200 if ok or result.get("message") else 400)
+
+    # —— automático ——
     limit = data.get("limit")
     only_uid = data.get("user_id")
     try:
@@ -1228,6 +1583,40 @@ def api_leads_distribute():
     )
     _invalidate_cache()
     return jsonify({"success": True, **result})
+
+
+@app.route("/api/leads/<int:lead_id>", methods=["DELETE"])
+@app.route("/api/leads/<int:lead_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def api_lead_delete(lead_id):
+    """Patrão apaga um lead do banco (de qualquer dono). Cliente = 403."""
+    from src.users import delete_company_lead
+    from src.audit import log_action
+
+    lead = get_lead_by_id(lead_id) or {}
+    if not lead:
+        return jsonify({"error": "Lead não encontrado"}), 404
+
+    ok = delete_company_lead(int(lead_id))
+    if not ok:
+        return jsonify({"error": "Não foi possível apagar o lead"}), 500
+
+    audit_uid, audit_uname = _audit_actor()
+    log_action(
+        "lead_delete",
+        user_id=audit_uid,
+        username=audit_uname,
+        lead_id=lead_id,
+        company_name=lead.get("name"),
+        details={
+            "assigned_to": lead.get("assigned_to"),
+            "city": lead.get("city"),
+            "niche": lead.get("niche"),
+        },
+    )
+    _invalidate_cache()
+    return jsonify({"success": True, "deleted_id": lead_id, "name": lead.get("name")})
 
 
 @app.route("/api/audit")

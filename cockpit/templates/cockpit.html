@@ -89,22 +89,118 @@
     .st.rodando { color: var(--neon); }
     .st.ok { color: var(--ok); }
     .st.erro, .st.parada { color: var(--danger); }
+    .log-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    @media (max-width: 900px) { .log-grid { grid-template-columns: 1fr; } }
+    .log-panel {
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: #070b12;
+      display: flex; flex-direction: column;
+      min-height: 200px;
+    }
+    .log-panel.maps {
+      border-color: rgba(0, 212, 255, 0.35);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.06);
+    }
+    .log-panel.fonteb {
+      border-color: rgba(167, 139, 250, 0.4);
+      box-shadow: 0 0 20px rgba(167, 139, 250, 0.08);
+    }
+    .log-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; font-size: 11px; font-weight: 800;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    .log-panel.maps .log-panel-head {
+      background: rgba(0, 212, 255, 0.1);
+      color: #5ce1ff;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+    .log-panel.fonteb .log-panel-head {
+      background: rgba(167, 139, 250, 0.12);
+      color: #c4b5fd;
+      border-bottom: 1px solid rgba(167, 139, 250, 0.25);
+    }
+    .log-panel-head .dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+      margin-right: 6px;
+    }
+    .log-panel.maps .dot { background: #00d4ff; box-shadow: 0 0 8px #00d4ff; }
+    .log-panel.fonteb .dot { background: #a78bfa; box-shadow: 0 0 8px #a78bfa; }
     .log {
-      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.5;
-      max-height: 340px; overflow: auto; color: var(--muted); background: #070b12;
-      border: 1px solid var(--border); border-radius: 10px; padding: 10px;
-      white-space: pre-wrap; word-break: break-word;
+      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.55;
+      max-height: 300px; overflow: auto; color: var(--muted);
+      padding: 10px;
+      white-space: pre-wrap; word-break: break-word; flex: 1;
     }
     .log .e { color: var(--danger); }
     .log .w { color: var(--warn); }
-    .log .b { color: #9fdfff; }
+    /* Maps = ciano */
+    .log .src-maps { color: #7dd3fc; }
+    .log .src-maps.e { color: #fca5a5; }
+    .log .src-maps.w { color: #fcd34d; }
+    /* Fonte B / CNPJ = roxo/violeta */
+    .log .src-fonteb { color: #c4b5fd; }
+    .log .src-fonteb.e { color: #f9a8d4; }
+    .log .src-fonteb.w { color: #fde68a; }
+    /* Sistema = cinza/verde suave */
+    .log .src-sys { color: #94a3b8; }
+    .log .src-sys.e { color: var(--danger); }
+    .log .src-sys.w { color: var(--warn); }
+    .log .tag {
+      display: inline-block; font-size: 9px; font-weight: 800;
+      padding: 1px 5px; border-radius: 4px; margin-right: 6px;
+      letter-spacing: .03em; vertical-align: middle;
+    }
+    .log .tag.maps { background: rgba(0,212,255,.15); color: #5ce1ff; }
+    .log .tag.fonteb { background: rgba(167,139,250,.2); color: #c4b5fd; }
+    .log .tag.sys { background: rgba(148,163,184,.15); color: #94a3b8; }
+    .log-empty { color: var(--muted); font-size: 11px; padding: 8px 0; }
     .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
     .msg { font-size: 13px; color: var(--neon); margin-bottom: 8px; min-height: 1.2em; }
     .leads-big {
       font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.03em;
-      margin: 4px 0 10px;
+      margin: 4px 0 6px;
     }
-    .leads-big span { color: var(--neon); text-shadow: 0 0 14px rgba(0,212,255,.35); }
+    .leads-big .meta-got {
+      color: var(--neon); text-shadow: 0 0 14px rgba(0,212,255,.35);
+    }
+    .leads-big .meta-slash { color: var(--muted); margin: 0 2px; font-weight: 700; }
+    .leads-big .meta-tgt { color: #9fdfff; }
+    .meta-sub {
+      font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.4;
+    }
+    .meta-bar {
+      height: 8px; border-radius: 999px; background: #0e1520;
+      border: 1px solid var(--border); overflow: hidden; margin: 0 0 14px;
+    }
+    .meta-bar > span {
+      display: block; height: 100%; width: 0%;
+      background: linear-gradient(90deg, #00d4ff, #22c55e);
+      transition: width .4s ease;
+      border-radius: 999px;
+    }
+    .meta-bar.full > span {
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+    }
+    .btn-xs {
+      padding: 4px 8px; font-size: 11px; border-radius: 8px; font-weight: 700;
+      min-width: 28px;
+    }
+    .btn-xs.danger { border-color: var(--danger); color: var(--danger); }
+    .btn-xs.edit { border-color: var(--neon); color: var(--neon); }
+    .act-cell { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    tr.editing { background: rgba(0,212,255,.06); }
+    tr.selected-row { background: rgba(0,212,255,.04); }
+    .form-mode {
+      font-size: 12px; font-weight: 700; color: var(--neon); margin-bottom: 8px;
+      min-height: 1.2em;
+    }
+    .btn-cancel-edit {
+      width: 100%; margin-top: 8px; border-color: var(--muted); color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -119,7 +215,8 @@
 
     <div class="grid">
       <section class="card">
-        <h2>Nova missão</h2>
+        <h2 id="form-title">Nova missão</h2>
+        <p class="form-mode" id="form-mode"></p>
         <label class="f">Quem recebe os leads</label>
         <select id="user_id">
           <option value="">Livre (sem dono forçado)</option>
@@ -157,48 +254,74 @@
           <button type="button" onclick="clearAllSelections()" style="flex:1;border-color:var(--danger);color:var(--danger);">✕ Limpar nichos e cidades</button>
         </div>
 
-        <button type="button" class="btn-add" onclick="addMission()">+ Adicionar na fila</button>
-        <p class="hint">Várias missões = o bot faz uma atrás da outra. Nichos revezam e a meta divide entre eles.</p>
+        <button type="button" class="btn-add" id="btn-save-mission" onclick="saveMissionForm()">+ Adicionar na fila</button>
+        <button type="button" class="btn-cancel-edit" id="btn-cancel-edit" style="display:none;" onclick="cancelEdit()">Cancelar edição</button>
+        <p class="hint">Várias missões = uma atrás da outra. Marque na fila e ▶ roda só as escolhidas. Ordem da lista = ordem de execução.</p>
       </section>
 
       <section class="card">
         <h2>Controles</h2>
         <p class="msg" id="msg">—</p>
-        <div class="leads-big">Leads sessão: <span id="sess-leads">0</span></div>
+        <div class="leads-big">
+          Meta:
+          <span class="meta-got" id="sess-leads">0</span><span class="meta-slash">/</span><span class="meta-tgt" id="sess-target">—</span>
+        </div>
+        <p class="meta-sub" id="meta-sub">Leads da missão atual (Maps + Fonte B)</p>
+        <div class="meta-bar" id="meta-bar" title="Progresso da meta"><span id="meta-fill"></span></div>
         <div class="row">
           <button type="button" class="btn-run" id="btn-run" onclick="runQueue()">▶ Rodar fila</button>
           <button type="button" class="btn-stop" onclick="stopBot()">■ Parar</button>
           <button type="button" class="btn-score" onclick="runScore(false)">⚡ Só score</button>
           <button type="button" class="btn-score" onclick="runScore(true)">⚡ Score force</button>
         </div>
-        <p class="hint">
-          <b>Só score</b> = pontua o que faltou (ex.: depois de Ctrl+C).<br />
-          <b>Score force</b> = recalcula raios (mais lento).
+        <p class="hint" id="run-hint">
+          <b>▶ Rodar</b>: se nada marcado → todas as pendentes; se marcar → só as selecionadas.<br />
+          Cada missão sobe <b>Maps + Fonte B</b> (OSM/CNPJ) juntos — só lead com WA/tel ou Instagram.<br />
+          <b>Só score</b> = pontua o que faltou · <b>Score force</b> = recalcula raios.
         </p>
 
         <h2 style="margin-top:18px;">Fila</h2>
         <div class="row" style="margin-top:0;margin-bottom:8px;">
+          <button type="button" class="btn-xs" onclick="selectAllMissions(true)">Marcar todas</button>
+          <button type="button" class="btn-xs" onclick="selectAllMissions(false)">Limpar marcas</button>
           <button type="button" onclick="clearDone()">Limpar ok/erro</button>
           <button type="button" onclick="refresh()">Atualizar</button>
         </div>
+        <p class="hint" style="margin-top:0;margin-bottom:8px;" id="sel-hint">0 missão(ões) marcada(s)</p>
         <div style="overflow:auto;">
           <table>
             <thead>
               <tr>
+                <th style="width:28px;"></th>
+                <th style="width:36px;">#</th>
                 <th>Missão</th>
                 <th>Dono</th>
                 <th>Meta</th>
+                <th>Progresso</th>
                 <th>Status</th>
-                <th></th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
 
-        <h2 style="margin-top:16px;">Log do bot (ao vivo)</h2>
-        <p class="hint" style="margin-top:0;margin-bottom:8px;">Mesma ideia do CMD antigo — jobs, bairros e contagem de leads.</p>
-        <div class="log" id="log"></div>
+        <h2 style="margin-top:16px;">Logs ao vivo (separados)</h2>
+        <p class="hint" style="margin-top:0;margin-bottom:8px;">
+          <span style="color:#5ce1ff">● Maps</span> = Google ·
+          <span style="color:#c4b5fd">● Fonte B / CNPJ</span> = mapa em paralelo ·
+          eventos do cockpit entram nos dois quando for sistema.
+        </p>
+        <div class="log-grid">
+          <div class="log-panel maps">
+            <div class="log-panel-head"><span><span class="dot"></span>Google Maps</span><span id="log-maps-count" style="font-weight:600;opacity:.8">0</span></div>
+            <div class="log" id="log-maps"></div>
+          </div>
+          <div class="log-panel fonteb">
+            <div class="log-panel-head"><span><span class="dot"></span>Fonte B · CNPJ / mapa</span><span id="log-fonteb-count" style="font-weight:600;opacity:.8">0</span></div>
+            <div class="log" id="log-fonteb"></div>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -206,6 +329,9 @@
   <script>
     let catalog = { cities: [], niches: [] };
     let users = [];
+    let lastMissions = [];
+    let selectedMissionIds = new Set();
+    let editingId = null;
 
     async function jfetch(url, opts) {
       const res = await fetch(url, {
@@ -306,30 +432,170 @@
       filterChecks('city');
     }
 
-    async function addMission() {
+    function missionBodyFromForm() {
       const userSel = document.getElementById('user_id');
       const opt = userSel.selectedOptions[0];
-      const body = {
+      return {
         user_id: userSel.value || null,
-        username: opt && userSel.value ? (opt.textContent.split('(@')[0]||'').trim() : '',
+        username: opt && userSel.value ? (opt.textContent.split('(@')[0] || '').trim() : '',
         niche_ids: checked('niche'),
         city_ids: checked('city'),
         target_leads: parseInt(document.getElementById('target').value || '20', 10),
         label: document.getElementById('label').value || '',
       };
+    }
+
+    function setFormMode(id) {
+      editingId = id || null;
+      const title = document.getElementById('form-title');
+      const mode = document.getElementById('form-mode');
+      const btn = document.getElementById('btn-save-mission');
+      const cancel = document.getElementById('btn-cancel-edit');
+      if (editingId) {
+        if (title) title.textContent = 'Editar missão';
+        if (mode) mode.textContent = 'Editando #' + editingId + ' — salve ou cancele';
+        if (btn) btn.textContent = '💾 Salvar alterações';
+        if (cancel) cancel.style.display = '';
+      } else {
+        if (title) title.textContent = 'Nova missão';
+        if (mode) mode.textContent = '';
+        if (btn) btn.textContent = '+ Adicionar na fila';
+        if (cancel) cancel.style.display = 'none';
+      }
+      renderMissions(lastMissions);
+    }
+
+    function cancelEdit() {
+      setFormMode(null);
+      document.getElementById('label').value = '';
+      clearAllSelections();
+      document.getElementById('target').value = '20';
+      document.getElementById('user_id').value = '';
+    }
+
+    async function saveMissionForm() {
+      const body = missionBodyFromForm();
+      if (!body.niche_ids.length || !body.city_ids.length) {
+        alert('Escolha pelo menos 1 nicho e 1 cidade.');
+        return;
+      }
       try {
-        await jfetch('/api/missions', { method: 'POST', body: JSON.stringify(body) });
-        document.getElementById('label').value = '';
+        if (editingId) {
+          await jfetch('/api/missions/' + editingId, {
+            method: 'POST',
+            body: JSON.stringify(body),
+          });
+          setFormMode(null);
+          document.getElementById('label').value = '';
+        } else {
+          await jfetch('/api/missions', { method: 'POST', body: JSON.stringify(body) });
+          document.getElementById('label').value = '';
+        }
         await refresh();
       } catch (e) {
         alert(e.message);
       }
     }
 
+    function startEditMission(id) {
+      const m = lastMissions.find(x => String(x.id) === String(id));
+      if (!m) {
+        alert('Missão não encontrada na fila.');
+        return;
+      }
+      if (m.status === 'rodando') {
+        alert('Missão em execução. Pare o bot para editar.');
+        return;
+      }
+      setFormMode(String(m.id));
+      document.getElementById('label').value = m.label || '';
+      document.getElementById('target').value = m.target_leads || 20;
+      document.getElementById('user_id').value = m.user_id != null ? String(m.user_id) : '';
+
+      const niches = new Set((m.niche_ids || []).map(String));
+      const cities = new Set((m.city_ids || []).map(String));
+      document.querySelectorAll('.niche').forEach(el => { el.checked = niches.has(el.value); });
+      document.querySelectorAll('.city').forEach(el => { el.checked = cities.has(el.value); });
+      updateSelCounts();
+      // limpa filtros pra achar os marcados
+      const nf = document.getElementById('niche-filter');
+      const cf = document.getElementById('city-filter');
+      if (nf) nf.value = '';
+      if (cf) cf.value = '';
+      filterChecks('niche');
+      filterChecks('city');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     async function delMission(id) {
-      if (!confirm('Remover missão ' + id + '?')) return;
-      await jfetch('/api/missions/' + id, { method: 'DELETE' });
-      await refresh();
+      const m = lastMissions.find(x => String(x.id) === String(id));
+      const name = (m && (m.label || m.id)) || id;
+      if (!confirm('Apagar missão da fila?\n\n' + name)) return;
+      try {
+        await jfetch('/api/missions/' + id, { method: 'DELETE' });
+        selectedMissionIds.delete(String(id));
+        if (editingId === String(id)) cancelEdit();
+        await refresh();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function moveMission(id, dir) {
+      const ids = lastMissions.map(m => String(m.id));
+      const i = ids.indexOf(String(id));
+      if (i < 0) return;
+      const j = i + dir;
+      if (j < 0 || j >= ids.length) return;
+      const next = ids.slice();
+      const tmp = next[i];
+      next[i] = next[j];
+      next[j] = tmp;
+      try {
+        await jfetch('/api/missions/reorder', {
+          method: 'POST',
+          body: JSON.stringify({ ids: next }),
+        });
+        await refresh();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    function toggleMissionSelect(id, on) {
+      id = String(id);
+      if (on) selectedMissionIds.add(id);
+      else selectedMissionIds.delete(id);
+      updateSelHint();
+      renderMissions(lastMissions);
+    }
+
+    function selectAllMissions(on) {
+      if (on) {
+        lastMissions.forEach(m => {
+          if (m.status === 'pendente' || m.status === 'parada' || m.status === 'erro') {
+            selectedMissionIds.add(String(m.id));
+          }
+        });
+      } else {
+        selectedMissionIds = new Set();
+      }
+      updateSelHint();
+      renderMissions(lastMissions);
+    }
+
+    function updateSelHint() {
+      const el = document.getElementById('sel-hint');
+      const n = selectedMissionIds.size;
+      const btn = document.getElementById('btn-run');
+      if (el) {
+        el.textContent = n
+          ? n + ' missão(ões) marcada(s) — ▶ roda só essas (ordem da lista)'
+          : 'Nenhuma marcada — ▶ roda todas as pendentes na ordem';
+      }
+      if (btn) {
+        btn.textContent = n ? ('▶ Rodar selecionadas (' + n + ')') : '▶ Rodar fila';
+      }
     }
 
     async function clearDone() {
@@ -340,8 +606,30 @@
     async function runQueue() {
       const btn = document.getElementById('btn-run');
       btn.disabled = true;
+      const body = {};
       try {
-        await jfetch('/api/run', { method: 'POST', body: '{}' });
+        if (selectedMissionIds.size) {
+          // reabre parada/erro/ok → pendente antes de rodar
+          for (const id of selectedMissionIds) {
+            const m = lastMissions.find(x => String(x.id) === String(id));
+            if (!m || m.status === 'pendente' || m.status === 'rodando') continue;
+            await jfetch('/api/missions/' + id, {
+              method: 'POST',
+              body: JSON.stringify({
+                niche_ids: m.niche_ids,
+                city_ids: m.city_ids,
+                target_leads: m.target_leads,
+                label: m.label,
+                user_id: m.user_id,
+                username: m.username,
+              }),
+            });
+          }
+          body.mission_ids = lastMissions
+            .map(m => String(m.id))
+            .filter(id => selectedMissionIds.has(id));
+        }
+        await jfetch('/api/run', { method: 'POST', body: JSON.stringify(body) });
       } catch (e) {
         alert(e.message);
       }
@@ -372,35 +660,120 @@
     }
 
     function renderMissions(missions) {
+      lastMissions = missions || [];
+      // limpa seleção de ids que sumiram
+      const alive = new Set(lastMissions.map(m => String(m.id)));
+      selectedMissionIds = new Set([...selectedMissionIds].filter(id => alive.has(id)));
+
       const tb = document.getElementById('tbody');
-      if (!missions || !missions.length) {
-        tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Fila vazia</td></tr>';
+      if (!lastMissions.length) {
+        tb.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Fila vazia</td></tr>';
+        updateSelHint();
         return;
       }
-      tb.innerHTML = missions.map(m => `
-        <tr>
-          <td><b>${esc(m.label || m.id)}</b><br><span style="color:var(--muted);font-size:11px">${esc((m.niche_ids||[]).join(', '))}<br>${esc((m.city_ids||[]).slice(0,3).join(', '))}${(m.city_ids||[]).length>3?'…':''}</span></td>
+      const liveId = window._currentMissionId || '';
+      const liveGot = window._sessionLeads || 0;
+      tb.innerHTML = lastMissions.map((m, idx) => {
+        const id = String(m.id);
+        const st = m.status || 'pendente';
+        const canEdit = st !== 'rodando';
+        const canDel = st !== 'rodando';
+        const canSelect = st === 'pendente' || st === 'parada' || st === 'erro' || st === 'ok';
+        const checked = selectedMissionIds.has(id) ? 'checked' : '';
+        const rowCls = [
+          editingId === id ? 'editing' : '',
+          selectedMissionIds.has(id) ? 'selected-row' : '',
+        ].filter(Boolean).join(' ');
+        const cityPrev = (m.city_ids || []).slice(0, 3).join(', ')
+          + ((m.city_ids || []).length > 3 ? '…' : '');
+        const tgt = parseInt(m.target_leads, 10) || 0;
+        let got = m.leads_found != null ? parseInt(m.leads_found, 10) : null;
+        if (st === 'rodando' && liveId && String(liveId) === id) {
+          got = liveGot;
+        }
+        const prog = (got != null && tgt)
+          ? `${got}/${tgt}`
+          : (st === 'pendente' ? `0/${tgt || '—'}` : (got != null ? String(got) : '—'));
+        const progColor = (got != null && tgt && got >= tgt) ? 'var(--ok)' : 'var(--neon)';
+        return `
+        <tr class="${rowCls}">
+          <td>
+            ${canSelect
+              ? `<input type="checkbox" ${checked} onchange="toggleMissionSelect('${esc(id)}', this.checked)" style="accent-color:var(--neon);" title="Selecionar para rodar">`
+              : ''}
+          </td>
+          <td style="color:var(--muted);font-size:11px;">${idx + 1}</td>
+          <td>
+            <b>${esc(m.label || m.id)}</b>
+            <br><span style="color:var(--muted);font-size:11px">${esc((m.niche_ids||[]).join(', '))}<br>${esc(cityPrev)}</span>
+            <br><span style="color:var(--muted);font-size:10px">id ${esc(id)}</span>
+          </td>
           <td>${esc(m.username || 'livre')}</td>
-          <td>${esc(m.target_leads)}</td>
-          <td><span class="st ${esc(m.status)}">${esc(m.status)}</span></td>
-          <td>${m.status === 'pendente' ? `<button type="button" onclick="delMission('${esc(m.id)}')">✕</button>` : ''}</td>
-        </tr>
-      `).join('');
+          <td>${esc(tgt || m.target_leads || '—')}</td>
+          <td style="font-weight:800;color:${progColor};font-variant-numeric:tabular-nums;">${esc(prog)}</td>
+          <td><span class="st ${esc(st)}">${esc(st)}</span></td>
+          <td>
+            <div class="act-cell">
+              <button type="button" class="btn-xs" title="Subir na fila" ${idx === 0 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', -1)">↑</button>
+              <button type="button" class="btn-xs" title="Descer na fila" ${idx >= lastMissions.length - 1 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', 1)">↓</button>
+              ${canEdit ? `<button type="button" class="btn-xs edit" title="Editar" onclick="startEditMission('${esc(id)}')">✎</button>` : ''}
+              ${canDel ? `<button type="button" class="btn-xs danger" title="Apagar" onclick="delMission('${esc(id)}')">✕</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+      updateSelHint();
     }
 
-    function renderLog(lines) {
-      const el = document.getElementById('log');
+    function _detectLogSrc(l) {
+      if (l && l.src) return l.src;
+      const m = String((l && l.msg) || '').toLowerCase();
+      if (m.includes('fonte b') || m.startsWith('📦') || m.includes('cnpj') || m.includes('openstreet')) return 'fonteb';
+      if (m.startsWith('🗺') || m.includes('playwright') || m.includes('maps') || m.includes('lead contat')) return 'maps';
+      return 'sys';
+    }
+
+    function _renderLogBox(el, lines, srcKey) {
+      if (!el) return;
       const arr = [...(lines || [])].reverse();
       const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
+      if (!arr.length) {
+        el.innerHTML = `<div class="log-empty">${srcKey === 'fonteb'
+          ? 'Aguardando Fonte B… (sobe junto com o Maps)'
+          : 'Aguardando Google Maps… aperte ▶ Rodar'}</div>`;
+        return;
+      }
       el.innerHTML = arr.map(l => {
-        let cls = l.level === 'ERROR' ? 'e' : (l.level === 'WARN' ? 'w' : '');
-        if (l.bot) cls = (cls + ' b').trim();
-        return `<div class="${cls}">[${esc((l.t||'').slice(11,19))}] ${esc(l.msg)}</div>`;
-      }).join('') || '<div>Sem logs ainda — aperte ▶ Rodar fila</div>';
-      // mantém no topo (mais recente) se usuario ja estava no topo
+        const src = _detectLogSrc(l);
+        let lvl = '';
+        if (l.level === 'ERROR') lvl = 'e';
+        else if (l.level === 'WARN') lvl = 'w';
+        const tag = src === 'fonteb' ? 'B' : (src === 'maps' ? 'M' : '·');
+        const tagCls = src === 'fonteb' ? 'fonteb' : (src === 'maps' ? 'maps' : 'sys');
+        return `<div class="src-${esc(src)} ${lvl}"><span class="tag ${tagCls}">${tag}</span>[${esc((l.t||'').slice(11,19))}] ${esc(l.msg)}</div>`;
+      }).join('');
       if (atBottom || el.dataset.stick !== '1') {
         el.scrollTop = 0;
       }
+    }
+
+    function renderLog(lines) {
+      const all = lines || [];
+      // Maps: Google + mensagens do sistema (fila, missão)
+      // Fonte B: só CNPJ / OpenStreetMap
+      const mapsOnly = all.filter(l => {
+        const s = _detectLogSrc(l);
+        return s === 'maps' || s === 'sys';
+      });
+      const bOnly = all.filter(l => _detectLogSrc(l) === 'fonteb');
+
+      _renderLogBox(document.getElementById('log-maps'), mapsOnly, 'maps');
+      _renderLogBox(document.getElementById('log-fonteb'), bOnly, 'fonteb');
+
+      const cm = document.getElementById('log-maps-count');
+      const cb = document.getElementById('log-fonteb-count');
+      if (cm) cm.textContent = String(all.filter(l => _detectLogSrc(l) === 'maps').length);
+      if (cb) cb.textContent = String(bOnly.length);
     }
 
     async function refresh() {
@@ -409,19 +782,60 @@
         const st = data.state || {};
         const bot = data.bot || {};
         document.getElementById('msg').textContent = st.message || '—';
-        const sess = st.session_leads != null ? st.session_leads : (bot.session_leads_count || 0);
-        document.getElementById('sess-leads').textContent = String(sess || 0);
+
+        const botSess = bot.session_leads_count != null ? Number(bot.session_leads_count) : 0;
+        const stSess = st.session_leads != null ? Number(st.session_leads) : 0;
+        const sess = Math.max(stSess, botSess) || 0;
+        let tgt = st.mission_target != null ? Number(st.mission_target) : 0;
+        // se missão rodando na fila, pega meta dela
+        const mid = st.current_mission_id || '';
+        const missions = data.missions || [];
+        if (mid) {
+          const cur = missions.find(m => String(m.id) === String(mid));
+          if (cur && cur.target_leads) tgt = Number(cur.target_leads) || tgt;
+        }
+        window._sessionLeads = sess;
+        window._currentMissionId = mid;
+
+        document.getElementById('sess-leads').textContent = String(sess);
+        document.getElementById('sess-target').textContent = tgt > 0 ? String(tgt) : '—';
+
+        const sub = document.getElementById('meta-sub');
+        const label = st.mission_label || (mid ? ('missão ' + mid) : '');
+        if (sub) {
+          if (st.status === 'rodando' && tgt > 0) {
+            const left = Math.max(0, tgt - sess);
+            sub.textContent = (label ? label + ' · ' : '')
+              + (sess >= tgt ? 'Meta batida ✓' : `Faltam ${left} lead(s)`)
+              + ' · Maps + Fonte B';
+          } else if (tgt > 0) {
+            sub.textContent = `Última contagem ${sess}/${tgt}` + (label ? ` · ${label}` : '');
+          } else {
+            sub.textContent = 'Leads da missão atual (Maps + Fonte B)';
+          }
+        }
+        const bar = document.getElementById('meta-bar');
+        const fill = document.getElementById('meta-fill');
+        if (fill && bar) {
+          const pct = tgt > 0 ? Math.min(100, Math.round((sess / tgt) * 100)) : 0;
+          fill.style.width = pct + '%';
+          bar.classList.toggle('full', tgt > 0 && sess >= tgt);
+          bar.title = tgt > 0 ? `Meta ${sess}/${tgt} (${pct}%)` : 'Sem meta definida';
+        }
+
         const pill = document.getElementById('pill-status');
-        pill.textContent = 'cockpit: ' + (st.status || '—');
+        pill.textContent = 'cockpit: ' + (st.status || '—')
+          + (tgt > 0 ? ` · ${sess}/${tgt}` : (sess ? ` · ${sess}` : ''));
         pill.className = 'pill' + (st.status === 'rodando' ? ' run' : (st.status === 'parado' ? '' : ''));
         if (st.status === 'rodando') pill.classList.add('run');
 
         const pb = document.getElementById('pill-bot');
         const bs = bot.status || '—';
-        pb.textContent = 'bot: ' + bs + (bot.session_leads_count != null ? ' · ' + bot.session_leads_count + ' leads' : '');
+        pb.textContent = 'bot: ' + bs
+          + (tgt > 0 ? ` · ${sess}/${tgt}` : (botSess ? ` · ${botSess} leads` : ''));
         pb.className = 'pill' + (bs === 'rodando' ? ' run' : (bs === 'parado' ? ' on' : ''));
 
-        renderMissions(data.missions || []);
+        renderMissions(missions);
         renderLog(st.log || []);
       } catch (e) {
         document.getElementById('msg').textContent = 'Erro: ' + e.message;

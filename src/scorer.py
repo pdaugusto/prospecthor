@@ -306,6 +306,25 @@ class LeadScorer:
         return re.sub(r"\D", "", str(phone or ""))
 
     @classmethod
+    def _phone_kind(cls, phone: Any) -> str:
+        """
+        celular | fixo | nenhum — regra BR unificada (Maps e Fonte B).
+        Celular: DDD + 9 + 8 dígitos (11) ou 55 + isso (12–13).
+        """
+        d = cls._phone_digits(phone)
+        if not d:
+            return "nenhum"
+        if d.startswith("55") and len(d) >= 12:
+            local = d[2:]
+        else:
+            local = d
+        if len(local) >= 11 and local[2:3] == "9":
+            return "celular"
+        if len(local) >= 10:
+            return "fixo"
+        return "nenhum"
+
+    @classmethod
     def _services_for_context(
         cls,
         *,
@@ -499,9 +518,11 @@ class LeadScorer:
         except (TypeError, ValueError):
             reviews = 0
 
-        digits = self._phone_digits(company.get("phone"))
-        has_mobile = len(digits) >= 12 or (len(digits) >= 11 and digits.startswith("55"))
-        has_landline = len(digits) >= 10 and not has_mobile
+        phone_kind = self._phone_kind(company.get("phone"))
+        has_mobile = phone_kind == "celular"
+        has_landline = phone_kind == "fixo"
+        # Instagram conta como canal de contato (Fonte B e Maps)
+        has_ig_contact = has_ig
 
         # ── A) Dor digital 0–100 ─────────────────────────────────────────
         if no_website:
@@ -562,23 +583,40 @@ class LeadScorer:
         else:
             cap = 30
 
-        # porte (ajuste fino ±8 em cima do nicho)
-        if 12 <= reviews <= 60:
-            cap = min(100, cap + 8)
-            problems.append(f"Porte saudável ({reviews} avaliações)")
-        elif 5 <= reviews <= 11:
-            cap = min(100, cap + 4)
-            problems.append(f"Porte em crescimento ({reviews} avaliações)")
-        elif reviews >= 61:
-            cap = min(100, cap + 2)
-            problems.append(f"Muita tração no Maps ({reviews} avaliações)")
-        elif reviews <= 1:
-            cap = max(0, cap - 8)
-            problems.append("Pouca prova social no Maps")
+        # porte (ajuste fino ±8) — só quando TEM dado do Google Maps
+        # (Fonte B/OSM sem nota não deve cair todo mundo no mesmo teto “pouca prova social”)
+        src = (company.get("source") or "").strip().lower()
+        maps_data_missing = (rating <= 0 and reviews <= 0)
+        partial_source = src in ("osm", "cnpj", "cnpj+osm", "fonte_b", "fonte-b")
+
+        if not maps_data_missing:
+            if 12 <= reviews <= 60:
+                cap = min(100, cap + 8)
+                problems.append(f"Porte saudável ({reviews} avaliações)")
+            elif 5 <= reviews <= 11:
+                cap = min(100, cap + 4)
+                problems.append(f"Porte em crescimento ({reviews} avaliações)")
+            elif reviews >= 61:
+                cap = min(100, cap + 2)
+                problems.append(f"Muita tração no Maps ({reviews} avaliações)")
+            elif reviews <= 1:
+                cap = max(0, cap - 8)
+                problems.append("Pouca prova social no Maps")
+        elif partial_source:
+            # mesma fórmula de blocos; sem punir por “0 reviews” se nunca teve Maps
+            problems.append(
+                "Sem nota/avaliações Google ainda (origem mapa/CNPJ) — "
+                "score usa dor + nicho + contato iguais ao Maps"
+            )
 
         # ── C) Visibilidade 0–100 ────────────────────────────────────────
         # nota Maps (0–55) + volume (0–35) + social (0–10)
-        if rating >= 4.7 and reviews >= 3:
+        if maps_data_missing and partial_source:
+            # neutro (não “nota fraca 5”) — evita todos com 56 por falta de Google
+            r_pts = 30
+            v_pts = 12
+            problems.append("Visibilidade parcial (sem Google) — base neutra")
+        elif rating >= 4.7 and reviews >= 3:
             r_pts = 55
             problems.append(f"Nota excelente ({rating:.1f})")
         elif rating >= 4.3 and reviews >= 2:
@@ -596,19 +634,20 @@ class LeadScorer:
         else:
             r_pts = 5
 
-        if reviews >= 15:
-            v_pts = 35
-            problems.append(f"Volume forte de avaliações ({reviews})")
-        elif reviews >= 8:
-            v_pts = 30
-            problems.append(f"Volume bom de avaliações ({reviews})")
-        elif reviews >= 3:
-            v_pts = 22
-            problems.append(f"Algumas avaliações ({reviews})")
-        elif reviews >= 1:
-            v_pts = 10
-        else:
-            v_pts = 0
+        if not (maps_data_missing and partial_source):
+            if reviews >= 15:
+                v_pts = 35
+                problems.append(f"Volume forte de avaliações ({reviews})")
+            elif reviews >= 8:
+                v_pts = 30
+                problems.append(f"Volume bom de avaliações ({reviews})")
+            elif reviews >= 3:
+                v_pts = 22
+                problems.append(f"Algumas avaliações ({reviews})")
+            elif reviews >= 1:
+                v_pts = 10
+            else:
+                v_pts = 0
 
         s_pts = 10 if (no_website and has_ig) else (4 if has_ig else 0)
         if s_pts >= 10:
@@ -622,6 +661,9 @@ class LeadScorer:
         elif has_landline:
             ab = 65
             problems.append("Telefone fixo utilizável")
+        elif has_ig_contact:
+            ab = 55
+            problems.append("Contato via Instagram (sem telefone)")
         else:
             ab = 0
             problems.append("Sem telefone útil — baixa chance de fechar agora")
@@ -657,9 +699,9 @@ class LeadScorer:
             f"→ {score}/100"
         )
 
-        # sem telefone: não fica no topo dourado
-        if not has_mobile and not has_landline and score > 58:
-            problems.append(f"Teto 58 sem telefone (era {score})")
+        # sem telefone e sem IG: não fica no topo dourado
+        if not has_mobile and not has_landline and not has_ig_contact and score > 58:
+            problems.append(f"Teto 58 sem telefone/IG (era {score})")
             score = 58
         # food truck/carrinho: raramente fecha site "completo" → teto
         if is_foodtruck and score > 62:
@@ -696,12 +738,14 @@ class LeadScorer:
             "scored_at": datetime.now().isoformat(),
         }
 
-    def score_one(self, company_id: int) -> dict[str, Any] | None:
+    def score_one(self, company_id: int, *, assign: bool = True) -> dict[str, Any] | None:
         """
         Pontua UMA empresa na hora (pra aparecer no dashboard sem esperar o lote).
 
         Usado assim que o Maps acha um lead sem site — se o bot parar no meio,
         o que já entrou já está classificado como Raio.
+
+        assign=False → sobra livre (meta/cota cheia): scoreia mas NÃO atribui a ninguém.
         """
         company = self.db.get_company_by_id(company_id)
         if not company:
@@ -720,9 +764,10 @@ class LeadScorer:
             f"[LeadScorer] Score imediato id={company_id} "
             f"→ {result['lead_class']} ({result['lead_score']} pts) | "
             f"{company.get('name', '')!r}"
+            + (" | SOBRA (sem dono)" if not assign else "")
         )
-        # Distribui Raio pro cliente com cota disponível
-        if result.get("lead_class") == "raio":
+        # Distribui Raio pro cliente com cota disponível (não em sobras)
+        if assign and result.get("lead_class") == "raio":
             try:
                 from src.users import assign_raio_lead
                 assign_raio_lead(int(company_id))
@@ -741,6 +786,8 @@ class LeadScorer:
             conn = self.db._connect()
             try:
                 cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                # force = reprocessa raios / sem site / Fonte B (OSM/CNPJ)
+                # (mesmo já tendo scored_at — para corrigir escala antiga)
                 cur.execute(
                     """
                     SELECT * FROM companies
@@ -750,9 +797,15 @@ class LeadScorer:
                           OR website IS NULL
                           OR TRIM(COALESCE(website, '')) = ''
                           OR lead_class = 'raio'
+                          OR lead_class IS NULL
                           OR website ILIKE '%%instagram.com%%'
                           OR website ILIKE '%%facebook.com%%'
                           OR website ILIKE '%%linktr.ee%%'
+                          OR lower(COALESCE(source, '')) IN (
+                              'osm', 'cnpj', 'cnpj+osm', 'fonte_b', 'fonte-b', 'playwright', 'places_api'
+                          )
+                          OR lower(COALESCE(source, '')) LIKE '%%osm%%'
+                          OR lower(COALESCE(source, '')) LIKE '%%cnpj%%'
                       )
                     ORDER BY id;
                     """
@@ -765,12 +818,15 @@ class LeadScorer:
             companies = self.db.get_collected_companies()
 
         if not companies:
-            logger.info("[LeadScorer] Nenhuma empresa para pontuar.")
+            logger.info(
+                "[LeadScorer] Nenhuma empresa para pontuar"
+                + (" (force não achou raios/OSM/CNPJ)." if force else " pendente (já todas com score — use force).")
+            )
             return []
 
         logger.info(
             f"[LeadScorer] Qualificando {len(companies)} empresas "
-            f"({'re-score 0-100' if force else 'pendentes'})..."
+            f"({'re-score force' if force else 'pendentes'})..."
         )
 
         scored_leads = []

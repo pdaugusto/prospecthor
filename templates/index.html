@@ -639,49 +639,101 @@
             box-shadow: 0 0 22px rgba(245, 197, 66, 0.22);
             transform: translateY(-1px);
         }
-        /* Moeda 3D — inclinação leve; giro completo no hover */
+        /* Moeda 3D real (frente + verso + espessura) — gira no eixo Y como metal */
         .coin-3d {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            perspective: 900px;
-            perspective-origin: 50% 45%;
             flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            perspective: 720px;
+            perspective-origin: 50% 40%;
         }
-        .coin-3d__face {
+        .coin-3d__spin {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateX(16deg) rotateY(-24deg);
+            filter: drop-shadow(3px 6px 8px rgba(0,0,0,0.5));
+            will-change: transform;
+        }
+        /* disco de espessura (visível de lado no giro) */
+        .coin-3d__rim {
+            position: absolute;
+            inset: 3%;
+            border-radius: 50%;
+            background: linear-gradient(
+                90deg,
+                #3d2a08 0%,
+                #8b6914 18%,
+                #e8c04a 48%,
+                #a67c00 72%,
+                #2a1c06 100%
+            );
+            transform: translateZ(0);
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.35);
+        }
+        .coin-3d__disk {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            background: #c99218;
+        }
+        .coin-3d__disk img {
             display: block;
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transform: rotateY(-22deg) rotateX(12deg) rotateZ(-4deg) scale(1.04);
-            transform-style: preserve-3d;
-            filter:
-                drop-shadow(4px 7px 10px rgba(0,0,0,0.5))
-                drop-shadow(-1px -1px 0 rgba(255,230,140,0.12));
-            transition: filter .3s;
-            will-change: transform;
+            pointer-events: none;
         }
-        .wallet-chip .coin-3d { width: 34px; height: 34px; }
-        .wallet-chip:hover .coin-3d__face,
-        .pkg-card:hover .coin-3d__face,
-        .shop-balance-card:hover .coin-3d__face,
-        .coin-3d:hover .coin-3d__face {
-            animation: coin-spin 0.85s cubic-bezier(.2,.75,.25,1) 1;
-            filter:
-                drop-shadow(5px 9px 12px rgba(0,0,0,0.55))
-                drop-shadow(-1px -1px 0 rgba(255,230,140,0.2));
+        .coin-3d__front {
+            transform: translateZ(3.5px);
         }
-        @keyframes coin-spin {
+        .coin-3d__back {
+            transform: rotateY(180deg) translateZ(3.5px);
+            filter: brightness(0.9) saturate(1.05);
+        }
+        /* idle leve na loja/carteira */
+        .shop-balance-card .coin-3d__spin,
+        .wallet-layout .shop-balance-card .coin-3d__spin {
+            animation: coin-idle 5s ease-in-out infinite;
+        }
+        @keyframes coin-idle {
+            0%, 100% { transform: rotateX(16deg) rotateY(-24deg) translateY(0); }
+            50% { transform: rotateX(14deg) rotateY(-18deg) translateY(-2px); }
+        }
+        /* giro realista: várias voltas no eixo Y (mostra borda e verso) */
+        @keyframes coin-flip-y {
             0% {
-                transform: rotateY(-22deg) rotateX(12deg) rotateZ(-4deg) scale(1.04);
+                transform: rotateX(16deg) rotateY(-24deg);
             }
-            40% {
-                transform: rotateY(160deg) rotateX(10deg) rotateZ(-2deg) scale(1.1);
+            15% {
+                transform: rotateX(12deg) rotateY(90deg) scale(1.04);
+            }
+            30% {
+                transform: rotateX(14deg) rotateY(270deg) scale(1.06);
+            }
+            50% {
+                transform: rotateX(10deg) rotateY(540deg) scale(1.08);
+            }
+            75% {
+                transform: rotateX(14deg) rotateY(900deg) scale(1.04);
             }
             100% {
-                transform: rotateY(338deg) rotateX(12deg) rotateZ(-4deg) scale(1.06);
-                /* 360 - 22 = 338 → volta à pose inclinada */
+                transform: rotateX(16deg) rotateY(1056deg); /* 3*360 - 24 */
             }
+        }
+        .wallet-chip:hover .coin-3d__spin,
+        .pkg-card:hover .coin-3d__spin,
+        .shop-balance-card:hover .coin-3d__spin,
+        .coin-3d.is-spinning .coin-3d__spin {
+            animation: coin-flip-y 1.15s cubic-bezier(0.15, 0.7, 0.2, 1) 1;
+            filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.55));
         }
 
         .wallet-chip .wallet-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
@@ -786,18 +838,7 @@
             backdrop-filter: blur(8px);
             display: flex; align-items: center; gap: 14px;
         }
-        .shop-balance-card .coin-3d { width: 56px; height: 56px; }
-        .shop-balance-card .coin-3d__face {
-            animation: coin-float 4.5s ease-in-out infinite;
-        }
-        @keyframes coin-float {
-            0%, 100% {
-                transform: rotateY(-22deg) rotateX(12deg) rotateZ(-4deg) scale(1.04) translateY(0);
-            }
-            50% {
-                transform: rotateY(-18deg) rotateX(10deg) rotateZ(-3deg) scale(1.06) translateY(-3px);
-            }
-        }
+        .shop-balance-card .coin-3d { width: 72px; height: 72px; }
 
         .shop-balance-card .lbl {
             font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
@@ -849,7 +890,6 @@
         }
         .pkg-card:hover::after { opacity: 1; }
         .pkg-card .coin-3d { width: 88px; height: 88px; }
-        .shop-balance-card .coin-3d { width: 72px; height: 72px; }
 
         .pkg-card.featured {
             border-color: rgba(245, 197, 66, 0.5);
@@ -2030,9 +2070,7 @@
             <div class="header-right">
                 <div class="wallet-bar" id="wallet-bar">
                     <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/wallet')" title="Abrir carteira e extrato">
-                        <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="30" height="30" />
-                        </span>
+                        <span class="coin-3d" aria-hidden="true" data-coin3d></span>
                         <div class="wallet-meta">
                             <span class="wallet-label">Trovoedas</span>
                             <span class="wallet-amt" id="wallet-amt">0</span>
@@ -2066,9 +2104,7 @@
                         </div>
                     </div>
                     <div class="shop-balance-card">
-                        <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
-                        </span>
+                        <span class="coin-3d" aria-hidden="true" data-coin3d></span>
                         <div>
                             <div class="lbl">Seu saldo</div>
                             <strong id="shop-balance-amt">0</strong>
@@ -2109,9 +2145,7 @@
                         </div>
                     </div>
                     <div class="shop-balance-card">
-                        <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
-                        </span>
+                        <span class="coin-3d" aria-hidden="true" data-coin3d></span>
                         <div>
                             <div class="lbl">Saldo disponível</div>
                             <strong id="wallet-page-amt">0</strong>
@@ -2730,6 +2764,25 @@
             return String(s ?? '').replace(/[&<>"']/g, c => ({
                 '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
             }[c]));
+        }
+
+        /** Moeda 3D com frente + verso + borda (giro realista no eixo Y) */
+        function coin3dHtml() {
+            const src = '/static/trovoeda-coin.svg';
+            return (
+                '<span class="coin-3d__spin">' +
+                  '<span class="coin-3d__rim" aria-hidden="true"></span>' +
+                  '<span class="coin-3d__disk coin-3d__front"><img src="' + src + '" alt="" draggable="false" /></span>' +
+                  '<span class="coin-3d__disk coin-3d__back"><img src="' + src + '" alt="" draggable="false" /></span>' +
+                '</span>'
+            );
+        }
+        function mountCoin3d(root) {
+            const scope = root || document;
+            scope.querySelectorAll('[data-coin3d]').forEach(el => {
+                if (el.querySelector('.coin-3d__spin')) return;
+                el.innerHTML = coin3dHtml();
+            });
         }
 
         function getStatus(l) {
@@ -3508,13 +3561,12 @@
                 if (!Array.isArray(rows) || !rows.length) {
                     body.innerHTML = `
                         <div class="wallet-empty">
-                            <span class="coin-3d" aria-hidden="true">
-                                <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
-                            </span>
+                            <span class="coin-3d" aria-hidden="true" data-coin3d style="width:64px;height:64px;margin:0 auto 14px;"></span>
                             <div style="font-weight:700;color:#e8eef7;margin-bottom:6px;">Nenhuma movimentação ainda</div>
                             <div style="margin-bottom:14px;">Compre Trovoedas na loja ou use o bônus de cadastro.</div>
                             <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">Ir para a loja</button>
                         </div>`;
+                    mountCoin3d(body);
                     return;
                 }
                 const head = `
@@ -3580,9 +3632,7 @@
                         <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
                             ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
                             <div class="pkg-card__top">
-                                <span class="coin-3d" aria-hidden="true">
-                                    <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="72" height="72" />
-                                </span>
+                                <span class="coin-3d" aria-hidden="true" data-coin3d></span>
                                 <div>
                                     <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
                                     <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
@@ -3601,6 +3651,7 @@
                             </div>
                         </article>`;
                 }).join('');
+                mountCoin3d(grid);
                 grid.querySelectorAll('.btn-buy').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const slug = btn.getAttribute('data-slug') || '';
@@ -5491,7 +5542,9 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         window.onpopstate = handleRouting;
         // só roteia depois de /api/me (evita filtrar como admin por engano)
         // e já pré-carrega leads em paralelo com a primeira tela
+        mountCoin3d();
         loadMe().then(() => {
+            mountCoin3d();
             handleRouting();
             // prefetch: na próxima ida a Leads a lista já está pronta
             if (location.pathname !== '/leads') {

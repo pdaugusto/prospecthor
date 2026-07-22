@@ -511,6 +511,7 @@
         .wallet-chip .coin-ico {
             width: 28px; height: 28px; border-radius: 50%;
             flex-shrink: 0;
+            object-fit: cover;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
         }
         .wallet-chip .wallet-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
@@ -607,7 +608,9 @@
             color: #1a1408;
         }
         .pkg-card .pkg-coin {
-            width: 48px; height: 48px; margin-bottom: 12px;
+            width: 56px; height: 56px; margin-bottom: 12px;
+            border-radius: 50%;
+            object-fit: cover;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
         }
         .pkg-card h3 {
@@ -1477,7 +1480,7 @@
             <div class="header-right">
                 <div class="wallet-bar" id="wallet-bar">
                     <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/shop')" title="Seu saldo de Trovoedas">
-                        <img class="coin-ico" src="/static/trovoeda-coin.svg" alt="" width="28" height="28" />
+                        <img class="coin-ico" src="/static/trovoeda-coin.jpg" alt="" width="28" height="28" />
                         <div class="wallet-meta">
                             <span class="wallet-label">Trovoedas</span>
                             <span class="wallet-amt" id="wallet-amt">0</span>
@@ -1502,7 +1505,7 @@
                     Compre o pacote e use quando quiser. Pagamento seguro via Stripe (em ativação).
                 </p>
                 <div class="shop-balance">
-                    <img src="/static/trovoeda-coin.svg" alt="" width="32" height="32" />
+                    <img src="/static/trovoeda-coin.jpg" alt="" width="32" height="32" />
                     <div>
                         <div><strong id="shop-balance-amt">0</strong> <span>no saldo</span></div>
                     </div>
@@ -1526,7 +1529,7 @@
                 <h2>Carteira</h2>
                 <p>Saldo de Trovoedas e extrato de crédito e consumo (1 moeda = 1 lead entregue).</p>
                 <div class="shop-balance">
-                    <img src="/static/trovoeda-coin.svg" alt="" width="40" height="40" />
+                    <img src="/static/trovoeda-coin.jpg" alt="" width="40" height="40" />
                     <div>
                         <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">Saldo atual</div>
                         <div><strong id="wallet-page-amt" style="font-size:32px;">0</strong> <span>Trovoedas</span></div>
@@ -2916,7 +2919,7 @@
                     return `
                         <div class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
                             ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
-                            <img class="pkg-coin" src="/static/trovoeda-coin.svg" alt="" width="48" height="48" />
+                            <img class="pkg-coin" src="/static/trovoeda-coin.jpg" alt="" width="48" height="48" />
                             <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
                             <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
                             <div class="pkg-per">${perTxt} · 1 moeda = 1 lead</div>

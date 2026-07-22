@@ -2235,9 +2235,14 @@
             background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
         }
         .contact-badge {
-            display: inline-block; font-size: 10px; font-weight: 800;
-            padding: 2px 6px; border-radius: 6px; letter-spacing: .04em;
+            display: inline-block; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px; letter-spacing: 0.01em;
             margin-left: 6px; vertical-align: middle;
+            white-space: nowrap;
+        }
+        .icon-btn.ig {
+            font-size: 10px; font-weight: 800; letter-spacing: 0.01em;
+            min-width: auto; padding: 0 8px;
         }
         .contact-badge.wa { background: rgba(37,211,102,.15); color: #25d366; border: 1px solid rgba(37,211,102,.35); }
         .contact-badge.ig { background: rgba(225,48,108,.12); color: #e1306c; border: 1px solid rgba(225,48,108,.35); }
@@ -3171,7 +3176,7 @@
                     <div class="bot-status-card">
                         <div class="bot-status-label">Leads da sessão</div>
                         <div class="bot-status-value" id="bot-last-leads">—</div>
-                        <div class="bot-status-meta">Contagem compartilhada Maps + Fonte B</div>
+                        <div class="bot-status-meta">Contagem compartilhada Google Maps + Fonte B</div>
                     </div>
                 </div>
 
@@ -3181,7 +3186,7 @@
                         <ul class="bot-checklist">
                             <li><strong>Rodando</strong> — heartbeat atualiza; se travar &gt;20 min, auto-corrige</li>
                             <li><strong>Meta</strong> — session_leads / mission_target</li>
-                            <li><strong>Job</strong> — etapa atual (Maps, score, META_OK…)</li>
+                            <li><strong>Job</strong> — etapa atual (Google Maps, score, META_OK…)</li>
                             <li><strong>Cockpit</strong> — cria e enfileira missões no PC local</li>
                         </ul>
                         <p class="admin-hint" style="margin-top:12px;">Plano de nichos/cidades: use o Cockpit. Este painel é o radar de produtividade.</p>
@@ -6018,10 +6023,10 @@
 
         function contactBadgeHtml(l) {
             const ch = primaryContactChannel(l);
-            if (ch === 'whatsapp') return '<span class="contact-badge wa" title="WhatsApp/celular">WA</span>';
-            if (ch === 'instagram') return '<span class="contact-badge ig" title="Instagram">IG</span>';
-            if (ch === 'phone') return '<span class="contact-badge tel" title="Telefone">Tel</span>';
-            return '<span class="contact-badge none" title="Sem contato">—</span>';
+            if (ch === 'whatsapp') return '<span class="contact-badge wa" title="WhatsApp / celular">WhatsApp</span>';
+            if (ch === 'instagram') return '<span class="contact-badge ig" title="Instagram">Instagram</span>';
+            if (ch === 'phone') return '<span class="contact-badge tel" title="Telefone fixo">Telefone</span>';
+            return '<span class="contact-badge none" title="Sem contato utilizável">Sem contato</span>';
         }
 
         function instagramHref(l) {
@@ -6419,7 +6424,7 @@
             if (ch === 'whatsapp' || (ch === 'phone' && tel)) {
                 primaryBtn = `<button class="icon-btn wa" type="button" title="WhatsApp" aria-label="WhatsApp" onclick="${stop}openWhatsAppForLead(${id})">${ICO_WA}</button>`;
             } else if (ch === 'instagram' && ig) {
-                primaryBtn = `<a class="icon-btn ig" href="${esc(ig)}" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram" onclick="${stop}">IG</a>`;
+                primaryBtn = `<a class="icon-btn ig" href="${esc(ig)}" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram" onclick="${stop}">Instagram</a>`;
             }
             return `
                 <button class="icon-btn prompt" type="button" title="Montar mensagem (seu nome)" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
@@ -6627,7 +6632,7 @@
                                 <li><strong>Google</strong> ${lead.rating != null ? esc(lead.rating) + ' (' + (lead.review_count || 0) + ' avaliações)' : '—'}</li>
                                 <li><strong>Instagram</strong> ${instagramHref(lead) ? `<a href="${esc(instagramHref(lead))}" target="_blank" rel="noopener">@${esc(lead.instagram_username || 'perfil')}</a>` : 'Não encontrado'}</li>
                                 <li><strong>Site</strong> <span style="color:var(--danger);">Sem site próprio</span></li>
-                                <li><strong>Maps</strong> ${lead.maps_url ? `<a href="${esc(lead.maps_url)}" target="_blank" rel="noopener">Abrir no Maps</a>` : '—'}</li>
+                                <li><strong>Google Maps</strong> ${lead.maps_url ? `<a href="${esc(lead.maps_url)}" target="_blank" rel="noopener">Abrir avaliações no Google Maps</a>` : '—'}</li>
                             </ul>
                         </div>
                         <div class="panel" style="margin-bottom:14px;">

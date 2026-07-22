@@ -291,33 +291,56 @@
     }
     .dash-shot {
       position: relative;
-      border-radius: 18px;
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(165deg, #0e141f 0%, #080b12 100%);
+      background: #080a10;
       box-shadow:
-        0 0 0 1px rgba(0,212,255,0.08),
+        0 0 0 1px rgba(0,212,255,0.06),
         0 28px 70px rgba(0,0,0,0.55),
-        0 0 80px rgba(0,212,255,0.08);
+        0 0 60px rgba(0,212,255,0.06);
       overflow: hidden;
-      display: grid;
-      grid-template-columns: 132px 1fr;
-      min-height: 400px;
-      transform: perspective(1400px) rotateY(-5deg) rotateX(3deg);
+      min-height: 420px;
+      transform: perspective(1400px) rotateY(-4deg) rotateX(2deg);
       transition: transform .4s ease;
     }
     .dash-shot:hover {
       transform: perspective(1400px) rotateY(-1deg) rotateX(1deg);
     }
+    .dash-chrome {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 12px;
+      background: #0a0e16;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dash-chrome .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #3a4558;
+    }
+    .dash-chrome .dot.r { background: #ff5f57; }
+    .dash-chrome .dot.y { background: #febc2e; }
+    .dash-chrome .dot.g { background: #28c840; }
+    .dash-chrome .chrome-title {
+      margin-left: 8px;
+      font-size: 10px; font-weight: 600;
+      color: var(--muted-2);
+      letter-spacing: 0.02em;
+    }
+    .dash-body {
+      display: grid;
+      grid-template-columns: 128px 1fr;
+      min-height: 380px;
+    }
     @media (max-width: 960px) {
-      .dash-shot { transform: none; grid-template-columns: 110px 1fr; min-height: 360px; }
+      .dash-shot { transform: none; min-height: auto; }
       .dash-shot:hover { transform: none; }
+      .dash-body { grid-template-columns: 100px 1fr; min-height: 340px; }
       .hero-visual { min-height: auto; }
     }
     .dash-shot-side {
       border-right: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.4);
-      padding: 14px 10px;
-      display: flex; flex-direction: column; gap: 3px;
+      background: #0c111a;
+      padding: 12px 8px;
+      display: flex; flex-direction: column; gap: 2px;
     }
     .dash-shot-side .sm-logo {
       display: flex; align-items: center; gap: 7px;
@@ -361,14 +384,31 @@
       min-width: 0;
     }
     .dash-shot-top {
-      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
     }
     .dash-shot-top h3 {
-      font-size: 13px; font-weight: 800; letter-spacing: -0.02em;
+      font-size: 14px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px;
     }
-    .dash-shot-top h3 small {
-      font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 6px;
+    .dash-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .dchip {
+      font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08); color: var(--muted-2);
     }
+    .dchip.on {
+      color: #9ae8ff;
+      border-color: rgba(0,212,255,0.35);
+      background: rgba(0,212,255,0.1);
+    }
+    .mock-table-head {
+      display: grid;
+      grid-template-columns: 1fr 0.7fr 48px;
+      gap: 8px;
+      padding: 0 4px 4px;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted-2);
+    }
+    .mock-table-head span:last-child { text-align: right; }
     .wallet-pill {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 5px 10px 5px 6px;
@@ -1464,253 +1504,90 @@
               </div>
             </div>
 
-            <div class="hero-carousel" id="hero-carousel">
-              <div class="hero-slides" id="hero-slides">
-                <!-- Slide 1: leads list (fallback / default) -->
-                <div class="hero-slide active" data-slide="0" id="hero-slide-leads">
-                  <div class="dash-shot">
-                    <aside class="dash-shot-side">
-                      <div class="sm-logo">
-                        <span class="m"><img src="/static/thor-mask.png" alt="" width="15" height="15" /></span>
-                        <span class="brand-word" style="font-size:10px;">Prospec<span>THOR</span></span>
-                      </div>
-                      <div class="dnav active"><i></i> Início</div>
-                      <div class="dnav"><i></i> Leads</div>
-                      <div class="dnav"><i></i> Relatórios</div>
-                      <div class="dnav sep">Créditos</div>
-                      <div class="dnav"><i></i> Loja</div>
-                      <div class="dnav"><i></i> Carteira</div>
-                      <div class="dnav"><i></i> Pedidos</div>
-                    </aside>
-                    <div class="dash-shot-main">
-                      <div class="dash-shot-top">
-                        <h3>Leads quentes <small>painel</small></h3>
-                        <div class="wallet-pill">
-                          <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="16" height="16" />
-                          24
-                        </div>
-                      </div>
-                      <div class="kpi-row">
-                        <div class="kpi"><b class="neon">18</b><span>Novos</span></div>
-                        <div class="kpi"><b class="gold">92</b><span>Top score</span></div>
-                        <div class="kpi"><b>6</b><span>Contactados</span></div>
-                      </div>
-                      <div class="mock-lead hot">
-                        <div>
-                          <h4>Clínica Odonto Horizonte</h4>
-                          <p>Campinas · Odontologia</p>
-                          <div class="mock-tags">
-                            <span class="mock-tag wa">WhatsApp</span>
-                            <span class="mock-tag ig">Instagram</span>
-                            <span class="mock-tag no">Sem site</span>
-                          </div>
-                        </div>
-                        <div class="mock-score"><b>92</b><span>score</span></div>
-                      </div>
-                      <div class="mock-lead">
-                        <div>
-                          <h4>Advocacia Mendes &amp; Silva</h4>
-                          <p>São Paulo · Advocacia</p>
-                          <div class="mock-tags">
-                            <span class="mock-tag wa">WhatsApp</span>
-                            <span class="mock-tag no">Sem site</span>
-                          </div>
-                        </div>
-                        <div class="mock-score"><b>87</b><span>score</span></div>
-                      </div>
-                      <div class="mock-lead">
-                        <div>
-                          <h4>Studio Belle Estética</h4>
-                          <p>Santos · Estética</p>
-                          <div class="mock-tags">
-                            <span class="mock-tag ig">Instagram</span>
-                            <span class="mock-tag no">Sem site</span>
-                          </div>
-                        </div>
-                        <div class="mock-score"><b>81</b><span>score</span></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Slide 2: score explanation -->
-                <div class="hero-slide" data-slide="1" id="hero-slide-score">
-                  <div class="slide-panel">
-                    <div class="slide-panel-head">
-                      <h3>Score de propensão <small>por que 92 é quente</small></h3>
-                      <span class="slide-chip">0–100</span>
-                    </div>
-                    <div class="score-big">
-                      <div class="ring"><b>92</b></div>
-                      <div>
-                        <strong>Alta propensão à venda</strong>
-                        <p>Sem site + WhatsApp ativo + boa nota no Google = prioridade máxima na sua fila.</p>
-                      </div>
-                    </div>
-                    <div class="score-bars">
-                      <div class="score-bar-row">
-                        <span>Sem site</span>
-                        <div class="track"><div class="fill gold" style="width:95%"></div></div>
-                        <b>95</b>
-                      </div>
-                      <div class="score-bar-row">
-                        <span>WhatsApp</span>
-                        <div class="track"><div class="fill" style="width:88%"></div></div>
-                        <b>88</b>
-                      </div>
-                      <div class="score-bar-row">
-                        <span>Nota Google</span>
-                        <div class="track"><div class="fill gold" style="width:90%"></div></div>
-                        <b>90</b>
-                      </div>
-                      <div class="score-bar-row">
-                        <span>Instagram</span>
-                        <div class="track"><div class="fill" style="width:72%"></div></div>
-                        <b>72</b>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Slide 3: pedidos -->
-                <div class="hero-slide" data-slide="2" id="hero-slide-pedidos">
-                  <div class="slide-panel">
-                    <div class="slide-panel-head">
-                      <h3>Pedidos <small>varreduras em andamento</small></h3>
-                      <span class="slide-chip">ao vivo</span>
-                    </div>
-                    <div class="pedido-list">
-                      <div class="pedido-item">
-                        <div>
-                          <h4>Odontologia · Campinas</h4>
-                          <p>18 leads · há 2 min</p>
-                        </div>
-                        <span class="status-pill done">Pronto</span>
-                      </div>
-                      <div class="pedido-item">
-                        <div>
-                          <h4>Advocacia · São Paulo</h4>
-                          <p>Varredura · ~40%</p>
-                        </div>
-                        <span class="status-pill run">Rodando</span>
-                      </div>
-                      <div class="pedido-item">
-                        <div>
-                          <h4>Estética · Santos</h4>
-                          <p>Na fila · 1 Trovoeda</p>
-                        </div>
-                        <span class="status-pill wait">Na fila</span>
-                      </div>
-                      <div class="pedido-item">
-                        <div>
-                          <h4>Clínica · Ribeirão</h4>
-                          <p>12 leads · ontem</p>
-                        </div>
-                        <span class="status-pill done">Pronto</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Slide 4: relatórios -->
-                <div class="hero-slide" data-slide="3" id="hero-slide-relatorios">
-                  <div class="slide-panel">
-                    <div class="slide-panel-head">
-                      <h3>Relatórios <small>visão do funil</small></h3>
-                      <span class="slide-chip">7 dias</span>
-                    </div>
-                    <div class="kpi-row">
-                      <div class="kpi"><b class="neon">47</b><span>Leads</span></div>
-                      <div class="kpi"><b class="gold">84</b><span>Avg score</span></div>
-                      <div class="kpi"><b>19</b><span>Contatos</span></div>
-                    </div>
-                    <div class="report-list">
-                      <div class="report-item">
-                        <div>
-                          <h4>Sem site encontrado</h4>
-                          <p>oportunidades abertas</p>
-                        </div>
-                        <span class="val">38</span>
-                      </div>
-                      <div class="report-item">
-                        <div>
-                          <h4>Com WhatsApp</h4>
-                          <p>prontos pra abordar</p>
-                        </div>
-                        <span class="val">31</span>
-                      </div>
-                      <div class="report-item">
-                        <div>
-                          <h4>Score ≥ 80</h4>
-                          <p>prioridade alta</p>
-                        </div>
-                        <span class="val gold">22</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Slide 5: como funciona mini -->
-                <div class="hero-slide" data-slide="4" id="hero-slide-como">
-                  <div class="slide-panel">
-                    <div class="slide-panel-head">
-                      <h3>Como funciona <small>do nicho ao contato</small></h3>
-                      <span class="slide-chip">4 passos</span>
-                    </div>
-                    <div class="mini-flow">
-                      <div class="mini-flow-step">
-                        <div class="mf-ico" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
-                        </div>
-                        <div>
-                          <h4>Escolhe nicho e cidade</h4>
-                          <p>Define o mercado que quer atacar.</p>
-                        </div>
-                      </div>
-                      <div class="mini-flow-step">
-                        <div class="mf-ico" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        </div>
-                        <div>
-                          <h4>Varredura da região</h4>
-                          <p>Negócios sem presença digital.</p>
-                        </div>
-                      </div>
-                      <div class="mini-flow-step">
-                        <div class="mf-ico" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                        </div>
-                        <div>
-                          <h4>Score 0–100</h4>
-                          <p>Prioriza quem está pronto.</p>
-                        </div>
-                      </div>
-                      <div class="mini-flow-step">
-                        <div class="mf-ico" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        </div>
-                        <div>
-                          <h4>Lead pronto pra abordar</h4>
-                          <p>WA, IG e nota do Google.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <!-- Preview fixo do painel real (sem carrossel) -->
+            <div class="dash-shot" id="hero-panel-preview">
+              <div class="dash-chrome">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="chrome-title">app.prospec thor · leads</span>
               </div>
-
-              <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Slides do painel">
-                <button type="button" role="tab" aria-selected="true" aria-label="Leads" data-go="0" class="active"></button>
-                <button type="button" role="tab" aria-selected="false" aria-label="Score" data-go="1"></button>
-                <button type="button" role="tab" aria-selected="false" aria-label="Pedidos" data-go="2"></button>
-                <button type="button" role="tab" aria-selected="false" aria-label="Relatórios" data-go="3"></button>
-                <button type="button" role="tab" aria-selected="false" aria-label="Como funciona" data-go="4"></button>
+              <div class="dash-body">
+                <aside class="dash-shot-side">
+                  <div class="sm-logo">
+                    <span class="m"><img src="/static/thor-mask.png" alt="" width="15" height="15" /></span>
+                    <span class="brand-word" style="font-size:10px;">Prospec<span>THOR</span></span>
+                  </div>
+                  <div class="dnav"><i></i> Início</div>
+                  <div class="dnav active"><i></i> Leads</div>
+                  <div class="dnav"><i></i> Relatórios</div>
+                  <div class="dnav sep">Créditos</div>
+                  <div class="dnav"><i></i> Loja</div>
+                  <div class="dnav"><i></i> Carteira</div>
+                  <div class="dnav"><i></i> Pedidos</div>
+                </aside>
+                <div class="dash-shot-main">
+                  <div class="dash-shot-top">
+                    <div>
+                      <h3>Leads</h3>
+                      <div class="dash-chips">
+                        <span class="dchip on">Todos</span>
+                        <span class="dchip">Novos</span>
+                        <span class="dchip">Contactados</span>
+                      </div>
+                    </div>
+                    <div class="wallet-pill">
+                      <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="16" height="16" />
+                      24
+                    </div>
+                  </div>
+                  <div class="kpi-row">
+                    <div class="kpi"><b class="neon">18</b><span>Novos</span></div>
+                    <div class="kpi"><b class="gold">92</b><span>Top score</span></div>
+                    <div class="kpi"><b>6</b><span>Contactados</span></div>
+                  </div>
+                  <div class="mock-table-head">
+                    <span>Empresa</span><span>Cidade</span><span>Score</span>
+                  </div>
+                  <div class="mock-lead hot">
+                    <div>
+                      <h4>Clínica Odonto Horizonte</h4>
+                      <p>Campinas · Odontologia</p>
+                      <div class="mock-tags">
+                        <span class="mock-tag wa">WhatsApp</span>
+                        <span class="mock-tag ig">Instagram</span>
+                        <span class="mock-tag no">Sem site</span>
+                      </div>
+                    </div>
+                    <div class="mock-score"><b>92</b><span>score</span></div>
+                  </div>
+                  <div class="mock-lead">
+                    <div>
+                      <h4>Advocacia Mendes &amp; Silva</h4>
+                      <p>São Paulo · Advocacia</p>
+                      <div class="mock-tags">
+                        <span class="mock-tag wa">WhatsApp</span>
+                        <span class="mock-tag no">Sem site</span>
+                      </div>
+                    </div>
+                    <div class="mock-score"><b>87</b><span>score</span></div>
+                  </div>
+                  <div class="mock-lead">
+                    <div>
+                      <h4>Studio Belle Estética</h4>
+                      <p>Santos · Estética</p>
+                      <div class="mock-tags">
+                        <span class="mock-tag ig">Instagram</span>
+                        <span class="mock-tag no">Sem site</span>
+                      </div>
+                    </div>
+                    <div class="mock-score"><b>81</b><span>score</span></div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="mock-float scan">
               <span class="dot"></span>
-              <span>Painel · leads prontos</span>
+              <span>Painel real · leads prontos</span>
             </div>
           </div>
         </div>
@@ -2060,66 +1937,6 @@
     <a class="btn btn-primary btn-lg" href="/register">Criar conta grátis — 5 leads</a>
   </div>
 
-  <script>
-    /* Hero carousel — auto-rotate 4.5s, pause on hover; first slide stays if JS fails */
-    (function () {
-      var root = document.getElementById('hero-carousel');
-      if (!root) return;
-      var slidesEl = document.getElementById('hero-slides');
-      var slides = root.querySelectorAll('.hero-slide');
-      var dots = root.querySelectorAll('.hero-dots button');
-      if (!slides.length) return;
-
-      var i = 0;
-      var n = slides.length;
-      var timer = null;
-      var INTERVAL = 4500;
-      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      if (slidesEl) slidesEl.classList.add('is-ready');
-
-      function go(idx) {
-        i = ((idx % n) + n) % n;
-        slides.forEach(function (s, k) {
-          s.classList.toggle('active', k === i);
-        });
-        dots.forEach(function (d, k) {
-          var on = k === i;
-          d.classList.toggle('active', on);
-          d.setAttribute('aria-selected', on ? 'true' : 'false');
-        });
-      }
-
-      function next() { go(i + 1); }
-
-      function start() {
-        if (reduce || n < 2) return;
-        stop();
-        timer = setInterval(next, INTERVAL);
-      }
-      function stop() {
-        if (timer) { clearInterval(timer); timer = null; }
-      }
-
-      dots.forEach(function (d) {
-        d.addEventListener('click', function () {
-          var t = parseInt(d.getAttribute('data-go'), 10);
-          if (!isNaN(t)) go(t);
-          start();
-        });
-      });
-
-      root.addEventListener('mouseenter', stop);
-      root.addEventListener('mouseleave', start);
-      root.addEventListener('focusin', stop);
-      root.addEventListener('focusout', function (e) {
-        if (!root.contains(e.relatedTarget)) start();
-      });
-
-      go(0);
-      start();
-    })();
-  </script>
   <script>
     (function () {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

@@ -472,12 +472,100 @@
             filter: drop-shadow(0 0 18px rgba(0, 212, 255, 0.25));
         }
         .home-hero p {
-            margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 520px;
+            margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 560px; line-height: 1.5;
         }
+        .home-saas { display: flex; flex-direction: column; gap: 18px; }
+        .home-hero-saas {
+            position: relative;
+            padding: 26px 26px 22px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background:
+                radial-gradient(ellipse 50% 80% at 0% 0%, rgba(0,212,255,0.12), transparent 55%),
+                radial-gradient(ellipse 40% 70% at 100% 100%, rgba(245,197,66,0.1), transparent 50%),
+                linear-gradient(145deg, #0e131c, #080a10);
+            overflow: hidden;
+        }
+        .home-hero-saas h2 {
+            font-size: clamp(22px, 3vw, 28px); font-weight: 900; letter-spacing: -0.035em;
+            color: #fff; background: none; -webkit-text-fill-color: #fff; filter: none;
+            line-height: 1.15;
+        }
+        .home-hero-saas h2 em {
+            font-style: normal;
+            background: linear-gradient(90deg, #7ee8ff, #00d4ff);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .home-hero-saas p { margin-top: 10px; font-size: 14px; color: var(--muted); max-width: 560px; line-height: 1.5; }
+        .home-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        .home-cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 16px; border-radius: 12px;
+            font-size: 13px; font-weight: 800; cursor: pointer; border: none;
+            transition: transform .12s, box-shadow .15s;
+        }
+        .home-cta:hover { transform: translateY(-1px); }
+        .home-cta.primary {
+            color: #031018;
+            background: linear-gradient(135deg, #00d4ff, #0a8ec4);
+            box-shadow: 0 4px 16px rgba(0,212,255,0.25);
+        }
+        .home-cta.gold {
+            color: #1a1408;
+            background: linear-gradient(135deg, #ffe08a, #f5c542, #e09a18);
+            box-shadow: 0 4px 16px rgba(245,197,66,0.28);
+        }
+        .home-cta.ghost {
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .home-quick {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 800px) {
+            .home-quick { grid-template-columns: 1fr; }
+        }
+        .home-quick-card {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(160deg, #101621, #0a0e16);
+            cursor: pointer;
+            transition: border-color .15s, transform .15s, box-shadow .15s;
+            text-align: left;
+            color: inherit;
+            font: inherit;
+            width: 100%;
+        }
+        .home-quick-card:hover {
+            border-color: rgba(0,212,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+        }
+        .home-quick-card .hq-ico {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: grid; place-items: center; flex-shrink: 0;
+            background: rgba(0,212,255,0.1); color: var(--neon); font-size: 18px;
+        }
+        .home-quick-card.gold .hq-ico {
+            background: rgba(245,197,66,0.12); color: #f5c542;
+        }
+        .home-quick-card h4 { margin: 0 0 4px; font-size: 14px; font-weight: 800; }
+        .home-quick-card p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
         .stat.active-kpi {
             border-color: var(--neon);
             box-shadow: 0 0 0 1px rgba(0,212,255,0.15), 0 0 24px rgba(0,212,255,0.08);
         }
+        .stat.gold-kpi {
+            border-color: rgba(245,197,66,0.35);
+            box-shadow: 0 0 0 1px rgba(245,197,66,0.1), 0 0 20px rgba(245,197,66,0.06);
+        }
+        .stat.gold-kpi .value { color: #f5c542; }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
             color: var(--muted) !important;
@@ -1782,7 +1870,7 @@
         </div>
         <div class="nav-label">Menu</div>
         <ul class="sidebar-menu">
-            <li><a onclick="navigateTo('/')" class="active" id="nav-home"><span class="nav-ico">⌂</span> Visão geral</a></li>
+            <li><a onclick="navigateTo('/')" class="active" id="nav-home"><span class="nav-ico">⌂</span> Início</a></li>
             <li><a onclick="navigateTo('/leads')" id="nav-leads"><span class="nav-ico">☰</span> Leads <span class="nav-badge" id="nav-leads-badge" style="display:none;">0</span></a></li>
             <li><a onclick="navigateTo('/shop')" id="nav-shop"><span class="nav-ico">⚡</span> Loja</a></li>
             <li><a onclick="navigateTo('/wallet')" id="nav-wallet"><span class="nav-ico">◈</span> Carteira</a></li>
@@ -1810,8 +1898,8 @@
             <div style="display:flex;align-items:center;gap:12px;min-width:0;">
                 <button class="menu-toggle" id="btn-open-menu" aria-label="Menu" type="button">☰</button>
                 <div class="page-head-titles">
-                    <h1 id="page-title">Visão geral</h1>
-                    <p class="page-sub" id="page-subtitle">Leads Raio com telefone · operação comercial</p>
+                    <h1 id="page-title">Início</h1>
+                    <p class="page-sub" id="page-subtitle">Trovoedas · leads · prospecção</p>
                 </div>
             </div>
             <div class="header-right">
@@ -1941,50 +2029,82 @@
 
         <!-- HOME -->
         <section id="view-home" class="view active">
-            <div class="home-hero">
-                <span class="live-pill"><i></i> Sistema online</span>
-                <h2 id="home-hero-title">Operação em tempo real</h2>
-                <p id="home-hero-sub">Painel ao vivo · leads com telefone</p>
-            </div>
-            <div class="stats">
-                <div class="stat neon" id="kpi-total">
-                    <div class="stat-top"><h3 id="home-total-label">Leads ativos</h3><div class="stat-ico">◎</div></div>
-                    <div class="value" id="home-total">0</div>
-                    <div class="stat-meta" id="home-total-meta"><span class="up" id="home-total-delta">—</span> carteira atual</div>
-                    <div class="spark-wrap"><canvas id="spark-total" width="200" height="28"></canvas></div>
+            <div class="home-saas">
+                <div class="home-hero-saas">
+                    <span class="live-pill"><i></i> Online</span>
+                    <h2 id="home-hero-title">Seu hub de <em>prospecção</em></h2>
+                    <p id="home-hero-sub">Leads com contato, saldo em Trovoedas e tudo pronto pra vender — sem cota mensal.</p>
+                    <div class="home-cta-row" id="home-cta-row">
+                        <button type="button" class="home-cta primary" onclick="navigateTo('/leads')">Ver meus leads</button>
+                        <button type="button" class="home-cta gold" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/wallet')">Abrir carteira</button>
+                    </div>
                 </div>
-                <div class="stat" id="kpi-novos">
-                    <div class="stat-top"><h3 id="home-novos-label">Novos</h3><div class="stat-ico">+</div></div>
-                    <div class="value" id="home-novos">0</div>
-                    <div class="stat-meta" id="home-novos-meta">Prontos para abordar</div>
-                    <div class="spark-wrap"><canvas id="spark-novos" width="200" height="28"></canvas></div>
+
+                <div class="stats">
+                    <div class="stat gold-kpi" id="kpi-trovoedas">
+                        <div class="stat-top"><h3 id="home-trovo-label">Trovoedas</h3><div class="stat-ico">⚡</div></div>
+                        <div class="value" id="home-trovoedas">0</div>
+                        <div class="stat-meta" id="home-trovo-meta">1 moeda = 1 lead · não expiram</div>
+                    </div>
+                    <div class="stat neon" id="kpi-total">
+                        <div class="stat-top"><h3 id="home-total-label">Leads na conta</h3><div class="stat-ico">◎</div></div>
+                        <div class="value" id="home-total">0</div>
+                        <div class="stat-meta" id="home-total-meta">Na sua lista</div>
+                        <div class="spark-wrap"><canvas id="spark-total" width="200" height="28"></canvas></div>
+                    </div>
+                    <div class="stat" id="kpi-novos">
+                        <div class="stat-top"><h3 id="home-novos-label">Novos</h3><div class="stat-ico">+</div></div>
+                        <div class="value" id="home-novos">0</div>
+                        <div class="stat-meta" id="home-novos-meta">Prontos para abordar</div>
+                        <div class="spark-wrap"><canvas id="spark-novos" width="200" height="28"></canvas></div>
+                    </div>
+                    <div class="stat warn" id="kpi-contactados">
+                        <div class="stat-top"><h3 id="home-contactados-label">Contactados</h3><div class="stat-ico">☎</div></div>
+                        <div class="value" id="home-contactados">0</div>
+                        <div class="stat-meta" id="home-contact-meta">Em follow-up</div>
+                        <div class="spark-wrap"><canvas id="spark-contact" width="200" height="28"></canvas></div>
+                    </div>
                 </div>
-                <div class="stat warn" id="kpi-contactados">
-                    <div class="stat-top"><h3 id="home-contactados-label">Contactados</h3><div class="stat-ico">☎</div></div>
-                    <div class="value" id="home-contactados">0</div>
-                    <div class="stat-meta" id="home-contact-meta">Em follow-up</div>
-                    <div class="spark-wrap"><canvas id="spark-contact" width="200" height="28"></canvas></div>
+
+                <div class="home-quick" id="home-quick-row">
+                    <button type="button" class="home-quick-card" onclick="navigateTo('/leads')">
+                        <div class="hq-ico">☰</div>
+                        <div>
+                            <h4>Abordar leads</h4>
+                            <p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p>
+                        </div>
+                    </button>
+                    <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
+                        <div class="hq-ico">⚡</div>
+                        <div>
+                            <h4>Comprar Trovoedas</h4>
+                            <p>Pacotes a partir de 10 moedas. Pague só o que usar.</p>
+                        </div>
+                    </button>
+                    <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">
+                        <div class="hq-ico">◈</div>
+                        <div>
+                            <h4>Ver extrato</h4>
+                            <p>Créditos, bônus e cada lead consumido na carteira.</p>
+                        </div>
+                    </button>
                 </div>
-                <div class="stat bad" id="kpi-cota">
-                    <div class="stat-top"><h3 id="home-descartados-label">Descartados</h3><div class="stat-ico">✓</div></div>
-                    <div class="value" id="home-descartados">0</div>
-                    <div class="quota-bar" id="home-quota-bar" style="display:none;"><span id="home-quota-fill" style="width:0%"></span></div>
-                    <div class="stat-meta" id="home-desc-meta">Fora do funil</div>
+
+                <div class="charts">
+                    <div class="panel">
+                        <h3 id="home-chart-status-title">Status dos leads</h3>
+                        <div class="chart-box"><canvas id="chart-status"></canvas></div>
+                    </div>
+                    <div class="panel">
+                        <h3>Por nicho</h3>
+                        <div class="chart-box"><canvas id="chart-niche"></canvas></div>
+                    </div>
                 </div>
-            </div>
-            <div class="charts">
                 <div class="panel">
-                    <h3 id="home-chart-status-title">Status dos leads</h3>
-                    <div class="chart-box"><canvas id="chart-status"></canvas></div>
+                    <h3 id="home-top-title">🔥 Hot leads — top 5 para abordar</h3>
+                    <div class="top-list" id="home-top"></div>
                 </div>
-                <div class="panel">
-                    <h3>Por nicho</h3>
-                    <div class="chart-box"><canvas id="chart-niche"></canvas></div>
-                </div>
-            </div>
-            <div class="panel">
-                <h3 id="home-top-title">🔥 Hot leads — top 5 para abordar</h3>
-                <div class="top-list" id="home-top"></div>
             </div>
         </section>
 
@@ -2793,35 +2913,39 @@
                     if (el) el.style.display = showAdmin ? '' : 'none';
                 });
 
-                const used = currentUser.assigned_this_month || 0;
-                const q = currentUser.monthly_quota || 0;
                 const trovo = (currentUser.trovoedas != null && currentUser.trovoedas !== '')
                     ? Number(currentUser.trovoedas)
                     : 0;
                 const roleEl = document.getElementById('sidebar-user-role');
                 const banner = document.getElementById('impersonate-banner');
+                const quotaBadge = document.getElementById('quota-badge');
                 updateWalletUI(Number.isFinite(trovo) ? trovo : 0, showAdmin && !imp);
                 if (imp) {
                     document.body.classList.add('impersonating');
                     banner.classList.add('show');
                     document.getElementById('impersonate-banner-text').textContent =
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
-                    document.getElementById('quota-badge').textContent =
-                        'Modo cliente · Cota: ' + used + '/' + q;
-                    if (roleEl) roleEl.textContent = 'Impersonate · Cota ' + used + '/' + q
-                        + ' · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
+                    if (quotaBadge) {
+                        quotaBadge.style.display = '';
+                        quotaBadge.textContent = 'Modo cliente · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
+                    }
+                    if (roleEl) roleEl.textContent = 'Impersonate · ⚡' + (Number.isFinite(trovo) ? trovo : 0);
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
                     if (showAdmin) {
-                        document.getElementById('quota-badge').textContent = 'Patrão · sobras';
+                        if (quotaBadge) {
+                            quotaBadge.style.display = '';
+                            quotaBadge.textContent = 'Patrão · sobras';
+                        }
                         if (roleEl) roleEl.textContent = 'Admin · Pro';
                     } else {
-                        document.getElementById('quota-badge').textContent =
-                            q ? `Cota: ${used}/${q} este mês` : (currentUser.username || '');
-                        if (roleEl) roleEl.textContent = q
-                            ? `Cliente · ${used}/${q}`
-                            : 'Cliente';
+                        // SaaS: sem cota mensal no header — saldo já está no chip Trovoedas
+                        if (quotaBadge) {
+                            quotaBadge.style.display = 'none';
+                            quotaBadge.textContent = '';
+                        }
+                        if (roleEl) roleEl.textContent = 'Cliente';
                     }
                 }
                 setupPatraoScopeFilters(showAdmin);
@@ -3871,84 +3995,115 @@
         function applyHomeNumbers(snap, animate) {
             if (!snap) return;
             const patrao = !!snap.patrao;
-            const quotaBar = document.getElementById('home-quota-bar');
-            const quotaFill = document.getElementById('home-quota-fill');
+            const trovo = Number(snap.trovoedas != null ? snap.trovoedas : (currentUser && currentUser.trovoedas) || 0) || 0;
+
+            // KPI Trovoedas (cliente e admin)
+            if (animate) animateCount('home-trovoedas', trovo);
+            else setText('home-trovoedas', String(trovo));
+
+            const cta = document.getElementById('home-cta-row');
+            const quick = document.getElementById('home-quick-row');
 
             if (patrao) {
-                setText('home-total-label', 'Leads ativos');
-                setText('home-novos-label', 'Novos');
-                setText('home-contactados-label', 'Contactados');
-                setText('home-descartados-label', 'Total no banco');
+                setText('home-hero-title', 'Operação · pool de sobras');
+                // keep em via innerHTML carefully
+                const ht = document.getElementById('home-hero-title');
+                if (ht) ht.innerHTML = 'Operação · <em>pool de sobras</em>';
+                setText('home-hero-sub', 'Gerencie sobras, usuários e o robô. Clientes usam Trovoedas — sem cota mensal.');
+                setText('home-trovo-label', 'Pool / sistema');
+                setHtml('home-trovo-meta', 'Atalhos de operação abaixo');
                 if (animate) {
-                    animateCount('home-total', snap.freeN);
+                    // for patrao first card shows free pool instead of personal coins
+                    animateCount('home-trovoedas', snap.freeN);
+                    animateCount('home-total', snap.assignedN);
                     animateCount('home-novos', snap.novos);
-                    animateCount('home-contactados', snap.assignedN);
-                    animateCount('home-descartados', snap.allN);
+                    animateCount('home-contactados', snap.allN);
                 } else {
-                    setText('home-total', String(snap.freeN));
+                    setText('home-trovoedas', String(snap.freeN));
+                    setText('home-total', String(snap.assignedN));
                     setText('home-novos', String(snap.novos));
-                    setText('home-contactados', String(snap.assignedN));
-                    setText('home-descartados', String(snap.allN));
+                    setText('home-contactados', String(snap.allN));
                 }
-                setHtml('home-total-meta', '<span class="up">↑ pool</span> sobras livres');
-                setHtml('home-novos-meta', 'Sobras novas no funil');
-                setHtml('home-contact-meta', 'Já distribuídos');
-                setText('home-desc-meta', 'Raios no sistema');
-                setText('home-hero-sub', 'Visão geral · sobras e raios do sistema');
+                setText('home-trovo-label', 'Sobras livres');
+                setText('home-total-label', 'Distribuídos');
+                setText('home-novos-label', 'Novos no pool');
+                setText('home-contactados-label', 'Total no banco');
+                setHtml('home-trovo-meta', 'Sem dono · prontos p/ enviar');
+                setHtml('home-total-meta', 'Já com clientes');
+                setHtml('home-novos-meta', 'Funil de sobras');
+                setHtml('home-contact-meta', 'Raios no sistema');
                 setText('home-chart-status-title', 'Status das sobras');
                 setText('home-top-title', '🔥 Hot leads — top sobras');
-                if (quotaBar) quotaBar.style.display = 'none';
+                if (cta) {
+                    cta.innerHTML = `
+                        <button type="button" class="home-cta primary" onclick="navigateTo('/leads')">Ver sobras</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/users')">Usuários</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/bot')">Status do robô</button>`;
+                }
+                if (quick) {
+                    quick.innerHTML = `
+                        <button type="button" class="home-quick-card" onclick="navigateTo('/leads')">
+                            <div class="hq-ico">☰</div>
+                            <div><h4>Distribuir sobras</h4><p>Leads livres do pool do Patrão, prontos para encaminhar.</p></div>
+                        </button>
+                        <button type="button" class="home-quick-card gold" onclick="navigateTo('/users')">
+                            <div class="hq-ico">◎</div>
+                            <div><h4>Clientes & Trovoedas</h4><p>Credite moedas e veja saldos dos usuários.</p></div>
+                        </button>
+                        <button type="button" class="home-quick-card" onclick="navigateTo('/bot')">
+                            <div class="hq-ico">⚙</div>
+                            <div><h4>Robô</h4><p>Plano de busca, meta e logs da sessão local.</p></div>
+                        </button>`;
+                }
             } else {
-                setText('home-total-label', 'Leads ativos');
+                const ht = document.getElementById('home-hero-title');
+                if (ht) ht.innerHTML = 'Seu hub de <em>prospecção</em>';
+                setText('home-hero-sub', 'Leads com contato e saldo em Trovoedas — pague só o que usar, sem cota mensal.');
+                setText('home-trovo-label', 'Trovoedas');
+                setText('home-total-label', 'Leads na conta');
                 setText('home-novos-label', 'Novos');
                 setText('home-contactados-label', 'Contactados');
-                setText('home-descartados-label', 'Cota do mês');
                 if (animate) {
+                    animateCount('home-trovoedas', trovo);
                     animateCount('home-total', snap.total);
                     animateCount('home-novos', snap.novos);
                     animateCount('home-contactados', snap.contactados);
                 } else {
+                    setText('home-trovoedas', String(trovo));
                     setText('home-total', String(snap.total));
                     setText('home-novos', String(snap.novos));
                     setText('home-contactados', String(snap.contactados));
                 }
-                const used = snap.used || 0;
-                const q = snap.quota || 0;
-                if (q) {
-                    const el = document.getElementById('home-descartados');
-                    if (el) {
-                        if (animate) {
-                            el.innerHTML = `<span id="home-cota-used">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
-                            animateCount('home-cota-used', used);
-                        } else {
-                            el.innerHTML = `<span id="home-cota-used">${used}</span><span style="font-size:14px;font-weight:500;color:var(--muted)">/${q}</span>`;
-                        }
-                    }
-                } else if (animate) {
-                    animateCount('home-descartados', snap.descartados);
-                } else {
-                    setText('home-descartados', String(snap.descartados));
-                }
-                setHtml('home-total-meta', '<span class="up">↑ carteira</span> na sua conta');
-                setText('home-novos-meta', 'Clique em Leads para filtrar');
+                setHtml('home-trovo-meta', trovo > 0
+                    ? 'Disponíveis · 1 moeda = 1 lead'
+                    : 'Saldo zerado · recarregue na Loja');
+                setHtml('home-total-meta', '<span class="up">↑ carteira</span> na sua lista');
+                setText('home-novos-meta', 'Prontos para abordar');
                 const rate = snap.total ? Math.round((snap.contactados / snap.total) * 100) : 0;
-                setHtml('home-contact-meta', `Taxa <strong style="color:var(--text)">${rate}%</strong>`);
-                setText('home-desc-meta', q ? 'Uso da cota' : 'Descartados');
-                setText('home-hero-sub', 'Sua carteira · leads com telefone prontos para abordar');
-                if (quotaBar && quotaFill && q) {
-                    quotaBar.style.display = '';
-                    const pct = Math.min(100, Math.round((used / q) * 100));
-                    if (animate) {
-                        quotaFill.style.width = '0%';
-                        requestAnimationFrame(() => { quotaFill.style.width = pct + '%'; });
-                    } else {
-                        quotaFill.style.width = pct + '%';
-                    }
-                } else if (quotaBar) {
-                    quotaBar.style.display = 'none';
-                }
+                setHtml('home-contact-meta', `Taxa de contato <strong style="color:var(--text)">${rate}%</strong>`);
                 setText('home-chart-status-title', 'Status dos leads');
-                setText('home-top-title', '🔥 Hot leads — top 5');
+                setText('home-top-title', '🔥 Hot leads — top 5 para abordar');
+                if (cta) {
+                    cta.innerHTML = `
+                        <button type="button" class="home-cta primary" onclick="navigateTo('/leads')">Ver meus leads</button>
+                        <button type="button" class="home-cta gold" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
+                        <button type="button" class="home-cta ghost" onclick="navigateTo('/wallet')">Abrir carteira</button>`;
+                }
+                if (quick) {
+                    quick.innerHTML = `
+                        <button type="button" class="home-quick-card" onclick="navigateTo('/leads')">
+                            <div class="hq-ico">☰</div>
+                            <div><h4>Abordar leads</h4><p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p></div>
+                        </button>
+                        <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
+                            <div class="hq-ico">⚡</div>
+                            <div><h4>Comprar Trovoedas</h4><p>Pacotes a partir de 10 moedas. Pague só o que usar.</p></div>
+                        </button>
+                        <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">
+                            <div class="hq-ico">◈</div>
+                            <div><h4>Ver extrato</h4><p>Créditos, bônus e cada lead consumido na carteira.</p></div>
+                        </button>`;
+                }
             }
         }
 
@@ -3968,10 +4123,10 @@
                     if (box) box.innerHTML = lastHomeSnapshot.topHtml;
                 }
             } else {
+                setText('home-trovoedas', '…');
                 setText('home-total', '…');
                 setText('home-novos', '…');
                 setText('home-contactados', '…');
-                setText('home-descartados', '…');
                 const topBox0 = document.getElementById('home-top');
                 if (topBox0) topBox0.innerHTML = '<p class="empty">Carregando…</p>';
             }
@@ -4014,12 +4169,14 @@
                 const freeN = Number(stats.free != null ? stats.free : total) || 0;
                 const assignedN = Number(stats.assigned_total != null ? stats.assigned_total : contactados) || 0;
                 const allN = Number(stats.all_total != null ? stats.all_total : total) || 0;
-                const used = currentUser.assigned_this_month || 0;
-                const q = currentUser.monthly_quota || 0;
+                const trovoedas = Number(
+                    (currentUser && currentUser.trovoedas != null) ? currentUser.trovoedas : 0
+                ) || 0;
 
                 const snap = {
                     patrao, total, novos, contactados, descartados,
-                    freeN, assignedN, allN, used, quota: q,
+                    freeN, assignedN, allN,
+                    trovoedas,
                     nichos: stats.nichos || {},
                     stats,
                 };
@@ -4027,8 +4184,7 @@
                 applyHomeNumbers(snap, true);
 
                 if (patrao) {
-
-                    renderSparks(freeN, novos, assignedN);
+                    renderSparks(assignedN, novos, freeN);
                 } else {
                     renderSparks(total, novos, contactados);
                 }
@@ -4133,10 +4289,10 @@
                 console.error('loadHome', e);
                 // se falhar e não tiver snapshot, avisa — senão mantém o último bom
                 if (stillHome() && !lastHomeSnapshot) {
+                    setText('home-trovoedas', '—');
                     setText('home-total', '—');
                     setText('home-novos', '—');
                     setText('home-contactados', '—');
-                    setText('home-descartados', '—');
                     const tb = document.getElementById('home-top');
                     if (tb) tb.innerHTML = '<p class="empty">Erro ao carregar a home. Clique de novo em Visão geral.</p>';
                 }

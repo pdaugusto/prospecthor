@@ -1106,6 +1106,43 @@
         .order-field-help {
             font-size: 12px; color: var(--muted); line-height: 1.45; margin: -4px 0 0;
         }
+        .order-field.is-locked {
+            opacity: 0.72;
+            position: relative;
+        }
+        .order-field.is-locked .chip-row {
+            pointer-events: none;
+            user-select: none;
+        }
+        .order-lock-banner {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(245,197,66,0.28);
+            background: linear-gradient(135deg, rgba(245,197,66,0.1), rgba(0,0,0,0.22));
+            color: #f0e6c8;
+            font-size: 13px;
+            line-height: 1.45;
+            font-weight: 600;
+        }
+        .order-lock-banner.show { display: flex; }
+        .order-lock-banner .lock-ico {
+            flex-shrink: 0;
+            width: 22px; height: 22px;
+            border-radius: 8px;
+            display: grid; place-items: center;
+            background: rgba(245,197,66,0.18);
+            color: #f5c542;
+            font-size: 13px;
+        }
+        .order-lock-banner strong { color: #ffe08a; font-weight: 800; }
+        .order-field-label .opt.locked {
+            color: #f5c542;
+            border-color: rgba(245,197,66,0.35);
+            background: rgba(245,197,66,0.1);
+        }
 
         .chip-row {
             display: flex; flex-wrap: wrap; gap: 8px;
@@ -1115,7 +1152,7 @@
             background: rgba(0,0,0,0.28); color: var(--muted);
             font-size: 13px; font-weight: 700; font-family: inherit;
             padding: 9px 14px; border-radius: 999px; cursor: pointer;
-            transition: border-color .15s, background .15s, color .15s, box-shadow .15s, transform .12s;
+            transition: border-color .15s, background .15s, color .15s, box-shadow .15s, transform .12s, opacity .15s;
         }
         .chip:hover {
             border-color: rgba(0,212,255,0.3); color: var(--text);
@@ -1132,6 +1169,14 @@
             background: rgba(245,197,66,0.12);
             color: #ffe08a;
             box-shadow: 0 0 16px rgba(245,197,66,0.12);
+        }
+        .chip.is-disabled,
+        .chip:disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            transform: none !important;
+            pointer-events: none;
+            box-shadow: none;
         }
         .chip-row.niches .chip { font-size: 12px; padding: 8px 12px; }
 
@@ -2756,7 +2801,7 @@
                         <div class="n">1</div>
                         <div>
                             <strong>Você pede</strong>
-                            <span>Quantidade + preferência de cidade/nicho (pode pular).</span>
+                            <span>Com 5 moedas: leads aleatórios do estoque. A partir de 10: escolhe cidade e nicho.</span>
                         </div>
                     </div>
                     <div class="orders-howto-step">
@@ -2790,7 +2835,10 @@
                 <div id="orders-create-panel" class="orders-create card-panel">
                     <div class="orders-create-head">
                         <h3>Novo pedido</h3>
-                        <p>Não precisa saber termo técnico. Se não souber cidade ou nicho, escolha <strong style="color:var(--text)">Tanto faz</strong> — a gente prioriza as melhores oportunidades.</p>
+                        <p>
+                            Com <strong style="color:var(--text)">5 Trovoedas</strong> (boas-vindas) você recebe leads <strong style="color:var(--text)">aleatórios do estoque</strong>.
+                            Cidade e nicho só liberam a partir de <strong style="color:#ffe08a">10 leads</strong>.
+                        </p>
                     </div>
                     <div class="orders-create-body">
                         <!-- Qtd -->
@@ -2799,7 +2847,7 @@
                                 <strong>1. Quantos leads você quer?</strong>
                                 <span class="opt req">Obrigatório</span>
                             </div>
-                            <p class="order-field-help">Cada lead custa 1 Trovoeda. Comece pequeno se for a primeira vez.</p>
+                            <p class="order-field-help">Cada lead custa 1 Trovoeda. Abaixo de 10 = estoque aleatório; a partir de 10 você escolhe cidade e nicho.</p>
                             <div class="chip-row" id="order-qty-chips" role="group" aria-label="Quantidade">
                                 <button type="button" class="chip gold" data-qty="5">5</button>
                                 <button type="button" class="chip gold active" data-qty="10">10</button>
@@ -2812,15 +2860,25 @@
                             </div>
                         </div>
 
+                        <!-- Aviso: filtros bloqueados abaixo de 10 -->
+                        <div class="order-lock-banner" id="order-filters-lock" role="status" aria-live="polite">
+                            <span class="lock-ico" aria-hidden="true">🔒</span>
+                            <div>
+                                <strong>Cidade e nicho bloqueados</strong>
+                                — com menos de 10 leads (ex.: suas 5 moedas de boas-vindas) você recebe do <strong>estoque aleatório</strong>.
+                                Não dá para clicar em outros nichos ou cidades: essa escolha só fica disponível a partir de <strong>10 leads</strong>.
+                            </div>
+                        </div>
+
                         <!-- Cidade -->
-                        <div class="order-field">
+                        <div class="order-field" id="order-city-field">
                             <div class="order-field-label">
                                 <strong>2. Em qual cidade?</strong>
-                                <span class="opt">Opcional</span>
+                                <span class="opt" id="order-city-opt">A partir de 10</span>
                             </div>
-                            <p class="order-field-help">Pode deixar em “Tanto faz”. Se tiver região preferida, toque nela ou digite o nome.</p>
+                            <p class="order-field-help" id="order-city-help">Disponível a partir de 10 leads. Abaixo disso, o sistema envia leads aleatórios do estoque.</p>
                             <div class="chip-row" id="order-city-chips" role="group" aria-label="Cidade">
-                                <button type="button" class="chip active" data-city="">Tanto faz</button>
+                                <button type="button" class="chip active" data-city="">Tanto faz / estoque</button>
                                 <button type="button" class="chip" data-city="São Paulo">São Paulo</button>
                                 <button type="button" class="chip" data-city="Campinas">Campinas</button>
                                 <button type="button" class="chip" data-city="Santos">Santos</button>
@@ -2833,17 +2891,16 @@
                         </div>
 
                         <!-- Nicho -->
-                        <div class="order-field">
+                        <div class="order-field" id="order-niche-field">
                             <div class="order-field-label">
                                 <strong>3. Qual tipo de negócio (nicho)?</strong>
-                                <span class="opt">Opcional</span>
+                                <span class="opt" id="order-niche-opt">A partir de 10</span>
                             </div>
-                            <p class="order-field-help">
-                                Nicho = o ramo que você vende (ex.: dentista, advogado).
-                                <strong style="color:#c5d0e0">Não sabe?</strong> Deixe “Tanto faz”.
+                            <p class="order-field-help" id="order-niche-help">
+                                Nicho = o ramo que você vende (ex.: dentista, advogado). Só liberado a partir de 10 leads.
                             </p>
                             <div class="chip-row niches" id="order-niche-chips" role="group" aria-label="Nicho">
-                                <button type="button" class="chip active" data-niche="">Tanto faz</button>
+                                <button type="button" class="chip active" data-niche="">Tanto faz / estoque</button>
                                 <button type="button" class="chip" data-niche="odontologia">Odontologia</button>
                                 <button type="button" class="chip" data-niche="advocacia">Advocacia</button>
                                 <button type="button" class="chip" data-niche="clínica médica">Clínica médica</button>
@@ -4478,6 +4535,9 @@
             }
         }
 
+        /** Cidade/nicho só liberam a partir desta quantidade (estoque aleatório abaixo). */
+        const ORDER_FILTER_MIN_QTY = 10;
+
         function getOrderQty() {
             const el = document.getElementById('order-qty');
             const q = parseInt(el && el.value, 10);
@@ -4485,7 +4545,12 @@
             return Math.min(200, q);
         }
 
+        function orderFiltersUnlocked() {
+            return getOrderQty() >= ORDER_FILTER_MIN_QTY;
+        }
+
         function getOrderCity() {
+            if (!orderFiltersUnlocked()) return '';
             const active = document.querySelector('#order-city-chips .chip.active');
             if (!active) return (document.getElementById('order-city')?.value || '').trim();
             const v = active.getAttribute('data-city');
@@ -4494,11 +4559,93 @@
         }
 
         function getOrderNiche() {
+            if (!orderFiltersUnlocked()) return '';
             const active = document.querySelector('#order-niche-chips .chip.active');
             if (!active) return (document.getElementById('order-niche')?.value || '').trim();
             const v = active.getAttribute('data-niche');
             if (v === 'custom') return (document.getElementById('order-niche')?.value || '').trim();
             return (v || '').trim();
+        }
+
+        function resetOrderFiltersToStock() {
+            document.querySelectorAll('#order-city-chips .chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-city') === '');
+            });
+            document.querySelectorAll('#order-niche-chips .chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-niche') === '');
+            });
+            document.getElementById('order-city-custom-wrap')?.classList.remove('show');
+            document.getElementById('order-niche-custom-wrap')?.classList.remove('show');
+            const cityIn = document.getElementById('order-city');
+            const nicheIn = document.getElementById('order-niche');
+            if (cityIn) cityIn.value = '';
+            if (nicheIn) nicheIn.value = '';
+        }
+
+        function syncOrderFiltersByQty() {
+            const unlocked = orderFiltersUnlocked();
+            const q = getOrderQty() || 0;
+            const lockBanner = document.getElementById('order-filters-lock');
+            const cityField = document.getElementById('order-city-field');
+            const nicheField = document.getElementById('order-niche-field');
+            const cityOpt = document.getElementById('order-city-opt');
+            const nicheOpt = document.getElementById('order-niche-opt');
+            const cityHelp = document.getElementById('order-city-help');
+            const nicheHelp = document.getElementById('order-niche-help');
+
+            if (lockBanner) {
+                lockBanner.classList.toggle('show', !unlocked && q > 0);
+            }
+            if (cityField) cityField.classList.toggle('is-locked', !unlocked);
+            if (nicheField) nicheField.classList.toggle('is-locked', !unlocked);
+
+            if (cityOpt) {
+                cityOpt.textContent = unlocked ? 'Opcional' : 'Bloqueado';
+                cityOpt.classList.toggle('locked', !unlocked);
+            }
+            if (nicheOpt) {
+                nicheOpt.textContent = unlocked ? 'Opcional' : 'Bloqueado';
+                nicheOpt.classList.toggle('locked', !unlocked);
+            }
+            if (cityHelp) {
+                cityHelp.textContent = unlocked
+                    ? 'Pode deixar em “Tanto faz”. Se tiver região preferida, toque nela ou digite o nome.'
+                    : 'Indisponível com menos de 10 leads — você recebe do estoque aleatório. Escolha 10+ para liberar.';
+            }
+            if (nicheHelp) {
+                nicheHelp.innerHTML = unlocked
+                    ? 'Nicho = o ramo que você vende (ex.: dentista, advogado). <strong style="color:#c5d0e0">Não sabe?</strong> Deixe “Tanto faz”.'
+                    : 'Indisponível com menos de 10 leads (ex.: 5 moedas de boas-vindas). Não dá para escolher nicho — só a partir de <strong style="color:#ffe08a">10 leads</strong>.';
+            }
+
+            // desabilita chips de cidade/nicho (exceto o “Tanto faz / estoque” visual)
+            document.querySelectorAll('#order-city-chips .chip, #order-niche-chips .chip').forEach(chip => {
+                const isDefault =
+                    chip.getAttribute('data-city') === '' ||
+                    chip.getAttribute('data-niche') === '';
+                if (!unlocked) {
+                    chip.disabled = true;
+                    chip.classList.add('is-disabled');
+                    chip.setAttribute('aria-disabled', 'true');
+                    chip.title = isDefault
+                        ? 'Estoque aleatório (sem filtro)'
+                        : 'Disponível somente a partir de 10 leads';
+                } else {
+                    chip.disabled = false;
+                    chip.classList.remove('is-disabled');
+                    chip.removeAttribute('aria-disabled');
+                    chip.title = '';
+                }
+            });
+
+            const cityInput = document.getElementById('order-city');
+            const nicheInput = document.getElementById('order-niche');
+            if (cityInput) cityInput.disabled = !unlocked;
+            if (nicheInput) nicheInput.disabled = !unlocked;
+
+            if (!unlocked) {
+                resetOrderFiltersToStock();
+            }
         }
 
         function refreshOrderCostHint() {
@@ -4508,6 +4655,7 @@
             const q = getOrderQty() || 0;
             const bal = (currentUser && currentUser.trovoedas != null)
                 ? Number(currentUser.trovoedas) : 0;
+            const unlocked = q >= ORDER_FILTER_MIN_QTY;
             if (hint) {
                 hint.innerHTML = q > 0
                     ? `<img class="coin-mini" src="/static/trovoeda-coin.svg?v=tilt2" alt="" /> Vai reservar <strong>${q}</strong> Trovoeda${q === 1 ? '' : 's'}`
@@ -4517,7 +4665,10 @@
                 if (q <= 0) {
                     sub.innerHTML = 'Saldo atual: <b>' + bal + '</b>';
                 } else if (bal >= q) {
-                    sub.innerHTML = 'Saldo depois: <b>' + (bal - q) + '</b> · 1 moeda = 1 lead';
+                    const filterNote = unlocked
+                        ? ' · pode escolher cidade/nicho'
+                        : ' · estoque aleatório (cidade/nicho a partir de 10)';
+                    sub.innerHTML = 'Saldo depois: <b>' + (bal - q) + '</b> · 1 moeda = 1 lead' + filterNote;
                 } else {
                     sub.innerHTML = 'Saldo insuficiente (<b>' + bal + '</b>). <a href="/shop" onclick="event.preventDefault();navigateTo(\'/shop\');" style="color:#f5c542;font-weight:700;">Recarregar →</a>';
                 }
@@ -4533,12 +4684,15 @@
                     btn.classList.add('need-coins');
                     btn.onclick = () => navigateTo('/shop');
                 } else {
-                    btn.textContent = 'Pedir ' + q + ' lead' + (q === 1 ? '' : 's');
+                    btn.textContent = unlocked
+                        ? ('Pedir ' + q + ' lead' + (q === 1 ? '' : 's'))
+                        : ('Pedir ' + q + ' do estoque');
                     btn.disabled = false;
                     btn.classList.remove('need-coins');
                     btn.onclick = () => submitOrder();
                 }
             }
+            syncOrderFiltersByQty();
         }
 
         function bindOrderFormUI() {
@@ -4584,9 +4738,19 @@
                 });
             }
 
-            // cidade
+            // cidade — bloqueado se qty < 10
             document.querySelectorAll('#order-city-chips .chip').forEach(chip => {
-                chip.addEventListener('click', () => {
+                chip.addEventListener('click', (ev) => {
+                    if (!orderFiltersUnlocked()) {
+                        ev.preventDefault();
+                        syncOrderFiltersByQty();
+                        const banner = document.getElementById('order-filters-lock');
+                        if (banner) {
+                            banner.classList.add('show');
+                            banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        return;
+                    }
                     document.querySelectorAll('#order-city-chips .chip').forEach(c => c.classList.remove('active'));
                     chip.classList.add('active');
                     const v = chip.getAttribute('data-city');
@@ -4602,9 +4766,19 @@
                 });
             });
 
-            // nicho
+            // nicho — bloqueado se qty < 10
             document.querySelectorAll('#order-niche-chips .chip').forEach(chip => {
-                chip.addEventListener('click', () => {
+                chip.addEventListener('click', (ev) => {
+                    if (!orderFiltersUnlocked()) {
+                        ev.preventDefault();
+                        syncOrderFiltersByQty();
+                        const banner = document.getElementById('order-filters-lock');
+                        if (banner) {
+                            banner.classList.add('show');
+                            banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        return;
+                    }
                     document.querySelectorAll('#order-niche-chips .chip').forEach(c => c.classList.remove('active'));
                     chip.classList.add('active');
                     const v = chip.getAttribute('data-niche');
@@ -4653,8 +4827,12 @@
 
             const tags = [];
             tags.push(`<span class="order-tag">${qty} lead${qty === 1 ? '' : 's'}</span>`);
-            tags.push(`<span class="order-tag">${city ? esc(city) : 'Qualquer cidade'}</span>`);
-            tags.push(`<span class="order-tag">${niche ? esc(niche) : 'Qualquer nicho'}</span>`);
+            if (qty < ORDER_FILTER_MIN_QTY && !city && !niche) {
+                tags.push(`<span class="order-tag">Estoque aleatório</span>`);
+            } else {
+                tags.push(`<span class="order-tag">${city ? esc(city) : 'Qualquer cidade'}</span>`);
+                tags.push(`<span class="order-tag">${niche ? esc(niche) : 'Qualquer nicho'}</span>`);
+            }
 
             let progress = '';
             if (st === 'approved' || st === 'fulfilled' || (st === 'pending' && del > 0)) {
@@ -4714,7 +4892,7 @@
             if (hero) {
                 hero.textContent = isHost
                     ? 'Aprove pedidos dos clientes, entregue sobras do pool ou rode o robô no cockpit se faltar lead.'
-                    : 'Escolha quantos quer, diga o mercado (se souber) e envie. 1 Trovoeda = 1 lead — o valor fica reservado até a entrega ou o estorno.';
+                    : 'Com 5 moedas: leads aleatórios do estoque. A partir de 10: escolha cidade e nicho. 1 Trovoeda = 1 lead.';
             }
             if (listTitle) listTitle.textContent = isHost ? 'Histórico de pedidos' : 'Seus pedidos';
             if (listSub) {
@@ -4760,7 +4938,7 @@
                             ? orders.map(o => renderOrderCard(o, false)).join('')
                             : `<div class="orders-empty">
                                 <strong>Nenhum pedido ainda</strong>
-                                <p>Use o formulário acima — escolha a quantidade e toque em Pedir. Cidade e nicho são opcionais.</p>
+                                <p>Use o formulário acima. Com 5 moedas: estoque aleatório. A partir de 10: cidade e nicho liberados.</p>
                                </div>`;
                     }
                 }
@@ -4778,8 +4956,10 @@
             const msg = document.getElementById('order-form-msg');
             const btn = document.getElementById('btn-create-order');
             const qty = getOrderQty();
-            const city = getOrderCity();
-            const niche = getOrderNiche();
+            // abaixo de 10: força estoque aleatório (sem cidade/nicho)
+            const unlocked = qty >= ORDER_FILTER_MIN_QTY;
+            const city = unlocked ? getOrderCity() : '';
+            const niche = unlocked ? getOrderNiche() : '';
             const notes = (document.getElementById('order-notes')?.value || '').trim();
             const bal = (currentUser && currentUser.trovoedas != null)
                 ? Number(currentUser.trovoedas) : 0;
@@ -4793,18 +4973,20 @@
                 navigateTo('/shop');
                 return;
             }
-            // se escolheu "Outro" mas não preencheu, avisa de leve
-            const cityChip = document.querySelector('#order-city-chips .chip.active');
-            const nicheChip = document.querySelector('#order-niche-chips .chip.active');
-            if (cityChip && cityChip.getAttribute('data-city') === 'custom' && !city) {
-                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite a cidade ou escolha “Tanto faz”.'; }
-                document.getElementById('order-city')?.focus();
-                return;
-            }
-            if (nicheChip && nicheChip.getAttribute('data-niche') === 'custom' && !niche) {
-                if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite o nicho ou escolha “Tanto faz”.'; }
-                document.getElementById('order-niche')?.focus();
-                return;
+            // se escolheu "Outro" mas não preencheu, avisa de leve (só com filtros liberados)
+            if (unlocked) {
+                const cityChip = document.querySelector('#order-city-chips .chip.active');
+                const nicheChip = document.querySelector('#order-niche-chips .chip.active');
+                if (cityChip && cityChip.getAttribute('data-city') === 'custom' && !city) {
+                    if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite a cidade ou escolha “Tanto faz”.'; }
+                    document.getElementById('order-city')?.focus();
+                    return;
+                }
+                if (nicheChip && nicheChip.getAttribute('data-niche') === 'custom' && !niche) {
+                    if (msg) { msg.style.display = ''; msg.className = 'orders-msg err'; msg.textContent = 'Digite o nicho ou escolha “Tanto faz”.'; }
+                    document.getElementById('order-niche')?.focus();
+                    return;
+                }
             }
 
             if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }

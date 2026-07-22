@@ -227,6 +227,15 @@ def create_order(
             "balance": bal,
         }
 
+    # Abaixo de 10 leads: só estoque aleatório (sem filtro de cidade/nicho).
+    # Escolha de mercado liberada a partir de 10 (ex.: boas-vindas com 5 moedas).
+    FILTER_MIN_QTY = 10
+    niche_s = (niche or "").strip()[:120]
+    city_s = (city or "").strip()[:120]
+    if qty < FILTER_MIN_QTY:
+        niche_s = ""
+        city_s = ""
+
     ensure_schema()
     conn = None
     try:
@@ -244,8 +253,8 @@ def create_order(
                 int(user_id),
                 qty,
                 qty,
-                (niche or "").strip()[:120],
-                (city or "").strip()[:120],
+                niche_s,
+                city_s,
                 (notes or "").strip()[:500],
                 STATUS_PENDING,
                 now,

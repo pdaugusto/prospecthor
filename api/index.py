@@ -1000,6 +1000,10 @@ def api_orders_create():
     niche = (data.get("niche") or "").strip()
     city = (data.get("city") or "").strip()
     notes = (data.get("notes") or data.get("note") or "").strip()
+    # Abaixo de 10: só estoque aleatório (sem cidade/nicho)
+    if qty < 10:
+        niche = ""
+        city = ""
 
     uid = _effective_user_id()
     if not uid:

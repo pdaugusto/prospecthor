@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -114,15 +114,16 @@
     .pkg .per strong.save { color: #34d399; font-weight: 700; }
     .pkg .coin-3d {
       width: 64px; height: 64px; margin-bottom: 12px;
-      display: inline-flex;
+      perspective: 800px; display: inline-flex;
     }
     .pkg .coin-3d img {
       width: 100%; height: 100%; object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
-      transition: transform .2s ease;
+      transform: rotateY(-18deg) rotateX(10deg) rotateZ(-3deg);
+      filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.4));
+      transition: transform .3s ease;
     }
     .pkg:hover .coin-3d img {
-      transform: scale(1.06);
+      transform: rotateY(-10deg) rotateX(8deg) scale(1.08);
     }
 
 
@@ -262,7 +263,7 @@
           {% endif %}
           {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
           <span class="coin-3d" aria-hidden="true">
-            <img src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
+            <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="64" height="64" />
           </span>
           <h3>{{ p.name }}</h3>
           <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>

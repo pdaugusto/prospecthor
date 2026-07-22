@@ -76,9 +76,18 @@
       font-weight: 900; letter-spacing: -0.03em; font-size: 15px;
     }
     .brand span { color: var(--neon); }
-    .brand img {
-      width: 36px; height: 36px; border-radius: 11px;
-      box-shadow: 0 0 0 1px rgba(0,212,255,0.25), 0 0 20px rgba(0,212,255,0.2);
+    /* PNG é máscara preta transparente — precisa do tile neon (igual login/painel) */
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+      background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.25), 0 0 20px rgba(0,212,255,0.28), inset 0 1px 0 rgba(255,255,255,0.28);
+      overflow: hidden;
+    }
+    .brand-mark img {
+      width: 24px; height: 24px;
+      display: block;
+      object-fit: contain;
     }
     .nav-links {
       display: flex; gap: 4px; align-items: center;
@@ -909,7 +918,9 @@
     <nav class="nav">
       <div class="wrap nav-inner">
         <a class="brand" href="/">
-          <img src="/static/thor-mask.png" alt="" width="36" height="36" />
+          <span class="brand-mark" aria-hidden="true">
+            <img src="/static/thor-mask.png" alt="" width="24" height="24" />
+          </span>
           Prospec<span>THOR</span>
         </a>
         <div class="nav-links">

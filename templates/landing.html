@@ -235,7 +235,7 @@
         {% for p in packages %}
         <div class="pkg {% if p.slug == 'raio' %}hot{% endif %}">
           {% if p.slug == 'raio' %}<span class="badge">Mais popular</span>{% endif %}
-          <img src="/static/trovoeda-coin.jpg" alt="" width="40" height="40" />
+          <img src="/static/trovoeda-coin.svg" alt="" width="40" height="40" />
           <h3>{{ p.name }}</h3>
           <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>
           <div class="price">R$ {{ p.price_brl }}</div>

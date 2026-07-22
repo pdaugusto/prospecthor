@@ -216,10 +216,10 @@
       box-shadow: 0 0 8px #34d399;
     }
 
-    /* Product mock */
+    /* Product mock = painel real (sidebar + leads) */
     .hero-visual {
       position: relative;
-      min-height: 420px;
+      min-height: 440px;
     }
     .mock-glow {
       position: absolute;
@@ -235,86 +235,151 @@
       background: radial-gradient(circle, rgba(245,197,66,0.18), transparent 70%);
       top: auto; bottom: 5%; left: 5%; right: auto;
     }
-    .mock-panel {
+    .dash-shot {
       position: relative;
-      border-radius: 20px;
+      border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(165deg, rgba(16,22,33,0.95) 0%, rgba(8,10,16,0.98) 100%);
+      background: linear-gradient(165deg, #0e141f 0%, #080b12 100%);
       box-shadow:
         0 0 0 1px rgba(0,212,255,0.08),
-        0 24px 60px rgba(0,0,0,0.55),
+        0 28px 70px rgba(0,0,0,0.55),
         0 0 80px rgba(0,212,255,0.08);
       overflow: hidden;
-      transform: perspective(1200px) rotateY(-6deg) rotateX(4deg);
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      min-height: 400px;
+      transform: perspective(1400px) rotateY(-5deg) rotateX(3deg);
       transition: transform .4s ease;
     }
-    .mock-panel:hover {
-      transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
+    .dash-shot:hover {
+      transform: perspective(1400px) rotateY(-1deg) rotateX(1deg);
     }
     @media (max-width: 960px) {
-      .mock-panel { transform: none; }
-      .mock-panel:hover { transform: none; }
+      .dash-shot { transform: none; grid-template-columns: 110px 1fr; min-height: 360px; }
+      .dash-shot:hover { transform: none; }
       .hero-visual { min-height: auto; }
     }
-    .mock-bar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 12px 14px;
+    .dash-shot-side {
+      border-right: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.4);
+      padding: 14px 10px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .dash-shot-side .sm-logo {
+      display: flex; align-items: center; gap: 7px;
+      padding: 2px 4px 12px; margin-bottom: 6px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.35);
     }
-    .mock-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #3a4558;
+    .dash-shot-side .sm-logo .m {
+      width: 24px; height: 24px; border-radius: 7px;
+      background: linear-gradient(145deg, #00d4ff, #0a6fa8);
+      display: grid; place-items: center;
+      box-shadow: 0 0 12px rgba(0,212,255,0.25);
     }
-    .mock-dot.r { background: #ff5f57; }
-    .mock-dot.y { background: #febc2e; }
-    .mock-dot.g { background: #28c840; }
-    .mock-bar-title {
-      margin-left: 6px; font-size: 11px; font-weight: 700;
-      color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+    .dash-shot-side .sm-logo .m img { width: 15px; height: 15px; }
+    .dash-shot-side .sm-logo span {
+      font-size: 10px; font-weight: 800; letter-spacing: -0.02em;
     }
-    .mock-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .dash-shot-side .sm-logo span b { color: var(--neon); }
+    .dnav {
+      font-size: 10px; font-weight: 600; color: var(--muted-2);
+      padding: 8px 8px; border-radius: 8px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .dnav.active {
+      background: rgba(0,212,255,0.1);
+      color: #9ae8ff;
+      box-shadow: inset 0 0 0 1px rgba(0,212,255,0.22);
+    }
+    .dnav i {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: currentColor; opacity: 0.65;
+    }
+    .dnav.sep {
+      margin-top: 8px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted-2); opacity: 0.7;
+    }
+    .dash-shot-main {
+      padding: 14px 14px 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      min-width: 0;
+    }
+    .dash-shot-top {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .dash-shot-top h3 {
+      font-size: 13px; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .dash-shot-top h3 small {
+      font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 6px;
+    }
+    .wallet-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px 5px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(245,197,66,0.4);
+      background: rgba(245,197,66,0.1);
+      font-size: 11px; font-weight: 800; color: #ffe8a3;
+    }
+    .wallet-pill img { width: 16px; height: 16px; }
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .kpi {
+      padding: 10px 10px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.025);
+    }
+    .kpi b {
+      display: block; font-size: 18px; font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+    .kpi b.neon { color: var(--neon); }
+    .kpi b.gold { color: var(--gold); }
+    .kpi span {
+      font-size: 10px; color: var(--muted-2); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
     .mock-lead {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 10px;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.02);
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.28);
     }
     .mock-lead.hot {
-      border-color: rgba(245,197,66,0.35);
-      background:
-        radial-gradient(ellipse 80% 100% at 0% 50%, rgba(245,197,66,0.1), transparent 55%),
-        rgba(255,255,255,0.02);
+      border-color: rgba(245,197,66,0.32);
+      background: linear-gradient(90deg, rgba(245,197,66,0.1), rgba(0,0,0,0.25));
     }
     .mock-lead h4 {
-      font-size: 13px; font-weight: 800; margin-bottom: 4px;
+      font-size: 12px; font-weight: 800; margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .mock-lead p {
-      font-size: 11px; color: var(--muted); line-height: 1.4;
+      font-size: 10px; color: var(--muted);
     }
     .mock-score {
-      text-align: center;
-      min-width: 52px;
+      text-align: center; min-width: 40px; align-self: center;
     }
     .mock-score b {
-      display: block;
-      font-size: 20px; font-weight: 900;
-      color: var(--gold);
-      letter-spacing: -0.03em;
+      display: block; font-size: 16px; font-weight: 900;
+      color: var(--gold); letter-spacing: -0.03em;
     }
     .mock-score span {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
       text-transform: uppercase; color: var(--muted-2);
     }
     .mock-tags {
-      display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
     }
     .mock-tag {
-      font-size: 10px; font-weight: 700;
-      padding: 3px 8px; border-radius: 999px;
+      font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.08);
       color: #a8b8d0; background: rgba(0,0,0,0.25);
     }
@@ -336,13 +401,13 @@
       padding: 10px 14px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(12,17,26,0.92);
+      background: rgba(12,17,26,0.94);
       backdrop-filter: blur(12px);
       box-shadow: 0 12px 32px rgba(0,0,0,0.4);
       animation: float-y 4.5s ease-in-out infinite;
     }
     .mock-float.coin {
-      top: -8px; right: -8px;
+      top: -10px; right: -6px;
       display: flex; align-items: center; gap: 10px;
       animation-delay: 0.4s;
     }
@@ -357,7 +422,7 @@
     }
     .mock-float.coin span { font-size: 11px; color: var(--muted); }
     .mock-float.scan {
-      bottom: 18px; left: -12px;
+      bottom: 16px; left: -10px;
       display: flex; align-items: center; gap: 8px;
       animation-delay: 1s;
     }
@@ -972,63 +1037,74 @@
               </div>
             </div>
 
-            <div class="mock-panel">
-              <div class="mock-bar">
-                <span class="mock-dot r"></span>
-                <span class="mock-dot y"></span>
-                <span class="mock-dot g"></span>
-                <span class="mock-bar-title">Leads quentes · hoje</span>
-              </div>
-              <div class="mock-body">
+            <!-- Preview do painel real -->
+            <div class="dash-shot">
+              <aside class="dash-shot-side">
+                <div class="sm-logo">
+                  <span class="m"><img src="/static/thor-mask.png" alt="" width="15" height="15" /></span>
+                  <span>Prospec<b>THOR</b></span>
+                </div>
+                <div class="dnav active"><i></i> Início</div>
+                <div class="dnav"><i></i> Leads</div>
+                <div class="dnav"><i></i> Relatórios</div>
+                <div class="dnav sep">Créditos</div>
+                <div class="dnav"><i></i> Loja</div>
+                <div class="dnav"><i></i> Carteira</div>
+                <div class="dnav"><i></i> Pedidos</div>
+              </aside>
+              <div class="dash-shot-main">
+                <div class="dash-shot-top">
+                  <h3>Leads quentes <small>painel</small></h3>
+                  <div class="wallet-pill">
+                    <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="16" height="16" />
+                    24
+                  </div>
+                </div>
+                <div class="kpi-row">
+                  <div class="kpi"><b class="neon">18</b><span>Novos</span></div>
+                  <div class="kpi"><b class="gold">92</b><span>Top score</span></div>
+                  <div class="kpi"><b>6</b><span>Contactados</span></div>
+                </div>
                 <div class="mock-lead hot">
                   <div>
                     <h4>Clínica Odonto Horizonte</h4>
-                    <p>Campinas · SP · Odontologia</p>
+                    <p>Campinas · Odontologia</p>
                     <div class="mock-tags">
                       <span class="mock-tag wa">WhatsApp</span>
                       <span class="mock-tag ig">Instagram</span>
                       <span class="mock-tag no">Sem site</span>
                     </div>
                   </div>
-                  <div class="mock-score">
-                    <b>92</b>
-                    <span>score</span>
-                  </div>
+                  <div class="mock-score"><b>92</b><span>score</span></div>
                 </div>
                 <div class="mock-lead">
                   <div>
                     <h4>Advocacia Mendes &amp; Silva</h4>
-                    <p>São Paulo · SP · Advocacia</p>
+                    <p>São Paulo · Advocacia</p>
                     <div class="mock-tags">
                       <span class="mock-tag wa">WhatsApp</span>
                       <span class="mock-tag no">Sem site</span>
                     </div>
                   </div>
-                  <div class="mock-score">
-                    <b>87</b>
-                    <span>score</span>
-                  </div>
+                  <div class="mock-score"><b>87</b><span>score</span></div>
                 </div>
                 <div class="mock-lead">
                   <div>
                     <h4>Studio Belle Estética</h4>
-                    <p>Santos · SP · Estética</p>
+                    <p>Santos · Estética</p>
                     <div class="mock-tags">
                       <span class="mock-tag ig">Instagram</span>
                       <span class="mock-tag no">Sem site</span>
                     </div>
                   </div>
-                  <div class="mock-score">
-                    <b>81</b>
-                    <span>score</span>
-                  </div>
+                  <div class="mock-score"><b>81</b><span>score</span></div>
                 </div>
               </div>
             </div>
 
             <div class="mock-float scan">
               <span class="dot"></span>
-              <span>Varredura ativa na região</span>
+              <span>Painel · leads prontos</span>
             </div>
           </div>
         </div>

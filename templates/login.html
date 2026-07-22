@@ -1,359 +1,593 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ProspecTHOR — Entrar</title>
-  <!-- cadastro: /register · site: / -->
+  <title>Entrar — ProspecTHOR</title>
+  <meta name="description" content="Acesse sua conta ProspecTHOR e continue prospectando com leads prontos pra fechar." />
+  <meta name="theme-color" content="#05070b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #05070b;
+      --card: #0c111a;
       --border: #1a2233;
-      --text: #ffffff;
+      --text: #e8eef7;
       --muted: #8b9bb4;
       --muted-2: #5a6b82;
       --neon: #00d4ff;
-      --neon-dim: rgba(0, 212, 255, 0.10);
+      --neon-dim: rgba(0, 212, 255, 0.12);
       --neon-glow: rgba(0, 212, 255, 0.35);
+      --gold: #f5c542;
       --danger: #ff4d6a;
       --font: "Inter", system-ui, -apple-system, sans-serif;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { min-height: 100%; }
     body {
       font-family: var(--font);
-      color: #e8eef7;
+      color: var(--text);
       background: var(--bg);
       -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; text-decoration: none; }
 
     .page {
       min-height: 100vh;
+      min-height: 100dvh;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.15fr 0.85fr;
+    }
+    @media (max-width: 960px) {
+      .page { grid-template-columns: 1fr; }
     }
 
-    .bg-layer {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 212, 255, 0.12), transparent 55%),
-        radial-gradient(ellipse 45% 40% at 90% 80%, rgba(59, 158, 255, 0.08), transparent 50%),
-        var(--bg);
-    }
-    .bg-layer::before {
-      content: "";
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-      background-size: 56px 56px;
-      mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000 10%, transparent 70%);
-    }
-
-    .pitch {
-      position: relative; z-index: 1;
-      padding: 56px 56px 56px 64px;
+    /* —— Left: product —— */
+    .showcase {
+      position: relative;
+      padding: 40px 40px 36px 48px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 28px;
       border-right: 1px solid var(--border);
-      max-width: 640px;
-      margin-left: auto;
-      width: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 55% 45% at 20% 15%, rgba(0,212,255,0.14), transparent 55%),
+        radial-gradient(ellipse 40% 35% at 85% 80%, rgba(245,197,66,0.07), transparent 50%),
+        #06090f;
     }
+    .showcase::before {
+      content: "";
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 70% at 40% 40%, #000 15%, transparent 75%);
+    }
+    .showcase > * { position: relative; z-index: 1; }
 
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 32px;
+    }
     .brand {
-      display: flex; align-items: center; gap: 12px;
+      display: inline-flex; align-items: center; gap: 11px;
+      font-weight: 900; font-size: 15px; letter-spacing: -0.03em;
     }
     .brand-mark {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: linear-gradient(145deg, #00d4ff, #0a6fa8);
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
       display: grid; place-items: center;
-      box-shadow: 0 0 24px var(--neon-glow);
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.3), 0 0 22px rgba(0,212,255,0.3), inset 0 1px 0 rgba(255,255,255,0.28);
       overflow: hidden;
-      flex-shrink: 0;
     }
     .brand-mark img {
-      width: 30px; height: 30px;
-      display: block;
-      object-fit: contain;
-      /* PNG já é silhueta preta com fundo transparente */
+      width: 26px; height: 26px;
+      display: block; object-fit: contain;
     }
-    .brand strong {
-      font-size: 16px; font-weight: 800; color: #fff;
-    }
+    .brand strong { color: #fff; font-weight: 900; }
     .brand strong span { color: var(--neon); }
-
-    .pitch h1 {
-      font-size: clamp(36px, 4.5vw, 52px);
-      font-weight: 900;
-      line-height: 1.05;
-      letter-spacing: -0.04em;
-      color: #fff;
+    .brand-back {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      padding: 8px 12px; border-radius: 999px;
+      border: 1px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
     }
-    .pitch h1 em {
+    .brand-back:hover {
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .showcase-copy h1 {
+      font-size: clamp(28px, 3.4vw, 40px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+      max-width: 480px;
+      margin-bottom: 12px;
+    }
+    .showcase-copy h1 em {
       font-style: normal;
-      background: linear-gradient(100deg, #fff 20%, #00d4ff 100%);
+      background: linear-gradient(100deg, #fff 10%, #9ae8ff 55%, var(--neon));
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-
-    .pitch p {
-      font-size: 17px;
-      line-height: 1.55;
-      color: var(--muted);
-      max-width: 420px;
+    .showcase-copy p {
+      font-size: 15px; color: var(--muted); line-height: 1.6;
+      max-width: 420px; margin-bottom: 28px;
     }
-    .pitch p strong { color: #fff; font-weight: 600; }
 
-    .metrics {
-      display: flex;
-      gap: 32px;
-      padding-top: 8px;
+    /* Mini dashboard mock */
+    .dash-mock {
+      flex: 1;
+      min-height: 280px;
+      max-width: 560px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(165deg, #0e141f 0%, #080b12 100%);
+      box-shadow:
+        0 0 0 1px rgba(0,212,255,0.06),
+        0 28px 60px rgba(0,0,0,0.5),
+        0 0 60px rgba(0,212,255,0.06);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 148px 1fr;
     }
-    .metrics div b {
-      display: block;
-      font-size: 28px;
-      font-weight: 900;
-      color: #fff;
+    .dash-side {
+      border-right: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.35);
+      padding: 14px 10px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .dash-side .logo-mini {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 6px 12px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dash-side .logo-mini .m {
+      width: 22px; height: 22px; border-radius: 6px;
+      background: linear-gradient(145deg, #00d4ff, #0a6fa8);
+      display: grid; place-items: center;
+    }
+    .dash-side .logo-mini .m img { width: 14px; height: 14px; }
+    .dash-side .logo-mini span {
+      font-size: 10px; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .dash-side .logo-mini span b { color: var(--neon); font-weight: 800; }
+    .dash-nav {
+      font-size: 10px; font-weight: 600; color: var(--muted-2);
+      padding: 7px 8px; border-radius: 7px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dash-nav.active {
+      background: rgba(0,212,255,0.1);
+      color: #9ae8ff;
+      box-shadow: inset 0 0 0 1px rgba(0,212,255,0.2);
+    }
+    .dash-nav i {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: currentColor; opacity: 0.6;
+    }
+    .dash-main { padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .dash-top {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .dash-top h3 {
+      font-size: 12px; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .dash-top h3 span { color: var(--muted); font-weight: 600; font-size: 10px; margin-left: 6px; }
+    .wallet-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px 4px 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(245,197,66,0.35);
+      background: rgba(245,197,66,0.1);
+      font-size: 10px; font-weight: 800; color: #ffe8a3;
+    }
+    .wallet-pill img { width: 14px; height: 14px; }
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .kpi {
+      padding: 8px 8px 7px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+    }
+    .kpi b {
+      display: block; font-size: 14px; font-weight: 900;
+      letter-spacing: -0.03em; color: #fff;
+    }
+    .kpi b.neon { color: var(--neon); }
+    .kpi b.gold { color: var(--gold); }
+    .kpi span {
+      font-size: 9px; color: var(--muted-2); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .lead-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.25);
+    }
+    .lead-row.hot {
+      border-color: rgba(245,197,66,0.28);
+      background: linear-gradient(90deg, rgba(245,197,66,0.08), rgba(0,0,0,0.2));
+    }
+    .lead-row h4 {
+      font-size: 11px; font-weight: 800; margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lead-row p {
+      font-size: 9px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lead-tags { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .ltag {
+      font-size: 8px; font-weight: 700; padding: 2px 5px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08); color: #a8b8d0;
+    }
+    .ltag.wa { color: #6ee7b7; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+    .ltag.no { color: #fca5a5; border-color: rgba(248,113,113,0.28); background: rgba(248,113,113,0.08); }
+    .score {
+      text-align: center; min-width: 36px; align-self: center;
+    }
+    .score b {
+      display: block; font-size: 15px; font-weight: 900; color: var(--gold);
       letter-spacing: -0.03em;
-      font-variant-numeric: tabular-nums;
     }
-    .metrics div b span { color: var(--neon); }
-    .metrics div small {
-      font-size: 12px;
-      color: var(--muted-2);
-      font-weight: 500;
+    .score span {
+      font-size: 8px; font-weight: 700; color: var(--muted-2);
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
 
+    .showcase-foot {
+      margin-top: 22px;
+      display: flex; flex-wrap: wrap; gap: 10px 18px;
+      font-size: 12px; color: var(--muted-2); font-weight: 500;
+    }
+    .showcase-foot span {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .showcase-foot span::before {
+      content: "";
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+    }
+
+    /* —— Right: auth —— */
     .auth {
-      position: relative; z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      padding: 40px 28px;
+      background:
+        radial-gradient(ellipse 50% 40% at 80% 20%, rgba(0,212,255,0.06), transparent 50%),
+        var(--bg);
     }
     .auth-card {
       width: 100%;
-      max-width: 380px;
-      background: rgba(10, 14, 23, 0.92);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px 32px 28px;
-      box-shadow:
-        0 0 0 1px rgba(0, 212, 255, 0.04),
-        0 24px 48px rgba(0, 0, 0, 0.4),
-        0 0 48px rgba(0, 212, 255, 0.05);
-      position: relative;
+      max-width: 400px;
     }
-    .auth-card::before {
+    .auth-card-inner {
+      padding: 32px 30px 26px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: linear-gradient(165deg, rgba(14,18,28,0.98), rgba(8,10,16,0.99));
+      box-shadow:
+        0 0 0 1px rgba(0,212,255,0.04),
+        0 24px 56px rgba(0,0,0,0.45),
+        0 0 40px rgba(0,212,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-card-inner::before {
       content: "";
       position: absolute;
-      top: 0; left: 24px; right: 24px;
+      top: 0; left: 20px; right: 20px;
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--neon), transparent);
-      box-shadow: 0 0 12px var(--neon);
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.7), transparent);
+      box-shadow: 0 0 14px rgba(0,212,255,0.4);
     }
 
-    .auth-card h2 {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
+    .auth-head { margin-bottom: 24px; }
+    .auth-head h1 {
+      font-size: 24px; font-weight: 900;
+      letter-spacing: -0.03em; margin-bottom: 6px;
     }
-    .auth-card .sub {
+    .auth-head p {
+      font-size: 13px; color: var(--muted); line-height: 1.5;
+    }
+
+    .error {
+      background: rgba(255, 77, 106, 0.08);
+      border: 1px solid rgba(255, 77, 106, 0.35);
+      color: #ff8fa3;
+      padding: 12px 14px;
+      border-radius: 12px;
       font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 28px;
       line-height: 1.45;
+      margin-bottom: 18px;
     }
 
+    .field { margin-bottom: 14px; }
     label {
       display: block;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      letter-spacing: .07em;
       color: var(--muted-2);
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
-    .field { margin-bottom: 16px; }
+    .input-wrap { position: relative; }
     input {
       width: 100%;
       padding: 13px 14px;
       background: #070b12;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       color: #fff;
       font-size: 14px;
       font-family: var(--font);
+      font-weight: 500;
       outline: none;
-      transition: border .15s, box-shadow .15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-    input::placeholder { color: var(--muted-2); }
+    input::placeholder { color: var(--muted-2); font-weight: 400; }
     input:focus {
-      border-color: var(--neon);
+      border-color: rgba(0,212,255,0.55);
       box-shadow: 0 0 0 3px var(--neon-dim);
     }
 
     .btn-enter {
       width: 100%;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px 16px;
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 14px;
       font-weight: 800;
       font-family: var(--font);
       cursor: pointer;
       color: #031018;
-      background: linear-gradient(135deg, #00d4ff, #0090c4);
-      box-shadow: 0 0 22px var(--neon-dim);
+      background: linear-gradient(135deg, #3de0ff 0%, var(--neon) 40%, #0a8ec4 100%);
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.15), 0 8px 24px rgba(0,212,255,0.22);
       transition: filter .15s, transform .15s, box-shadow .15s;
     }
     .btn-enter:hover {
-      filter: brightness(1.08);
+      filter: brightness(1.06);
       transform: translateY(-1px);
-      box-shadow: 0 0 30px var(--neon-glow);
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.25), 0 10px 30px rgba(0,212,255,0.32);
     }
     .btn-enter:active { transform: translateY(0); }
     .btn-enter:disabled {
-      opacity: .7;
+      opacity: 0.7;
       cursor: wait;
       transform: none;
     }
 
-    .error {
-      background: rgba(255, 77, 106, 0.08);
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      text-align: center;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-
-    .auth-foot {
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      font-size: 12px;
+    .auth-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 22px 0 16px;
       color: var(--muted-2);
-      line-height: 1.45;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
-    .auth-foot b { color: #fff; }
+    .auth-divider::before,
+    .auth-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
 
-    @media (max-width: 900px) {
-      .page { grid-template-columns: 1fr; min-height: 100dvh; }
-      .pitch {
-        padding: 36px 20px 20px;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        max-width: none;
-        margin: 0;
-        gap: 18px;
-      }
-      .pitch h1 { font-size: 28px; }
-      .pitch p { font-size: 15px; }
-      .metrics { gap: 16px; flex-wrap: wrap; }
-      .metrics div b { font-size: 22px; }
+    .auth-links {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .auth-links a {
+      color: var(--neon);
+      font-weight: 700;
+    }
+    .auth-links a:hover { text-decoration: underline; }
+    .auth-links .sep { color: var(--muted-2); margin: 0 6px; }
+
+    .auth-trust {
+      margin-top: 18px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px;
+      font-size: 11px; color: var(--muted-2); font-weight: 500;
+    }
+    .auth-trust span::before {
+      content: "✓ ";
+      color: #34d399;
+      font-weight: 800;
+    }
+
+    .mobile-brand {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 960px) {
+      .showcase { display: none; }
       .auth {
-        padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0));
+        padding: 28px 18px calc(28px + env(safe-area-inset-bottom, 0));
+        min-height: 100dvh;
         align-items: flex-start;
+        padding-top: 40px;
       }
-      .auth-card { max-width: none; padding: 28px 20px 22px; }
+      .mobile-brand { display: flex; }
+      .auth-card { max-width: 440px; margin: 0 auto; }
+      .auth-card-inner { padding: 28px 22px 22px; }
       input { font-size: 16px; min-height: 48px; }
       .btn-enter { min-height: 50px; font-size: 15px; }
     }
   </style>
 </head>
 <body>
-  <div class="bg-layer" aria-hidden="true"></div>
-
   <div class="page">
-    <section class="pitch">
-      <div class="brand">
-        <div class="brand-mark" title="ProspecTHOR" aria-label="ProspecTHOR">
-          <img src="/static/thor-mask.png" alt="" width="28" height="28" />
-        </div>
-        <strong>Prospec<span>THOR</span></strong>
+    <!-- Painel preview -->
+    <section class="showcase" aria-hidden="true">
+      <div class="top-bar">
+        <a class="brand" href="/">
+          <span class="brand-mark">
+            <img src="/static/thor-mask.png" alt="" width="26" height="26" />
+          </span>
+          <strong>Prospec<span>THOR</span></strong>
+        </a>
+        <a class="brand-back" href="/">← Voltar ao site</a>
       </div>
 
-      <h1>
-        Prospecção automática.<br />
-        <em>Lead pronto pra fechar.</em>
-      </h1>
+      <div class="showcase-copy">
+        <h1>Seu painel de leads.<br /><em>Pronto pra abordar.</em></h1>
+        <p>
+          WhatsApp, Instagram, nota do Google e score de propensão — tudo em um só lugar.
+          Pague só o que usar com Trovoedas.
+        </p>
+      </div>
 
-      <p>
-        Robô varre Maps + CNPJ, filtra quem <strong>não tem site</strong> e entrega
-        com WhatsApp, Instagram e score. Pague só o que usar com <strong>Trovoedas</strong>.
-      </p>
+      <div class="dash-mock">
+        <aside class="dash-side">
+          <div class="logo-mini">
+            <span class="m"><img src="/static/thor-mask.png" alt="" width="14" height="14" /></span>
+            <span>Prospec<b>THOR</b></span>
+          </div>
+          <div class="dash-nav active"><i></i> Início</div>
+          <div class="dash-nav"><i></i> Leads</div>
+          <div class="dash-nav"><i></i> Pedidos</div>
+          <div class="dash-nav"><i></i> Loja</div>
+          <div class="dash-nav"><i></i> Carteira</div>
+        </aside>
+        <div class="dash-main">
+          <div class="dash-top">
+            <h3>Leads quentes <span>hoje</span></h3>
+            <div class="wallet-pill">
+              <img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="14" height="14" />
+              24
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><b class="neon">18</b><span>Novos</span></div>
+            <div class="kpi"><b class="gold">92</b><span>Top score</span></div>
+            <div class="kpi"><b>6</b><span>Contactados</span></div>
+          </div>
+          <div class="lead-row hot">
+            <div>
+              <h4>Clínica Odonto Horizonte</h4>
+              <p>Campinas · Odontologia</p>
+              <div class="lead-tags">
+                <span class="ltag wa">WhatsApp</span>
+                <span class="ltag no">Sem site</span>
+              </div>
+            </div>
+            <div class="score"><b>92</b><span>score</span></div>
+          </div>
+          <div class="lead-row">
+            <div>
+              <h4>Advocacia Mendes &amp; Silva</h4>
+              <p>São Paulo · Advocacia</p>
+              <div class="lead-tags">
+                <span class="ltag wa">WhatsApp</span>
+                <span class="ltag no">Sem site</span>
+              </div>
+            </div>
+            <div class="score"><b>87</b><span>score</span></div>
+          </div>
+          <div class="lead-row">
+            <div>
+              <h4>Studio Belle Estética</h4>
+              <p>Santos · Estética</p>
+              <div class="lead-tags">
+                <span class="ltag no">Sem site</span>
+              </div>
+            </div>
+            <div class="score"><b>81</b><span>score</span></div>
+          </div>
+        </div>
+      </div>
 
-      <div class="metrics">
-        <div>
-          <b style="display:inline-flex;align-items:center;gap:4px;"><img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="18" height="18" />1</b>
-          <small>= 1 lead</small>
-        </div>
-        <div>
-          <b style="display:inline-flex;align-items:center;gap:4px;"><img src="/static/trovoeda-coin.svg?v=tilt2" alt="" width="18" height="18" />5</b>
-          <small>grátis no cadastro</small>
-        </div>
-        <div>
-          <b>0</b>
-          <small>mensalidade fixa</small>
-        </div>
+      <div class="showcase-foot">
+        <span>1 Trovoeda = 1 lead</span>
+        <span>Sem mensalidade</span>
+        <span>Saldo não expira</span>
       </div>
     </section>
 
+    <!-- Form -->
     <section class="auth">
       <div class="auth-card">
-        <h2>Entrar</h2>
-        <p class="sub">Acesse seus leads e comece a vender.</p>
+        <a class="brand mobile-brand" href="/">
+          <span class="brand-mark">
+            <img src="/static/thor-mask.png" alt="" width="26" height="26" />
+          </span>
+          <strong>Prospec<span>THOR</span></strong>
+        </a>
 
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
-
-        <form action="/login" method="POST" id="login-form">
-          <div class="field">
-            <label for="username">Usuário</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Seu usuário"
-              required
-              autocomplete="username"
-              autofocus
-            />
+        <div class="auth-card-inner">
+          <div class="auth-head">
+            <h1>Entrar na conta</h1>
+            <p>Acesse seus leads, pedidos e saldo de Trovoedas.</p>
           </div>
-          <div class="field">
-            <label for="password">Senha</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Sua senha"
-              required
-              autocomplete="current-password"
-            />
-          </div>
-          <button type="submit" class="btn-enter" id="btn-login">Entrar →</button>
-        </form>
 
-        <div class="auth-foot">
-          Não tem conta?
-          <a href="/register" style="color:#00d4ff;font-weight:700;">Criar grátis</a>
-          · <a href="/" style="color:#8b9bb4;">Ver o site</a>
+          {% if error %}
+          <div class="error" role="alert">{{ error }}</div>
+          {% endif %}
+
+          <form action="/entrar" method="POST" id="login-form" autocomplete="on">
+            <div class="field">
+              <label for="username">Usuário</label>
+              <div class="input-wrap">
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  placeholder="Seu usuário de login"
+                  required
+                  autocomplete="username"
+                  autofocus
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label for="password">Senha</label>
+              <div class="input-wrap">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Sua senha"
+                  required
+                  autocomplete="current-password"
+                />
+              </div>
+            </div>
+            <button type="submit" class="btn-enter" id="btn-login">Entrar no painel →</button>
+          </form>
+
+          <div class="auth-divider">ou</div>
+
+          <div class="auth-links">
+            Não tem conta?
+            <a href="/register">Criar grátis</a>
+            <span class="sep">·</span>
+            <a href="/" style="color:var(--muted);font-weight:600;">Ver o site</a>
+          </div>
+
+          <div class="auth-trust">
+            <span>5 leads grátis no cadastro</span>
+            <span>Sem cartão</span>
+          </div>
         </div>
       </div>
     </section>

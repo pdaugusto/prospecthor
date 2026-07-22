@@ -1217,6 +1217,113 @@
         .order-notes-box { display: none; margin-top: 10px; }
         .order-notes-box.show { display: block; }
 
+        /* ── Tutorial guiado (primeira visita) ── */
+        .tour-root {
+            position: fixed; inset: 0; z-index: 12000;
+            display: none; pointer-events: none;
+        }
+        .tour-root.show { display: block; pointer-events: auto; }
+        body.tour-open { overflow: hidden; }
+        .tour-backdrop {
+            position: absolute; inset: 0;
+            background: rgba(3, 8, 18, 0.72);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+        .tour-spotlight {
+            position: fixed;
+            border-radius: 14px;
+            box-shadow:
+                0 0 0 9999px rgba(3, 8, 18, 0.72),
+                0 0 0 3px rgba(0, 212, 255, 0.75),
+                0 0 28px rgba(0, 212, 255, 0.35);
+            pointer-events: none;
+            transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease;
+            z-index: 12001;
+        }
+        .tour-spotlight::after {
+            content: '';
+            position: absolute; inset: -6px;
+            border-radius: 18px;
+            border: 1px solid rgba(0, 212, 255, 0.35);
+            animation: tour-pulse 1.6s ease-in-out infinite;
+        }
+        @keyframes tour-pulse {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .tour-card {
+            position: fixed;
+            z-index: 12002;
+            width: min(340px, calc(100vw - 28px));
+            background: linear-gradient(165deg, #121c2e 0%, #0a1220 100%);
+            border: 1px solid rgba(0, 212, 255, 0.28);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+            padding: 16px 16px 14px;
+            color: var(--text);
+            transition: top .22s ease, left .22s ease, opacity .18s ease;
+        }
+        .tour-card__head {
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+            margin-bottom: 8px;
+        }
+        .tour-kicker {
+            font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #00d4ff;
+        }
+        .tour-close {
+            appearance: none; border: none; background: rgba(255,255,255,0.06);
+            color: var(--muted); width: 28px; height: 28px; border-radius: 8px;
+            font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0;
+            display: grid; place-items: center;
+        }
+        .tour-close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+        .tour-card h3 {
+            margin: 0 0 6px; font-size: 16px; font-weight: 800; line-height: 1.25; color: #f0f4fa;
+        }
+        .tour-card p {
+            margin: 0 0 14px; font-size: 13px; line-height: 1.5; color: var(--muted); font-weight: 500;
+        }
+        .tour-card p strong { color: #c5d0e0; font-weight: 700; }
+        .tour-actions {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+        }
+        .tour-actions .btn-tour-skip {
+            appearance: none; border: none; background: transparent;
+            color: var(--muted); font-size: 12px; font-weight: 700; font-family: inherit;
+            cursor: pointer; padding: 8px 4px; margin-right: auto;
+        }
+        .tour-actions .btn-tour-skip:hover { color: var(--text); }
+        .tour-actions .btn-tour-secondary {
+            appearance: none; border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.25); color: var(--text);
+            font-size: 12px; font-weight: 700; font-family: inherit;
+            padding: 9px 12px; border-radius: 10px; cursor: pointer;
+        }
+        .tour-actions .btn-tour-secondary:hover { border-color: rgba(0,212,255,0.35); }
+        .tour-actions .btn-tour-next {
+            appearance: none; border: none;
+            background: linear-gradient(135deg, #00d4ff, #0090cc);
+            color: #041018; font-size: 13px; font-weight: 800; font-family: inherit;
+            padding: 9px 16px; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,212,255,0.25);
+        }
+        .tour-actions .btn-tour-next:hover { filter: brightness(1.06); }
+        .tour-progress {
+            display: flex; gap: 5px; margin-top: 12px;
+        }
+        .tour-progress i {
+            flex: 1; height: 3px; border-radius: 99px;
+            background: rgba(255,255,255,0.1);
+        }
+        .tour-progress i.on { background: #00d4ff; }
+        .tour-target-elevate {
+            position: relative !important;
+            z-index: 12003 !important;
+            pointer-events: none !important;
+        }
+
         .orders-summary {
             display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
             gap: 14px;
@@ -3564,6 +3671,25 @@
         </div>
     </div>
 
+    <!-- Tutorial guiado (primeira visita por aba) -->
+    <div id="tour-root" class="tour-root" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+        <div class="tour-spotlight" id="tour-spotlight" hidden></div>
+        <div class="tour-card" id="tour-card" hidden>
+            <div class="tour-card__head">
+                <div class="tour-kicker" id="tour-kicker">Tour · 1/3</div>
+                <button type="button" class="tour-close" id="tour-close" aria-label="Fechar tutorial" title="Fechar">×</button>
+            </div>
+            <h3 id="tour-title">Título</h3>
+            <p id="tour-body">Descrição</p>
+            <div class="tour-actions">
+                <button type="button" class="btn-tour-skip" id="tour-skip-all">Pular tudo</button>
+                <button type="button" class="btn-tour-secondary" id="tour-skip-page">Pular esta aba</button>
+                <button type="button" class="btn-tour-next" id="tour-next">Próximo</button>
+            </div>
+            <div class="tour-progress" id="tour-progress" aria-hidden="true"></div>
+        </div>
+    </div>
+
     <script>
         Chart.defaults.color = '#7a8ba3';
         Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
@@ -4220,6 +4346,13 @@
         function handleRouting() {
             if (!meReady) return;
             const path = location.pathname;
+            // se mudou de aba no meio do tour, fecha sem marcar (próxima aba tem o dela)
+            if (typeof tourState !== 'undefined' && tourState.active) {
+                const nextKey = typeof tourRouteKey === 'function' ? tourRouteKey(path) : null;
+                if (nextKey !== tourState.route) {
+                    tourClose(false);
+                }
+            }
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
             // Home usa o hero grande; some o título pequeno do header
@@ -4257,11 +4390,9 @@
                 if (navShop) navShop.classList.add('active');
                 setPageMeta('Loja', 'Compre Trovoedas · 1 moeda = 1 lead · não expiram');
                 loadShop();
+                // pós-registro: limpa ?welcome=1 (o tour da loja explica o bônus)
                 if (new URLSearchParams(location.search).get('welcome') === '1') {
-                    setTimeout(() => {
-                        alert('Conta criada! Você ganhou 5 Trovoedas de bônus. Explore a loja e seu saldo no topo.');
-                        try { history.replaceState({}, '', '/shop'); } catch (e) {}
-                    }, 400);
+                    try { history.replaceState({}, '', '/shop'); } catch (e) {}
                 }
             } else if (path === '/wallet' || path === '/carteira') {
                 destroyHomeCharts();
@@ -4318,6 +4449,11 @@
                 loadBotStatus();
             } else {
                 navigateTo('/');
+                return;
+            }
+            // Tutorial: primeira vez em cada aba (cliente)
+            if (typeof scheduleTourForCurrentRoute === 'function') {
+                scheduleTourForCurrentRoute(path === '/' || path === '' ? 900 : 700);
             }
         }
 
@@ -7372,12 +7508,383 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             setTimeout(() => a.remove(), 100);
         }
 
+        /* ═══════════════════════════════════════════════
+           Tutorial guiado — primeira visita por aba
+           ═══════════════════════════════════════════════ */
+        const TOUR_PAD = 10;
+        let tourState = {
+            active: false,
+            route: null,
+            step: 0,
+            steps: [],
+            elevateEl: null,
+            timer: null,
+        };
+
+        const TOUR_STEPS = {
+            home: [
+                {
+                    sel: '#wallet-chip',
+                    title: 'Suas Trovoedas',
+                    body: 'Aqui fica o seu <strong>saldo</strong>. 1 Trovoeda = 1 lead. Toque no chip a qualquer hora para ver a carteira.',
+                },
+                {
+                    sel: '#home-cta-row',
+                    title: 'Comece por aqui',
+                    body: 'Atalhos principais: ver leads, <strong>pedir leads</strong> (gasta moedas) e recarregar se o saldo acabar.',
+                },
+                {
+                    sel: '#home-quick-row',
+                    title: 'Atalhos do dia a dia',
+                    body: 'Os mesmos caminhos em cards — útil no celular. Pedir leads e loja ficam sempre à mão.',
+                },
+                {
+                    sel: '#home-hero-aside',
+                    title: 'Resumo da conta',
+                    body: 'Saldo, quantos leads você tem e quantos ainda estão <strong>novos</strong> pra abordar.',
+                },
+            ],
+            orders: [
+                {
+                    sel: '#order-qty-chips',
+                    title: 'Quantos leads?',
+                    body: 'Cada lead custa <strong>1 Trovoeda</strong>. Com 5 moedas de boas-vindas você pede 5 do estoque aleatório.',
+                },
+                {
+                    sel: '#order-filters-lock, #order-city-field',
+                    title: 'Cidade e nicho',
+                    body: 'Só liberam a partir de <strong>10 leads</strong>. Abaixo disso (ex.: 5 moedas) não dá para clicar — o sistema manda do estoque.',
+                },
+                {
+                    sel: '#btn-create-order',
+                    title: 'Enviar o pedido',
+                    body: 'As moedas saem do saldo na hora (reservadas). O host aprova e os leads aparecem em <strong>Meus leads</strong>.',
+                },
+            ],
+            leads: [
+                {
+                    sel: '#status-chips',
+                    title: 'Filtre por status',
+                    body: 'Novos, contactados, convertidos… Foque em quem ainda não falou com você.',
+                },
+                {
+                    sel: '.leads-toolbar, #filter-search',
+                    title: 'Busca e nicho',
+                    body: 'Ache por nome, cidade ou telefone. Filtre o ramo do negócio pra montar a lista do dia.',
+                },
+                {
+                    sel: '#leads-table-wrap, #leads-mobile',
+                    title: 'Sua lista',
+                    body: 'Toque no lead para abrir a ficha, ver score e copiar a abordagem no WhatsApp.',
+                },
+            ],
+            shop: [
+                {
+                    sel: '#view-shop .shop-balance-card, .shop-balance-card',
+                    title: 'Bônus de boas-vindas',
+                    body: 'Conta nova já vem com <strong>5 Trovoedas</strong>. As moedas não expiram — use em Pedidos (1 moeda = 1 lead do estoque).',
+                },
+                {
+                    sel: '#shop-packages',
+                    title: 'Pacotes de Trovoedas',
+                    body: 'Quando precisar de mais, escolha um pacote aqui. Depois é só ir em <strong>Pedidos</strong> e pedir leads.',
+                },
+            ],
+            wallet: [
+                {
+                    sel: '#view-wallet .shop-balance-card, #wallet-page-amt',
+                    title: 'Carteira',
+                    body: 'Saldo atual e botões pra recarregar. Tudo que entra e sai de Trovoedas fica no extrato abaixo.',
+                },
+                {
+                    sel: '#wallet-ledger-body, .wallet-ledger-body',
+                    title: 'Extrato',
+                    body: 'Histórico de recargas, reservas de pedido e estornos. Dá pra auditar cada moeda.',
+                },
+            ],
+            reports: [
+                {
+                    sel: '#view-reports .admin-hero, #reports-sub',
+                    title: 'Relatórios',
+                    body: 'Visão da sua carteira no período: volume, status e problemas mais comuns nos leads.',
+                },
+            ],
+        };
+
+        function tourStorageKey() {
+            const id = (currentUser && currentUser.id != null) ? currentUser.id : 'anon';
+            return 'prospecthor_tour_v1_' + id;
+        }
+
+        function loadTourPrefs() {
+            try {
+                const raw = localStorage.getItem(tourStorageKey());
+                if (!raw) return { skipAll: false, seen: {} };
+                const data = JSON.parse(raw);
+                return {
+                    skipAll: !!data.skipAll,
+                    seen: (data.seen && typeof data.seen === 'object') ? data.seen : {},
+                };
+            } catch (_) {
+                return { skipAll: false, seen: {} };
+            }
+        }
+
+        function saveTourPrefs(prefs) {
+            try {
+                localStorage.setItem(tourStorageKey(), JSON.stringify({
+                    skipAll: !!prefs.skipAll,
+                    seen: prefs.seen || {},
+                }));
+            } catch (_) {}
+        }
+
+        function tourRouteKey(path) {
+            const p = path || location.pathname || '/';
+            if (p === '/' || p === '') return 'home';
+            if (p === '/leads') return 'leads';
+            if (p === '/orders' || p === '/pedidos') return 'orders';
+            if (p === '/shop' || p === '/trovoedas') return 'shop';
+            if (p === '/wallet' || p === '/carteira') return 'wallet';
+            if (p === '/reports') return 'reports';
+            return null;
+        }
+
+        function tourShouldRun(route) {
+            if (!route || !TOUR_STEPS[route]) return false;
+            if (!meReady || !currentUser) return false;
+            // host (sem impersonate) não precisa do tour de cliente
+            if (isPatraoSession()) return false;
+            const prefs = loadTourPrefs();
+            if (prefs.skipAll) return false;
+            if (prefs.seen[route]) return false;
+            return true;
+        }
+
+        function tourPickEl(sel) {
+            if (!sel) return null;
+            const parts = String(sel).split(',').map(s => s.trim()).filter(Boolean);
+            for (const p of parts) {
+                const el = document.querySelector(p);
+                if (!el) continue;
+                // ignora se escondido com display:none no próprio nó
+                const st = window.getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') continue;
+                const r = el.getBoundingClientRect();
+                if (r.width < 2 && r.height < 2) continue;
+                return el;
+            }
+            return null;
+        }
+
+        function tourClearElevate() {
+            if (tourState.elevateEl) {
+                tourState.elevateEl.classList.remove('tour-target-elevate');
+                tourState.elevateEl = null;
+            }
+        }
+
+        function tourPosition(step) {
+            const root = document.getElementById('tour-root');
+            const spot = document.getElementById('tour-spotlight');
+            const card = document.getElementById('tour-card');
+            if (!root || !spot || !card || !step) return;
+
+            tourClearElevate();
+            const el = tourPickEl(step.sel);
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const cardW = Math.min(340, vw - 28);
+
+            let rect;
+            if (el) {
+                try { el.scrollIntoView({ block: 'center', behavior: 'smooth', inline: 'nearest' }); } catch (_) {}
+                rect = el.getBoundingClientRect();
+                // re-measure after scroll settle is handled by caller timeout; use current
+                tourState.elevateEl = el;
+                el.classList.add('tour-target-elevate');
+            } else {
+                // fallback: centro da tela sem highlight de elemento
+                rect = {
+                    top: vh * 0.28, left: vw * 0.5 - 80,
+                    width: 160, height: 40,
+                    bottom: vh * 0.28 + 40, right: vw * 0.5 + 80,
+                };
+            }
+
+            const pad = TOUR_PAD;
+            const top = Math.max(8, rect.top - pad);
+            const left = Math.max(8, rect.left - pad);
+            const width = Math.min(vw - 16, rect.width + pad * 2);
+            const height = Math.min(vh - 16, rect.height + pad * 2);
+
+            spot.hidden = false;
+            spot.style.top = top + 'px';
+            spot.style.left = left + 'px';
+            spot.style.width = width + 'px';
+            spot.style.height = height + 'px';
+
+            // card: abaixo do alvo se couber; senão acima; senão centro
+            const cardH = card.offsetHeight || 200;
+            let cardTop = rect.bottom + 14;
+            if (cardTop + cardH > vh - 12) {
+                cardTop = rect.top - cardH - 14;
+            }
+            if (cardTop < 12) cardTop = Math.max(12, (vh - cardH) / 2);
+
+            let cardLeft = rect.left + (rect.width / 2) - (cardW / 2);
+            cardLeft = Math.max(14, Math.min(cardLeft, vw - cardW - 14));
+
+            card.hidden = false;
+            card.style.top = cardTop + 'px';
+            card.style.left = cardLeft + 'px';
+            card.style.width = cardW + 'px';
+        }
+
+        function tourRenderStep() {
+            const steps = tourState.steps;
+            const i = tourState.step;
+            const step = steps[i];
+            if (!step) { tourClose(true); return; }
+
+            const kicker = document.getElementById('tour-kicker');
+            const title = document.getElementById('tour-title');
+            const body = document.getElementById('tour-body');
+            const nextBtn = document.getElementById('tour-next');
+            const prog = document.getElementById('tour-progress');
+
+            if (kicker) kicker.textContent = 'Tour · ' + (i + 1) + '/' + steps.length;
+            if (title) title.textContent = step.title || '';
+            if (body) body.innerHTML = step.body || '';
+            if (nextBtn) nextBtn.textContent = (i >= steps.length - 1) ? 'Entendi' : 'Próximo';
+            if (prog) {
+                prog.innerHTML = steps.map((_, idx) =>
+                    '<i class="' + (idx <= i ? 'on' : '') + '"></i>'
+                ).join('');
+            }
+
+            // duplo frame: layout + scrollIntoView
+            requestAnimationFrame(() => {
+                tourPosition(step);
+                setTimeout(() => tourPosition(step), 280);
+            });
+        }
+
+        function tourStart(route) {
+            if (tourState.active) return;
+            const steps = (TOUR_STEPS[route] || []).filter(s => !!s);
+            if (!steps.length) return;
+
+            tourState.active = true;
+            tourState.route = route;
+            tourState.step = 0;
+            tourState.steps = steps;
+
+            const root = document.getElementById('tour-root');
+            if (root) {
+                root.classList.add('show');
+                root.setAttribute('aria-hidden', 'false');
+            }
+            document.body.classList.add('tour-open');
+            tourRenderStep();
+        }
+
+        function tourClose(markPageDone) {
+            if (!tourState.active && !markPageDone) {
+                // still allow mark without active
+            }
+            const route = tourState.route;
+            if (markPageDone && route) {
+                const prefs = loadTourPrefs();
+                prefs.seen[route] = true;
+                saveTourPrefs(prefs);
+            }
+            tourClearElevate();
+            tourState.active = false;
+            tourState.route = null;
+            tourState.step = 0;
+            tourState.steps = [];
+            const root = document.getElementById('tour-root');
+            const spot = document.getElementById('tour-spotlight');
+            const card = document.getElementById('tour-card');
+            if (root) {
+                root.classList.remove('show');
+                root.setAttribute('aria-hidden', 'true');
+            }
+            if (spot) spot.hidden = true;
+            if (card) card.hidden = true;
+            document.body.classList.remove('tour-open');
+        }
+
+        function tourNext() {
+            if (!tourState.active) return;
+            if (tourState.step >= tourState.steps.length - 1) {
+                tourClose(true);
+                return;
+            }
+            tourState.step += 1;
+            tourRenderStep();
+        }
+
+        function tourSkipPage() {
+            tourClose(true);
+        }
+
+        function tourSkipAll() {
+            const prefs = loadTourPrefs();
+            prefs.skipAll = true;
+            if (tourState.route) prefs.seen[tourState.route] = true;
+            saveTourPrefs(prefs);
+            tourClose(false);
+        }
+
+        function scheduleTourForCurrentRoute(delayMs) {
+            const route = tourRouteKey(location.pathname);
+            if (!tourShouldRun(route)) return;
+            if (tourState.timer) {
+                clearTimeout(tourState.timer);
+                tourState.timer = null;
+            }
+            const wait = typeof delayMs === 'number' ? delayMs : 650;
+            tourState.timer = setTimeout(() => {
+                tourState.timer = null;
+                // revalida (usuário pode ter mudado de rota)
+                const r = tourRouteKey(location.pathname);
+                if (r !== route) return;
+                if (!tourShouldRun(r)) return;
+                if (tourState.active) return;
+                tourStart(r);
+            }, wait);
+        }
+
+        function bindTourUI() {
+            if (bindTourUI._done) return;
+            bindTourUI._done = true;
+            document.getElementById('tour-next')?.addEventListener('click', tourNext);
+            document.getElementById('tour-skip-page')?.addEventListener('click', tourSkipPage);
+            document.getElementById('tour-skip-all')?.addEventListener('click', tourSkipAll);
+            document.getElementById('tour-close')?.addEventListener('click', tourSkipPage);
+            window.addEventListener('resize', () => {
+                if (tourState.active) {
+                    const step = tourState.steps[tourState.step];
+                    if (step) tourPosition(step);
+                }
+            });
+            // Esc fecha o tour da aba (não o tutorial inteiro)
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && tourState.active) {
+                    e.preventDefault();
+                    tourSkipPage();
+                }
+            });
+        }
+
         document.getElementById('btn-open-menu').onclick = openSidebar;
         document.getElementById('btn-close-menu').onclick = closeSidebar;
         document.getElementById('sidebar-overlay').onclick = closeSidebar;
-        // fecha menu com tecla Esc
+        // fecha menu com tecla Esc (tour tem prioridade no handler próprio)
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeSidebar();
+            if (e.key === 'Escape' && !tourState.active) closeSidebar();
         });
         document.getElementById('filter-search').oninput = applyFilters;
         document.getElementById('filter-niche').onchange = applyFilters;
@@ -7390,6 +7897,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         // só roteia depois de /api/me (evita filtrar como admin por engano)
         // e já pré-carrega leads em paralelo com a primeira tela
         mountCoin3d();
+        bindTourUI();
         loadMe().then(() => {
             mountCoin3d();
             handleRouting();

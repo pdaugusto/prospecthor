@@ -73,10 +73,20 @@
     }
     .brand {
       display: flex; align-items: center; gap: 10px;
-      font-weight: 900; letter-spacing: -0.03em; font-size: 15px;
     }
-    .brand span { color: var(--neon); }
-    /* PNG é máscara preta transparente — precisa do tile neon (igual login/painel) */
+    /* Mesma marca do painel: ProspecTHOR junto, THOR em neon */
+    .brand-word {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 15px;
+      color: #fff;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .brand-word span {
+      color: var(--neon);
+      text-shadow: 0 0 14px rgba(0,212,255,0.3);
+    }
     .brand-mark {
       width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
       background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
@@ -89,6 +99,50 @@
       display: block;
       object-fit: contain;
     }
+    /* Ícones raio / Thor (identidade) */
+    .ico-bolt {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.15em; height: 1.15em;
+      vertical-align: -0.15em;
+      flex-shrink: 0;
+    }
+    .ico-bolt svg { width: 100%; height: 100%; display: block; }
+    .sec-label .ico-bolt {
+      width: 14px; height: 14px;
+      color: currentColor;
+      margin-right: 2px;
+    }
+    .step-num .ico-bolt,
+    .step .step-bolt {
+      width: 18px; height: 18px;
+      color: #031018;
+    }
+    .trust-item .ico-bolt {
+      width: 22px; height: 22px;
+      color: var(--neon);
+      margin: 0 auto 8px;
+      display: grid;
+    }
+    .trust-item .ico-bolt.gold { color: var(--gold); }
+    .hero-kicker .ico-bolt {
+      width: 12px; height: 12px;
+      color: var(--neon);
+    }
+    .deco-bolts {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .deco-bolts span {
+      position: absolute;
+      color: var(--neon);
+      opacity: 0.06;
+    }
+    .deco-bolts span svg { width: 100%; height: 100%; }
+    .deco-bolts .d1 { width: 100px; height: 100px; top: 8%; right: 6%; transform: rotate(14deg); }
+    .deco-bolts .d2 { width: 56px; height: 56px; bottom: 12%; left: 4%; transform: rotate(-18deg); opacity: 0.05; }
     .nav-links {
       display: flex; gap: 4px; align-items: center;
     }
@@ -496,13 +550,6 @@
       margin-bottom: 12px;
     }
     .sec-label.gold { color: var(--gold); }
-    .sec-label::before {
-      content: "";
-      width: 18px; height: 2px;
-      border-radius: 2px;
-      background: currentColor;
-      opacity: 0.7;
-    }
     section h2 {
       font-size: clamp(26px, 3.6vw, 36px);
       font-weight: 900;
@@ -982,11 +1029,11 @@
   <div class="page">
     <nav class="nav">
       <div class="wrap nav-inner">
-        <a class="brand" href="/">
+        <a class="brand" href="/" title="ProspecTHOR">
           <span class="brand-mark" aria-hidden="true">
             <img src="/static/thor-mask.png" alt="" width="24" height="24" />
           </span>
-          Prospec<span>THOR</span>
+          <span class="brand-word">Prospec<span>THOR</span></span>
         </a>
         <div class="nav-links">
           <a href="#como">Como funciona</a>
@@ -1006,7 +1053,10 @@
       <div class="wrap">
         <div class="hero-grid">
           <div>
-            <div class="hero-kicker"><i></i> Inteligência comercial · leads reais</div>
+            <div class="hero-kicker">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+              Inteligência comercial · leads reais
+            </div>
             <h1>
               Todo dia, alguém no seu mercado fecha um cliente
               <span class="line-accent">que devia ser seu.</span>
@@ -1042,7 +1092,7 @@
               <aside class="dash-shot-side">
                 <div class="sm-logo">
                   <span class="m"><img src="/static/thor-mask.png" alt="" width="15" height="15" /></span>
-                  <span>Prospec<b>THOR</b></span>
+                  <span class="brand-word" style="font-size:10px;">Prospec<span>THOR</span></span>
                 </div>
                 <div class="dnav active"><i></i> Início</div>
                 <div class="dnav"><i></i> Leads</div>
@@ -1129,7 +1179,10 @@
     <!-- COMO FUNCIONA -->
     <section id="como" class="band">
       <div class="wrap">
-        <div class="sec-label reveal">Passo a passo</div>
+        <div class="sec-label reveal">
+          <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+          Passo a passo
+        </div>
         <h2 class="reveal">Como funciona</h2>
         <p class="lead reveal">Sequência real — do nicho ao contato utilizável na sua conta.</p>
         <div class="steps">
@@ -1149,7 +1202,9 @@
             <p>Cada empresa recebe um score de propensão à venda. Você prioriza quem está pronto.</p>
           </div>
           <div class="step reveal">
-            <div class="step-num">4</div>
+            <div class="step-num">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            </div>
             <h3>Lead pronto pra abordar</h3>
             <p>Telefone, WhatsApp, Instagram e nota do Google — tudo na sua conta.</p>
           </div>
@@ -1160,7 +1215,10 @@
     <!-- POR QUE FUNCIONA -->
     <section id="porque">
       <div class="wrap">
-        <div class="sec-label reveal">A dor real</div>
+        <div class="sec-label reveal">
+          <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+          A dor real
+        </div>
         <h2 class="reveal">Por que isso funciona</h2>
         <p class="lead reveal">Não é sobre tecnologia. É sobre quem a concorrência ignora.</p>
         <div class="pain-layout">
@@ -1190,7 +1248,10 @@
       <div class="wrap">
         <div class="trovo-grid">
           <div class="trovo-copy reveal">
-            <div class="sec-label gold">Como você paga</div>
+            <div class="sec-label gold">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+              Como você paga
+            </div>
             <h2>Trovoedas, em português claro</h2>
             <p>
               Você não paga mensalidade pra ficar esperando lead aparecer.
@@ -1222,7 +1283,10 @@
       <div class="wrap">
         <div class="shop-head reveal">
           <div>
-            <div class="sec-label gold">Preço transparente</div>
+            <div class="sec-label gold">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+              Preço transparente
+            </div>
             <h2>Pacotes de Trovoedas</h2>
             <p class="lead">Quanto maior o pacote, menor o custo por lead. Sem cota mensal escondida.</p>
           </div>
@@ -1264,18 +1328,22 @@
 
         <div class="trust-row reveal">
           <div class="trust-item">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
             <strong>Sem mensalidade</strong>
             <span>Pague só o que usar</span>
           </div>
           <div class="trust-item">
+            <span class="ico-bolt gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
             <strong>Saldo permanente</strong>
             <span>Trovoedas não expiram</span>
           </div>
           <div class="trust-item">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
             <strong>Contato real</strong>
             <span>WA, IG e nota do Google</span>
           </div>
           <div class="trust-item">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></span>
             <strong>Score 0–100</strong>
             <span>Priorize quem fecha</span>
           </div>
@@ -1288,7 +1356,10 @@
       <div class="wrap">
         <div class="faq-grid">
           <div class="faq-side reveal">
-            <div class="sec-label">Antes de criar a conta</div>
+            <div class="sec-label">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+              Antes de criar a conta
+            </div>
             <h2>Perguntas que todo mundo faz</h2>
             <p>Direto — sem enrolação. Se ainda tiver dúvida, crie a conta e use os 5 leads grátis.</p>
           </div>
@@ -1332,6 +1403,10 @@
     <section>
       <div class="wrap">
         <div class="cta-final reveal">
+          <div class="deco-bolts" aria-hidden="true">
+            <span class="d1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            <span class="d2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+          </div>
           <h2>Não deixe outro vendedor fechar o cliente que devia ser seu.</h2>
           <p>
             Encontre quem ainda não tem presença digital — antes da concorrência.

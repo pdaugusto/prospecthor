@@ -639,12 +639,11 @@
             box-shadow: 0 0 22px rgba(245, 197, 66, 0.22);
             transform: translateY(-1px);
         }
-        /* Moeda: SVG simples, inclinação leve (sem borda amarela 3D) */
+        /* Moeda Trovoeda: flat, sem borda/espessura 3D amarela */
         .coin-3d {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            perspective: 800px;
             flex-shrink: 0;
             width: 34px;
             height: 34px;
@@ -654,18 +653,16 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transform: rotateY(-18deg) rotateX(10deg) rotateZ(-3deg);
-            filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.45));
-            transition: transform .3s ease, filter .25s;
-            will-change: transform;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+            transition: transform .2s ease, filter .2s;
         }
         .wallet-chip .coin-3d { width: 32px; height: 32px; }
         .wallet-chip:hover .coin-3d__face,
         .pkg-card:hover .coin-3d__face,
         .shop-balance-card:hover .coin-3d__face,
         .coin-3d:hover .coin-3d__face {
-            transform: rotateY(-10deg) rotateX(8deg) rotateZ(-2deg) scale(1.08);
-            filter: drop-shadow(4px 7px 10px rgba(0,0,0,0.5));
+            transform: scale(1.06);
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
         }
 
         .wallet-chip .wallet-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
@@ -775,8 +772,8 @@
             animation: coin-float 4.5s ease-in-out infinite;
         }
         @keyframes coin-float {
-            0%, 100% { transform: rotateY(-18deg) rotateX(10deg) rotateZ(-3deg) translateY(0); }
-            50% { transform: rotateY(-14deg) rotateX(8deg) rotateZ(-2deg) translateY(-3px); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
         }
 
         .shop-balance-card .lbl {
@@ -830,7 +827,7 @@
         .pkg-card:hover::after { opacity: 1; }
         .pkg-card .coin-3d { width: 72px; height: 72px; }
         .pkg-card:hover .coin-3d__face {
-            transform: rotateY(-8deg) rotateX(6deg) scale(1.1);
+            transform: scale(1.08);
         }
 
         .pkg-card.featured {
@@ -2013,7 +2010,7 @@
                 <div class="wallet-bar" id="wallet-bar">
                     <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/wallet')" title="Abrir carteira e extrato">
                         <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="32" height="32" />
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="32" height="32" />
                         </span>
                         <div class="wallet-meta">
                             <span class="wallet-label">Trovoedas</span>
@@ -2049,7 +2046,7 @@
                     </div>
                     <div class="shop-balance-card">
                         <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
                         </span>
                         <div>
                             <div class="lbl">Seu saldo</div>
@@ -2092,7 +2089,7 @@
                     </div>
                     <div class="shop-balance-card">
                         <span class="coin-3d" aria-hidden="true">
-                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
                         </span>
                         <div>
                             <div class="lbl">Saldo disponível</div>
@@ -2105,7 +2102,7 @@
                 <div class="wallet-stats">
                     <div class="wallet-stat">
                         <div class="ws-label">Saldo</div>
-                        <div class="ws-value gold" id="wallet-stat-bal"><img class="coin-mini lg" src="/static/trovoeda-coin.svg" alt="" />0</div>
+                        <div class="ws-value gold" id="wallet-stat-bal"><img class="coin-mini lg" src="/static/trovoeda-coin.svg?v=flat1" alt="" />0</div>
                         <div class="ws-hint">Disponível agora</div>
                     </div>
                     <div class="wallet-stat">
@@ -2150,7 +2147,7 @@
 
                 <div class="stats">
                     <div class="stat gold-kpi" id="kpi-trovoedas">
-                        <div class="stat-top"><h3 id="home-trovo-label">Trovoedas</h3><div class="stat-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div></div>
+                        <div class="stat-top"><h3 id="home-trovo-label">Trovoedas</h3><div class="stat-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></div></div>
                         <div class="value" id="home-trovoedas">0</div>
                         <div class="stat-meta" id="home-trovo-meta">1 moeda = 1 lead · não expiram</div>
                     </div>
@@ -2183,7 +2180,7 @@
                         </div>
                     </button>
                     <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
-                        <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div>
+                        <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></div>
                         <div>
                             <h4>Comprar Trovoedas</h4>
                             <p>Pacotes a partir de 10 moedas. Pague só o que usar.</p>
@@ -2245,7 +2242,7 @@
                             <th>Nome</th>
                             <th>Papel</th>
                             <th title="Legado bot / distribuição">Cota/mês</th>
-                            <th title="Saldo SaaS (compras + bônus)"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> Trovoedas</th>
+                            <th title="Saldo SaaS (compras + bônus)"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /> Trovoedas</th>
                             <th>Recebidos</th>
                             <th style="min-width:320px;">Ações</th>
                         </tr>
@@ -2717,7 +2714,7 @@
         function coin3dHtml(size) {
             const s = size || 64;
             return (
-                '<img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="' +
+                '<img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="' +
                 s + '" height="' + s + '" draggable="false" />'
             );
         }
@@ -3049,7 +3046,7 @@
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
                     if (quotaBadge) {
                         quotaBadge.style.display = '';
-                        quotaBadge.innerHTML = 'Modo cliente · <img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
+                        quotaBadge.innerHTML = 'Modo cliente · <img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
                     }
                     if (roleEl) roleEl.textContent = 'Impersonate · ' + (Number.isFinite(trovo) ? trovo : 0) + ' Trovoedas';
                 } else {
@@ -3372,7 +3369,7 @@
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${u.monthly_quota ?? 0}</td>
-                        <td style="font-weight:700;color:#f5c542;"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> ${trovo}</td>
+                        <td style="font-weight:700;color:#f5c542;"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /> ${trovo}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
                     </tr>`;
@@ -3480,7 +3477,7 @@
             const statIn = document.getElementById('wallet-stat-in');
             const statOut = document.getElementById('wallet-stat-out');
             if (statBal) {
-                statBal.innerHTML = '<img class="coin-mini lg" src="/static/trovoeda-coin.svg" alt="" />' + (Number.isFinite(bal) ? bal : 0);
+                statBal.innerHTML = '<img class="coin-mini lg" src="/static/trovoeda-coin.svg?v=flat1" alt="" />' + (Number.isFinite(bal) ? bal : 0);
             }
             if (!body) return;
             body.innerHTML = '<div class="wallet-empty">Carregando extrato…</div>';
@@ -3506,7 +3503,7 @@
                     body.innerHTML = `
                         <div class="wallet-empty">
                             <span class="coin-3d" aria-hidden="true" style="width:64px;height:64px;margin:0 auto 14px;">
-                                <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
+                                <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
                             </span>
                             <div style="font-weight:700;color:#e8eef7;margin-bottom:6px;">Nenhuma movimentação ainda</div>
                             <div style="margin-bottom:14px;">Compre Trovoedas na loja ou use o bônus de cadastro.</div>
@@ -3529,7 +3526,7 @@
                             <div class="lg-date ledger-muted">${esc(when)}</div>
                             <div class="ledger-type"><span class="ledger-dot ${dot}"></span>${esc(ledgerReasonLabel(r.reason))}</div>
                             <div class="ledger-delta ${cls}">${dTxt}</div>
-                            <div><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /> ${esc(String(r.balance_after ?? '—'))}</div>
+                            <div><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /> ${esc(String(r.balance_after ?? '—'))}</div>
                             <div class="lg-detail ledger-muted">${esc(r.note || r.ref_id || '—')}</div>
                         </div>`;
                 }).join('');
@@ -3578,7 +3575,7 @@
                             ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
                             <div class="pkg-card__top">
                                 <span class="coin-3d" aria-hidden="true">
-                                    <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="72" height="72" />
+                                    <img class="coin-3d__face" src="/static/trovoeda-coin.svg?v=flat1" alt="" width="72" height="72" />
                                 </span>
                                 <div>
                                     <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
@@ -3591,7 +3588,7 @@
                                 <button type="button" class="btn-buy" data-slug="${esc(p.slug || '')}" data-coins="${coins}" data-name="${esc(p.name || '')}">
                                     <span class="bolt-fx" aria-hidden="true"></span>
                                     <span class="btn-buy-label">
-                                        <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></span>
+                                        <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></span>
                                         <span>${featured ? 'Escolher pacote' : 'Comprar'}</span>
                                     </span>
                                 </button>
@@ -4220,7 +4217,7 @@
                             <div><h4>Abordar leads</h4><p>Abra a lista, filtre por nicho e fale com quem ainda não tem site.</p></div>
                         </button>
                         <button type="button" class="home-quick-card gold" onclick="navigateTo('/shop')">
-                            <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg" alt="" /></div>
+                            <div class="hq-ico"><img class="coin-mini" src="/static/trovoeda-coin.svg?v=flat1" alt="" /></div>
                             <div><h4>Comprar Trovoedas</h4><p>Pacotes a partir de 10 moedas. Pague só o que usar.</p></div>
                         </button>
                         <button type="button" class="home-quick-card" onclick="navigateTo('/wallet')">

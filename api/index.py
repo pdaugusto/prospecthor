@@ -584,7 +584,7 @@ def page_privacidade():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Cadastro público + bônus de Trovoedas."""
+    """Cadastro público + bônus de Trovoedas (1 conta por IP)."""
     if session.get("logged_in"):
         return redirect("/")
     form = {
@@ -602,6 +602,7 @@ def register():
         form["whatsapp"] = (request.form.get("whatsapp") or "").strip()
         form["terms"] = bool(request.form.get("terms"))
         password = request.form.get("password") or ""
+        client_ip = _client_ip()
 
         if not form["terms"]:
             error = "Aceite os Termos e a Privacidade para continuar."
@@ -613,10 +614,22 @@ def register():
             error = "Este nome de usuário não está disponível."
         else:
             try:
-                from src.users import create_user, get_user_by_username
+                from src.users import (
+                    create_user,
+                    get_user_by_username,
+                    count_users_by_signup_ip,
+                    normalize_signup_ip,
+                )
                 from src.trovoeda import ensure_schema as t_schema
                 t_schema()
-                if get_user_by_username(form["username"]):
+                ip_n = normalize_signup_ip(client_ip)
+                # Anti multi-conta: 1 cadastro público por IP
+                if ip_n and count_users_by_signup_ip(ip_n) > 0:
+                    error = (
+                        "Já existe uma conta criada nesta rede/dispositivo. "
+                        "Entre com a conta existente ou fale com o suporte se precisar de ajuda."
+                    )
+                elif get_user_by_username(form["username"]):
                     error = "Usuário já existe. Escolha outro login."
                 else:
                     import psycopg2
@@ -645,6 +658,8 @@ def register():
                             display_name=form["display_name"],
                             terms_accepted=True,
                             welcome_bonus=True,
+                            signup_ip=ip_n,
+                            enforce_ip_limit=True,
                         )
                         # login automático
                         session.clear()
@@ -655,10 +670,20 @@ def register():
                         session["role"] = "client"
                         session["label"] = user.get("label") or form["display_name"]
                         session["user_id"] = user.get("id")
+                        try:
+                            app.logger.info(
+                                "register ok user=%s ip=%s",
+                                user.get("username"),
+                                ip_n or "?",
+                            )
+                        except Exception:
+                            pass
                         return redirect("/shop?welcome=1")
             except Exception as exc:
                 msg = str(exc)
-                if "unique" in msg.lower() or "duplicate" in msg.lower():
+                if "já existe uma conta" in msg.lower() or "rede/dispositivo" in msg.lower():
+                    error = msg
+                elif "unique" in msg.lower() or "duplicate" in msg.lower():
                     error = "Usuário ou e-mail já cadastrado."
                 else:
                     error = "Não foi possível criar a conta. Tente de novo."

@@ -133,6 +133,24 @@ def ensure_schema() -> None:
             if not cur.fetchone():
                 cur.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ};")
 
+        # IP do cadastro público (anti multi-conta)
+        cur.execute(
+            """
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'app_users' AND column_name = 'signup_ip'
+            """
+        )
+        if not cur.fetchone():
+            cur.execute("ALTER TABLE app_users ADD COLUMN signup_ip TEXT DEFAULT '';")
+        # 1 conta pública por IP (parcial: IPs vazios do painel admin podem repetir)
+        cur.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_signup_ip_unique
+            ON app_users (signup_ip)
+            WHERE signup_ip IS NOT NULL AND btrim(signup_ip) <> '';
+            """
+        )
+
         # Admin principal FIXO = patrao (nunca o username "admin" do amigo)
         principal = _PRINCIPAL_USERNAME
         cur.execute(
@@ -408,6 +426,48 @@ def count_assigned_this_month(user_id: int) -> int:
         conn.close()
 
 
+def normalize_signup_ip(ip: str | None) -> str:
+    """Normaliza IP de cadastro; vazio se inválido/desconhecido."""
+    s = (ip or "").strip()
+    if not s or s.lower() in ("unknown", "null", "none", "0.0.0.0", "::"):
+        return ""
+    # só o primeiro hop (já costuma vir limpo do X-Forwarded-For)
+    s = s.split(",")[0].strip()
+    # tamanho razoável (IPv4 / IPv6)
+    if len(s) > 64:
+        s = s[:64]
+    return s
+
+
+def count_users_by_signup_ip(ip: str) -> int:
+    """Quantas contas já foram criadas com este IP (cadastro público)."""
+    ip_n = normalize_signup_ip(ip)
+    if not ip_n or not _DATABASE_URL:
+        return 0
+    try:
+        ensure_schema()
+        conn = _connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM app_users
+                WHERE signup_ip IS NOT NULL
+                  AND signup_ip <> ''
+                  AND signup_ip = %s;
+                """,
+                (ip_n,),
+            )
+            n = cur.fetchone()[0]
+            cur.close()
+            return int(n or 0)
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("[Users] count_users_by_signup_ip: %s", exc)
+        return 0
+
+
 def create_user(
     username: str,
     password: str,
@@ -421,6 +481,8 @@ def create_user(
     display_name: str = "",
     terms_accepted: bool = False,
     welcome_bonus: bool = False,
+    signup_ip: str = "",
+    enforce_ip_limit: bool = False,
 ) -> dict[str, Any]:
     ensure_schema()
     username = (username or "").strip().lower()
@@ -435,6 +497,17 @@ def create_user(
     wa = re.sub(r"\D", "", str(whatsapp or ""))
     dname = (display_name or label or username).strip()
     terms_at = datetime.now().isoformat() if terms_accepted else None
+    ip_n = normalize_signup_ip(signup_ip)
+
+    # Cadastro público: 1 conta por IP (evita farm de bônus / multi-conta)
+    if enforce_ip_limit and ip_n:
+        existing = count_users_by_signup_ip(ip_n)
+        if existing > 0:
+            raise ValueError(
+                "Já existe uma conta criada nesta rede/dispositivo. "
+                "Entre com a conta existente ou fale com o suporte se precisar de ajuda."
+            )
+
     conn = _connect()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -442,8 +515,8 @@ def create_user(
             """
             INSERT INTO app_users
                 (username, password_hash, role, monthly_quota, active, cities, niches, label,
-                 email, whatsapp, display_name, terms_accepted_at)
-            VALUES (%s, %s, %s, %s, 1, %s, %s, %s, %s, %s, %s, %s)
+                 email, whatsapp, display_name, terms_accepted_at, signup_ip)
+            VALUES (%s, %s, %s, %s, 1, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, username, role, monthly_quota, active, cities, niches, label,
                       COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
                       COALESCE(email, '') AS email;
@@ -460,6 +533,7 @@ def create_user(
                 wa or "",
                 dname,
                 terms_at,
+                ip_n or "",
             ),
         )
         row = dict(cur.fetchone())

@@ -825,28 +825,43 @@ def api_me():
             payload["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
             payload["label"] = full.get("label") or u.get("username")
             payload["trovoedas"] = int(full.get("trovoedas_balance") or get_balance(int(u["id"])) or 0)
+            payload["trovoedas_infinite"] = False
             if imp:
                 payload["impersonate_label"] = payload["label"]
         except Exception:
             payload.setdefault("trovoedas", 0)
+            payload.setdefault("trovoedas_infinite", False)
     elif is_adm and not imp:
         payload["label"] = "Patrão"
-        payload["trovoedas"] = None  # patrão não usa saldo de cliente
+        # Host: saldo ilimitado (não gasta Trovoeda)
+        payload["trovoedas"] = None
+        payload["trovoedas_infinite"] = True
     else:
         payload.setdefault("trovoedas", 0)
+        payload.setdefault("trovoedas_infinite", False)
     return jsonify(payload)
 
 
 @app.route("/api/trovoeda/balance")
 @login_required
 def api_trovoeda_balance():
-    """Saldo do usuário efetivo (cliente ou impersonate)."""
+    """Saldo do usuário efetivo (cliente ou impersonate). Patrão = infinito."""
     from src.trovoeda import get_balance, ensure_schema
     ensure_schema()
+    if _is_real_admin() and not _is_impersonating():
+        return jsonify({
+            "trovoedas": None,
+            "trovoedas_infinite": True,
+            "user_id": _real_session_user().get("id"),
+        })
     uid = _effective_user_id()
     if not uid:
-        return jsonify({"trovoedas": 0})
-    return jsonify({"trovoedas": get_balance(int(uid)), "user_id": int(uid)})
+        return jsonify({"trovoedas": 0, "trovoedas_infinite": False})
+    return jsonify({
+        "trovoedas": get_balance(int(uid)),
+        "trovoedas_infinite": False,
+        "user_id": int(uid),
+    })
 
 
 @app.route("/api/trovoeda/ledger")

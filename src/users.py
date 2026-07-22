@@ -747,9 +747,37 @@ def unassign_leads_without_phone() -> int:
         conn.close()
 
 
-def _try_spend_trovoeda(user_id: int, company_id: int) -> None:
-    """Debita 1 Trovoeda se o usuário tiver saldo (SaaS). Sem saldo = fluxo legado (cota)."""
+def _is_host_user(user_id: int) -> bool:
+    """Patrão / host do sistema — Trovoedas ilimitadas."""
+    if not user_id or not _DATABASE_URL:
+        return False
     try:
+        conn = _connect()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT username, role FROM app_users WHERE id = %s LIMIT 1;",
+            (int(user_id),),
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return False
+        uname = (row[0] or "").lower().strip()
+        role = (row[1] or "").lower().strip()
+        return uname == "patrao" or role == "admin"
+    except Exception:
+        return False
+
+
+def _try_spend_trovoeda(user_id: int, company_id: int) -> None:
+    """Debita 1 Trovoeda se o usuário tiver saldo (SaaS). Sem saldo = fluxo legado (cota).
+    Patrão (host) tem Trovoedas infinitas — nunca debita."""
+    try:
+        if _is_host_user(int(user_id)):
+            logger.info("[Trovoeda] skip spend host user=%s lead=%s", user_id, company_id)
+            return
+
         from src.trovoeda import get_balance, spend_for_lead
         if get_balance(int(user_id)) <= 0:
             return

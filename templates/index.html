@@ -677,6 +677,19 @@
             font-size: 14px; font-weight: 800; color: #ffe8a3;
             font-variant-numeric: tabular-nums;
         }
+        .wallet-chip .wallet-amt.is-infinite {
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: 0;
+        }
+        .shop-balance-card strong.is-infinite,
+        #wallet-page-amt.is-infinite,
+        #orders-balance-amt.is-infinite,
+        #home-trovoedas.is-infinite {
+            font-size: 1.15em;
+            letter-spacing: 0;
+        }
         .btn-recharge {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 14px;
@@ -2375,7 +2388,7 @@
                         <div>
                             <div class="lbl">Seu saldo</div>
                             <strong id="shop-balance-amt">0</strong>
-                            <div class="sub">Trovoedas disponíveis</div>
+                            <div class="sub" data-balance-sub="Trovoedas disponíveis">Trovoedas disponíveis</div>
                         </div>
                     </div>
                 </div>
@@ -2410,7 +2423,7 @@
                         <div>
                             <div class="lbl">Saldo disponível</div>
                             <strong id="orders-balance-amt">0</strong>
-                            <div class="sub">Trovoedas</div>
+                            <div class="sub" data-balance-sub="Trovoedas">Trovoedas</div>
                         </div>
                     </div>
                 </div>
@@ -2590,7 +2603,7 @@
                         <div>
                             <div class="lbl">Saldo disponível</div>
                             <strong id="wallet-page-amt">0</strong>
-                            <div class="sub">Trovoedas</div>
+                            <div class="sub" data-balance-sub="Trovoedas">Trovoedas</div>
                         </div>
                     </div>
                 </div>
@@ -3553,9 +3566,9 @@
                     if (showAdmin) {
                         if (quotaBadge) {
                             quotaBadge.style.display = '';
-                            quotaBadge.textContent = 'Patrão · sobras';
+                            quotaBadge.textContent = 'Patrão · ∞ Trovoedas';
                         }
-                        if (roleEl) roleEl.textContent = 'Admin · Pro';
+                        if (roleEl) roleEl.textContent = 'Host · ilimitado';
                     } else {
                         // SaaS: sem cota mensal no header — saldo já está no chip Trovoedas
                         if (quotaBadge) {
@@ -3950,16 +3963,53 @@
             }
         }
 
+        function hasInfiniteTrovoedas() {
+            if (currentUser && currentUser.trovoedas_infinite) return true;
+            // host real (não impersonate)
+            try {
+                return isPatraoSession() && !(currentUser && currentUser.impersonating);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function formatTrovoedasDisplay(balance) {
+            if (hasInfiniteTrovoedas()) return '∞';
+            const n = Number(balance);
+            return Number.isFinite(n) ? String(n) : '0';
+        }
+
         function updateWalletUI(balance, hideForPatrao) {
             const bar = document.getElementById('wallet-bar');
             const amt = document.getElementById('wallet-amt');
             const shopAmt = document.getElementById('shop-balance-amt');
             const pageAmt = document.getElementById('wallet-page-amt');
-            const n = Number(balance) || 0;
-            if (amt) amt.textContent = String(n);
-            if (shopAmt) shopAmt.textContent = String(n);
-            if (pageAmt) pageAmt.textContent = String(n);
+            const ordersAmt = document.getElementById('orders-balance-amt');
+            const btnRecharge = document.getElementById('btn-recharge');
+            const chip = document.getElementById('wallet-chip');
+            const infinite = hasInfiniteTrovoedas();
+            const label = formatTrovoedasDisplay(balance);
+
+            [amt, shopAmt, pageAmt, ordersAmt].forEach(el => {
+                if (!el) return;
+                el.textContent = label;
+                el.classList.toggle('is-infinite', infinite);
+            });
+            if (chip) {
+                chip.title = infinite
+                    ? 'Trovoedas ilimitadas (host)'
+                    : 'Abrir carteira e extrato';
+            }
+            if (btnRecharge) {
+                // host não precisa recarregar
+                btnRecharge.style.display = infinite ? 'none' : '';
+            }
             if (bar) bar.style.display = '';
+
+            // subtextos de saldo na loja / carteira / pedidos
+            document.querySelectorAll('[data-balance-sub]').forEach(el => {
+                el.textContent = infinite ? 'Ilimitadas · host' : (el.getAttribute('data-balance-sub') || 'Trovoedas');
+            });
         }
 
         function ledgerReasonLabel(reason) {
@@ -4450,7 +4500,9 @@
             const statIn = document.getElementById('wallet-stat-in');
             const statOut = document.getElementById('wallet-stat-out');
             if (statBal) {
-                statBal.innerHTML = '<img class="coin-mini lg" src="/static/trovoeda-coin.svg?v=tilt2" alt="" />' + (Number.isFinite(bal) ? bal : 0);
+                const disp = formatTrovoedasDisplay(bal);
+                statBal.innerHTML = '<img class="coin-mini lg" src="/static/trovoeda-coin.svg?v=tilt2" alt="" />' + disp
+                    + (hasInfiniteTrovoedas() ? ' <span style="font-size:12px;color:var(--muted);font-weight:600;">ilimitado</span>' : '');
             }
             if (!body) return;
             body.innerHTML = '<div class="wallet-empty">Carregando extrato…</div>';

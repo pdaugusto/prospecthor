@@ -2271,6 +2271,41 @@
             box-shadow: 0 0 0 3px var(--neon-dim);
         }
         .empty { color: var(--muted); text-align: center; padding: 28px; font-size: 13px; }
+        .leads-empty {
+            text-align: center;
+            padding: 48px 28px 44px;
+            border-radius: 18px;
+            border: 1px solid rgba(0,212,255,0.15);
+            background:
+                radial-gradient(ellipse 60% 80% at 50% 0%, rgba(0,212,255,0.1), transparent 55%),
+                linear-gradient(165deg, #101621, #0a0e16);
+            max-width: 480px;
+            margin: 28px auto;
+        }
+        .leads-empty .le-bolt {
+            width: 48px; height: 48px; margin: 0 auto 16px;
+            border-radius: 14px;
+            display: grid; place-items: center;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            color: var(--neon);
+            box-shadow: 0 0 24px rgba(0,212,255,0.15);
+        }
+        .leads-empty .le-bolt svg { width: 24px; height: 24px; }
+        .leads-empty h3 {
+            margin: 0 0 8px;
+            font-size: 18px; font-weight: 900;
+            letter-spacing: -0.03em; color: #fff;
+        }
+        .leads-empty p {
+            margin: 0 auto 18px;
+            font-size: 13px; color: var(--muted);
+            line-height: 1.55; max-width: 360px;
+        }
+        .leads-empty .le-actions {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            justify-content: center;
+        }
 
         /* Skeleton loading — lista de leads */
         @keyframes sk-shimmer {
@@ -6469,8 +6504,9 @@
             }
 
             if (!filteredLeads.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum lead encontrado.</td></tr>';
-                mobile.innerHTML = '<p class="empty">Nenhum lead encontrado.</p>';
+                const emptyHtml = leadsEmptyStateHtml();
+                tbody.innerHTML = `<tr><td colspan="6" style="border:none;padding:8px 0;">${emptyHtml}</td></tr>`;
+                mobile.innerHTML = emptyHtml;
                 renderPagination();
                 return;
             }

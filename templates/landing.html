@@ -102,6 +102,16 @@
       position: absolute; top: 12px; right: 12px; font-size: 10px; font-weight: 800;
       padding: 3px 8px; border-radius: 999px; background: var(--gold); color: #1a1408;
     }
+    .pkg .badge.save {
+      right: auto; left: 12px;
+      text-transform: none;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #34d399, #10b981);
+      color: #042f1e;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    .pkg .per strong.save { color: #34d399; font-weight: 700; }
     .pkg .coin-3d {
       width: 64px; height: 64px; margin-bottom: 12px;
       display: inline-flex;
@@ -247,6 +257,9 @@
       <div class="shop-preview">
         {% for p in packages %}
         <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %}">
+          {% if p.save_pct and p.save_pct > 0 %}
+          <span class="badge save" title="Em relação ao pacote Faísca">Economize {{ p.save_pct }}%</span>
+          {% endif %}
           {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
           <span class="coin-3d" aria-hidden="true">
             <img src="/static/trovoeda-coin.svg?v=flat1" alt="" width="64" height="64" />
@@ -254,7 +267,12 @@
           <h3>{{ p.name }}</h3>
           <div class="coins">{{ p.coins }} <small>Trovoedas</small></div>
           <div class="price">R$ {{ p.price_brl }}</div>
-          <div class="per">{% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}</div>
+          <div class="per">
+            {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
+            {% if p.save_pct and p.save_pct > 0 %}
+            · <strong class="save">−{{ p.save_pct }}% vs Faísca</strong>
+            {% endif %}
+          </div>
         </div>
         {% else %}
         <div class="pkg"><h3>Em breve</h3><p class="per">Pacotes em configuração.</p></div>

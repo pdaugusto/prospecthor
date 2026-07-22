@@ -518,22 +518,37 @@ def _login_register_fail(ip: str) -> None:
 
 
 def _packages_for_view():
-    """Pacotes com preço formatado pra landing/loja."""
+    """Pacotes com preço formatado + % de economia vs pacote base (Faísca)."""
     try:
         from src.trovoeda import list_packages, ensure_schema
         ensure_schema()
         pkgs = list_packages(active_only=True)
     except Exception:
         pkgs = []
+    if not pkgs:
+        return []
+
+    # Base = menor sort_order (Faísca) — desconto = economia no R$/lead vs base
+    base = pkgs[0]
+    base_coins = int(base.get("coins") or 0)
+    base_cents = int(base.get("price_cents") or 0)
+    base_per = (base_cents / base_coins) if base_coins else 0.0
+
     out = []
     for p in pkgs:
         coins = int(p.get("coins") or 0)
         cents = int(p.get("price_cents") or 0)
         reais = cents / 100.0
-        per = (reais / coins) if coins else 0
+        per = (reais / coins) if coins else 0.0
+        per_cents = (cents / coins) if coins else 0.0
         item = dict(p)
         item["price_brl"] = f"{reais:.2f}".replace(".", ",")
         item["per_lead"] = f"{per:.2f}".replace(".", ",") if coins else ""
+        save_pct = 0
+        if base_per > 0 and per_cents > 0 and coins != base_coins:
+            save_pct = max(0, int(round((1.0 - (per_cents / base_per)) * 100)))
+        item["save_pct"] = save_pct
+        item["is_base"] = coins == base_coins
         out.append(item)
     return out
 
@@ -913,10 +928,8 @@ def api_trovoeda_grant():
 @app.route("/api/trovoeda/packages")
 @login_required
 def api_trovoeda_packages():
-    """Lista pacotes (preços futuros Stripe)."""
-    from src.trovoeda import list_packages, ensure_schema
-    ensure_schema()
-    return jsonify(list_packages(active_only=True))
+    """Lista pacotes com preço formatado e % de economia vs base."""
+    return jsonify(_packages_for_view())
 
 
 @app.route("/api/trovoeda/checkout", methods=["POST"])

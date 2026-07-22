@@ -102,16 +102,20 @@
       position: absolute; top: 12px; right: 12px; font-size: 10px; font-weight: 800;
       padding: 3px 8px; border-radius: 999px; background: var(--gold); color: #1a1408;
     }
-    .pkg .coin-3d { width: 56px; height: 56px; margin-bottom: 12px; perspective: 480px; display: block; }
+    .pkg .coin-3d {
+      width: 72px; height: 72px; margin-bottom: 14px;
+      perspective: 900px; display: block;
+    }
     .pkg .coin-3d img {
       width: 100%; height: 100%; object-fit: contain;
-      transform: rotateY(-28deg) rotateX(14deg) rotateZ(-6deg);
-      filter: drop-shadow(4px 6px 8px rgba(0,0,0,0.4));
-      transition: transform .3s ease;
+      transform: rotateY(-52deg) rotateX(22deg) rotateZ(-12deg) scale(1.08);
+      filter: drop-shadow(6px 10px 12px rgba(0,0,0,0.5));
+      transition: transform .35s cubic-bezier(.2,.8,.2,1);
     }
     .pkg:hover .coin-3d img {
-      transform: rotateY(-14deg) rotateX(10deg) rotateZ(-4deg) scale(1.06);
+      transform: rotateY(-38deg) rotateX(16deg) rotateZ(-9deg) scale(1.14);
     }
+
 
     .pkg h3 { font-size: 16px; font-weight: 800; }
     .pkg .coins { font-size: 26px; font-weight: 900; color: var(--gold); margin: 6px 0; }

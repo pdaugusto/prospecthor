@@ -793,6 +793,109 @@
         }
         .shop-note a:hover { text-decoration: underline; }
 
+        /* —— Carteira profissional —— */
+        .wallet-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1100px;
+        }
+        .wallet-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 720px) {
+            .wallet-stats { grid-template-columns: 1fr; }
+        }
+        .wallet-stat {
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(160deg, #101621, #0a0e16);
+        }
+        .wallet-stat .ws-label {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--muted);
+        }
+        .wallet-stat .ws-value {
+            margin-top: 6px; font-size: 22px; font-weight: 900;
+            letter-spacing: -0.03em; color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+        .wallet-stat .ws-value.pos { color: #4ade80; }
+        .wallet-stat .ws-value.neg { color: #f87171; }
+        .wallet-stat .ws-value.gold { color: #ffe8a3; }
+        .wallet-stat .ws-hint { margin-top: 4px; font-size: 12px; color: var(--muted); }
+
+        .wallet-ledger-card {
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
+            overflow: hidden;
+        }
+        .wallet-ledger-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .wallet-ledger-head h3 {
+            margin: 0; font-size: 15px; font-weight: 800; color: #fff;
+        }
+        .wallet-ledger-head p {
+            margin: 4px 0 0; font-size: 12px; color: var(--muted);
+        }
+        .wallet-ledger-body { padding: 0; }
+        .wallet-empty {
+            padding: 40px 24px; text-align: center; color: var(--muted); font-size: 13px;
+        }
+        .wallet-empty .coin-3d { width: 64px; height: 64px; margin: 0 auto 14px; display: block; }
+        .ledger-row {
+            display: grid;
+            grid-template-columns: 140px 1.2fr 90px 100px 1.4fr;
+            gap: 10px;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+            transition: background .12s;
+        }
+        .ledger-row:last-child { border-bottom: none; }
+        .ledger-row:hover { background: rgba(255,255,255,0.02); }
+        .ledger-row--head {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--muted);
+            background: rgba(0,0,0,0.25);
+            padding-top: 10px; padding-bottom: 10px;
+        }
+        .ledger-row--head:hover { background: rgba(0,0,0,0.25); }
+        .ledger-delta {
+            font-weight: 800; font-variant-numeric: tabular-nums;
+        }
+        .ledger-delta.pos { color: #4ade80; }
+        .ledger-delta.neg { color: #f87171; }
+        .ledger-type {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 600; color: #e8eef7;
+        }
+        .ledger-dot {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .ledger-dot.credit { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .ledger-dot.debit { background: #f87171; box-shadow: 0 0 8px rgba(248,113,113,0.35); }
+        .ledger-dot.neutral { background: #f5c542; }
+        .ledger-muted { color: var(--muted); font-size: 12px; }
+        @media (max-width: 800px) {
+            .ledger-row, .ledger-row--head {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px 12px;
+            }
+            .ledger-row--head { display: none; }
+            .ledger-row .lg-date { grid-column: 1 / -1; font-size: 11px; color: var(--muted); }
+            .ledger-row .lg-detail { grid-column: 1 / -1; }
+        }
+
         .avatar {
             width: 38px; height: 38px; border-radius: 50%;
             background: linear-gradient(135deg, var(--neon), var(--neon-soft));
@@ -1613,7 +1716,7 @@
             </div>
             <div class="header-right">
                 <div class="wallet-bar" id="wallet-bar">
-                    <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/shop')" title="Seu saldo de Trovoedas">
+                    <div class="wallet-chip" id="wallet-chip" onclick="navigateTo('/wallet')" title="Abrir carteira e extrato">
                         <span class="coin-3d" aria-hidden="true">
                             <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="30" height="30" />
                         </span>
@@ -1674,43 +1777,64 @@
 
         <!-- CARTEIRA / EXTRATO -->
         <section id="view-wallet" class="view">
-            <div class="shop-hero" style="margin-bottom:18px;">
-                <div class="shop-hero__copy">
-                    <div class="shop-kicker"><i></i> Conta</div>
-                    <h2>Carteira</h2>
-                    <p>Saldo e extrato de crédito e consumo. Cada lead entregue consome 1 Trovoeda.</p>
-                    <div style="margin-top:16px;">
-                        <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar na loja</button>
+            <div class="wallet-layout">
+                <div class="shop-hero">
+                    <div class="shop-hero__copy">
+                        <div class="shop-kicker"><i></i> Conta</div>
+                        <h2>Sua <em>carteira</em></h2>
+                        <p>
+                            Acompanhe saldo, recargas e o consumo de cada lead entregue.
+                            1 Trovoeda = 1 lead · moedas <strong style="color:#e8d48a;">não expiram</strong>.
+                        </p>
+                        <div class="shop-hero__pills" style="margin-top:16px;">
+                            <span class="shop-pill">Extrato em tempo real</span>
+                            <span class="shop-pill">Crédito e débito</span>
+                        </div>
+                        <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;">
+                            <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar</button>
+                            <button type="button" class="btn" onclick="navigateTo('/shop')" style="border-radius:999px;font-size:12px;font-weight:700;">Ver pacotes</button>
+                        </div>
+                    </div>
+                    <div class="shop-balance-card">
+                        <span class="coin-3d" aria-hidden="true">
+                            <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
+                        </span>
+                        <div>
+                            <div class="lbl">Saldo disponível</div>
+                            <strong id="wallet-page-amt">0</strong>
+                            <div class="sub">Trovoedas</div>
+                        </div>
                     </div>
                 </div>
-                <div class="shop-balance-card">
-                    <span class="coin-3d" aria-hidden="true">
-                        <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="56" height="56" />
-                    </span>
-                    <div>
-                        <div class="lbl">Saldo atual</div>
-                        <strong id="wallet-page-amt">0</strong>
-                        <div class="sub">Trovoedas</div>
+
+                <div class="wallet-stats">
+                    <div class="wallet-stat">
+                        <div class="ws-label">Saldo</div>
+                        <div class="ws-value gold" id="wallet-stat-bal">⚡ 0</div>
+                        <div class="ws-hint">Disponível agora</div>
+                    </div>
+                    <div class="wallet-stat">
+                        <div class="ws-label">Créditos</div>
+                        <div class="ws-value pos" id="wallet-stat-in">+0</div>
+                        <div class="ws-hint">Compras e bônus</div>
+                    </div>
+                    <div class="wallet-stat">
+                        <div class="ws-label">Consumo</div>
+                        <div class="ws-value neg" id="wallet-stat-out">−0</div>
+                        <div class="ws-hint">Leads entregues</div>
                     </div>
                 </div>
-            </div>
-            <div class="panel">
-                <h3 style="margin-bottom:12px;">Extrato</h3>
-                <div class="table-wrap" style="overflow-x:auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Tipo</th>
-                                <th>Δ</th>
-                                <th>Saldo após</th>
-                                <th>Detalhe</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wallet-ledger-body">
-                            <tr><td colspan="5" class="empty">Carregando…</td></tr>
-                        </tbody>
-                    </table>
+
+                <div class="wallet-ledger-card">
+                    <div class="wallet-ledger-head">
+                        <div>
+                            <h3>Extrato</h3>
+                            <p>Movimentações da sua conta Trovoeda</p>
+                        </div>
+                    </div>
+                    <div class="wallet-ledger-body" id="wallet-ledger-body">
+                        <div class="wallet-empty">Carregando extrato…</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -3005,34 +3129,65 @@
             const bal = (currentUser && currentUser.trovoedas != null)
                 ? Number(currentUser.trovoedas) : 0;
             updateWalletUI(bal, false);
-            const tbody = document.getElementById('wallet-ledger-body');
-            if (!tbody) return;
-            tbody.innerHTML = '<tr><td colspan="5" class="empty">Carregando extrato…</td></tr>';
+            const body = document.getElementById('wallet-ledger-body');
+            const statBal = document.getElementById('wallet-stat-bal');
+            const statIn = document.getElementById('wallet-stat-in');
+            const statOut = document.getElementById('wallet-stat-out');
+            if (statBal) statBal.textContent = '⚡ ' + (Number.isFinite(bal) ? bal : 0);
+            if (!body) return;
+            body.innerHTML = '<div class="wallet-empty">Carregando extrato…</div>';
             try {
                 const res = await fetch('/api/trovoeda/ledger?limit=80', {
                     cache: 'no-store', credentials: 'same-origin',
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const rows = await res.json();
+                let credit = 0;
+                let debit = 0;
+                if (Array.isArray(rows)) {
+                    rows.forEach(r => {
+                        const d = Number(r.delta) || 0;
+                        if (d > 0) credit += d;
+                        else if (d < 0) debit += Math.abs(d);
+                    });
+                }
+                if (statIn) statIn.textContent = '+' + credit;
+                if (statOut) statOut.textContent = '−' + debit;
+
                 if (!Array.isArray(rows) || !rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhum movimento ainda. Compre na Loja ou aguarde o bônus de cadastro.</td></tr>';
+                    body.innerHTML = `
+                        <div class="wallet-empty">
+                            <span class="coin-3d" aria-hidden="true">
+                                <img class="coin-3d__face" src="/static/trovoeda-coin.svg" alt="" width="64" height="64" />
+                            </span>
+                            <div style="font-weight:700;color:#e8eef7;margin-bottom:6px;">Nenhuma movimentação ainda</div>
+                            <div style="margin-bottom:14px;">Compre Trovoedas na loja ou use o bônus de cadastro.</div>
+                            <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">Ir para a loja</button>
+                        </div>`;
                     return;
                 }
-                tbody.innerHTML = rows.map(r => {
+                const head = `
+                    <div class="ledger-row ledger-row--head">
+                        <div>Data</div><div>Tipo</div><div>Valor</div><div>Saldo</div><div>Detalhe</div>
+                    </div>`;
+                const lines = rows.map(r => {
                     const d = Number(r.delta) || 0;
-                    const dColor = d > 0 ? '#4ade80' : (d < 0 ? '#f87171' : 'var(--muted)');
+                    const cls = d > 0 ? 'pos' : (d < 0 ? 'neg' : '');
+                    const dot = d > 0 ? 'credit' : (d < 0 ? 'debit' : 'neutral');
                     const dTxt = (d > 0 ? '+' : '') + d;
                     const when = String(r.created_at || '').replace('T', ' ').slice(0, 19);
-                    return `<tr>
-                        <td style="white-space:nowrap;font-size:12px;">${esc(when)}</td>
-                        <td>${esc(ledgerReasonLabel(r.reason))}</td>
-                        <td style="font-weight:800;color:${dColor};">${dTxt}</td>
-                        <td>⚡ ${esc(String(r.balance_after ?? '—'))}</td>
-                        <td style="font-size:12px;color:var(--muted);">${esc(r.note || r.ref_id || '—')}</td>
-                    </tr>`;
+                    return `
+                        <div class="ledger-row">
+                            <div class="lg-date ledger-muted">${esc(when)}</div>
+                            <div class="ledger-type"><span class="ledger-dot ${dot}"></span>${esc(ledgerReasonLabel(r.reason))}</div>
+                            <div class="ledger-delta ${cls}">${dTxt}</div>
+                            <div>⚡ ${esc(String(r.balance_after ?? '—'))}</div>
+                            <div class="lg-detail ledger-muted">${esc(r.note || r.ref_id || '—')}</div>
+                        </div>`;
                 }).join('');
+                body.innerHTML = head + lines;
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty">Erro: ' + esc(String(e.message || e)) + '</td></tr>';
+                body.innerHTML = '<div class="wallet-empty">Erro ao carregar: ' + esc(String(e.message || e)) + '</div>';
             }
         }
 

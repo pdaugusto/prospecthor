@@ -413,6 +413,12 @@
       border-radius: 12px;
       overflow: visible;
       background: rgba(0,0,0,0.2);
+      /* espaço pro tip do score não colidir com a borda do mock */
+      padding-bottom: 4px;
+    }
+    .mock-table.has-score-hover {
+      padding-bottom: 8px;
+      margin-bottom: 4px;
     }
     .mock-tr {
       display: grid;
@@ -436,9 +442,14 @@
     .mock-tr.hot {
       background: linear-gradient(90deg, rgba(245,197,66,0.08), transparent 70%);
     }
+    /* Linha em hover: lista continua visível; só um leve destaque */
+    .mock-table.has-score-hover .mock-tr:not(.head):not(.is-hover) {
+      opacity: 0.72;
+    }
     .mock-tr.is-hover {
-      background: linear-gradient(90deg, rgba(0,212,255,0.06), rgba(245,197,66,0.05) 60%, transparent);
-      z-index: 4;
+      background: linear-gradient(90deg, rgba(245,197,66,0.1), transparent 75%);
+      z-index: 5;
+      opacity: 1 !important;
     }
     .mt-name {
       font-weight: 800; color: #e8eef7; font-size: 11px;
@@ -500,6 +511,7 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
+      isolation: isolate;
     }
     .mt-score-pill {
       display: inline-flex;
@@ -536,130 +548,147 @@
       background: rgba(52,211,153,0.08);
     }
     .mt-score-pill.is-hover {
-      box-shadow: 0 0 0 2px rgba(245,197,66,0.2), 0 0 16px rgba(245,197,66,0.2);
+      box-shadow: 0 0 0 2px rgba(245,197,66,0.28), 0 0 14px rgba(245,197,66,0.22);
+      transform: scale(1.04);
     }
 
-    /* Tooltip “Por que este score” (3º lead em hover) — à esquerda pra não cortar */
+    /*
+      Tooltip compacto (como no painel real) — flutuando perto do score,
+      pequeno, com pontos que somam a nota. NÃO é um dump da tela de detalhe.
+    */
     .score-tip {
       position: absolute;
-      right: calc(100% + 12px);
-      top: 50%;
-      transform: translateY(-50%);
-      width: 252px;
-      padding: 12px 12px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+      right: -4px;
+      top: calc(100% + 10px);
+      width: 210px;
+      padding: 0;
+      border-radius: 11px;
+      border: 1px solid rgba(0,212,255,0.22);
       background: linear-gradient(165deg, #121a28 0%, #0a1018 100%);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3);
-      z-index: 12;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.55), 0 0 20px rgba(0,212,255,0.06);
+      z-index: 20;
       text-align: left;
       pointer-events: none;
-      animation: score-tip-in .35s ease both;
+      animation: score-tip-in .28s ease both;
     }
     @keyframes score-tip-in {
-      from { opacity: 0; transform: translateY(-50%) translateX(6px); }
-      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
     }
     .score-tip::before {
       content: "";
       position: absolute;
-      top: 50%; right: -5px;
-      width: 9px; height: 9px;
-      margin-top: -5px;
+      top: -5px; right: 14px;
+      width: 8px; height: 8px;
       background: #121a28;
-      border-right: 1px solid rgba(255,255,255,0.1);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      border-left: 1px solid rgba(0,212,255,0.22);
+      border-top: 1px solid rgba(0,212,255,0.22);
       transform: rotate(45deg);
     }
     .score-tip-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
+      gap: 6px;
+      padding: 8px 10px 7px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .score-tip-head strong {
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: 800;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--muted-2);
     }
     .score-tip-head b {
       font-size: 11px;
       font-weight: 900;
       color: #f5c542;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-tip-head b small {
+      font-size: 9px;
+      font-weight: 600;
+      opacity: 0.7;
+      margin-left: 2px;
     }
     .score-tip-rows {
       display: flex;
       flex-direction: column;
-      gap: 5px;
       margin: 0;
-      padding: 0;
+      padding: 4px 0;
       list-style: none;
     }
     .score-tip-rows li {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
-      font-size: 10px;
-      line-height: 1.35;
-      color: #a8b6c9;
+      padding: 4px 10px;
+      font-size: 9.5px;
+      line-height: 1.3;
+      color: #c5d0e0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
     }
-    .score-tip-rows li span { font-weight: 500; }
+    .score-tip-rows li:last-child { border-bottom: none; }
+    .score-tip-rows li span {
+      font-weight: 500;
+      color: #a8b6c9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .score-tip-rows li em {
       font-style: normal;
       font-weight: 800;
-      color: var(--muted-2);
       font-variant-numeric: tabular-nums;
+      color: #00d4ff;
+      font-size: 10px;
     }
-    .score-tip-rows li em.plus { color: #34d399; }
     .score-tip-total {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 11px;
-      font-weight: 800;
-      color: #e8eef7;
-    }
-    .score-tip-total b { color: #f5c542; font-weight: 900; }
-    .score-tip-foot {
-      margin-top: 6px;
+      padding: 7px 10px 8px;
+      border-top: 1px solid rgba(255,255,255,0.07);
       font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--muted-2);
-      line-height: 1.35;
     }
-    /* Cursor “fake hover” no 3º lead */
+    .score-tip-total b {
+      color: #f5c542;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-tip-foot {
+      display: none; /* compacto no mock */
+    }
+    /* Cursor “fake hover” no score da linha */
     .mock-cursor {
       position: absolute;
-      right: 18px;
-      top: 50%;
-      width: 14px;
-      height: 14px;
-      margin-top: -2px;
-      z-index: 9;
+      right: 6px;
+      top: 18px;
+      width: 15px;
+      height: 15px;
+      z-index: 22;
       pointer-events: none;
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
-      animation: mock-cursor-bob 2.2s ease-in-out infinite;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.55));
+      animation: mock-cursor-bob 2s ease-in-out infinite;
     }
     @keyframes mock-cursor-bob {
       0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-2px, 2px); }
+      50% { transform: translate(2px, 3px); }
     }
     @media (max-width: 520px) {
       .mock-tr { grid-template-columns: 1.15fr 0.55fr 1fr 42px; }
       .mt-btn span { display: none; }
       .mt-btn { padding: 5px 7px; }
-      .score-tip {
-        width: min(220px, 68vw);
-        right: calc(100% + 8px);
-      }
+      .score-tip { width: 190px; right: -2px; }
     }
 
     /* Trovoedas model (profissional) */
@@ -2017,14 +2046,16 @@
                     <span class="dchip">Contactados</span>
                     <span class="dchip">Convertidos</span>
                   </div>
-                  <div class="mock-table" aria-hidden="false">
+                  <!-- Lista normal; em 1 lead o mouse “para” no score e abre tip compacto -->
+                  <div class="mock-table has-score-hover" aria-hidden="false">
                     <div class="mock-tr head">
                       <span>Empresa</span>
                       <span>Cidade</span>
                       <span>Contato</span>
                       <span style="text-align:right">Score</span>
                     </div>
-                    <div class="mock-tr hot">
+                    <!-- 1º: score mais alto + hover com breakdown (pontos somam 92) -->
+                    <div class="mock-tr hot is-hover">
                       <span class="mt-name">Clínica Odonto Horizonte<small>Odontologia · sem site</small></span>
                       <span class="mt-city">Campinas</span>
                       <span class="mt-actions">
@@ -2038,7 +2069,28 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-gold">92</span>
+                        <span class="mt-score-pill s-gold is-hover">92</span>
+                        <svg class="mock-cursor" viewBox="0 0 24 24" fill="#e8eef7" aria-hidden="true">
+                          <path d="M5.5 3.2 18.8 12.1c.5.3.3 1.1-.3 1.2l-5.1.7 2.3 5.7c.2.5-.1 1.1-.6 1.2l-2.2.5c-.5.1-1-.2-1.2-.7l-2.2-5.5-3.4 3.2c-.5.5-1.3.1-1.3-.6V4c0-.7.8-1.1 1.4-.8z"/>
+                        </svg>
+                        <div class="score-tip" role="tooltip">
+                          <div class="score-tip-head">
+                            <strong>Por que este score</strong>
+                            <b>92<small>/100 · Elite</small></b>
+                          </div>
+                          <ul class="score-tip-rows">
+                            <li><span>Sem site próprio (dor alta)</span><em>+28</em></li>
+                            <li><span>Só rede social no lugar do site</span><em>+8</em></li>
+                            <li><span>Nicho S · odontologia</span><em>+22</em></li>
+                            <li><span>Nota excelente (4.9)</span><em>+14</em></li>
+                            <li><span>Volume forte no Maps</span><em>+12</em></li>
+                            <li><span>Celular / WhatsApp</span><em>+8</em></li>
+                          </ul>
+                          <div class="score-tip-total">
+                            <span>Total</span>
+                            <b>92/100</b>
+                          </div>
+                        </div>
                       </span>
                     </div>
                     <div class="mock-tr">
@@ -2054,8 +2106,7 @@
                         <span class="mt-score-pill s-purple">87</span>
                       </span>
                     </div>
-                    <!-- 3º lead: score em hover com explicação da nota -->
-                    <div class="mock-tr is-hover">
+                    <div class="mock-tr">
                       <span class="mt-name">Studio Belle Estética<small>Estética · sem site</small></span>
                       <span class="mt-city">Santos</span>
                       <span class="mt-actions">
@@ -2069,30 +2120,7 @@
                         </a>
                       </span>
                       <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-gold is-hover">90</span>
-                        <svg class="mock-cursor" viewBox="0 0 24 24" fill="#e8eef7" aria-hidden="true">
-                          <path d="M5.5 3.2 18.8 12.1c.5.3.3 1.1-.3 1.2l-5.1.7 2.3 5.7c.2.5-.1 1.1-.6 1.2l-2.2.5c-.5.1-1-.2-1.2-.7l-2.2-5.5-3.4 3.2c-.5.5-1.3.1-1.3-.6V4c0-.7.8-1.1 1.4-.8z"/>
-                        </svg>
-                        <div class="score-tip" role="tooltip">
-                          <div class="score-tip-head">
-                            <strong>Por que este score</strong>
-                            <b>90/100 · Elite</b>
-                          </div>
-                          <ul class="score-tip-rows">
-                            <li><span>Sem site próprio (dor alta) — principal gatilho de venda</span><em>—</em></li>
-                            <li><span>Só rede social no lugar do site</span><em>—</em></li>
-                            <li><span>Nicho S — alta propensão/ticket (estética)</span><em>—</em></li>
-                            <li><span>Muita tração no Maps (86 avaliações)</span><em>—</em></li>
-                            <li><span>Nota excelente (4.9)</span><em>—</em></li>
-                            <li><span>Volume forte de avaliações</span><em class="plus">+90</em></li>
-                            <li><span>Telefone celular / WhatsApp</span><em>—</em></li>
-                          </ul>
-                          <div class="score-tip-total">
-                            <span>TOTAL</span>
-                            <b>90/100</b>
-                          </div>
-                          <p class="score-tip-foot">Oportunidade de venda · maior = mais chance de fechar</p>
-                        </div>
+                        <span class="mt-score-pill s-purple">81</span>
                       </span>
                     </div>
                     <div class="mock-tr">

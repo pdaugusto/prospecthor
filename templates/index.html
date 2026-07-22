@@ -2635,11 +2635,11 @@
 
             <li class="nav-sep" role="separator" aria-hidden="true"></li>
             <li>
-                <a href="/api/export/csv" class="nav-download" id="nav-export-csv">
+                <a href="/api/export/csv" class="nav-download" id="nav-export-csv" title="Baixa a lista de leads em planilha (abre no Excel)">
                     <span class="nav-ico" aria-hidden="true">
                         <svg viewBox="0 0 24 24"><path d="M12 4v12M7 12l5 5 5-5M5 20h14"/></svg>
                     </span>
-                    Exportar CSV
+                    Baixar leads (Excel)
                 </a>
             </li>
         </ul>
@@ -3301,7 +3301,7 @@
         <section id="view-leads" class="view">
             <div class="leads-head-actions">
                 <button type="button" class="btn btn-primary" id="btn-distribute-leads" style="display:none;" onclick="openDistributeModal()">Distribuir sobra</button>
-                <a class="btn btn-secondary" id="export-csv-btn" href="/api/export/csv?scope=free">CSV</a>
+                <a class="btn btn-secondary" id="export-csv-btn" href="/api/export/csv?scope=free" title="Baixa a lista de leads em planilha (abre no Excel)">Baixar leads (Excel)</a>
             </div>
             <div class="chip-filters" id="status-chips">
                 <button type="button" class="chip on" data-st="" onclick="setStatusChip('', this)">Todos</button>
@@ -6487,9 +6487,69 @@
             });
         }
 
+        function leadsEmptyStateHtml() {
+            const total = (allLeads || []).length;
+            const hasFilters = !!(
+                (document.getElementById('filter-search')?.value || '').trim() ||
+                (document.getElementById('filter-niche')?.value || '') ||
+                (document.getElementById('filter-status')?.value || '')
+            );
+            const bolt = `<div class="le-bolt" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+            </div>`;
+
+            // Tem leads no total, mas filtros zeram a lista
+            if (total > 0 || hasFilters) {
+                return `<div class="leads-empty">
+                    ${bolt}
+                    <h3>Nada por aqui com esses filtros</h3>
+                    <p>Você tem leads — só não casam com a busca ou o status selecionado. Limpe os filtros e tente de novo.</p>
+                    <div class="le-actions">
+                        <button type="button" class="btn btn-primary" onclick="clearLeadsFilters()">Limpar filtros</button>
+                    </div>
+                </div>`;
+            }
+
+            // Lista realmente vazia
+            if (typeof isPatraoSession === 'function' && isPatraoSession()) {
+                return `<div class="leads-empty">
+                    ${bolt}
+                    <h3>Ainda sem sobras na fila</h3>
+                    <p>O pool está quieto por enquanto. Rode o robô no Cockpit ou confira se as missões já entregaram — a gente fica no aguardo da próxima leva.</p>
+                    <div class="le-actions">
+                        <button type="button" class="btn btn-primary" onclick="navigateTo('/bot')">Ver status do robô</button>
+                        <button type="button" class="btn" onclick="loadLeads(true)">Atualizar lista</button>
+                    </div>
+                </div>`;
+            }
+
+            return `<div class="leads-empty">
+                ${bolt}
+                <h3>Você ainda não tem leads</h3>
+                <p>A gente está ansioso pra encher essa tela. Peça sua primeira leva com Trovoedas — e a lista deixa de ficar vazia.</p>
+                <div class="le-actions">
+                    <button type="button" class="btn btn-primary" onclick="navigateTo('/orders')">Pedir leads</button>
+                    <button type="button" class="btn" onclick="navigateTo('/shop')">Recarregar Trovoedas</button>
+                </div>
+            </div>`;
+        }
+
+        function clearLeadsFilters() {
+            const search = document.getElementById('filter-search');
+            const niche = document.getElementById('filter-niche');
+            const status = document.getElementById('filter-status');
+            if (search) search.value = '';
+            if (niche) niche.value = '';
+            if (status) status.value = '';
+            syncStatusChips();
+            currentPage = 1;
+            applyFilters();
+        }
+
         function renderTable() {
             const tbody = document.getElementById('leads-tbody');
             const mobile = document.getElementById('leads-mobile');
+            if (!tbody || !mobile) return;
             const start = (currentPage - 1) * PAGE_SIZE;
             const page = filteredLeads.slice(start, start + PAGE_SIZE);
             const novos = (allLeads || []).filter(l => getStatus(l) === 'novo').length;

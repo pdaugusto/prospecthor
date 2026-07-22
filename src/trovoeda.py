@@ -102,13 +102,13 @@ def ensure_schema() -> None:
             );
             """
         )
-        # Pacotes oficiais MVP (upsert — nomes temáticos raio/trovão)
-        # Faísca 10 · Raio 50 · Trovão 150 · Tempestade 500
+        # Pacotes acessíveis MVP (upsert)
+        # Faísca 10 · Chispa 25 · Raio 50 · Trovão 100
         packages_seed = [
-            ("faisca", "Faísca", 10, 3900, 1),       # R$ 39 · ~R$ 3,90/lead
-            ("raio", "Raio", 50, 14900, 2),         # R$ 149 · ~R$ 2,98/lead (popular)
-            ("trovao", "Trovão", 150, 34900, 3),    # R$ 349 · ~R$ 2,33/lead
-            ("tempestade", "Tempestade", 500, 89900, 4),  # R$ 899 · ~R$ 1,80/lead
+            ("faisca", "Faísca", 10, 2900, 1),      # R$ 29 · R$ 2,90/lead
+            ("chispa", "Chispa", 25, 5900, 2),      # R$ 59 · R$ 2,36/lead
+            ("raio", "Raio", 50, 9900, 3),          # R$ 99 · R$ 1,98/lead (popular)
+            ("trovao", "Trovão", 100, 16900, 4),    # R$ 169 · R$ 1,69/lead
         ]
         for slug, name, coins, cents, order in packages_seed:
             cur.execute(
@@ -124,6 +124,14 @@ def ensure_schema() -> None:
                 """,
                 (slug, name, coins, cents, order),
             )
+        # desativa pacotes antigos grandes (tempestade etc.) se ainda existirem
+        cur.execute(
+            """
+            UPDATE trovoeda_packages
+            SET active = 0
+            WHERE slug NOT IN ('faisca', 'chispa', 'raio', 'trovao');
+            """
+        )
 
         conn.commit()
         cur.close()

@@ -725,8 +725,16 @@
         .stat-ico .coin-mini { width: 18px; height: 18px; margin: 0; vertical-align: middle; }
         .hq-ico .coin-mini { width: 20px; height: 20px; margin: 0; }
         .btn-buy .bolt-ico .coin-mini {
-            width: 14px; height: 14px; margin: 0;
-            filter: drop-shadow(0 0 4px rgba(255,220,80,0.7));
+            width: 16px; height: 16px; margin: 0;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+            transition: transform .2s ease, filter .2s ease;
+        }
+        .pkg-card .btn-buy:hover .bolt-ico .coin-mini,
+        .pkg-card .btn-buy:focus-visible .bolt-ico .coin-mini {
+            transform: scale(1.08);
+            filter: drop-shadow(0 0 6px rgba(255,220,80,0.65));
         }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
@@ -1352,7 +1360,7 @@
             justify-content: center;
             gap: 6px;
         }
-        /* faísca / raio no hover */
+        /* raio / brilho só no hover — moeda sempre visível no botão */
         .pkg-card .btn-buy .bolt-fx {
             position: absolute;
             inset: 0;
@@ -1389,28 +1397,17 @@
             animation: buy-bolt-sweep 0.7s ease-out 1;
         }
         .pkg-card .btn-buy .bolt-ico {
-            display: inline-block;
-            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             line-height: 1;
-            opacity: 0;
-            transform: scale(0.4) translateY(4px);
-            filter: drop-shadow(0 0 6px rgba(255, 220, 80, 0.9));
-            transition: opacity .12s, transform .2s cubic-bezier(.2,.9,.2,1);
-        }
-        .pkg-card .btn-buy:hover .bolt-ico,
-        .pkg-card .btn-buy:focus-visible .bolt-ico {
             opacity: 1;
-            transform: scale(1.15) translateY(0);
-            animation: buy-bolt-flash 0.55s ease-out 1;
+            transform: none;
+            flex-shrink: 0;
         }
         @keyframes buy-bolt-sweep {
             0% { transform: translateX(-120%) skewX(-18deg); }
             100% { transform: translateX(280%) skewX(-18deg); }
-        }
-        @keyframes buy-bolt-flash {
-            0% { opacity: 0; transform: scale(0.3) translateY(6px); filter: drop-shadow(0 0 0 transparent); }
-            35% { opacity: 1; transform: scale(1.35) translateY(0); filter: drop-shadow(0 0 10px #fff59a); }
-            100% { opacity: 1; transform: scale(1.1) translateY(0); filter: drop-shadow(0 0 6px rgba(255,220,80,0.85)); }
         }
         .pkg-card .btn-buy:hover {
             filter: brightness(1.08);

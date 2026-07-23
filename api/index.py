@@ -1205,7 +1205,7 @@ def api_trovoeda_checkout():
     if not pkg:
         return jsonify({"error": "pacote não encontrado"}), 404
 
-    secret = (os.getenv("STRIPE_SECRET_KEY") or "").strip()
+    secret = (os.getenv("STRIPE_API_KEY") or os.getenv("STRIPE_SECRET_KEY") or "").strip()
     price_id = (pkg.get("stripe_price_id") or "").strip() or (
         os.getenv(f"STRIPE_PRICE_{slug.upper()}") or ""
     ).strip()

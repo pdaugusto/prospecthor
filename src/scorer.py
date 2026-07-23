@@ -524,67 +524,74 @@ class LeadScorer:
         # Instagram conta como canal de contato (Fonte B e Maps)
         has_ig_contact = has_ig
 
+        # Acumula (label, contribuição_ao_score) — convertido em "(+XX)" no final
+        _factors: list[tuple[str, float]] = []
+
         # ── A) Dor digital 0–100 ─────────────────────────────────────────
+        W_DOR = 0.32
         if no_website:
             dor = 88  # base forte: produto = vender presença digital
-            problems.append("Sem site próprio (dor alta) — principal gatilho de venda")
+            _factors.append(("Sem site próprio — principal gatilho de venda", W_DOR * 88))
             if only_social:
                 dor = min(100, dor + 6)
-                problems.append("Só rede social no lugar do site")
+                _factors.append(("Só rede social no lugar do site", W_DOR * 6))
             if has_ig:
                 dor = min(100, dor + 4)
-                problems.append("Tem Instagram sem site — já se expõe, falta casa na web")
+                _factors.append(("Tem Instagram sem site — já se expõe, falta casa na web", W_DOR * 4))
                 if company.get("instagram_has_link") == 0:
                     dor = min(100, dor + 2)
-                    problems.append("Instagram sem link na bio")
+                    _factors.append(("Instagram sem link na bio", W_DOR * 2))
         else:
-            dor = 18  # tem site = dor baixa de “vender site do zero”
+            dor = 18  # tem site = dor baixa de "vender site do zero"
             tech = 0
             if "sem_https" in web_flags or company.get("website_https") == 0:
                 tech += 22
-                problems.append("Site sem HTTPS")
+                _factors.append(("Site sem HTTPS", W_DOR * 22))
             speed = company.get("website_speed_s")
             try:
                 if speed is not None and float(speed) > 5.0:
                     tech += 20
-                    problems.append(f"Site lento ({float(speed):.1f}s)")
+                    _factors.append((f"Site lento ({float(speed):.1f}s)", W_DOR * 20))
             except (TypeError, ValueError):
                 pass
             if "nao_mobile" in web_flags or company.get("website_mobile") == 0:
                 tech += 22
-                problems.append("Site não mobile-friendly")
+                _factors.append(("Site não mobile-friendly", W_DOR * 22))
             dor = min(70, dor + tech)
+            if tech == 0:
+                _factors.append(("Site ok — dor digital baixa", W_DOR * 18))
 
         # ── B) Capacidade / nicho 0–100 ──────────────────────────────────
+        W_CAP = 0.30
         niche = (company.get("niche") or "").strip().lower()
         is_foodtruck = self._looks_like_foodtruck(company)
         # "Lanche"/carrinho classificado como restaurante → trata como food truck
         if is_foodtruck:
             cap = 12
-            problems.append(
+            _factors.append((
                 "Parece food truck/carrinho/lanche — ticket baixo de site "
-                "(não é restaurante de salão)"
-            )
+                "(não é restaurante de salão)", W_CAP * 12
+            ))
         elif niche in self._NICHES_S:
             cap = 92
-            problems.append(f"Nicho S — alta propensão/ticket ({niche})")
+            _factors.append((f"Nicho S — alta propensão/ticket ({niche})", W_CAP * 92))
         elif niche in self._NICHES_A:
             cap = 72
-            problems.append(f"Nicho A — boa propensão ({niche})")
+            _factors.append((f"Nicho A — boa propensão ({niche})", W_CAP * 72))
         elif niche in self._NICHES_B:
             cap = 48
-            problems.append(f"Nicho B — ticket menor ({niche})")
+            _factors.append((f"Nicho B — ticket menor ({niche})", W_CAP * 48))
         elif niche in self._NICHES_C:
             cap = 28
-            problems.append(f"Nicho C — baixa prioridade site ({niche})")
+            _factors.append((f"Nicho C — baixa prioridade site ({niche})", W_CAP * 28))
         elif niche:
             cap = 40
-            problems.append(f"Nicho local ({niche})")
+            _factors.append((f"Nicho local ({niche})", W_CAP * 40))
         else:
             cap = 30
 
         # porte (ajuste fino ±8) — só quando TEM dado do Google Maps
-        # (Fonte B/OSM sem nota não deve cair todo mundo no mesmo teto “pouca prova social”)
+        # (Fonte B/OSM sem nota não deve cair todo mundo no mesmo teto "pouca prova social")
         src = (company.get("source") or "").strip().lower()
         maps_data_missing = (rating <= 0 and reviews <= 0)
         partial_source = src in ("osm", "cnpj", "cnpj+osm", "fonte_b", "fonte-b")
@@ -592,55 +599,56 @@ class LeadScorer:
         if not maps_data_missing:
             if 12 <= reviews <= 60:
                 cap = min(100, cap + 8)
-                problems.append(f"Porte saudável ({reviews} avaliações)")
+                _factors.append((f"Porte saudável ({reviews} avaliações)", W_CAP * 8))
             elif 5 <= reviews <= 11:
                 cap = min(100, cap + 4)
-                problems.append(f"Porte em crescimento ({reviews} avaliações)")
+                _factors.append((f"Porte em crescimento ({reviews} avaliações)", W_CAP * 4))
             elif reviews >= 61:
                 cap = min(100, cap + 2)
-                problems.append(f"Muita tração no Maps ({reviews} avaliações)")
+                _factors.append((f"Muita tração no Maps ({reviews} avaliações)", W_CAP * 2))
             elif reviews <= 1:
                 cap = max(0, cap - 8)
-                problems.append("Pouca prova social no Maps")
+                _factors.append(("Pouca prova social no Maps", -(W_CAP * 8)))
         elif partial_source:
-            # mesma fórmula de blocos; sem punir por “0 reviews” se nunca teve Maps
-            problems.append("Sem nota/avaliações no Google ainda")
+            # mesma fórmula de blocos; sem punir por "0 reviews" se nunca teve Maps
+            _factors.append(("Sem nota/avaliações no Google ainda", 0.0))
 
         # ── C) Visibilidade 0–100 ────────────────────────────────────────
         # nota Maps (0–55) + volume (0–35) + social (0–10)
+        W_VIS = 0.23
         if maps_data_missing and partial_source:
-            # neutro (não “nota fraca 5”) — evita todos com 56 por falta de Google
+            # neutro (não "nota fraca 5") — evita todos com 56 por falta de Google
             r_pts = 30
             v_pts = 12
-            problems.append("Visibilidade parcial (sem Google) — base neutra")
+            _factors.append(("Visibilidade parcial (sem Google) — base neutra", W_VIS * (r_pts + v_pts)))
         elif rating >= 4.7 and reviews >= 3:
             r_pts = 55
-            problems.append(f"Nota excelente ({rating:.1f})")
+            _factors.append((f"Nota excelente ({rating:.1f})", W_VIS * 55))
         elif rating >= 4.3 and reviews >= 2:
             r_pts = 48
-            problems.append(f"Nota alta ({rating:.1f})")
+            _factors.append((f"Nota alta ({rating:.1f})", W_VIS * 48))
         elif rating >= 4.0:
             r_pts = 40
-            problems.append(f"Boa reputação Maps ({rating:.1f})")
+            _factors.append((f"Boa reputação Maps ({rating:.1f})", W_VIS * 40))
         elif rating >= 3.5:
             r_pts = 28
-            problems.append(f"Reputação ok ({rating:.1f})")
+            _factors.append((f"Reputação ok ({rating:.1f})", W_VIS * 28))
         elif rating > 0:
             r_pts = 12
-            problems.append(f"Nota fraca ({rating:.1f})")
+            _factors.append((f"Nota fraca ({rating:.1f})", W_VIS * 12))
         else:
             r_pts = 5
 
         if not (maps_data_missing and partial_source):
             if reviews >= 15:
                 v_pts = 35
-                problems.append(f"Volume forte de avaliações ({reviews})")
+                _factors.append((f"Volume forte de avaliações ({reviews})", W_VIS * 35))
             elif reviews >= 8:
                 v_pts = 30
-                problems.append(f"Volume bom de avaliações ({reviews})")
+                _factors.append((f"Volume bom de avaliações ({reviews})", W_VIS * 30))
             elif reviews >= 3:
                 v_pts = 22
-                problems.append(f"Algumas avaliações ({reviews})")
+                _factors.append((f"Algumas avaliações ({reviews})", W_VIS * 22))
             elif reviews >= 1:
                 v_pts = 10
             else:
@@ -648,22 +656,23 @@ class LeadScorer:
 
         s_pts = 10 if (no_website and has_ig) else (4 if has_ig else 0)
         if s_pts >= 10:
-            problems.append("Presença social (IG) ativa")
+            _factors.append(("Presença social (IG) ativa", W_VIS * 10))
         vis = min(100, r_pts + v_pts + s_pts)
 
         # ── D) Abordabilidade 0–100 ──────────────────────────────────────
+        W_AB = 0.15
         if has_mobile:
             ab = 100
-            problems.append("Telefone celular / WhatsApp")
+            _factors.append(("Telefone celular / WhatsApp", W_AB * 100))
         elif has_landline:
             ab = 65
-            problems.append("Telefone fixo utilizável")
+            _factors.append(("Telefone fixo utilizável", W_AB * 65))
         elif has_ig_contact:
             ab = 55
-            problems.append("Contato via Instagram (sem telefone)")
+            _factors.append(("Contato via Instagram (sem telefone)", W_AB * 55))
         else:
             ab = 0
-            problems.append("Sem telefone útil — baixa chance de fechar agora")
+            _factors.append(("Sem telefone útil — baixa chance de fechar agora", 0.0))
 
         # Serviços sugeridos por nicho (cardápio, agenda, etc. — não só “site”)
         services = self._services_for_context(
@@ -695,12 +704,23 @@ class LeadScorer:
 
         # sem telefone e sem IG: não fica no topo dourado
         if not has_mobile and not has_landline and not has_ig_contact and score > 58:
-            problems.append("Sem telefone/WhatsApp nem Instagram — contato fraco")
+            _factors.append(("Sem telefone/WhatsApp nem Instagram — contato fraco", 0.0))
             score = 58
         # food truck/carrinho: raramente fecha site "completo" → teto
         if is_foodtruck and score > 62:
-            problems.append("Perfil food truck/carrinho — ticket de site costuma ser menor")
+            _factors.append(("Perfil food truck/carrinho — ticket de site costuma ser menor", 0.0))
             score = 62
+
+        # ── Montar problems com pontuação anotada (+XX) ──────────────────
+        # Converte _factors em "Label (+XX)" para o tooltip do dashboard
+        for label, contrib in _factors:
+            pts = int(round(contrib))
+            if pts > 0:
+                problems.append(f"{label} (+{pts})")
+            elif pts < 0:
+                problems.append(f"{label} ({pts})")
+            else:
+                problems.append(label)
 
         # ── Classificação ────────────────────────────────────────────────
         if no_website:

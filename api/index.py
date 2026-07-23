@@ -1247,6 +1247,47 @@ def api_trovoeda_checkout():
         return jsonify({"error": str(exc)}), 400
 
 
+@app.route("/api/webhook/stripe", methods=["POST"])
+def api_webhook_stripe():
+    """Recebe eventos do Stripe, valida assinatura e injeta Trovoedas."""
+    payload = request.data
+    sig_header = request.headers.get("Stripe-Signature")
+    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    import stripe  # type: ignore
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        return "Invalid payload", 400
+    except stripe.error.SignatureVerificationError as e:
+        return "Invalid signature", 400
+
+    if event["type"] == "checkout.session.completed":
+        session_obj = event["data"]["object"]
+        
+        uid_str = session_obj.get("client_reference_id")
+        metadata = session_obj.get("metadata") or {}
+        coins_str = metadata.get("coins", "0")
+        
+        if uid_str and coins_str.isdigit():
+            user_id = int(uid_str)
+            coins = int(coins_str)
+            from src.trovoeda import apply_delta
+            apply_delta(
+                user_id,
+                coins,
+                reason="purchase",
+                note=f"Compra via Stripe: {metadata.get('package', 'pacote')}",
+                ref_type="stripe_session",
+                ref_id=session_obj.get("id"),
+            )
+            _invalidate_cache()
+
+    return "", 200
+
+
 @app.route("/api/impersonate", methods=["POST"])
 @login_required
 def api_impersonate_start():

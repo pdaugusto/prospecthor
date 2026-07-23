@@ -111,24 +111,25 @@ def ensure_schema() -> None:
         )
         # Pacotes acessíveis — nomes clássicos: Faísca · Raio · Tempestade · Trovão
         packages_seed = [
-            ("faisca", "Faísca", 10, 2900, 1),          # R$ 29
-            ("raio", "Raio", 25, 5900, 2),              # R$ 59
-            ("tempestade", "Tempestade", 50, 9900, 3), # R$ 99 · popular
-            ("trovao", "Trovão", 100, 16900, 4),       # R$ 169
+            ("faisca", "Faísca", 10, 2900, "price_1TwTbXKXomNHAqYlBMyhGJUB", 1),          # R$ 29
+            ("raio", "Raio", 25, 5900, "price_1TwTc1KXomNHAqYluOCBbtZF", 2),              # R$ 59
+            ("tempestade", "Tempestade", 50, 9900, "price_1TwTcLKXomNHAqYlIOEB21IV", 3), # R$ 99 · popular
+            ("trovao", "Trovão", 100, 16900, "price_1TwTcjKXomNHAqYlsEIfdnKD", 4),       # R$ 169
         ]
-        for slug, name, coins, cents, order in packages_seed:
+        for slug, name, coins, cents, stripe_price_id, order in packages_seed:
             cur.execute(
                 """
-                INSERT INTO trovoeda_packages (slug, name, coins, price_cents, sort_order, active)
-                VALUES (%s, %s, %s, %s, %s, 1)
+                INSERT INTO trovoeda_packages (slug, name, coins, price_cents, stripe_price_id, sort_order, active)
+                VALUES (%s, %s, %s, %s, %s, %s, 1)
                 ON CONFLICT (slug) DO UPDATE SET
                     name = EXCLUDED.name,
                     coins = EXCLUDED.coins,
                     price_cents = EXCLUDED.price_cents,
+                    stripe_price_id = EXCLUDED.stripe_price_id,
                     sort_order = EXCLUDED.sort_order,
                     active = 1;
                 """,
-                (slug, name, coins, cents, order),
+                (slug, name, coins, cents, stripe_price_id, order),
             )
         # desativa nomes fora do catálogo atual (ex.: chispa)
         cur.execute(

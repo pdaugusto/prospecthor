@@ -384,8 +384,8 @@
             position: relative; z-index: 2;
         }
         #score-tip-float {
-            position: fixed; z-index: 9999; pointer-events: none;
-            min-width: 240px; max-width: 320px;
+            position: fixed; z-index: 13050; pointer-events: none;
+            min-width: 260px; max-width: min(340px, calc(100vw - 16px));
             background: linear-gradient(165deg, #121a28, #0a0f18);
             border: 1px solid var(--border-glow);
             border-radius: 12px;
@@ -393,6 +393,7 @@
             padding: 0; opacity: 0; visibility: hidden;
             transform: translateY(4px);
             transition: opacity .12s ease, transform .12s ease, visibility .12s;
+            left: 0; top: 0; /* sempre setado em JS — evita aparecer no canto */
         }
         #score-tip-float.visible {
             opacity: 1; visibility: visible; transform: translateY(0);
@@ -3890,21 +3891,33 @@
             return list.map(p => String(p || '').trim()).filter(p => p && !isScoreMetaProblem(p));
         }
 
-        /** Extrai linhas {label, pts} de lead_problems: "Motivo (+20) — detalhe" */
+        /**
+         * Extrai {label, pts} de lead_problems.
+         * Pontos SÓ com sinal explícito: (+28) ou (-5) ou unicode (−5).
+         */
         function parseScoreBreakdown(problemsRaw) {
             return filterBusinessProblems(problemsRaw).map(s => {
-                const m = s.match(/^(.+?)\s*\(([+-]?\d+)\)(?:\s*[—–\-].*)?$/);
+                const raw = String(s || '').trim();
+                if (!raw) return null;
+                // Aceita sinal de mais (+), hífen-menos (-), ou sinal de menos unicode (minus: −)
+                const m = raw.match(/^(.*?)\s*\(([+−\-]\d+)\)\s*(?:[—–\-].*)?$/);
                 if (m) {
-                    return { label: m[1].trim(), pts: parseInt(m[2], 10) };
+                    const ptsStr = m[2].replace(/−/g, '-');
+                    return { label: m[1].trim() || raw, pts: parseInt(ptsStr, 10) };
                 }
-                return { label: s.trim(), pts: null };
-            }).filter(r => r.label);
+                // sem pontos numéricos — ainda é um fator (mostra o texto completo)
+                return { label: raw, pts: null };
+            }).filter(r => r && r.label);
         }
 
         function scoreBadgeHtml(sc, problemsRaw) {
             const n = Number(sc) || 0;
             const rows = parseScoreBreakdown(problemsRaw);
-            const payload = encodeURIComponent(JSON.stringify({ score: n, rows }));
+            // data-attribute: JSON escapado (sem encodeURIComponent — evita % quebra no HTML)
+            const payload = JSON.stringify({ score: n, rows })
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;');
             return `<span class="score-tip-wrap"
                 data-score-tip="${payload}"
                 onmouseenter="showScoreTip(event)"
@@ -3928,13 +3941,40 @@
             return el;
         }
 
+        function positionScoreTip(el, wrap) {
+            if (!el || !wrap) return;
+            const rect = wrap.getBoundingClientRect();
+            let tipW = Math.min(300, window.innerWidth - 16);
+            el.style.width = tipW + 'px';
+            // medir depois de ter conteúdo + width
+            const tipH = el.offsetHeight || 180;
+            tipW = el.offsetWidth || tipW;
+
+            let left = rect.left + rect.width / 2 - tipW / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+
+            let top = rect.bottom + 10;
+            if (top + tipH > window.innerHeight - 8) {
+                top = rect.top - tipH - 10;
+            }
+            if (top < 8) top = 8;
+
+            el.style.left = Math.round(left) + 'px';
+            el.style.top = Math.round(top) + 'px';
+        }
+
         function showScoreTip(ev) {
-            const wrap = ev.currentTarget || ev.target.closest('.score-tip-wrap');
+            const wrap = ev.currentTarget || (ev.target && ev.target.closest && ev.target.closest('.score-tip-wrap'));
             if (!wrap) return;
             let data = { score: 0, rows: [] };
             try {
-                data = JSON.parse(decodeURIComponent(wrap.getAttribute('data-score-tip') || '%7B%7D'));
-            } catch (_) {}
+                const raw = wrap.getAttribute('data-score-tip') || '{}';
+                data = JSON.parse(raw);
+            } catch (_) {
+                try {
+                    data = JSON.parse(decodeURIComponent(wrap.getAttribute('data-score-tip') || '%7B%7D'));
+                } catch (__) {}
+            }
             const n = Number(data.score) || 0;
             const tier = scoreTier(n);
             const rows = Array.isArray(data.rows) ? data.rows : [];
@@ -3943,16 +3983,27 @@
             if (!rows.length) {
                 body = '<div class="st-empty">Sem detalhe de pontuação para este lead.</div>';
             } else {
+                const hasAnyPts = rows.some(r => r.pts != null && !Number.isNaN(Number(r.pts)));
                 const trs = rows.map(r => {
                     const pts = r.pts;
-                    let ptsHtml = '—';
+                    let ptsHtml = '';
                     let cls = 'pts';
-                    if (pts != null && !Number.isNaN(pts)) {
-                        ptsHtml = (pts > 0 ? '+' : '') + pts;
-                        if (pts === 0) cls += ' zero';
-                        if (pts < 0) cls += ' neg';
+                    if (pts != null && !Number.isNaN(Number(pts))) {
+                        const p = Number(pts);
+                        ptsHtml = (p > 0 ? '+' : '') + p;
+                        if (p === 0) cls += ' zero';
+                        if (p < 0) cls += ' neg';
+                    } else if (hasAnyPts) {
+                        // mistura: fatores sem peso numérico
+                        ptsHtml = '·';
+                        cls += ' zero';
+                    } else {
+                        // só fatores textuais (leads antigos) — não enche de "—"
+                        ptsHtml = '';
+                        cls += ' zero';
                     }
-                    return `<tr><td>${esc(r.label)}</td><td class="${cls}">${ptsHtml}</td></tr>`;
+                    const label = esc(r.label || '');
+                    return `<tr><td title="${label}">${label}</td><td class="${cls}">${ptsHtml}</td></tr>`;
                 }).join('');
                 body = `<table><tbody>${trs}
                     <tr class="st-total"><td>Total</td><td class="pts">${n}/100</td></tr>
@@ -3967,27 +4018,25 @@
                 ${body}
                 <div class="st-foot">Oportunidade de venda · maior = mais chance de fechar</div>
             `;
+            
+            // Posiciona antes de exibir para evitar que a transição de opacidade comece em left:0, top:0 (no canto)
+            el.style.left = '0px';
+            el.style.top = '0px';
+            el.style.visibility = 'hidden';
+            el.style.display = 'block';
+            positionScoreTip(el, wrap);
             el.classList.add('visible');
-            // posiciona perto do badge, sem sair da tela
-            const rect = wrap.getBoundingClientRect();
-            const tipW = 280;
-            const tipH = el.offsetHeight || 180;
-            tipW = Math.min(tipW, window.innerWidth - 16);
-            let left = rect.left + rect.width / 2 - tipW / 2;
-            left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
-            let top = rect.bottom + 8;
-            if (top + tipH > window.innerHeight - 8) {
-                top = rect.top - tipH - 8;
-            }
-            if (top < 8) top = 8;
-            el.style.width = tipW + 'px';
-            el.style.left = left + 'px';
-            el.style.top = top + 'px';
+            el.style.visibility = '';
+            
+            // re-mede após layout (tipH real)
+            requestAnimationFrame(() => positionScoreTip(el, wrap));
         }
 
         function hideScoreTip() {
             const el = document.getElementById('score-tip-float');
-            if (el) el.classList.remove('visible');
+            if (el) {
+                el.classList.remove('visible');
+            }
         }
 
         // esconde ao rolar / trocar de página

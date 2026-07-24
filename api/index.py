@@ -1250,57 +1250,63 @@ def api_trovoeda_checkout():
 @app.route("/api/webhook/stripe", methods=["POST"])
 def api_webhook_stripe():
     """Recebe eventos do Stripe, valida assinatura e injeta Trovoedas."""
-    import stripe  # type: ignore
-
-    payload = request.data
-    sig_header = request.headers.get("Stripe-Signature")
-    endpoint_secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
-
-    if not endpoint_secret:
-        app.logger.error("[Webhook] STRIPE_WEBHOOK_SECRET não configurado")
-        return "Webhook secret not configured", 500
-
+    import traceback
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-    except ValueError:
-        app.logger.error("[Webhook] Payload inválido")
-        return "Invalid payload", 400
-    except Exception as e:
-        # Cobre stripe.error.SignatureVerificationError e stripe.SignatureVerificationError
-        app.logger.error("[Webhook] Assinatura inválida: %s", e)
-        return "Invalid signature", 400
+        import stripe  # type: ignore
 
-    app.logger.info("[Webhook] Evento recebido: %s", event.get("type"))
+        payload = request.data
+        sig_header = request.headers.get("Stripe-Signature")
+        endpoint_secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
 
-    if event.get("type") == "checkout.session.completed":
-        session_obj = event["data"]["object"]
-        uid_str = (session_obj.get("client_reference_id") or "").strip()
-        metadata = session_obj.get("metadata") or {}
-        coins_str = str(metadata.get("coins") or "0").strip()
+        if not endpoint_secret:
+            app.logger.error("[Webhook] STRIPE_WEBHOOK_SECRET não configurado")
+            return "Webhook secret not configured", 500
 
-        app.logger.info(
-            "[Webhook] checkout.session.completed uid=%s coins=%s package=%s",
-            uid_str, coins_str, metadata.get("package"),
-        )
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        except ValueError:
+            app.logger.error("[Webhook] Payload inválido")
+            return "Invalid payload", 400
+        except Exception as e:
+            # Cobre stripe.error.SignatureVerificationError e stripe.SignatureVerificationError
+            app.logger.error("[Webhook] Assinatura inválida: %s", e)
+            return f"Invalid signature: {e}", 400
 
-        if uid_str and uid_str.isdigit() and coins_str.isdigit() and int(coins_str) > 0:
-            from src.trovoeda import apply_delta
-            result = apply_delta(
-                int(uid_str),
-                int(coins_str),
-                reason="purchase",
-                note=f"Compra via Stripe: {metadata.get('package', 'pacote')} ({coins_str} Trovoedas)",
-                ref_type="stripe_session",
-                ref_id=str(session_obj.get("id") or ""),
-            )
-            app.logger.info("[Webhook] apply_delta resultado: %s", result)
-            _invalidate_cache()
-        else:
-            app.logger.warning(
-                "[Webhook] Dados inválidos — uid=%r coins=%r", uid_str, coins_str
+        app.logger.info("[Webhook] Evento recebido: %s", event.get("type"))
+
+        if event.get("type") == "checkout.session.completed":
+            session_obj = event["data"]["object"]
+            uid_str = (session_obj.get("client_reference_id") or "").strip()
+            metadata = session_obj.get("metadata") or {}
+            coins_str = str(metadata.get("coins") or "0").strip()
+
+            app.logger.info(
+                "[Webhook] checkout.session.completed uid=%s coins=%s package=%s",
+                uid_str, coins_str, metadata.get("package"),
             )
 
-    return "", 200
+            if uid_str and uid_str.isdigit() and coins_str.isdigit() and int(coins_str) > 0:
+                from src.trovoeda import apply_delta
+                result = apply_delta(
+                    int(uid_str),
+                    int(coins_str),
+                    reason="purchase",
+                    note=f"Compra via Stripe: {metadata.get('package', 'pacote')} ({coins_str} Trovoedas)",
+                    ref_type="stripe_session",
+                    ref_id=str(session_obj.get("id") or ""),
+                )
+                app.logger.info("[Webhook] apply_delta resultado: %s", result)
+                _invalidate_cache()
+            else:
+                app.logger.warning(
+                    "[Webhook] Dados inválidos — uid=%r coins=%r", uid_str, coins_str
+                )
+
+        return "", 200
+    except Exception as exc:
+        err_msg = traceback.format_exc()
+        app.logger.error(f"[Webhook Exception] {err_msg}")
+        return f"Internal Error: {err_msg}", 500
 
 
 @app.route("/api/impersonate", methods=["POST"])

@@ -1272,9 +1272,9 @@ def api_webhook_stripe():
             app.logger.error("[Webhook] Assinatura inválida: %s", e)
             return f"Invalid signature: {e}", 400
 
-        app.logger.info("[Webhook] Evento recebido: %s", event.get("type"))
+        app.logger.info("[Webhook] Evento recebido: %s", event.type)
 
-        if event.get("type") == "checkout.session.completed":
+        if event.type == "checkout.session.completed":
             session_obj = event["data"]["object"]
             uid_str = (session_obj.get("client_reference_id") or "").strip()
             metadata = session_obj.get("metadata") or {}

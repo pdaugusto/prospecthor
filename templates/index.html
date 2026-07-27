@@ -7493,8 +7493,11 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             }
             const text = buildApproachMessage(lead, 'whatsapp');
             const url = waLink(lead.phone, text);
-            if (url) openExternalUrl(url);
-        }
+            if (url) {
+                openExternalUrl(url);
+                updateStatus(id, 'contactado');
+            }
+        }   
 
         /** Do modal: usa o texto da caixa (editável) */
         function openWhatsAppFromPrompt() {

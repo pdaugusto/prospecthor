@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PREVIEW — Login comercial ProspecTHOR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070b;
+      --border: #1a2233;
+      --text: #ffffff;
+      --muted: #8b9bb4;
+      --muted-2: #5a6b82;
+      --neon: #00d4ff;
+      --neon-dim: rgba(0, 212, 255, 0.10);
+      --neon-glow: rgba(0, 212, 255, 0.35);
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: var(--font);
+      color: #e8eef7;
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .preview-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      background: rgba(0, 80, 120, 0.95);
+      color: #fff;
+      text-align: center;
+      padding: 7px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    }
+    .preview-banner span { opacity: .8; font-weight: 500; }
+
+    .page {
+      min-height: 100vh;
+      padding-top: 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 212, 255, 0.12), transparent 55%),
+        radial-gradient(ellipse 45% 40% at 90% 80%, rgba(59, 158, 255, 0.08), transparent 50%),
+        var(--bg);
+    }
+    .bg-layer::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000 10%, transparent 70%);
+    }
+
+    /* LEFT — pitch limpo */
+    .pitch {
+      position: relative; z-index: 1;
+      padding: 56px 56px 56px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      border-right: 1px solid var(--border);
+      max-width: 640px;
+      margin-left: auto;
+      width: 100%;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-mark {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: linear-gradient(145deg, #00d4ff, #0a6fa8);
+      color: #031018; font-weight: 900; font-size: 15px;
+      display: grid; place-items: center;
+      box-shadow: 0 0 24px var(--neon-glow);
+    }
+    .brand strong {
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .brand strong span { color: var(--neon); }
+
+    .pitch h1 {
+      font-size: clamp(36px, 4.5vw, 52px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: #fff;
+    }
+    .pitch h1 em {
+      font-style: normal;
+      background: linear-gradient(100deg, #fff 20%, #00d4ff 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .pitch p {
+      font-size: 17px;
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 420px;
+    }
+    .pitch p strong { color: #fff; font-weight: 600; }
+
+    .metrics {
+      display: flex;
+      gap: 32px;
+      padding-top: 8px;
+    }
+    .metrics div b {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+    .metrics div b span { color: var(--neon); }
+    .metrics div small {
+      font-size: 12px;
+      color: var(--muted-2);
+      font-weight: 500;
+    }
+
+    /* RIGHT — login */
+    .auth {
+      position: relative; z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(10, 14, 23, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px 28px;
+      box-shadow:
+        0 0 0 1px rgba(0, 212, 255, 0.04),
+        0 24px 48px rgba(0, 0, 0, 0.4),
+        0 0 48px rgba(0, 212, 255, 0.05);
+      position: relative;
+    }
+    .auth-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 24px; right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      box-shadow: 0 0 12px var(--neon);
+    }
+
+    .auth-card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .auth-card .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted-2);
+      margin-bottom: 8px;
+    }
+    .field { margin-bottom: 16px; }
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      background: #070b12;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+    input::placeholder { color: var(--muted-2); }
+    input:focus {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 3px var(--neon-dim);
+    }
+
+    .row-opts {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 2px 0 22px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .row-opts label.check {
+      display: flex; align-items: center; gap: 8px;
+      text-transform: none; letter-spacing: 0; font-weight: 500;
+      cursor: pointer; font-size: 12px; color: var(--muted);
+    }
+    .row-opts input[type="checkbox"] {
+      width: 14px; height: 14px; accent-color: var(--neon); padding: 0;
+    }
+    .row-opts a {
+      color: var(--neon);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .row-opts a:hover { text-decoration: underline; }
+
+    .btn-enter {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: var(--font);
+      cursor: pointer;
+      color: #031018;
+      background: linear-gradient(135deg, #00d4ff, #0090c4);
+      box-shadow: 0 0 22px var(--neon-dim);
+      transition: filter .15s, transform .15s;
+    }
+    .btn-enter:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .toast {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      color: var(--neon);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .toast.show { display: block; }
+
+    .auth-foot {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted-2);
+    }
+    .auth-foot b { color: #fff; }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .pitch {
+        padding: 40px 28px 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-width: none;
+        margin: 0;
+      }
+      .pitch h1 { font-size: 32px; }
+      .metrics { gap: 24px; }
+      .auth { padding: 28px 20px 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-banner">
+    PREVIEW · só exemplo · <span>não é a tela real</span>
+  </div>
+
+  <div class="bg-layer" aria-hidden="true"></div>
+
+  <div class="page">
+    <section class="pitch">
+      <div class="brand">
+        <div class="brand-mark">PT</div>
+        <strong>Prospec<span>THOR</span></strong>
+      </div>
+
+      <h1>
+        Feche mais sites.<br />
+        <em>Sem caçar cliente.</em>
+      </h1>
+
+      <p>
+        Leads locais <strong>sem site</strong>, ranqueados por chance de venda.
+        Você só aborda e fecha.
+      </p>
+
+      <div class="metrics">
+        <div>
+          <b><span>+72%</span></b>
+          <small>mais contatos</small>
+        </div>
+        <div>
+          <b>3–5</b>
+          <small>sites a mais / mês</small>
+        </div>
+        <div>
+          <b>1×</b>
+          <small>fechamento paga o acesso</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth">
+      <div class="auth-card">
+        <h2>Entrar</h2>
+        <p class="sub">Acesse seus leads e comece a vender.</p>
+
+        <form onsubmit="return fakeLogin(event)">
+          <div class="field">
+            <label for="user">Usuário</label>
+            <input id="user" type="text" autocomplete="username" placeholder="seu.usuario" />
+          </div>
+          <div class="field">
+            <label for="pass">Senha</label>
+            <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" />
+          </div>
+          <div class="row-opts">
+            <label class="check">
+              <input type="checkbox" checked /> Manter conectado
+            </label>
+            <a href="#" onclick="return false;">Esqueci a senha</a>
+          </div>
+          <button type="submit" class="btn-enter">Entrar →</button>
+          <div class="toast" id="toast">Só preview — login real do projeto não foi alterado.</div>
+        </form>
+
+        <div class="auth-foot">
+          <b>1 fechamento</b> já paga o acesso. O ticket é o seu.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function fakeLogin(e) {
+      e.preventDefault();
+      document.getElementById('toast').classList.add('show');
+      return false;
+    }
+  </script>
+</body>
+</html>

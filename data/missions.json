@@ -1,0 +1,39 @@
+{
+  "missions": [
+    {
+      "id": "56553b37",
+      "label": "Missão livre",
+      "user_id": null,
+      "username": "livre",
+      "niche_ids": [
+        "academia",
+        "advocacia",
+        "arquitetura",
+        "construtora",
+        "hotel",
+        "imobiliaria",
+        "odontologia",
+        "otica",
+        "pet",
+        "seguradora"
+      ],
+      "city_ids": [
+        "belo_horizonte_mg",
+        "brasilia_df",
+        "porto_alegre_rs",
+        "recife_pe",
+        "rio_de_janeiro_rj",
+        "salvador_ba",
+        "sao_paulo_sp",
+        "vitoria_es"
+      ],
+      "target_leads": 500,
+      "status": "parada",
+      "created_at": "2026-07-27T17:51:00",
+      "finished_at": "2026-07-27T19:58:49",
+      "notes": "",
+      "updated_at": "2026-07-27T19:02:21"
+    }
+  ],
+  "updated_at": "2026-07-27T19:58:49"
+}

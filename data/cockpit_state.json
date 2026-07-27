@@ -1,0 +1,536 @@
+{
+  "status": "parado",
+  "message": "Bot parado pelo cockpit",
+  "pid": null,
+  "current_mission_id": null,
+  "session_leads": 0,
+  "mission_target": 0,
+  "mission_label": "",
+  "log": [
+    {
+      "t": "2026-07-27T19:53:13",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:53:13",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:53:13] [src.cnpj_source] [INFO] [Fonte B] Par Porto Alegre/imobiliaria: +0 missão · +0 sobras · meta 38/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:53:29",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:53:29] [src.cnpj_source] [INFO] [Fonte B] → Porto Alegre / odontologia · pede até 20 · meta 39/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:53:29",
+      "level": "INFO",
+      "msg": "📦 Fonte B: consultando OpenStreetMap… 53:29] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Porto Alegre / RS · nicho odontologia",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:53:29",
+      "level": "INFO",
+      "msg": "📦 Fonte B: cidade encontrada no mapa 53:29] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:53:30",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:53:30] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +7] meta 39/500: 'Paula Moura Advogados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:53:34",
+      "level": "INFO",
+      "msg": "'Paula Moura Advogados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:53:37",
+      "level": "ERROR",
+      "msg": "📦 [2026-07-27 19:53:37] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:53:41",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:53:58",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:53:58] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +8] meta 40/500: 'Filipe Guedes Advocacia'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:02",
+      "level": "INFO",
+      "msg": "'Filipe Guedes Advocacia'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:09",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:18",
+      "level": "WARN",
+      "msg": "📦 [2026-07-27 19:54:18] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (ReadTimeout), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:54:26",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:54:26] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +9] meta 41/500: 'Diogo Melim Advogados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:30",
+      "level": "INFO",
+      "msg": "'Diogo Melim Advogados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:38",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:51",
+      "level": "ERROR",
+      "msg": "📦 [2026-07-27 19:54:51] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:54:55",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:54:55] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +10] meta 42/500: 'Renata Moreira Advocacia'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:54:55",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:54:55] [src.cnpj_source] [INFO] [Fonte B] Mapa (modo 2) devolveu 35 empresas em Porto Alegre / odontologia",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:54:55",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:54:55] [src.cnpj_source] [INFO] [Fonte B] Porto Alegre/odontologia: 35 no mapa · 10 com site · 23 sem contato · 2 prontos",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:54:59",
+      "level": "INFO",
+      "msg": "'Renata Moreira Advocacia'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:55:06",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:55:20",
+      "level": "INFO",
+      "msg": "[Fonte B] 'Faé Fontana - Odontologia de Precisão'",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:23",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:55:23] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +11] meta 44/500: 'COSTA & BEZERRA ADVOGADOS ASSOCIADOS'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:55:27",
+      "level": "INFO",
+      "msg": "[Fonte B] [Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:28",
+      "level": "INFO",
+      "msg": "'COSTA & BEZERRA ADVOGADOS ASSOCIADOS'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:55:28",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:55:27] [src.cnpj_source] [INFO] [Fonte B] Score (igual Maps): Faé Fontana - Odontologia de Precisão → 78 pts · raio",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:28",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:55:27] [src.cnpj_source] [INFO] [Fonte B] Meta compartilhada agora: 43/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:30",
+      "level": "INFO",
+      "msg": "✅ Fonte B salvou lead:",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:35",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:55:56",
+      "level": "INFO",
+      "msg": "[Fonte B] 'Dr. Cássius Rennhack'",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:55:58",
+      "level": "INFO",
+      "msg": "meta 45/500",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:56:03",
+      "level": "INFO",
+      "msg": "[Fonte B] [Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:03",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:56:03] [src.cnpj_source] [INFO] [Fonte B] Score (igual Maps): Dr. Cássius Rennhack → 80 pts · raio",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:03",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:56:03] [src.cnpj_source] [INFO] [Fonte B] Meta compartilhada agora: 45/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:06",
+      "level": "INFO",
+      "msg": "✅ Fonte B salvou lead:",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:15",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:56:15] [src.cnpj_source] [INFO] [Fonte B] Par Porto Alegre/odontologia: +2 missão · +0 sobras · meta 45/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:15",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:56:15] [src.google_maps] [INFO] [Playwright] Executando busca via scraping...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:56:15",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:56:15] [src.google_maps] [INFO] [Playwright] Iniciando navegador Chromium...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:56:20",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:56:20] [src.google_maps] [INFO] [Playwright] Navegador pronto.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:56:21",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:56:21] [src.google_maps] [INFO] [Playwright] Abrindo: https://www.google.com/maps/search/escrit%C3%B3rio+de+advocacia+em+Asa+Norte+Bras%C3%ADlia+DF (meta: 7 leads contatáveis sem site)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:56:31",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:56:31] [src.cnpj_source] [INFO] [Fonte B] → Porto Alegre / otica · pede até 20 · meta 45/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:31",
+      "level": "INFO",
+      "msg": "📦 Fonte B: consultando OpenStreetMap… 56:31] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Porto Alegre / RS · nicho otica",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:31",
+      "level": "INFO",
+      "msg": "📦 Fonte B: cidade encontrada no mapa 56:31] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:56:39",
+      "level": "ERROR",
+      "msg": "📦 [2026-07-27 19:56:39] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:15",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:57:15] [src.google_maps] [INFO] [Playwright] Pool de 60 URLs (meta 7 novas sem site).",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:15",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:57:15] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (0/7 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:15",
+      "level": "INFO",
+      "msg": "url 3/60): https://www.google.com/maps/place/Thiago+Castro+Advogados/data=!4m7!3m...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:20",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:57:20] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 52 empresas no mapa empresas em Porto Alegre / otica",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:20",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:57:20] [src.cnpj_source] [INFO] [Fonte B] Porto Alegre/otica: 52 no mapa · 18 com site · 34 sem contato · 0 prontos",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:20",
+      "level": "WARN",
+      "msg": "📦 [2026-07-27 19:57:20] [src.cnpj_source] [WARNING] [Fonte B] Achei 52 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:22",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 57:22] [src.google_maps] [INFO] [Playwright] ⏭ 'Thiago Castro Advogados' tem site — pula sem extrair (0/7)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:57:22] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (0/7 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:23",
+      "level": "INFO",
+      "msg": "url 34/60): https://www.google.com/maps/place/Rodrigo+Caetano+Advocacia+e+Consulto...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:29",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:57:29] [src.cnpj_source] [INFO] [Fonte B] Par Porto Alegre/otica: +0 missão · +0 sobras · meta 45/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:39",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 57:39] [src.google_maps] [INFO] [Playwright] ⏭ 'Rodrigo Caetano Advocacia e Consultoria Jurídica' sem tel/IG — não conta na meta (0/7)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:40",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:57:40] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (0/7 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:41",
+      "level": "INFO",
+      "msg": "url 41/60): https://www.google.com/maps/place/DANIELLA+COSTA+Advocacia/data=!4m7!3...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:47",
+      "level": "INFO",
+      "msg": "📦 [2026-07-27 19:57:47] [src.cnpj_source] [INFO] [Fonte B] → Porto Alegre / pet · pede até 20 · meta 45/500",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:48",
+      "level": "INFO",
+      "msg": "📦 Fonte B: consultando OpenStreetMap… 57:47] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Porto Alegre / RS · nicho pet",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:49",
+      "level": "INFO",
+      "msg": "📦 Fonte B: cidade encontrada no mapa 57:47] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:57:51",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 57:51] [src.google_maps] [INFO] [Playwright] ⏭ 'DANIELLA COSTA Advocacia' sem tel/IG — não conta na meta (0/7)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:52",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:57:52] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (0/7 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:52",
+      "level": "INFO",
+      "msg": "3 painéis",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:57:55",
+      "level": "ERROR",
+      "msg": "📦 [2026-07-27 19:57:55] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:58:00",
+      "level": "INFO",
+      "msg": "0 já no banco",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:00",
+      "level": "INFO",
+      "msg": "🗺 [2026-07-27 19:58:00] [src.scheduler] [INFO] [Pipeline] 11 NOVAS sem site — score na hora (sem web/IG em massa)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:05",
+      "level": "INFO",
+      "msg": "'Advogado em Brasília DF Online no Whatsapp'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:13",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:18",
+      "level": "INFO",
+      "msg": "'Rocha & Brito Advogados Associados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:26",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:30",
+      "level": "INFO",
+      "msg": "'Cesar Advogados'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:36",
+      "level": "WARN",
+      "msg": "📦 [2026-07-27 19:58:36] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (ReadTimeout), tentando outro…",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-07-27T19:58:37",
+      "level": "INFO",
+      "msg": "[Users] Nenhum client ativo para receber lead.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-07-27T19:58:49",
+      "level": "WARN",
+      "msg": "Bot parado pelo cockpit",
+      "bot": false,
+      "src": "sys"
+    }
+  ]
+}

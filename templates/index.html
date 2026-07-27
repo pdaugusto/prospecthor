@@ -7479,6 +7479,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                 const ig = instagramHref(lead);
                 if (ig) {
                     openExternalUrl(ig);
+                    updateStatus(id, 'contactado');
                     return;
                 }
                 alert('Este lead não tem WhatsApp/telefone nem Instagram.');
@@ -7503,6 +7504,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             if (channel === 'instagram' || !phoneDigits(activePromptLead.phone)) {
                 if (ig) {
                     openExternalUrl(ig);
+                    updateStatus(activePromptLead.id, 'contactado');
                     return;
                 }
                 alert('Este lead não tem Instagram nem telefone.');

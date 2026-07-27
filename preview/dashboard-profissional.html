@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProspecTHOR — Prévia Dark Neon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #05070b;
+      --bg-2: #080c14;
+      --card: #0a0e17;
+      --card-2: #0e1420;
+      --card-hover: #121a28;
+      --border: #1a2233;
+      --border-glow: rgba(0, 212, 255, 0.22);
+      --text: #e8eef7;
+      --muted: #7a8ba3;
+      --muted-2: #5a6b82;
+      --neon: #00d4ff;
+      --neon-soft: #3b9eff;
+      --neon-dim: rgba(0, 212, 255, 0.10);
+      --neon-glow: rgba(0, 212, 255, 0.35);
+      --success: #22c55e;
+      --success-dim: rgba(34, 197, 94, 0.12);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245, 158, 11, 0.12);
+      --danger: #ff4d6a;
+      --danger-dim: rgba(255, 77, 106, 0.12);
+      --sidebar-w: 256px;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --font: "Inter", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 40% at 10% -10%, rgba(0, 212, 255, 0.09), transparent 55%),
+        radial-gradient(ellipse 40% 35% at 90% 10%, rgba(59, 158, 255, 0.06), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(0, 212, 255, 0.04), transparent 55%);
+    }
+
+    /* ── Banner ── */
+    .preview-banner {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 20px;
+      background: linear-gradient(90deg, #0a1220, #0c1a2e 50%, #0a1220);
+      border-bottom: 1px solid var(--border-glow);
+      color: var(--muted);
+      font-size: 13px;
+      backdrop-filter: blur(12px);
+    }
+    .preview-banner strong { color: var(--text); }
+    .preview-banner .tag {
+      background: var(--neon-dim);
+      color: var(--neon);
+      border: 1px solid var(--border-glow);
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 4px 9px;
+      border-radius: 6px;
+      box-shadow: 0 0 20px var(--neon-dim);
+    }
+    .preview-banner button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: .2s var(--ease);
+    }
+    .preview-banner button:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      box-shadow: 0 0 16px var(--neon-dim);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: calc(100vh - 45px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: rgba(10, 14, 23, 0.85);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 18px 12px;
+      position: sticky;
+      top: 45px;
+      height: calc(100vh - 45px);
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #00d4ff 0%, #0a6fa8 100%);
+      display: grid;
+      place-items: center;
+      color: #031018;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 0 24px var(--neon-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand h1 span {
+      color: var(--neon);
+      text-shadow: 0 0 18px var(--neon-glow);
+    }
+    .brand small {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 1px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-2);
+      padding: 10px 12px 6px;
+    }
+    .nav button {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 500;
+      margin-bottom: 3px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all .2s var(--ease);
+    }
+    .nav button:hover {
+      background: var(--card-2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .nav button.active {
+      background: var(--neon-dim);
+      color: var(--neon);
+      border-color: var(--border-glow);
+      box-shadow: 0 0 24px rgba(0, 212, 255, 0.08), inset 0 0 0 1px rgba(0, 212, 255, 0.05);
+      font-weight: 600;
+    }
+    .nav button svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.9; }
+    .nav .badge {
+      margin-left: auto;
+      background: var(--neon);
+      color: #031018;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      box-shadow: 0 0 12px var(--neon-glow);
+    }
+
+    .sidebar-foot {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      transition: border-color .2s;
+    }
+    .user-chip:hover { border-color: var(--border-glow); }
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon), var(--neon-soft));
+      color: #031018;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 0 16px var(--neon-dim);
+    }
+    .user-chip .name { font-size: 13px; font-weight: 600; }
+    .user-chip .role { font-size: 11px; color: var(--muted); }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      margin-left: auto;
+    }
+
+    /* ── Main ── */
+    .main {
+      padding: 28px 32px 56px;
+      max-width: 1320px;
+    }
+    .page-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .page-head h2 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #fff 30%, var(--neon));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-head p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+      max-width: 480px;
+    }
+    .head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all .2s var(--ease);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #0090c4);
+      color: #031018;
+      box-shadow: 0 0 20px var(--neon-dim), 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 28px var(--neon-glow), 0 6px 16px rgba(0,0,0,0.35);
+    }
+    .btn-secondary {
+      background: var(--card);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      background: var(--neon-dim);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+    .btn-ghost:hover { color: var(--neon); background: var(--neon-dim); }
+
+    /* ── KPI ── */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .kpi {
+      position: relative;
+      background: linear-gradient(160deg, rgba(14, 20, 32, 0.95), rgba(10, 14, 23, 0.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .25s var(--ease), border-color .25s, box-shadow .25s;
+    }
+    .kpi::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      opacity: 0.35;
+    }
+    .kpi:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-glow);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 30px rgba(0, 212, 255, 0.06);
+    }
+    .kpi.active-filter {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.15), 0 0 28px rgba(0,212,255,0.1);
+    }
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .kpi-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--neon-dim);
+      border: 1px solid var(--border-glow);
+      color: var(--neon);
+      font-size: 14px;
+    }
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-meta {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted-2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi-meta .up { color: var(--success); font-weight: 600; }
+    .spark-wrap {
+      height: 28px;
+      max-height: 28px;
+      margin-top: 12px;
+      opacity: 0.85;
+      overflow: hidden;
+      position: relative;
+    }
+    .spark-wrap canvas {
+      width: 100% !important;
+      height: 28px !important;
+      max-height: 28px !important;
+      display: block;
+    }
+
+    /* ── Panels ── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .panel {
+      background: linear-gradient(165deg, rgba(14, 20, 32, 0.9), rgba(10, 14, 23, 0.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .panel:hover { border-color: rgba(0, 212, 255, 0.15); }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.15);
+    }
+    .panel-head h3 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .panel-head .sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 400;
+      margin-left: 8px;
+    }
+    .panel-body { padding: 18px; }
+    .chart-wrap {
+      height: 250px;
+      max-height: 250px;
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-wrap canvas {
+      max-height: 250px !important;
+    }
+
+    /* ── Activity ── */
+    .activity { list-style: none; }
+    .activity li {
+      display: flex;
+      gap: 12px;
+      padding: 12px 10px;
+      border-radius: 10px;
+      margin: 0 -6px;
+      transition: background .15s;
+      cursor: default;
+    }
+    .activity li:hover { background: var(--neon-dim); }
+    .activity li + li { border-top: 1px solid transparent; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+      background: var(--neon);
+      box-shadow: 0 0 10px var(--neon-glow);
+    }
+    .dot.teal { background: var(--success); box-shadow: 0 0 10px rgba(34,197,94,0.5); }
+    .dot.amber { background: var(--warning); box-shadow: 0 0 10px rgba(245,158,11,0.5); }
+    .activity .title { font-size: 13px; font-weight: 500; }
+    .activity .meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Toolbar / table ── */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .search { flex: 1; min-width: 180px; position: relative; }
+    .search input, .toolbar select {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+    }
+    .toolbar select {
+      padding-left: 12px;
+      min-width: 150px;
+      width: auto;
+      cursor: pointer;
+    }
+    .search input:focus, .toolbar select:focus {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 3px var(--neon-dim), 0 0 20px rgba(0,212,255,0.08);
+    }
+    .search input::placeholder { color: var(--muted-2); }
+    .search svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted-2);
+      background: rgba(0,0,0,0.25);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      user-select: none;
+    }
+    thead th.sortable { cursor: pointer; }
+    thead th.sortable:hover { color: var(--neon); }
+    thead th .sort-ind { opacity: 0.4; margin-left: 4px; font-size: 9px; }
+    thead th.sorted { color: var(--neon); }
+    thead th.sorted .sort-ind { opacity: 1; }
+
+    tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(26, 34, 51, 0.8);
+      vertical-align: middle;
+    }
+    tbody tr {
+      transition: background .15s, box-shadow .15s;
+      cursor: pointer;
+    }
+    tbody tr:hover {
+      background: rgba(0, 212, 255, 0.04);
+    }
+    tbody tr:hover td:first-child {
+      box-shadow: inset 2px 0 0 var(--neon);
+    }
+    .company-cell { font-weight: 600; color: var(--text); }
+    .company-cell small {
+      display: block;
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-top: 3px;
+    }
+    .phone {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      background: var(--neon-dim);
+      color: var(--neon);
+      border: 1px solid var(--border-glow);
+    }
+    .score.high {
+      background: var(--success-dim);
+      color: var(--success);
+      border-color: rgba(34, 197, 94, 0.3);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .pill.novo {
+      background: var(--neon-dim);
+      color: var(--neon);
+      border-color: var(--border-glow);
+    }
+    .pill.contactado {
+      background: var(--warning-dim);
+      color: var(--warning);
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+    .pill.convertido {
+      background: var(--success-dim);
+      color: var(--success);
+      border-color: rgba(34, 197, 94, 0.25);
+    }
+    .pill.descartado {
+      background: rgba(122, 139, 163, 0.12);
+      color: var(--muted);
+      border-color: var(--border);
+    }
+
+    .row-actions { display: flex; gap: 6px; opacity: 0.55; transition: opacity .15s; }
+    tbody tr:hover .row-actions { opacity: 1; }
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .icon-btn:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      background: var(--neon-dim);
+      box-shadow: 0 0 14px var(--neon-dim);
+    }
+    .icon-btn.wa:hover {
+      border-color: var(--success);
+      color: var(--success);
+      background: var(--success-dim);
+      box-shadow: 0 0 14px rgba(34,197,94,0.15);
+    }
+
+    .table-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid var(--border);
+    }
+    .pager { display: flex; gap: 6px; }
+    .pager button {
+      min-width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--muted);
+      transition: .15s;
+    }
+    .pager button.active, .pager button:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      background: var(--neon-dim);
+      box-shadow: 0 0 12px var(--neon-dim);
+    }
+
+    /* ── Drawer ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 12, 0.65);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+      z-index: 80;
+    }
+    .overlay.open { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(440px, 100%);
+      height: 100%;
+      background: linear-gradient(180deg, #0e1420 0%, #0a0e17 40%);
+      border-left: 1px solid var(--border-glow);
+      box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 212, 255, 0.05);
+      transform: translateX(100%);
+      transition: transform .3s var(--ease);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head {
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .drawer-head h3 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .drawer-head .city { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .drawer-body { padding: 22px 24px; overflow: auto; flex: 1; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-2);
+      margin-bottom: 6px;
+    }
+    .field .val { font-size: 14px; color: var(--text); }
+    .field .val.big-phone {
+      font-family: var(--mono);
+      font-size: 16px;
+      color: var(--neon);
+      text-shadow: 0 0 20px var(--neon-dim);
+    }
+    .drawer-foot {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      background: rgba(0,0,0,0.25);
+    }
+    .drawer-foot .btn { flex: 1; }
+
+    .score-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--neon) calc(var(--p) * 1%), var(--border) 0);
+      margin: 8px 0 20px;
+      position: relative;
+    }
+    .score-ring::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: var(--card);
+    }
+    .score-ring span {
+      position: relative;
+      z-index: 1;
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--neon);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; animation: rise .35s var(--ease); }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .empty {
+      text-align: center;
+      padding: 52px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .quota-bar {
+      height: 6px;
+      background: rgba(26, 34, 51, 0.9);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .quota-bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-soft), var(--neon));
+      border-radius: 99px;
+      box-shadow: 0 0 12px var(--neon-glow);
+      transition: width .6s var(--ease);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border-glow);
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 24px var(--neon-dim);
+      transform: translateY(16px);
+      opacity: 0;
+      transition: all .3s var(--ease);
+      z-index: 120;
+      max-width: 320px;
+    }
+    .toast.show { transform: none; opacity: 1; }
+
+    .chip-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .chip:hover, .chip.on {
+      border-color: var(--neon);
+      color: var(--neon);
+      background: var(--neon-dim);
+      box-shadow: 0 0 16px var(--neon-dim);
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success);
+      background: var(--success-dim);
+      border: 1px solid rgba(34,197,94,0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .live-pill i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    @media (max-width: 1100px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 18px 14px 40px; }
+      .kpis { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-banner">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="tag">PRÉVIA</span>
+      <span><strong>Dark neon</strong> · não altera o dashboard de produção · arquivo em <code style="color:var(--neon)">preview/</code></span>
+    </div>
+    <button type="button" onclick="toast('Só mock visual. Produção continua no templates/index.html')">Sobre</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <div>
+          <h1>Prospec<span>THOR</span></h1>
+          <small>Inteligência comercial</small>
+        </div>
+      </div>
+
+      <div class="nav-label">Menu</div>
+      <nav class="nav">
+        <button type="button" class="active" data-view="home" onclick="go('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z"/></svg>
+          Visão geral
+        </button>
+        <button type="button" data-view="leads" onclick="go('leads')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          Leads
+          <span class="badge" id="nav-badge">7</span>
+        </button>
+        <button type="button" data-view="reports" onclick="go('reports')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16V9m4 7V6m4 10v-4"/></svg>
+          Relatórios
+        </button>
+      </nav>
+
+      <div class="nav-label" style="margin-top:14px;">Sistema</div>
+      <nav class="nav">
+        <button type="button" onclick="toast('Prévia: pool de sobras (só visual)')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg>
+          Distribuir sobra
+        </button>
+        <button type="button" onclick="toast('Prévia: status do robô')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10"/></svg>
+          Robô
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="user-chip">
+          <div class="avatar">PA</div>
+          <div>
+            <div class="name">Patrão</div>
+            <div class="role">Admin · Pro</div>
+          </div>
+          <span class="status-dot" title="Online"></span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- HOME -->
+      <section id="view-home" class="view active">
+        <div class="page-head">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span class="live-pill"><i></i> Sistema online</span>
+            </div>
+            <h2>Operação em tempo real</h2>
+            <p>Leads Raio com telefone · dark neon · mesma pegada do painel atual, visual de produto.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-secondary" type="button" onclick="toast('CSV simulado na prévia')">Exportar</button>
+            <button class="btn btn-primary" type="button" onclick="go('leads')">Abrir leads →</button>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi" data-filter="all" onclick="filterFromKpi('all')">
+            <div class="kpi-top">
+              <span class="kpi-label">Leads ativos</span>
+              <div class="kpi-icon">◎</div>
+            </div>
+            <div class="kpi-value" data-count="248">0</div>
+            <div class="kpi-meta"><span class="up">↑ 12%</span> vs. mês anterior</div>
+            <div class="spark-wrap"><canvas id="spark1" width="200" height="28"></canvas></div>
+          </div>
+          <div class="kpi" data-filter="novo" onclick="filterFromKpi('novo')">
+            <div class="kpi-top">
+              <span class="kpi-label">Novos</span>
+              <div class="kpi-icon">+</div>
+            </div>
+            <div class="kpi-value" data-count="37">0</div>
+            <div class="kpi-meta">Clique para filtrar</div>
+            <div class="spark-wrap"><canvas id="spark2" width="200" height="28"></canvas></div>
+          </div>
+          <div class="kpi" data-filter="contactado" onclick="filterFromKpi('contactado')">
+            <div class="kpi-top">
+              <span class="kpi-label">Contactados</span>
+              <div class="kpi-icon">☎</div>
+            </div>
+            <div class="kpi-value" data-count="94">0</div>
+            <div class="kpi-meta">Taxa <strong style="color:var(--text)">38%</strong></div>
+            <div class="spark-wrap"><canvas id="spark3" width="200" height="28"></canvas></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top">
+              <span class="kpi-label">Cota do mês</span>
+              <div class="kpi-icon">✓</div>
+            </div>
+            <div class="kpi-value" style="font-size:24px;">67<span style="font-size:14px;font-weight:500;color:var(--muted)">/100</span></div>
+            <div class="quota-bar"><span style="width:67%"></span></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Pipeline semanal <span class="sub">interativo</span></h3>
+              <div class="chip-filters" style="margin:0;">
+                <button type="button" class="chip on" data-range="4" onclick="setRange(4, this)">4 sem</button>
+                <button type="button" class="chip" data-range="8" onclick="setRange(8, this)">8 sem</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="chartPipeline"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Feed ao vivo</h3>
+              <button class="btn btn-ghost" type="button" style="padding:4px 8px;font-size:11px;" onclick="shuffleFeed()">Atualizar</button>
+            </div>
+            <div class="panel-body">
+              <ul class="activity" id="feed"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Hot leads <span class="sub">maior score</span></h3>
+            <button class="btn btn-secondary" type="button" style="padding:7px 12px;font-size:12px;" onclick="go('leads')">Ver todos</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Cidade</th>
+                  <th>Telefone</th>
+                  <th>Score</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="home-top-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADS -->
+      <section id="view-leads" class="view">
+        <div class="page-head">
+          <div>
+            <h2>Leads</h2>
+            <p>Busca, filtros e ordenação · clique na linha para o painel lateral.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-secondary" type="button" onclick="toast('Export simulado')">CSV</button>
+            <button class="btn btn-primary" type="button" onclick="toast('Distribuir sobra — só visual')">Distribuir sobra</button>
+          </div>
+        </div>
+
+        <div class="chip-filters" id="status-chips">
+          <button type="button" class="chip on" data-st="" onclick="setStatusChip('', this)">Todos</button>
+          <button type="button" class="chip" data-st="novo" onclick="setStatusChip('novo', this)">Novos</button>
+          <button type="button" class="chip" data-st="contactado" onclick="setStatusChip('contactado', this)">Contactados</button>
+          <button type="button" class="chip" data-st="convertido" onclick="setStatusChip('convertido', this)">Convertidos</button>
+        </div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <div class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+              <input type="search" id="q" placeholder="Buscar empresa, cidade, telefone…" oninput="page=1;renderTable()" />
+            </div>
+            <select id="f-niche" onchange="page=1;renderTable()">
+              <option value="">Todos os nichos</option>
+              <option value="comercio">Comércio</option>
+              <option value="odontologia">Odontologia</option>
+              <option value="advocacia">Advocacia</option>
+              <option value="estetica">Estética</option>
+            </select>
+            <select id="f-status" onchange="syncChipsFromSelect();page=1;renderTable()">
+              <option value="">Todos os status</option>
+              <option value="novo">Novo</option>
+              <option value="contactado">Contactado</option>
+              <option value="convertido">Convertido</option>
+              <option value="descartado">Descartado</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="name" onclick="sortBy('name')">Empresa <span class="sort-ind">↕</span></th>
+                  <th class="sortable" data-sort="city" onclick="sortBy('city')">Cidade <span class="sort-ind">↕</span></th>
+                  <th>Telefone</th>
+                  <th class="sortable sorted" data-sort="score" onclick="sortBy('score')">Score <span class="sort-ind">↓</span></th>
+                  <th class="sortable" data-sort="status" onclick="sortBy('status')">Status <span class="sort-ind">↕</span></th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="leads-body"></tbody>
+            </table>
+          </div>
+          <div class="table-foot">
+            <span id="table-count">0 leads</span>
+            <div class="pager" id="pager"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="view-reports" class="view">
+        <div class="page-head">
+          <div>
+            <h2>Relatórios</h2>
+            <p>Gráficos interativos · dados de demonstração.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h3>Mix por nicho</h3></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="chartNiche"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Funil de conversão</h3></div>
+            <div class="panel-body">
+              <div style="display:grid;gap:22px;padding-top:8px;">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                    <span style="color:var(--muted)">Novos → contactados</span>
+                    <strong style="color:var(--neon)">42%</strong>
+                  </div>
+                  <div class="quota-bar"><span style="width:42%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                    <span style="color:var(--muted)">Contactados → convertidos</span>
+                    <strong style="color:var(--success)">18%</strong>
+                  </div>
+                  <div class="quota-bar"><span style="width:18%;background:linear-gradient(90deg,#16a34a,#22c55e);box-shadow:0 0 12px rgba(34,197,94,0.4)"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                    <span style="color:var(--muted)">Com telefone válido</span>
+                    <strong style="color:var(--text)">96%</strong>
+                  </div>
+                  <div class="quota-bar"><span style="width:96%"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div>
+        <h3 id="d-name">—</h3>
+        <div class="city" id="d-city">—</div>
+      </div>
+      <button class="icon-btn" type="button" onclick="closeDrawer()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="score-ring" id="d-ring" style="--p:70"><span id="d-score-n">—</span></div>
+      <div class="field"><label>Telefone</label><div class="val big-phone" id="d-phone">—</div></div>
+      <div class="field"><label>Nicho</label><div class="val" id="d-niche">—</div></div>
+      <div class="field"><label>Status</label><div class="val" id="d-status">—</div></div>
+      <div class="field">
+        <label>Oportunidade</label>
+        <div class="val" style="color:var(--muted);font-size:13px;line-height:1.55;">
+          Raio sem site próprio — ideal para oferta de presença digital e agenda online.
+        </div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn btn-secondary" type="button" id="d-wa">WhatsApp</button>
+      <button class="btn btn-primary" type="button" onclick="toast('Status → contactado (simulado)')">Contactar</button>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const LEADS = [
+      { id: 1, name: "Loja Centro Variedades", city: "Campinas", state: "SP", phone: "19 98877-1122", niche: "comercio", score: 118, status: "novo" },
+      { id: 2, name: "Odonto Sorriso Bela", city: "Santos", state: "SP", phone: "13 99123-4567", niche: "odontologia", score: 124, status: "novo" },
+      { id: 3, name: "Advocacia Mendes & Souza", city: "Ribeirão Preto", state: "SP", phone: "16 3344-8899", niche: "advocacia", score: 109, status: "contactado" },
+      { id: 4, name: "Estética Aura Skin", city: "Campinas", state: "SP", phone: "19 97766-5544", niche: "estetica", score: 101, status: "novo" },
+      { id: 5, name: "Mercadinho do Bairro", city: "Goiânia", state: "GO", phone: "62 99811-2233", niche: "comercio", score: 97, status: "contactado" },
+      { id: 6, name: "Clínica Arte Dental", city: "Rio de Janeiro", state: "RJ", phone: "21 98876-5432", niche: "odontologia", score: 131, status: "convertido" },
+      { id: 7, name: "Escritório Lima Advogados", city: "Curitiba", state: "PR", phone: "41 99988-7766", niche: "advocacia", score: 115, status: "novo" },
+      { id: 8, name: "Moda & Cia Confecções", city: "Fortaleza", state: "CE", phone: "85 98765-4321", niche: "comercio", score: 92, status: "descartado" },
+      { id: 9, name: "Studio Belle Hair", city: "Belo Horizonte", state: "MG", phone: "31 99100-2030", niche: "estetica", score: 104, status: "contactado" },
+      { id: 10, name: "Empório das Ferragens", city: "Campinas", state: "SP", phone: "19 3232-1100", niche: "comercio", score: 88, status: "novo" },
+      { id: 11, name: "Dental Prime Implantes", city: "São José dos Campos", state: "SP", phone: "12 98870-1010", niche: "odontologia", score: 120, status: "novo" },
+      { id: 12, name: "Boutique Casa & Cor", city: "Salvador", state: "BA", phone: "71 99912-3456", niche: "comercio", score: 95, status: "novo" },
+    ];
+
+    const FEED = [
+      { t: "12 leads atribuídos a Ranso", m: "Há 2h · Distribuição", c: "" },
+      { t: "Bot finalizou Campinas / Centro", m: "Há 5h · +4 raios", c: "teal" },
+      { t: "Fafa em 16/20 da cota", m: "Ontem · Comércio", c: "amber" },
+      { t: "Convertido — Clínica Odonto Sul", m: "Ontem · Score 112", c: "" },
+      { t: "Plano de busca: meta 20 · Comércio", m: "2 dias", c: "teal" },
+    ];
+
+    const nicheLabel = { comercio: "Comércio", odontologia: "Odontologia", advocacia: "Advocacia", estetica: "Estética" };
+
+    let page = 1;
+    const PAGE = 6;
+    let sortKey = "score";
+    let sortAsc = false;
+    let chartP, chartN;
+    let pipelineMode = 4;
+
+    Chart.defaults.color = "#7a8ba3";
+    Chart.defaults.borderColor = "rgba(26,34,51,0.8)";
+    Chart.defaults.font.family = "Inter";
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function go(view) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-" + view).classList.add("active");
+      document.querySelectorAll(".nav button[data-view]").forEach(a => {
+        a.classList.toggle("active", a.dataset.view === view);
+      });
+      if (view === "leads") renderTable();
+      if (view === "reports" && !chartN) initNicheChart();
+    }
+
+    function filterFromKpi(st) {
+      document.querySelectorAll(".kpi[data-filter]").forEach(k => {
+        k.classList.toggle("active-filter", k.dataset.filter === st && st !== "all");
+      });
+      if (st === "all") {
+        go("leads");
+        setStatusChip("", document.querySelector('#status-chips .chip[data-st=""]'));
+        return;
+      }
+      go("leads");
+      setStatusChip(st, document.querySelector(`#status-chips .chip[data-st="${st}"]`));
+    }
+
+    function setStatusChip(st, el) {
+      document.querySelectorAll("#status-chips .chip").forEach(c => c.classList.remove("on"));
+      if (el) el.classList.add("on");
+      const sel = document.getElementById("f-status");
+      if (sel) sel.value = st;
+      page = 1;
+      renderTable();
+    }
+
+    function syncChipsFromSelect() {
+      const st = document.getElementById("f-status").value;
+      document.querySelectorAll("#status-chips .chip").forEach(c => {
+        c.classList.toggle("on", c.dataset.st === st);
+      });
+    }
+
+    function statusPill(s) {
+      const label = s.charAt(0).toUpperCase() + s.slice(1);
+      return `<span class="pill ${s}">${label}</span>`;
+    }
+
+    function scoreHtml(n) {
+      return `<span class="score ${n >= 110 ? "high" : ""}">${n}</span>`;
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+      );
+    }
+
+    function renderFeed() {
+      const list = [...FEED].sort(() => Math.random() - 0.4);
+      document.getElementById("feed").innerHTML = list.map(f => `
+        <li>
+          <span class="dot ${f.c || ""}"></span>
+          <div>
+            <div class="title">${esc(f.t)}</div>
+            <div class="meta">${esc(f.m)}</div>
+          </div>
+        </li>
+      `).join("");
+    }
+
+    function shuffleFeed() {
+      renderFeed();
+      toast("Feed atualizado");
+    }
+
+    function renderHomeTop() {
+      const top = [...LEADS].sort((a, b) => b.score - a.score).slice(0, 5);
+      document.getElementById("home-top-body").innerHTML = top.map(l => `
+        <tr onclick="openDrawer(${l.id})">
+          <td class="company-cell">${esc(l.name)}<small>${nicheLabel[l.niche] || l.niche}</small></td>
+          <td>${esc(l.city)} / ${esc(l.state)}</td>
+          <td class="phone">${esc(l.phone)}</td>
+          <td>${scoreHtml(l.score)}</td>
+          <td>${statusPill(l.status)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function filtered() {
+      const q = (document.getElementById("q")?.value || "").toLowerCase().trim();
+      const niche = document.getElementById("f-niche")?.value || "";
+      const status = document.getElementById("f-status")?.value || "";
+      let rows = LEADS.filter(l => {
+        const hay = `${l.name} ${l.city} ${l.phone}`.toLowerCase();
+        return (!q || hay.includes(q))
+          && (!niche || l.niche === niche)
+          && (!status || l.status === status);
+      });
+      rows.sort((a, b) => {
+        let va = a[sortKey], vb = b[sortKey];
+        if (sortKey === "score") return sortAsc ? va - vb : vb - va;
+        va = String(va).toLowerCase();
+        vb = String(vb).toLowerCase();
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+      return rows;
+    }
+
+    function sortBy(key) {
+      if (sortKey === key) sortAsc = !sortAsc;
+      else { sortKey = key; sortAsc = key !== "score"; }
+      document.querySelectorAll("thead th.sortable").forEach(th => {
+        const on = th.dataset.sort === sortKey;
+        th.classList.toggle("sorted", on);
+        const ind = th.querySelector(".sort-ind");
+        if (ind) ind.textContent = on ? (sortAsc ? "↑" : "↓") : "↕";
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const rows = filtered();
+      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
+      if (page > totalPages) page = 1;
+      const slice = rows.slice((page - 1) * PAGE, page * PAGE);
+      const body = document.getElementById("leads-body");
+      if (!slice.length) {
+        body.innerHTML = `<tr><td colspan="6" class="empty">Nenhum lead com esses filtros.</td></tr>`;
+      } else {
+        body.innerHTML = slice.map(l => `
+          <tr onclick="openDrawer(${l.id})">
+            <td class="company-cell">${esc(l.name)}<small>${nicheLabel[l.niche] || l.niche}</small></td>
+            <td>${esc(l.city)} / ${esc(l.state)}</td>
+            <td class="phone">${esc(l.phone)}</td>
+            <td>${scoreHtml(l.score)}</td>
+            <td>${statusPill(l.status)}</td>
+            <td onclick="event.stopPropagation()">
+              <div class="row-actions">
+                <button class="icon-btn wa" type="button" title="WhatsApp" onclick="toast('WhatsApp ${esc(l.phone)}')">WA</button>
+                <button class="icon-btn" type="button" title="Abrir" onclick="openDrawer(${l.id})">→</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+      document.getElementById("table-count").textContent = `${rows.length} lead${rows.length !== 1 ? "s" : ""}`;
+      document.getElementById("nav-badge").textContent = LEADS.filter(l => l.status === "novo").length;
+      const pager = document.getElementById("pager");
+      pager.innerHTML = "";
+      for (let i = 1; i <= totalPages; i++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = i;
+        if (i === page) b.classList.add("active");
+        b.onclick = () => { page = i; renderTable(); };
+        pager.appendChild(b);
+      }
+    }
+
+    function openDrawer(id) {
+      const l = LEADS.find(x => x.id === id);
+      if (!l) return;
+      document.getElementById("d-name").textContent = l.name;
+      document.getElementById("d-city").textContent = `${l.city} / ${l.state}`;
+      document.getElementById("d-phone").textContent = l.phone;
+      document.getElementById("d-niche").textContent = nicheLabel[l.niche] || l.niche;
+      document.getElementById("d-score-n").textContent = l.score;
+      document.getElementById("d-ring").style.setProperty("--p", Math.min(100, (l.score / 150) * 100));
+      document.getElementById("d-status").innerHTML = statusPill(l.status);
+      const digits = l.phone.replace(/\D/g, "");
+      document.getElementById("d-wa").onclick = () => window.open("https://wa.me/55" + digits, "_blank");
+      document.getElementById("drawer").classList.add("open");
+      document.getElementById("overlay").classList.add("open");
+    }
+
+    function closeDrawer() {
+      document.getElementById("drawer").classList.remove("open");
+      document.getElementById("overlay").classList.remove("open");
+    }
+
+    function animateCounts() {
+      document.querySelectorAll("[data-count]").forEach(el => {
+        const target = +el.dataset.count;
+        const start = performance.now();
+        const dur = 1000;
+        function tick(now) {
+          const t = Math.min(1, (now - start) / dur);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(target * eased);
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function initSparks() {
+      // responsive:false evita bug clássico do Chart.js de altura infinita
+      const make = (id, vals, color) => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        new Chart(c, {
+          type: "line",
+          data: {
+            labels: vals.map((_, i) => i),
+            datasets: [{
+              data: vals,
+              borderColor: color,
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.45,
+              fill: true,
+              backgroundColor: color === "#00d4ff" ? "rgba(0,212,255,0.08)" : "rgba(34,197,94,0.08)",
+            }],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } },
+          },
+        });
+      };
+      make("spark1", [12, 18, 15, 22, 28, 24, 31, 37], "#00d4ff");
+      make("spark2", [4, 8, 6, 10, 9, 14, 11, 16], "#00d4ff");
+      make("spark3", [8, 12, 10, 15, 18, 16, 20, 22], "#22c55e");
+    }
+
+    function pipelineData(weeks) {
+      if (weeks === 8) {
+        return {
+          labels: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"],
+          novos: [18, 22, 20, 28, 25, 35, 22, 37],
+          cont: [8, 10, 12, 14, 13, 18, 15, 21],
+        };
+      }
+      return {
+        labels: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
+        novos: [28, 35, 22, 37],
+        cont: [12, 18, 15, 21],
+      };
+    }
+
+    function initPipelineChart() {
+      const d = pipelineData(pipelineMode);
+      const ctx = document.getElementById("chartPipeline");
+      chartP = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: d.labels,
+          datasets: [
+            {
+              label: "Novos",
+              data: d.novos,
+              backgroundColor: "rgba(0, 212, 255, 0.85)",
+              hoverBackgroundColor: "#00d4ff",
+              borderRadius: 8,
+              barPercentage: 0.6,
+            },
+            {
+              label: "Contactados",
+              data: d.cont,
+              backgroundColor: "rgba(59, 158, 255, 0.55)",
+              hoverBackgroundColor: "#3b9eff",
+              borderRadius: 8,
+              barPercentage: 0.6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                padding: 16,
+                font: { size: 12, weight: "500" },
+              },
+            },
+            tooltip: {
+              backgroundColor: "#0e1420",
+              borderColor: "rgba(0,212,255,0.3)",
+              borderWidth: 1,
+              titleFont: { weight: "600" },
+              padding: 12,
+            },
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11, weight: "500" } },
+            },
+            y: {
+              grid: { color: "rgba(26,34,51,0.9)" },
+              border: { display: false },
+              ticks: { font: { size: 11 }, precision: 0 },
+            },
+          },
+        },
+      });
+    }
+
+    function setRange(n, el) {
+      pipelineMode = n;
+      document.querySelectorAll(".panel-head .chip").forEach(c => c.classList.remove("on"));
+      el.classList.add("on");
+      const d = pipelineData(n);
+      chartP.data.labels = d.labels;
+      chartP.data.datasets[0].data = d.novos;
+      chartP.data.datasets[1].data = d.cont;
+      chartP.update("active");
+    }
+
+    function initNicheChart() {
+      const ctx = document.getElementById("chartNiche");
+      chartN = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Comércio", "Odontologia", "Advocacia", "Estética"],
+          datasets: [{
+            data: [42, 28, 18, 12],
+            backgroundColor: ["#00d4ff", "#3b9eff", "#f59e0b", "#5a6b82"],
+            borderWidth: 0,
+            hoverOffset: 10,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "70%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                padding: 14,
+                font: { size: 12 },
+              },
+            },
+            tooltip: {
+              backgroundColor: "#0e1420",
+              borderColor: "rgba(0,212,255,0.3)",
+              borderWidth: 1,
+            },
+          },
+        },
+      });
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeDrawer();
+    });
+
+    renderFeed();
+    renderHomeTop();
+    renderTable();
+    initPipelineChart();
+    initSparks();
+    animateCounts();
+  </script>
+</body>
+</html>

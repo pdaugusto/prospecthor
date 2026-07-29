@@ -53,6 +53,8 @@ def ensure_schema() -> None:
             ("trovoedas_balance", "ALTER TABLE app_users ADD COLUMN trovoedas_balance INTEGER NOT NULL DEFAULT 0;"),
             ("terms_accepted_at", "ALTER TABLE app_users ADD COLUMN terms_accepted_at TEXT;"),
             ("stripe_customer_id", "ALTER TABLE app_users ADD COLUMN stripe_customer_id TEXT;"),
+            ("plan_slug", "ALTER TABLE app_users ADD COLUMN plan_slug TEXT DEFAULT NULL;"),
+            ("daily_quota", "ALTER TABLE app_users ADD COLUMN daily_quota INTEGER DEFAULT NULL;"),
         ):
             cur.execute(
                 """
@@ -109,34 +111,61 @@ def ensure_schema() -> None:
             );
             """
         )
-        # Pacotes acessíveis — nomes clássicos: Faísca · Raio · Tempestade · Trovão
-        packages_seed = [
-            ("faisca", "Faísca", 10, 2900, "price_1TwTbXKXomNHAqYlBMyhGJUB", 1),          # R$ 29
-            ("raio", "Raio", 25, 5900, "price_1TwTc1KXomNHAqYluOCBbtZF", 2),              # R$ 59
-            ("tempestade", "Tempestade", 50, 9900, "price_1TwTcLKXomNHAqYlIOEB21IV", 3), # R$ 99 · popular
-            ("trovao", "Trovão", 100, 16900, "price_1TwTcjKXomNHAqYlsEIfdnKD", 4),       # R$ 169
-        ]
-        for slug, name, coins, cents, stripe_price_id, order in packages_seed:
+
+        for col, ddl in (
+            ("daily_cap", "ALTER TABLE trovoeda_packages ADD COLUMN daily_cap INTEGER DEFAULT NULL;"),
+            ("duration_days", "ALTER TABLE trovoeda_packages ADD COLUMN duration_days INTEGER DEFAULT NULL;"),
+            ("color", "ALTER TABLE trovoeda_packages ADD COLUMN color TEXT DEFAULT '#C9A060';"),
+        ):
             cur.execute(
                 """
-                INSERT INTO trovoeda_packages (slug, name, coins, price_cents, stripe_price_id, sort_order, active)
-                VALUES (%s, %s, %s, %s, %s, %s, 1)
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'trovoeda_packages' AND column_name = %s;
+                """,
+                (col,),
+            )
+            if not cur.fetchone():
+                try:
+                    cur.execute(ddl)
+                except Exception as exc:
+                    logger.warning("[Trovoeda] add column %s: %s", col, exc)
+        # Pacotes acessíveis — nomes clássicos: Faísca · Raio · Tempestade · Trovão
+        packages_seed = [
+            # slug,        name,          coins, cents, stripe_price_id,                    order, daily_cap, duration_days, color
+            ("faisca",     "Faísca",      10,    2900,  "price_1TwTbXKXomNHAqYlBMyhGJUB",    1,     None,      None,          "#C9A060"),
+            ("raio",       "Raio",        25,    5900,  "price_1TwTc1KXomNHAqYluOCBbtZF",    2,     None,      None,          "#60a5fa"),
+            ("tempestade", "Tempestade",  50,    9900,  "price_1TwTcLKXomNHAqYlIOEB21IV",    3,     None,      None,          "#a78bfa"),
+            ("trovao",     "Trovão",      100,   16900, "price_1TwTcjKXomNHAqYlsEIfdnKD",    4,     None,      None,          "#f59e0b"),
+            ("loki",       "Loki",        300,   7500,  "",                                  5,     10,        30,            "#22c55e"),
+            ("odin",       "Odin",        600,   15000, "",                                  6,     20,        30,            "#60a5fa"),
+            ("thor",       "Thor",        900,   22000, "",                                  7,     30,        30,            "#ef4444"),
+            ("valhalla",   "Valhalla",    1500,  36000, "",                                  8,     50,        30,            "#eab308"),
+        ]
+        for slug, name, coins, cents, stripe_price_id, order, daily_cap, duration_days, color in packages_seed:
+            cur.execute(
+                """
+                INSERT INTO trovoeda_packages
+                    (slug, name, coins, price_cents, stripe_price_id, sort_order, active, daily_cap, duration_days, color)
+                VALUES (%s, %s, %s, %s, %s, %s, 1, %s, %s, %s)
                 ON CONFLICT (slug) DO UPDATE SET
                     name = EXCLUDED.name,
                     coins = EXCLUDED.coins,
                     price_cents = EXCLUDED.price_cents,
                     stripe_price_id = EXCLUDED.stripe_price_id,
                     sort_order = EXCLUDED.sort_order,
+                    daily_cap = EXCLUDED.daily_cap,
+                    duration_days = EXCLUDED.duration_days,
+                    color = EXCLUDED.color,
                     active = 1;
                 """,
-                (slug, name, coins, cents, stripe_price_id, order),
+                (slug, name, coins, cents, stripe_price_id, order, daily_cap, duration_days, color),
             )
         # desativa nomes fora do catálogo atual (ex.: chispa)
         cur.execute(
             """
             UPDATE trovoeda_packages
             SET active = 0
-            WHERE slug NOT IN ('faisca', 'raio', 'tempestade', 'trovao');
+            WHERE slug NOT IN ('faisca', 'raio', 'tempestade', 'trovao', 'loki', 'odin', 'thor', 'valhalla');
             """
         )
 
@@ -444,7 +473,7 @@ def list_packages(active_only: bool = True) -> list[dict[str, Any]]:
         if active_only:
             cur.execute(
                 """
-                SELECT id, slug, name, coins, price_cents, stripe_price_id, active, sort_order
+                SELECT id, slug, name, coins, price_cents, stripe_price_id, active, sort_order, daily_cap, duration_days, color
                 FROM trovoeda_packages
                 WHERE active = 1
                 ORDER BY sort_order, id;
@@ -453,7 +482,7 @@ def list_packages(active_only: bool = True) -> list[dict[str, Any]]:
         else:
             cur.execute(
                 """
-                SELECT id, slug, name, coins, price_cents, stripe_price_id, active, sort_order
+                SELECT id, slug, name, coins, price_cents, stripe_price_id, active, sort_order, daily_cap, duration_days, color
                 FROM trovoeda_packages
                 ORDER BY sort_order, id;
                 """

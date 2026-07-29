@@ -2852,7 +2852,6 @@
                         <span class="recharge-txt">Recarregar</span>
                     </button>
                 </div>
-                <span id="quota-badge">—</span>
                 <div class="avatar" id="user-avatar">A</div>
             </div>
         </header>
@@ -4230,7 +4229,6 @@
                     : 0;
                 const roleEl = document.getElementById('sidebar-user-role');
                 const banner = document.getElementById('impersonate-banner');
-                const quotaBadge = document.getElementById('quota-badge');
                 updateWalletUI(Number.isFinite(trovo) ? trovo : 0, showAdmin && !imp);
                 updatePlanChipUI(currentUser);
                 if (imp) {
@@ -4238,29 +4236,13 @@
                     banner.classList.add('show');
                     document.getElementById('impersonate-banner-text').textContent =
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
-                    if (quotaBadge) {
-                        quotaBadge.style.display = '';
-                        const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
-                        const planSlug = currentUser && currentUser.plan_slug;
-                        const planLabel = planSlug && planNames[planSlug] ? ('PLANO ' + planNames[planSlug].toUpperCase()) : 'SEM PLANO';
-                        quotaBadge.innerHTML = '<span style="cursor:pointer;text-decoration:underline dotted;" onclick="openPlanSettings()">' + planLabel + '</span> · <img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
-                    }
                     if (roleEl) roleEl.textContent = 'Impersonate · ' + (Number.isFinite(trovo) ? trovo : 0) + ' Trovoedas';
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
                     if (showAdmin) {
-                        if (quotaBadge) {
-                            quotaBadge.style.display = '';
-                            quotaBadge.textContent = 'Patrão · ∞ Trovoedas';
-                        }
                         if (roleEl) roleEl.textContent = 'Host · ilimitado';
                     } else {
-                        // SaaS: sem cota mensal no header — saldo já está no chip Trovoedas
-                        if (quotaBadge) {
-                            quotaBadge.style.display = 'none';
-                            quotaBadge.textContent = '';
-                        }
                         if (roleEl) roleEl.textContent = 'Cliente';
                     }
                 }

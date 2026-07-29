@@ -4137,15 +4137,6 @@
             return 'Olá! Tudo bem? Me chamo ' + seller + '.\n\nVi a ' + name + ' aqui em ' + city + ' e percebi que vocês ainda não têm site próprio. Isso faz com que muita gente te encontre no Google e acabe indo pro concorrente.\n\nA gente faz ' + offer + '. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário pra gente conversar?';
         }
 
-            if (ch === 'instagram') {
-                return `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem presença digital completa no Google. Trabalho com ${offer} para ${niche}. Topa um papo rápido de 5 min?`;
-            }
-            if (ch === 'email') {
-                return `Assunto: Presença digital para ${name}\n\nOlá, equipe da ${name},\n\nMeu nome é ${seller}. Analisei a presença digital da empresa em ${city} e vi oportunidade de melhorar com ${offer}.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples.\n\nAtenciosamente,\n${seller}`;
-            }
-            return `Olá! Tudo bem? Me chamo *${seller}*.\n\nEstava analisando a presença digital da *${name}* em ${city} e notei que vocês ainda *não possuem um site próprio* — isso faz muita gente te achar no Google e ir para o concorrente.\n\nAjudamos com *${offer}*. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário esta semana?`;
-        }
-
         function navigateTo(path) {
             // atalho confiável para detalhe do lead
             if (String(path).startsWith('/lead/')) {

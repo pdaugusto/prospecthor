@@ -4590,7 +4590,6 @@
                     const planBadge = planSlug
                         ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;border:1px solid ${planColor}50;background:${planColor}15;color:${planColor};font-size:11px;font-weight:700;">${planLabel}</span>`
                         : '<span style="color:var(--muted);font-size:11px;">—</span>';
-                    const dailyQuota = u.daily_quota != null ? Number(u.daily_quota) : null;
                     const monthlyQuota = u.monthly_quota != null ? Number(u.monthly_quota) : null;
                     const quotaDisplay = dailyQuota != null ? `${dailyQuota}/dia` : '—';
                     const totalDisplay = monthlyQuota != null ? `${monthlyQuota}/mês` : '—';

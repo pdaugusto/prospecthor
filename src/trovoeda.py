@@ -136,10 +136,10 @@ def ensure_schema() -> None:
             ("raio",       "Raio",        25,    5900,  "price_1TwTc1KXomNHAqYluOCBbtZF",    2,     None,      None,          "#60a5fa"),
             ("tempestade", "Tempestade",  50,    9900,  "price_1TwTcLKXomNHAqYlIOEB21IV",    3,     None,      None,          "#a78bfa"),
             ("trovao",     "Trovão",      100,   16900, "price_1TwTcjKXomNHAqYlsEIfdnKD",    4,     None,      None,          "#f59e0b"),
-            ("loki",       "Loki",        300,   7500,  "",                                  5,     10,        30,            "#22c55e"),
-            ("odin",       "Odin",        600,   15000, "",                                  6,     20,        30,            "#60a5fa"),
-            ("thor",       "Thor",        900,   22000, "",                                  7,     30,        30,            "#ef4444"),
-            ("valhalla",   "Valhalla",    1500,  36000, "",                                  8,     50,        30,            "#eab308"),
+            ("loki",       "Loki",        300,   7500,  "",                                  5,     10,        30,            "#00ff66"),
+            ("odin",       "Odin",        600,   15000, "",                                  6,     20,        30,            "#00d2ff"),
+            ("thor",       "Thor",        900,   22000, "",                                  7,     30,        30,            "#ff003c"),
+            ("valhalla",   "Valhalla",    1500,  36000, "",                                  8,     50,        30,            "#ffea00"),
         ]
         for slug, name, coins, cents, stripe_price_id, order, daily_cap, duration_days, color in packages_seed:
             cur.execute(

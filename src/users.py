@@ -355,7 +355,8 @@ def get_user_by_id(user_id: int) -> dict[str, Any] | None:
             SELECT id, username, role, monthly_quota, active, cities, niches, label,
                    COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
                    COALESCE(email, '') AS email,
-                   COALESCE(display_name, '') AS display_name
+                   COALESCE(display_name, '') AS display_name,
+                   plan_slug, daily_quota
             FROM app_users WHERE id = %s LIMIT 1;
             """,
             (user_id,),

@@ -851,6 +851,9 @@ def api_me():
             payload["label"] = full.get("label") or u.get("username")
             payload["trovoedas"] = int(full.get("trovoedas_balance") or get_balance(int(u["id"])) or 0)
             payload["trovoedas_infinite"] = False
+            payload["plan_slug"] = full.get("plan_slug")
+            payload["daily_quota"] = full.get("daily_quota")
+
             if imp:
                 payload["impersonate_label"] = payload["label"]
         except Exception:

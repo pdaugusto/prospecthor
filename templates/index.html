@@ -5498,11 +5498,18 @@
                     return;
                 }
                 const featureSlug = 'tempestade';
-                // fallback se API antiga não mandar save_pct: calcula vs 1º pacote (base)
-                const base = pkgs[0] || {};
-                const baseCoins = Number(base.coins) || 0;
-                const baseCents = Number(base.price_cents) || 0;
-                const basePer = baseCoins > 0 ? baseCents / baseCoins : 0;
+                // fallback se API antiga não mandar save_pct: calcula vs base correta
+                // Planos vs Loki, Moedas vs Faísca
+                const planosAll = pkgs.filter(p => Number(p.daily_cap) > 0);
+                const moedasAll = pkgs.filter(p => !(Number(p.daily_cap) > 0));
+                const planBase = planosAll[0] || {};
+                const coinBase = moedasAll[0] || pkgs[0] || {};
+                const planBaseCoins = Number(planBase.coins) || 0;
+                const planBaseCents = Number(planBase.price_cents) || 0;
+                const planBasePer = planBaseCoins > 0 ? planBaseCents / planBaseCoins : 0;
+                const coinBaseCoins = Number(coinBase.coins) || 0;
+                const coinBaseCents = Number(coinBase.price_cents) || 0;
+                const coinBasePer = coinBaseCoins > 0 ? coinBaseCents / coinBaseCoins : 0;
                 const renderCard = (p) => {
                     const coins = Number(p.coins) || 0;
                     const cents = Number(p.price_cents) || 0;
@@ -5558,11 +5565,15 @@
                         ? (per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' por lead')
                         : '';
                     let savePct = Number(p.save_pct) || 0;
-                    if (!savePct && basePer > 0 && coins > 0 && coins !== baseCoins) {
-                        savePct = Math.max(0, Math.round((1 - (cents / coins) / basePer) * 100));
+                    if (!savePct && coins > 0) {
+                        const refPer = isPlano ? planBasePer : coinBasePer;
+                        const refCoins = isPlano ? planBaseCoins : coinBaseCoins;
+                        if (refPer > 0 && coins !== refCoins) {
+                            savePct = Math.max(0, Math.round((1 - (cents / coins) / refPer) * 100));
+                        }
                     }
                     const saveBadge = savePct > 0
-                        ? `<span class="pkg-badge save" style="${isPlano ? `color:${color};border-color:${color};background:rgba(0,0,0,.15);` : ''}" title="Em relação ao pacote Faísca">Economize ${savePct}%</span>`
+                        ? `<span class="pkg-badge save" style="${isPlano ? `color:${color};border-color:${color};background:rgba(0,0,0,.15);` : ''}" title="Em relação ao pacote ${esc(p.base_label || (isPlano ? 'Loki' : 'Faísca'))}">Economize ${savePct}%</span>`
                         : '';
                     return `
                         <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}" style="${cardBorder}">
@@ -5576,7 +5587,7 @@
                                 <div>
                                     <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
                                     <div class="pkg-coins" style="color:${color};">${coins}<small>${unitLabel}</small></div>
-                                    <div class="pkg-per">${perTxt}${savePct > 0 ? ` · <strong style="color:${discountColor}">−${savePct}% vs Faísca</strong>` : ''}</div>
+                                    <div class="pkg-per">${perTxt}${savePct > 0 ? ` · <strong style="color:${discountColor}">−${savePct}% vs ${esc(p.base_label || (isPlano ? 'Loki' : 'Faísca'))}</strong>` : ''}</div>
                                 </div>
                             </div>
                             <div class="pkg-card__bottom">

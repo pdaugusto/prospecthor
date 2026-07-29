@@ -2447,7 +2447,7 @@
           {% for p in packages %}
           <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %} reveal">
             {% if p.save_pct and p.save_pct > 0 %}
-            <span class="badge save" title="Em relação ao pacote Faísca">Economize {{ p.save_pct }}%</span>
+            <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
             {% endif %}
             {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
             <span class="coin-3d" aria-hidden="true">
@@ -2459,7 +2459,7 @@
             <div class="per">
               {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
               {% if p.save_pct and p.save_pct > 0 %}
-              · <strong class="save">−{{ p.save_pct }}% vs Faísca</strong>
+              · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
               {% endif %}
             </div>
             <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="/register">

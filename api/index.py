@@ -518,7 +518,11 @@ def _login_register_fail(ip: str) -> None:
 
 
 def _packages_for_view():
-    """Pacotes com preço formatado + % de economia vs pacote base (Faísca)."""
+    """Pacotes com preço formatado + % de economia vs pacote base.
+
+    Planos (daily_cap > 0) compararam com Loki (primeiro plano).
+    Moedas (daily_cap = None) compararam com Faísca (primeira moeda).
+    """
     try:
         from src.trovoeda import list_packages, ensure_schema
         ensure_schema()
@@ -528,11 +532,22 @@ def _packages_for_view():
     if not pkgs:
         return []
 
-    # Base = menor sort_order (Faísca) — desconto = economia no R$/lead vs base
-    base = pkgs[0]
-    base_coins = int(base.get("coins") or 0)
-    base_cents = int(base.get("price_cents") or 0)
-    base_per = (base_cents / base_coins) if base_coins else 0.0
+    # Separa planos e moedas
+    planos = [p for p in pkgs if p.get("daily_cap")]
+    moedas = [p for p in pkgs if not p.get("daily_cap")]
+
+    # Base para moedas = Faísca (menor sort_order entre moedas)
+    coin_base = moedas[0] if moedas else pkgs[0]
+    coin_base_coins = int(coin_base.get("coins") or 0)
+    coin_base_cents = int(coin_base.get("price_cents") or 0)
+    coin_base_per = (coin_base_cents / coin_base_coins) if coin_base_coins else 0.0
+
+    # Base para planos = Loki (menor sort_order entre planos)
+    plan_base = planos[0] if planos else pkgs[0]
+    plan_base_coins = int(plan_base.get("coins") or 0)
+    plan_base_cents = int(plan_base.get("price_cents") or 0)
+    plan_base_per = (plan_base_cents / plan_base_coins) if plan_base_coins else 0.0
+    plan_base_name = plan_base.get("name", "Loki")
 
     out = []
     for p in pkgs:
@@ -541,14 +556,28 @@ def _packages_for_view():
         reais = cents / 100.0
         per = (reais / coins) if coins else 0.0
         per_cents = (cents / coins) if coins else 0.0
+        is_plano = bool(p.get("daily_cap"))
+
         item = dict(p)
         item["price_brl"] = f"{reais:.2f}".replace(".", ",")
         item["per_lead"] = f"{per:.2f}".replace(".", ",") if coins else ""
+
+        # Calcula save_pct vs base correta (Loki para planos, Faísca para moedas)
+        if is_plano:
+            base_per = plan_base_per
+            base_coins = plan_base_coins
+            base_label = plan_base_name
+        else:
+            base_per = coin_base_per
+            base_coins = coin_base_coins
+            base_label = "Faísca"
+
         save_pct = 0
         if base_per > 0 and per_cents > 0 and coins != base_coins:
             save_pct = max(0, int(round((1.0 - (per_cents / base_per)) * 100)))
         item["save_pct"] = save_pct
         item["is_base"] = coins == base_coins
+        item["base_label"] = base_label
         out.append(item)
     return out
 

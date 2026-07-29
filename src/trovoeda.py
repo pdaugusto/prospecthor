@@ -132,10 +132,10 @@ def ensure_schema() -> None:
         # Pacotes acessíveis — nomes clássicos: Faísca · Raio · Tempestade · Trovão
         packages_seed = [
             # slug,        name,          coins, cents, stripe_price_id,                    order, daily_cap, duration_days, color
-            ("faisca",     "Faísca",      10,    2900,  "price_1TwTbXKXomNHAqYlBMyhGJUB",    1,     None,      None,          "#C9A060"),
-            ("raio",       "Raio",        25,    5900,  "price_1TwTc1KXomNHAqYluOCBbtZF",    2,     None,      None,          "#60a5fa"),
-            ("tempestade", "Tempestade",  50,    9900,  "price_1TwTcLKXomNHAqYlIOEB21IV",    3,     None,      None,          "#a78bfa"),
-            ("trovao",     "Trovão",      100,   16900, "price_1TwTcjKXomNHAqYlsEIfdnKD",    4,     None,      None,          "#f59e0b"),
+            ("faisca",     "Faísca",      10,    1490,  "price_1TwTbXKXomNHAqYlBMyhGJUB",    1,     None,      None,          "#C9A060"),
+            ("raio",       "Raio",        25,    3490,  "price_1TwTc1KXomNHAqYluOCBbtZF",    2,     None,      None,          "#60a5fa"),
+            ("tempestade", "Tempestade",  50,    5990,  "price_1TwTcLKXomNHAqYlIOEB21IV",    3,     None,      None,          "#a78bfa"),
+            ("trovao",     "Trovão",      100,   9990,  "price_1TwTcjKXomNHAqYlsEIfdnKD",    4,     None,      None,          "#f59e0b"),
             ("loki",       "Loki",        300,   7500,  "",                                  5,     10,        30,            "#00ff66"),
             ("odin",       "Odin",        600,   15000, "",                                  6,     20,        30,            "#00d2ff"),
             ("thor",       "Thor",        900,   22000, "",                                  7,     30,        30,            "#ff003c"),

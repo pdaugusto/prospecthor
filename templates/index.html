@@ -4228,6 +4228,8 @@
                         const planSlug = currentUser && currentUser.plan_slug;
                         const planLabel = planSlug && planNames[planSlug] ? ('PLANO ' + planNames[planSlug].toUpperCase()) : 'SEM PLANO';
                         quotaBadge.innerHTML = '<span style="cursor:pointer;text-decoration:underline dotted;" onclick="openPlanSettings()">' + planLabel + '</span> · <img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
+                    }
+                    if (roleEl) roleEl.textContent = 'Impersonate · ' + (Number.isFinite(trovo) ? trovo : 0) + ' Trovoedas';
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');

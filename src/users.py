@@ -384,19 +384,23 @@ def list_users() -> list[dict[str, Any]]:
             SELECT id, username, role, monthly_quota, active, cities, niches, label, created_at,
                    COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
                    COALESCE(email, '') AS email,
-                   COALESCE(display_name, '') AS display_name
+                   COALESCE(display_name, '') AS display_name,
+                   plan_slug, daily_quota
             FROM app_users
             ORDER BY role DESC, username;
             """
         )
         rows = [dict(r) for r in cur.fetchall()]
         cur.close()
-        # contagem do mês
+        # contagem do mês e do dia
         for u in rows:
             u["cities"] = _parse_json_list(u.get("cities"))
             u["niches"] = _parse_json_list(u.get("niches"))
             u["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
+            u["assigned_today"] = count_assigned_today(int(u["id"]))
             u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
+            u["daily_quota"] = u.get("daily_quota")
+            u["plan_slug"] = u.get("plan_slug")
         return rows
     finally:
         conn.close()

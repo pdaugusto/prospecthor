@@ -2703,14 +2703,14 @@
       var msg = '';
       if (isPlano) {
         var planDetails = {
-          loki: 'Plano Loki (10 leads/dia, 300 leads no total)',
-          odin: 'Plano Odin (20 leads/dia, 600 leads no total)',
-          thor: 'Plano Thor (30 leads/dia, 900 leads no total)',
-          valhalla: 'Plano Valhalla (50 leads/dia, 1500 leads no total)'
+          loki: 'Plano Loki (10 leads por dia)',
+          odin: 'Plano Odin (20 leads por dia)',
+          thor: 'Plano Thor (30 leads por dia)',
+          valhalla: 'Plano Valhalla (50 leads por dia)'
         };
-        msg = 'Olá! 👋\n\nTenho interesse no *' + (planDetails[name] || name) + '* do ProspecThor!\n\nGostaria de saber mais sobre como funciona e como adquirir. Podem me ajudar?';
+        msg = 'Oi, tudo bem? Tenho interesse no ' + (planDetails[name] || name) + ' do ProspecThor. Quero saber como funciona e como posso contratar. Pode me ajudar?';
       } else {
-        msg = 'Olá! 👋\n\nTenho interesse no pacote *' + name + '* (' + coins + ' Trovoedas) do ProspecThor!\n\nGostaria de saber mais sobre como adquirir. Podem me ajudar?';
+        msg = 'Oi, tudo bem? Quero comprar o pacote ' + name + ' com ' + coins + ' Trovoedas do ProspecThor. Como faço?';
       }
       window.open('https://wa.me/557799801738?text=' + encodeURIComponent(msg), '_blank');
     }

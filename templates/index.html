@@ -2893,6 +2893,25 @@
                     <span><strong>Como funciona:</strong> compre → <a href="/orders" onclick="event.preventDefault();navigateTo('/orders');" style="color:#C9A060;font-weight:700;">peça leads</a> → host aprova e entrega (1 moeda por lead).</span>
                     <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
                 </div>
+                <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
+                        <h4 style="margin:0 0 8px;font-size:13px;color:#C9A060;">📋 Planos</h4>
+                        <p style="margin:0;font-size:12px;color:#999;line-height:1.5;">
+                            O plano define sua <strong style="color:#fff;">cota de leads</strong> (quanto.receive por dia e no mês total).
+                            Os leads são distribuídos <strong style="color:#fff;">pelo administrador</strong> — não precisa fazer nada, é automático.
+                            Cada plano tem uma cor diferente que aparece no seu painel.
+                        </p>
+                    </div>
+                    <div style="padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
+                        <h4 style="margin:0 0 8px;font-size:13px;color:#C9A060;">🪙 Trovoedas</h4>
+                        <p style="margin:0;font-size:12px;color:#999;line-height:1.5;">
+                            As Trovoedas são moedas pra você <strong style="color:#fff;">pedir leads</strong> na aba
+                            <a href="/orders" onclick="event.preventDefault();navigateTo('/orders');" style="color:#C9A060;font-weight:700;">Pedidos</a>.
+                            Cada moeda = 1 lead. Compre um pacote, vá em Pedidos e faça seu pedido.
+                            O host aprova e entrega o lead com contato.
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -3310,7 +3329,6 @@
                                     <th>Plano</th>
                                     <th>Cota (dia / mês)</th>
                                     <th><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> Trovoedas</th>
-                                    <th>Recebidos</th>
                                     <th style="min-width:280px;">Ações</th>
                                 </tr>
                             </thead>
@@ -4541,7 +4559,7 @@
         async function loadUsers() {
             const tbody = document.getElementById('users-tbody');
             const hint = document.getElementById('users-hint');
-            tbody.innerHTML = '<tr><td colspan="9" class="empty">Carregando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty">Carregando...</td></tr>';
             if (hint) hint.textContent = '';
             try {
                 const res = await fetch('/api/users?_=' + Date.now());
@@ -4551,7 +4569,7 @@
                 }
                 usersCache = await res.json();
                 if (!Array.isArray(usersCache) || !usersCache.length) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="empty">Nenhum usuário.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty">Nenhum usuário.</td></tr>';
                     return;
                 }
                 // Mostra ativos primeiro, depois inativos
@@ -4605,8 +4623,6 @@
                                 <button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="plan" style="border-color:#ff003c;color:#ff003c;background:rgba(255,0,60,0.12);">+Plano</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="trovoeda" style="border-color:#8F6232;color:#C9A060;background:rgba(201,160,96,0.12);">+Trovoedas</button>
-                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="quota0" style="border-color:var(--warning);color:var(--warning);">Cota 0</button>
-                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="reset" style="border-color:var(--neon);color:var(--neon);">Zerar mês</button>
                                 <button type="button" class="btn btn-sm btn-danger" data-uid="${uid}" data-uname="${esc(uname)}" data-act="del">Remover</button>
                             </div>`;
                     }
@@ -4616,12 +4632,11 @@
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td style="text-align:center;">${planIconHtml}</td>
-                        <td style="font-size:11px;font-weight:600;">
+                        <td style="font-weight:700;font-size:13px;">
                             <div style="color:${planColor};">${dailyDisplay}</div>
-                            <div style="opacity:0.6;font-size:10px;">${totalDisplay}</div>
+                            <div style="opacity:0.6;font-size:11px;">${totalDisplay}</div>
                         </td>
                         <td style="font-weight:700;color:#C9A060;"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> ${trovo}</td>
-                        <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
                     </tr>`;
                 }).join('');
@@ -4631,8 +4646,6 @@
                         const id = parseInt(btn.getAttribute('data-uid'), 10);
                         const act = btn.getAttribute('data-act');
                         if (act === 'edit') openUserEdit(id);
-                        else if (act === 'quota0') quickZeroQuota(id);
-                        else if (act === 'reset') quickResetMonth(id);
                         else if (act === 'del') quickDeleteUser(id, btn.getAttribute('data-uname') || '');
                         else if (act === 'impersonate') startImpersonate(id, btn.getAttribute('data-label') || '');
                         else if (act === 'trovoeda') quickGrantTrovoeda(id);
@@ -4663,7 +4676,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="9" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">Erro ao carregar usuários: ' + esc(String(e.message || e)) + '</td></tr>';
             }
         }
 
@@ -5697,22 +5710,20 @@
         }
 
         async function buyTrovoedaPackage(slug, name, coins, btn) {
-            // Redireciona para WhatsApp com mensagem personalizada
             const isPlano = ['loki', 'odin', 'thor', 'valhalla'].includes(slug);
             let msg = '';
             if (isPlano) {
                 const planDetails = {
-                    loki: 'Plano Loki (10 leads/dia, 300 leads no total)',
-                    odin: 'Plano Odin (20 leads/dia, 600 leads no total)',
-                    thor: 'Plano Thor (30 leads/dia, 900 leads no total)',
-                    valhalla: 'Plano Valhalla (50 leads/dia, 1500 leads no total)',
+                    loki: 'Plano Loki (10 leads por dia)',
+                    odin: 'Plano Odin (20 leads por dia)',
+                    thor: 'Plano Thor (30 leads por dia)',
+                    valhalla: 'Plano Valhalla (50 leads por dia)',
                 };
-                msg = `Olá! 👋\n\nTenho interesse no *${planDetails[name] || name}* do ProspecThor!\n\nGostaria de saber mais sobre como funciona e como adquirir. Podem me ajudar?`;
+                msg = 'Oi, tudo bem? Tenho interesse no ' + (planDetails[name] || name) + ' do ProspecThor. Quero saber como funciona e como posso contratar. Pode me ajudar?';
             } else {
-                msg = `Olá! 👋\n\nTenho interesse no pacote *${name}* (${coins} Trovoedas) do ProspecThor!\n\nGostaria de saber mais sobre como adquirir. Podem me ajudar?`;
+                msg = 'Oi, tudo bem? Quero comprar o pacote ' + name + ' com ' + coins + ' Trovoedas do ProspecThor. Como faço?';
             }
-            const whatsappUrl = `https://wa.me/557799801738?text=${encodeURIComponent(msg)}`;
-            window.open(whatsappUrl, '_blank');
+            window.open('https://wa.me/557799801738?text=' + encodeURIComponent(msg), '_blank');
         }
 
         async function loadAudit() {

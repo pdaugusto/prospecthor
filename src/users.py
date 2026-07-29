@@ -425,6 +425,29 @@ def count_assigned_this_month(user_id: int) -> int:
     finally:
         conn.close()
 
+def count_assigned_today(user_id: int) -> int:
+    if not user_id:
+        return 0
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM companies
+            WHERE assigned_to = %s
+              AND assigned_at IS NOT NULL
+              AND assigned_at LIKE %s;
+            """,
+            (user_id, f"{today}%"),
+        )
+        n = cur.fetchone()[0]
+        cur.close()
+        return int(n or 0)
+    except Exception:
+        return 0
+    finally:
+        conn.close()
 
 def normalize_signup_ip(ip: str | None) -> str:
     """Normaliza IP de cadastro; vazio se inválido/desconhecido."""
@@ -1433,8 +1456,13 @@ def distribute_free_leads(
         for u in clients:
             u["cities"] = _parse_json_list(u.get("cities"))
             u["niches"] = _parse_json_list(u.get("niches"))
-            u["_used"] = count_assigned_this_month(int(u["id"]))
-            u["_quota"] = int(u.get("monthly_quota") or 0)
+            if u.get("plan_slug") and u.get("daily_quota"):
+                u["_used"] = count_assigned_today(int(u["id"]))
+                u["_quota"] = int(u.get("daily_quota") or 0)
+            else:
+                u["_used"] = count_assigned_this_month(int(u["id"]))
+                u["_quota"] = int(u.get("monthly_quota") or 0)
+
 
         # Sobras (raio / sem site), melhor score primeiro
         cur.execute(

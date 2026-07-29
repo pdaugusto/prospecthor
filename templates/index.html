@@ -2861,16 +2861,21 @@
             <div class="shop-layout">
                 <div class="shop-hero">
                     <div class="shop-hero__copy">
-                        <div class="shop-kicker"><i></i> Créditos</div>
-                        <h2>Loja de <em>Trovoedas</em></h2>
+                        <div class="shop-kicker"><i></i> Planos e Créditos</div>
+                        <h2>Escolha como <em>receber leads</em></h2>
                         <p>
-                            1 Trovoeda = 1 lead com contato utilizável. Escolha o pacote, recarregue o saldo
-                            e use quando quiser — as moedas <strong style="color:#e8d48a;">não expiram</strong>.
+                            Aqui você escolhe entre um <strong style="color:#fff;">Plano</strong> (cota fixa de leads por dia, distribuídos automaticamente pelo admin)
+                            ou <strong style="color:#fff;">Trovoedas</strong> (moedas pra pedir leads quando quiser na aba Pedidos).
                         </p>
-                        <div class="shop-hero__pills">
-                            <span class="shop-pill">Sem mensalidade</span>
-                            <span class="shop-pill">1 moeda = 1 lead</span>
-                            <span class="shop-pill">Saldo permanente</span>
+                        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,212,255,0.2);background:rgba(0,212,255,0.05);font-size:12px;color:#aaa;line-height:1.5;">
+                                <strong style="color:#00d4ff;">📋 Planos</strong><br>
+                                Cota de leads/dia definida. O admin distribui pra você automaticamente. Basta esperar chegar.
+                            </div>
+                            <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(201,160,96,0.2);background:rgba(201,160,96,0.05);font-size:12px;color:#aaa;line-height:1.5;">
+                                <strong style="color:#C9A060;">🪙 Trovoedas</strong><br>
+                                Compre moedas e use pra pedir leads na aba Pedidos. 1 moeda = 1 lead. Não expiram.
+                            </div>
                         </div>
                     </div>
                     <div class="shop-balance-card">
@@ -2890,27 +2895,7 @@
                     </div>
                 </div>
                 <div class="shop-note">
-                    <span><strong>Como funciona:</strong> compre → <a href="/orders" onclick="event.preventDefault();navigateTo('/orders');" style="color:#C9A060;font-weight:700;">peça leads</a> → host aprova e entrega (1 moeda por lead).</span>
                     <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
-                </div>
-                <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div style="padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
-                        <h4 style="margin:0 0 8px;font-size:13px;color:#C9A060;">📋 Planos</h4>
-                        <p style="margin:0;font-size:12px;color:#999;line-height:1.5;">
-                            O plano define sua <strong style="color:#fff;">cota de leads</strong> (quanto.receive por dia e no mês total).
-                            Os leads são distribuídos <strong style="color:#fff;">pelo administrador</strong> — não precisa fazer nada, é automático.
-                            Cada plano tem uma cor diferente que aparece no seu painel.
-                        </p>
-                    </div>
-                    <div style="padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);">
-                        <h4 style="margin:0 0 8px;font-size:13px;color:#C9A060;">🪙 Trovoedas</h4>
-                        <p style="margin:0;font-size:12px;color:#999;line-height:1.5;">
-                            As Trovoedas são moedas pra você <strong style="color:#fff;">pedir leads</strong> na aba
-                            <a href="/orders" onclick="event.preventDefault();navigateTo('/orders');" style="color:#C9A060;font-weight:700;">Pedidos</a>.
-                            Cada moeda = 1 lead. Compre um pacote, vá em Pedidos e faça seu pedido.
-                            O host aprova e entrega o lead com contato.
-                        </p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -4113,7 +4098,6 @@
             const city = lead.city || 'sua região';
             const niche = lead.niche || 'negócio';
             const name = lead.name || 'empresa';
-            // gancho de oferta por nicho (além de “site”)
             const n = String(niche || '').toLowerCase();
             let offer = 'site profissional e presença digital';
             if (n.includes('restaurant') || n.includes('padaria') || n.includes('acai')) {
@@ -4137,6 +4121,15 @@
             } else if (n.includes('seguro')) {
                 offer = 'landing de cotação e site profissional';
             }
+
+            if (ch === 'instagram') {
+                return 'Oi! Sou ' + seller + '. Vi a ' + name + ' no Google e percebi que vocês ainda não têm presença digital completa. Trabalho com ' + offer + ' para ' + niche + '. Topa um papo rápido de 5 min?';
+            }
+            if (ch === 'email') {
+                return 'Assunto: Presença digital para ' + name + '\n\nOlá, equipe da ' + name + ',\n\nMeu nome é ' + seller + '. Analisei a presença digital da empresa em ' + city + ' e vi uma oportunidade de melhorar com ' + offer + '.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples.\n\nAtenciosamente,\n' + seller;
+            }
+            return 'Olá! Tudo bem? Me chamo ' + seller + '.\n\nVi a ' + name + ' aqui em ' + city + ' e percebi que vocês ainda não têm site próprio. Isso faz com que muita gente te encontre no Google e acabe indo pro concorrente.\n\nA gente faz ' + offer + '. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário pra gente conversar?';
+        }
 
             if (ch === 'instagram') {
                 return `Oi! Sou ${seller}. Vi a ${name} e notei que ainda não tem presença digital completa no Google. Trabalho com ${offer} para ${niche}. Topa um papo rápido de 5 min?`;

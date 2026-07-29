@@ -2871,7 +2871,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="shop-grid" id="shop-packages">
+                <div id="shop-packages">
                     <div class="pkg-card" style="grid-column:1/-1;opacity:0.7;text-align:center;padding:40px;">
                         Carregando pacotes…
                     </div>
@@ -4224,9 +4224,10 @@
                         'Você está visualizando como: ' + (currentUser.impersonate_label || currentUser.label || name);
                     if (quotaBadge) {
                         quotaBadge.style.display = '';
-                        quotaBadge.innerHTML = 'Modo cliente · <img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
-                    }
-                    if (roleEl) roleEl.textContent = 'Impersonate · ' + (Number.isFinite(trovo) ? trovo : 0) + ' Trovoedas';
+                        const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
+                        const planSlug = currentUser && currentUser.plan_slug;
+                        const planLabel = planSlug && planNames[planSlug] ? ('PLANO ' + planNames[planSlug].toUpperCase()) : 'SEM PLANO';
+                        quotaBadge.innerHTML = '<span style="cursor:pointer;text-decoration:underline dotted;" onclick="openPlanSettings()">' + planLabel + '</span> · <img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" />' + (Number.isFinite(trovo) ? trovo : 0);
                 } else {
                     document.body.classList.remove('impersonating');
                     banner.classList.remove('show');
@@ -4268,6 +4269,31 @@
             const real = normUser(currentUser.real_username);
             return uname === 'patrao' || real === 'patrao';
         }
+
+        async function openPlanSettings() {
+    const res = await fetch('/api/my-plan', { credentials: 'same-origin' });
+    const plan = await res.json();
+    if (!plan.plan_slug) {
+        alert('Você ainda não tem um plano ativo. Compre um pacote com cota diária na Loja.');
+        return;
+    }
+    const cidadesAtuais = (plan.cities || []).join(', ');
+    const nichosAtuais = (plan.niches || []).join(', ');
+    const novasCidades = prompt('Cidades do seu plano (separadas por vírgula):', cidadesAtuais);
+    if (novasCidades === null) return;
+    const novosNichos = prompt('Nichos do seu plano (separados por vírgula):', nichosAtuais);
+    if (novosNichos === null) return;
+    await fetch('/api/my-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            cities: novasCidades.split(',').map(s => s.trim()).filter(Boolean),
+            niches: novosNichos.split(',').map(s => s.trim()).filter(Boolean),
+        }),
+    });
+    alert('Preferências do plano atualizadas!');
+}
 
         function setupPatraoScopeFilters(show) {
             const scopeEl = document.getElementById('filter-scope');
@@ -5393,11 +5419,16 @@
                 const baseCoins = Number(base.coins) || 0;
                 const baseCents = Number(base.price_cents) || 0;
                 const basePer = baseCoins > 0 ? baseCents / baseCoins : 0;
-                grid.innerHTML = pkgs.map(p => {
+                const renderCard = (p) => {
                     const coins = Number(p.coins) || 0;
                     const cents = Number(p.price_cents) || 0;
                     const per = coins > 0 ? (cents / 100) / coins : 0;
                     const featured = (p.slug || '') === featureSlug;
+                    const color = p.color || '#C9A060';
+                    const isPlano = Number(p.daily_cap) > 0;
+                    const planoTxt = isPlano
+                        ? `<span class="pkg-badge" style="background:rgba(96,165,250,.15);color:${color};border-color:${color};">${p.daily_cap}/dia · ${p.duration_days} dias</span>`
+                        : '';
                     const perTxt = per > 0
                         ? (per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' por lead')
                         : '';
@@ -5409,8 +5440,9 @@
                         ? `<span class="pkg-badge save" title="Em relação ao pacote Faísca">Economize ${savePct}%</span>`
                         : '';
                     return `
-                        <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}">
+                        <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}" style="border-top:3px solid ${color};">
                             ${saveBadge}
+                            ${planoTxt}
                             ${featured ? '<span class="pkg-badge">Mais popular</span>' : ''}
                             <div class="pkg-card__top">
                                 <span class="coin-3d" aria-hidden="true">
@@ -5418,7 +5450,7 @@
                                 </span>
                                 <div>
                                     <h3>${esc(p.name || p.slug || 'Pacote')}</h3>
-                                    <div class="pkg-coins">${coins}<small>Trovoedas</small></div>
+                                    <div class="pkg-coins" style="color:${color};">${coins}<small>Trovoedas</small></div>
                                     <div class="pkg-per">${perTxt}${savePct > 0 ? ` · <strong style="color:#34d399">−${savePct}% vs Faísca</strong>` : ''}</div>
                                 </div>
                             </div>
@@ -5433,7 +5465,19 @@
                                 </button>
                             </div>
                         </article>`;
-                }).join('');
+                };
+
+                const planos = pkgs.filter(p => Number(p.daily_cap) > 0);
+                const moedas = pkgs.filter(p => !(Number(p.daily_cap) > 0));
+
+                const renderGroup = (list, label, marginTop) => {
+                    if (!list.length) return '';
+                    return `
+                        <div class="shop-kicker" style="margin:${marginTop} 0 12px;"><i></i> ${label}</div>
+                        <div class="shop-grid">${list.map(renderCard).join('')}</div>`;
+                };
+
+                grid.innerHTML = renderGroup(planos, 'PLANOS', '0') + renderGroup(moedas, 'MOEDAS', '32px');
                 grid.querySelectorAll('.btn-buy').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const slug = btn.getAttribute('data-slug') || '';

@@ -1,39 +1,26 @@
 {
   "missions": [
     {
-      "id": "56553b37",
+      "id": "7fabd965",
       "label": "Missão livre",
       "user_id": null,
       "username": "livre",
       "niche_ids": [
-        "academia",
-        "advocacia",
-        "arquitetura",
-        "construtora",
-        "hotel",
-        "imobiliaria",
-        "odontologia",
-        "otica",
-        "pet",
-        "seguradora"
+        "estetica",
+        "mentores_palestrantes",
+        "pet"
       ],
       "city_ids": [
-        "belo_horizonte_mg",
-        "brasilia_df",
-        "porto_alegre_rs",
-        "recife_pe",
-        "rio_de_janeiro_rj",
-        "salvador_ba",
-        "sao_paulo_sp",
-        "vitoria_es"
+        "curitiba_pr",
+        "florianopolis_sc",
+        "londrina_pr"
       ],
-      "target_leads": 500,
+      "target_leads": 100,
       "status": "parada",
-      "created_at": "2026-07-27T17:51:00",
-      "finished_at": "2026-07-27T19:58:49",
-      "notes": "",
-      "updated_at": "2026-07-27T19:02:21"
+      "created_at": "2026-07-27T22:01:46",
+      "finished_at": "2026-07-27T23:06:49",
+      "notes": ""
     }
   ],
-  "updated_at": "2026-07-27T19:58:49"
+  "updated_at": "2026-07-27T23:06:49"
 }

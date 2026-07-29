@@ -2839,7 +2839,7 @@
                     </div>
 
                     <!-- Plano Atual -->
-                    <div class="wallet-chip" id="plan-chip" onclick="navigateTo('/shop')" title="Ver planos na Loja" style="padding: 5px 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); box-shadow: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <div class="wallet-chip" id="plan-chip" onclick="navigateTo('/shop')" title="Ver planos na Loja" style="padding: 5px 12px; border: 2px solid #ff003c; background: rgba(255,0,60,0.08); box-shadow: 0 0 12px rgba(255,0,60,0.15); display: inline-flex; align-items: center; gap: 8px;">
                         <span id="plan-chip-icon" style="width:24px;height:24px;margin-right:-2px;display:none;align-items:center;justify-content:center;flex-shrink:0;"></span>
                         <div class="wallet-meta">
                             <span class="wallet-label" style="font-size: 8px; color: #a1a1aa; letter-spacing: 0.05em; font-weight: 600; text-transform: uppercase;">Plano Atual</span>
@@ -3308,7 +3308,8 @@
                                     <th>Login</th>
                                     <th>Nome</th>
                                     <th>Papel</th>
-                                    <th>Cota/mês</th>
+                                    <th>Plano</th>
+                                    <th>Cota/dia</th>
                                     <th><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> Trovoedas</th>
                                     <th>Recebidos</th>
                                     <th style="min-width:280px;">Ações</th>
@@ -4580,6 +4581,16 @@
                     const uid = Number(u.id);
                     const active = !!u.active;
                     const trovo = Number(u.trovoedas_balance || 0);
+                    const planSlug = u.plan_slug || '';
+                    const dailyQuota = u.daily_quota != null ? Number(u.daily_quota) : null;
+                    const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
+                    const planColors = { loki: '#00ff66', odin: '#00d2ff', thor: '#ff003c', valhalla: '#ffea00' };
+                    const planLabel = planNames[planSlug] || '—';
+                    const planColor = planColors[planSlug] || 'var(--muted)';
+                    const planBadge = planSlug
+                        ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;border:1px solid ${planColor}50;background:${planColor}15;color:${planColor};font-size:11px;font-weight:700;">${planLabel}</span>`
+                        : '<span style="color:var(--muted);font-size:11px;">—</span>';
+                    const quotaDisplay = dailyQuota != null ? dailyQuota : '—';
                     const check = isPatrao
                         ? '<span style="color:var(--muted);font-size:11px;">—</span>'
                         : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Só para receber leads — login continua funcionando se OFF">
@@ -4596,6 +4607,7 @@
                             <div style="display:flex;flex-wrap:wrap;gap:6px;">
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-label="${esc(u.label || uname)}" data-act="impersonate" style="border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.12);">Ver como</button>
                                 <button type="button" class="btn btn-sm btn-primary" data-uid="${uid}" data-act="edit">Editar</button>
+                                <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="plan" style="border-color:#ff003c;color:#ff003c;background:rgba(255,0,60,0.12);">+Plano</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="trovoeda" style="border-color:#8F6232;color:#C9A060;background:rgba(201,160,96,0.12);">+Trovoedas</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="quota0" style="border-color:var(--warning);color:var(--warning);">Cota 0</button>
                                 <button type="button" class="btn btn-sm" data-uid="${uid}" data-act="reset" style="border-color:var(--neon);color:var(--neon);">Zerar mês</button>
@@ -4607,7 +4619,8 @@
                         <td><strong>${esc(uname)}</strong></td>
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
-                        <td>${u.monthly_quota ?? 0}</td>
+                        <td>${planBadge}</td>
+                        <td style="font-weight:700;color:${planColor};">${quotaDisplay}</td>
                         <td style="font-weight:700;color:#C9A060;"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> ${trovo}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
@@ -4624,6 +4637,7 @@
                         else if (act === 'del') quickDeleteUser(id, btn.getAttribute('data-uname') || '');
                         else if (act === 'impersonate') startImpersonate(id, btn.getAttribute('data-label') || '');
                         else if (act === 'trovoeda') quickGrantTrovoeda(id);
+                        else if (act === 'plan') quickAssignPlan(id);
                     });
                 });
                 tbody.querySelectorAll('input.active-toggle').forEach(cb => {
@@ -4677,6 +4691,55 @@
                 alert('OK: ' + (data.username || userId) + ' agora tem ' + (data.trovoedas ?? '?') + ' Trovoedas');
                 await loadUsers();
                 await loadMe();
+            } catch (e) {
+                alert('Erro: ' + (e.message || e));
+            }
+        }
+
+        async function quickAssignPlan(userId) {
+            const plans = [
+                { slug: 'loki', name: 'Loki', daily: 10, coins: 300, color: '#00ff66' },
+                { slug: 'odin', name: 'Odin', daily: 20, coins: 600, color: '#00d2ff' },
+                { slug: 'thor', name: 'Thor', daily: 30, coins: 900, color: '#ff003c' },
+                { slug: 'valhalla', name: 'Valhalla', daily: 50, coins: 1500, color: '#ffea00' },
+            ];
+            const user = usersCache.find(u => Number(u.id) === userId);
+            const currentPlan = user?.plan_slug || '';
+            const lines = plans.map((p, i) =>
+                `${i + 1} — ${p.name} (${p.daily}/dia, ${p.coins} moedas)` +
+                (p.slug === currentPlan ? ' ← ATUAL' : '')
+            );
+            lines.push('0 — Remover plano');
+            const choice = prompt(
+                `Atribuir plano para "${user?.username || userId}":\n\n` +
+                lines.join('\n') +
+                `\n\nDigite o número (0-${plans.length}):`,
+                currentPlan ? plans.findIndex(p => p.slug === currentPlan) + 1 : 1
+            );
+            if (choice === null || choice === '') return;
+            const idx = parseInt(String(choice).trim(), 10);
+            const planSlug = idx === 0 ? '' : (plans[idx - 1]?.slug || '');
+            try {
+                const res = await fetch(`/api/users/${userId}/assign-plan`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_slug: planSlug || null }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || 'Falha ao atribuir plano');
+                    return;
+                }
+                const u = data.user || {};
+                alert(
+                    `Plano atribuído!\n\n` +
+                    `Usuário: ${u.username || userId}\n` +
+                    `Plano: ${u.plan_slug || 'Nenhum'}\n` +
+                    `Cota/dia: ${u.daily_quota ?? '—'}\n` +
+                    `Trovoedas: ${u.trovoedas_balance ?? 0}`
+                );
+                await loadUsers();
             } catch (e) {
                 alert('Erro: ' + (e.message || e));
             }
@@ -4786,13 +4849,13 @@
             }
             if (chipEl) {
                 if (planSlug) {
-                    chipEl.style.borderColor = planColor + '70';
-                    chipEl.style.background = `linear-gradient(145deg, ${planColor}16, rgba(20,16,8,0.65))`;
-                    chipEl.style.boxShadow = `0 0 18px ${planColor}12`;
+                    chipEl.style.borderColor = planColor;
+                    chipEl.style.background = `linear-gradient(145deg, ${planColor}20, rgba(20,16,8,0.65))`;
+                    chipEl.style.boxShadow = `0 0 18px ${planColor}25`;
                 } else {
-                    chipEl.style.borderColor = 'rgba(255,255,255,0.12)';
-                    chipEl.style.background = 'rgba(255,255,255,0.03)';
-                    chipEl.style.boxShadow = 'none';
+                    chipEl.style.borderColor = '#ff003c';
+                    chipEl.style.background = 'rgba(255,0,60,0.08)';
+                    chipEl.style.boxShadow = '0 0 12px rgba(255,0,60,0.15)';
                 }
             }
         }
@@ -5629,45 +5692,22 @@
         }
 
         async function buyTrovoedaPackage(slug, name, coins, btn) {
-            // Stripe entra na próxima fase — UI pronta
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Abrindo…';
+            // Redireciona para WhatsApp com mensagem personalizada
+            const isPlano = ['loki', 'odin', 'thor', 'valhalla'].includes(slug);
+            let msg = '';
+            if (isPlano) {
+                const planDetails = {
+                    loki: 'Plano Loki (10 leads/dia, 300 leads no total)',
+                    odin: 'Plano Odin (20 leads/dia, 600 leads no total)',
+                    thor: 'Plano Thor (30 leads/dia, 900 leads no total)',
+                    valhalla: 'Plano Valhalla (50 leads/dia, 1500 leads no total)',
+                };
+                msg = `Olá! 👋\n\nTenho interesse no *${planDetails[name] || name}* do ProspecThor!\n\nGostaria de saber mais sobre como funciona e como adquirir. Podem me ajudar?`;
+            } else {
+                msg = `Olá! 👋\n\nTenho interesse no pacote *${name}* (${coins} Trovoedas) do ProspecThor!\n\nGostaria de saber mais sobre como adquirir. Podem me ajudar?`;
             }
-            try {
-                const res = await fetch('/api/trovoeda/checkout', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ package: slug }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (res.status === 501 || data.status === 'not_configured') {
-                    alert(
-                        'Pacote «' + name + '» (' + coins + ' Trovoedas)\n\n' +
-                        'Checkout Stripe ainda não está ligado neste ambiente.\n' +
-                        'Por enquanto o Patrão credita em Usuários → +Trovoedas.\n\n' +
-                        'A loja e os preços já estão no ar — pagamento na próxima etapa.'
-                    );
-                    return;
-                }
-                if (data.url) {
-                    window.location.href = data.url;
-                    return;
-                }
-                if (!res.ok) {
-                    alert(data.error || 'Não foi possível iniciar o pagamento.');
-                    return;
-                }
-                alert(data.message || 'Pedido registrado.');
-            } catch (e) {
-                alert('Erro: ' + (e.message || e));
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = 'Comprar agora';
-                }
-            }
+            const whatsappUrl = `https://wa.me/557799801738?text=${encodeURIComponent(msg)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         async function loadAudit() {

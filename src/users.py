@@ -655,6 +655,32 @@ def update_user(user_id: int, **fields: Any) -> dict[str, Any] | None:
             )
         )
 
+    if "plan_slug" in fields:
+        val = fields["plan_slug"]
+        if val is None or val == "":
+            sets.append("plan_slug = NULL")
+        else:
+            sets.append("plan_slug = %s")
+            params.append(str(val).strip().lower())
+
+    if "daily_quota" in fields:
+        val = fields["daily_quota"]
+        if val is None or val == "":
+            sets.append("daily_quota = NULL")
+        else:
+            try:
+                sets.append("daily_quota = %s")
+                params.append(max(0, int(val)))
+            except (TypeError, ValueError):
+                pass
+
+    if "trovoedas_balance" in fields:
+        try:
+            sets.append("trovoedas_balance = %s")
+            params.append(max(0, int(fields["trovoedas_balance"])))
+        except (TypeError, ValueError):
+            pass
+
     if not sets:
         return get_user_by_id(user_id)
 

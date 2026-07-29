@@ -1840,6 +1840,70 @@ def api_users_reset_month(user_id):
         return jsonify({"error": str(e)}), 400
 
 
+@app.route("/api/users/<int:user_id>/assign-plan", methods=["POST"])
+@login_required
+@admin_required
+def api_users_assign_plan(user_id):
+    """Atribui um plano a um usuário (patrão only).
+
+    Body: { "plan_slug": "loki" | "odin" | "thor" | "valhalla" | null }
+    Define plan_slug, daily_quota e trovoedas_balance no usuário.
+    """
+    from src.users import update_user, get_user_by_id
+    from src.trovoeda import list_packages, ensure_schema
+    from src.audit import log_action
+
+    data = request.get_json(silent=True) or {}
+    plan_slug = (data.get("plan_slug") or "").strip().lower() or None
+
+    try:
+        ensure_schema()
+        su = _session_user()
+
+        if plan_slug:
+            # Busca detalhes do plano
+            pkgs = list_packages(active_only=True)
+            plan_pkg = next((p for p in pkgs if p.get("slug") == plan_slug and p.get("daily_cap")), None)
+            if not plan_pkg:
+                return jsonify({"error": f"Plano '{plan_slug}' não encontrado ou não é um plano"}), 400
+
+            daily_quota = int(plan_pkg.get("daily_cap") or 0)
+            coins = int(plan_pkg.get("coins") or 0)
+
+            user = update_user(
+                user_id,
+                plan_slug=plan_slug,
+                daily_quota=daily_quota,
+                trovoedas_balance=coins,
+            )
+        else:
+            # Remove plano
+            user = update_user(
+                user_id,
+                plan_slug=None,
+                daily_quota=None,
+            )
+
+        if not user:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        log_action(
+            "user_assign_plan",
+            user_id=su.get("id"),
+            username=su.get("username"),
+            details={
+                "target": user.get("username"),
+                "plan": plan_slug,
+                "daily_quota": user.get("daily_quota"),
+                "trovoedas": user.get("trovoedas_balance"),
+            },
+        )
+        _invalidate_cache()
+        return jsonify({"success": True, "user": user})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
 @login_required
 @admin_required

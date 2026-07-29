@@ -2462,7 +2462,7 @@
               · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
               {% endif %}
             </div>
-            <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="/register">
+            <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
               {% if p.slug == 'tempestade' %}Escolher pacote{% else %}Começar{% endif %}
             </a>
           </div>
@@ -2697,6 +2697,24 @@
     <a class="btn btn-primary btn-lg" href="/register">Criar conta grátis — 5 leads</a>
   </div>
 
+  <script>
+    function openWhatsApp(slug, name, coins) {
+      var isPlano = ['loki', 'odin', 'thor', 'valhalla'].indexOf(slug) !== -1;
+      var msg = '';
+      if (isPlano) {
+        var planDetails = {
+          loki: 'Plano Loki (10 leads/dia, 300 leads no total)',
+          odin: 'Plano Odin (20 leads/dia, 600 leads no total)',
+          thor: 'Plano Thor (30 leads/dia, 900 leads no total)',
+          valhalla: 'Plano Valhalla (50 leads/dia, 1500 leads no total)'
+        };
+        msg = 'Olá! 👋\n\nTenho interesse no *' + (planDetails[name] || name) + '* do ProspecThor!\n\nGostaria de saber mais sobre como funciona e como adquirir. Podem me ajudar?';
+      } else {
+        msg = 'Olá! 👋\n\nTenho interesse no pacote *' + name + '* (' + coins + ' Trovoedas) do ProspecThor!\n\nGostaria de saber mais sobre como adquirir. Podem me ajudar?';
+      }
+      window.open('https://wa.me/557799801738?text=' + encodeURIComponent(msg), '_blank');
+    }
+  </script>
   <script>
     /* FAQ: abrir um fecha os outros */
     (function () {

@@ -5426,8 +5426,8 @@
                     const cents = Number(p.price_cents) || 0;
                     const per = coins > 0 ? (cents / 100) / coins : 0;
                     const featured = (p.slug || '') === featureSlug;
-                    const color = p.color || '#C9A060';
                     const isPlano = Number(p.daily_cap) > 0;
+                    const color = isPlano ? (p.color || '#C9A060') : '#C9A060';
 
                     // Ícones SVG inline por plano (coloridos com a cor do plano)
                     const planIconSvg = {

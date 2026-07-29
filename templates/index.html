@@ -792,6 +792,10 @@
             transition: transform .28s ease, filter .25s;
             will-change: transform;
         }
+        /* SVGs de plano não devem ter drop-shadow (cria caixa preta) */
+        .coin-3d svg {
+            filter: none !important;
+        }
         .wallet-chip .coin-3d { width: 32px; height: 32px; }
         .wallet-chip:hover .coin-3d__face,
         .pkg-card:hover .coin-3d__face,
@@ -5470,7 +5474,7 @@
                         : `border-top:3px solid ${color};`;
 
                     const planoTxt = isPlano
-                        ? `<span class="pkg-badge" style="background:rgba(0,0,0,.18);color:${color};border-color:${color};">${p.daily_cap}/dia · ${p.duration_days} dias</span>`
+                        ? `<span class="pkg-badge" style="background:rgba(0,0,0,.25);color:${color};border-color:${color};box-shadow:0 2px 10px color-mix(in srgb, ${color} 40%, transparent);">${p.daily_cap}/dia · ${p.duration_days} dias</span>`
                         : '';
                     const perTxt = per > 0
                         ? (per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ' por lead')

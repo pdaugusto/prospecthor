@@ -3309,7 +3309,7 @@
                                     <th>Nome</th>
                                     <th>Papel</th>
                                     <th>Plano</th>
-                                    <th>Cota/dia</th>
+                                    <th>Cota</th>
                                     <th><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> Trovoedas</th>
                                     <th>Recebidos</th>
                                     <th style="min-width:280px;">Ações</th>
@@ -4590,7 +4590,10 @@
                     const planBadge = planSlug
                         ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;border:1px solid ${planColor}50;background:${planColor}15;color:${planColor};font-size:11px;font-weight:700;">${planLabel}</span>`
                         : '<span style="color:var(--muted);font-size:11px;">—</span>';
-                    const quotaDisplay = dailyQuota != null ? dailyQuota : '—';
+                    const dailyQuota = u.daily_quota != null ? Number(u.daily_quota) : null;
+                    const monthlyQuota = u.monthly_quota != null ? Number(u.monthly_quota) : null;
+                    const quotaDisplay = dailyQuota != null ? `${dailyQuota}/dia` : '—';
+                    const totalDisplay = monthlyQuota != null ? `${monthlyQuota}/mês` : '—';
                     const check = isPatrao
                         ? '<span style="color:var(--muted);font-size:11px;">—</span>'
                         : `<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Só para receber leads — login continua funcionando se OFF">
@@ -4620,7 +4623,7 @@
                         <td>${esc(u.label || '—')}</td>
                         <td>${roleLabel}</td>
                         <td>${planBadge}</td>
-                        <td style="font-weight:700;color:${planColor};">${quotaDisplay}</td>
+                        <td style="font-weight:700;color:${planColor};font-size:11px;">${quotaDisplay}<br><span style="opacity:0.7;">${totalDisplay}</span></td>
                         <td style="font-weight:700;color:#C9A060;"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /> ${trovo}</td>
                         <td>${u.assigned_this_month || 0}</td>
                         <td>${actions}</td>
@@ -4698,15 +4701,15 @@
 
         async function quickAssignPlan(userId) {
             const plans = [
-                { slug: 'loki', name: 'Loki', daily: 10, coins: 300, color: '#00ff66' },
-                { slug: 'odin', name: 'Odin', daily: 20, coins: 600, color: '#00d2ff' },
-                { slug: 'thor', name: 'Thor', daily: 30, coins: 900, color: '#ff003c' },
-                { slug: 'valhalla', name: 'Valhalla', daily: 50, coins: 1500, color: '#ffea00' },
+                { slug: 'loki', name: 'Loki', daily: 10, total: 300, color: '#00ff66' },
+                { slug: 'odin', name: 'Odin', daily: 20, total: 600, color: '#00d2ff' },
+                { slug: 'thor', name: 'Thor', daily: 30, total: 900, color: '#ff003c' },
+                { slug: 'valhalla', name: 'Valhalla', daily: 50, total: 1500, color: '#ffea00' },
             ];
             const user = usersCache.find(u => Number(u.id) === userId);
             const currentPlan = user?.plan_slug || '';
             const lines = plans.map((p, i) =>
-                `${i + 1} — ${p.name} (${p.daily}/dia, ${p.coins} moedas)` +
+                `${i + 1} — ${p.name} (${p.daily}/dia, ${p.total} total no mês)` +
                 (p.slug === currentPlan ? ' ← ATUAL' : '')
             );
             lines.push('0 — Remover plano');
@@ -4737,7 +4740,7 @@
                     `Usuário: ${u.username || userId}\n` +
                     `Plano: ${u.plan_slug || 'Nenhum'}\n` +
                     `Cota/dia: ${u.daily_quota ?? '—'}\n` +
-                    `Trovoedas: ${u.trovoedas_balance ?? 0}`
+                    `Cota total/mês: ${u.monthly_quota ?? '—'}`
                 );
                 await loadUsers();
             } catch (e) {

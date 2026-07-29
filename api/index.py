@@ -1868,13 +1868,14 @@ def api_users_assign_plan(user_id):
                 return jsonify({"error": f"Plano '{plan_slug}' não encontrado ou não é um plano"}), 400
 
             daily_quota = int(plan_pkg.get("daily_cap") or 0)
-            coins = int(plan_pkg.get("coins") or 0)
+            duration = int(plan_pkg.get("duration_days") or 30)
+            total_leads = daily_quota * duration  # cota total do plano
 
             user = update_user(
                 user_id,
                 plan_slug=plan_slug,
                 daily_quota=daily_quota,
-                trovoedas_balance=coins,
+                monthly_quota=total_leads,
             )
         else:
             # Remove plano
@@ -1895,7 +1896,7 @@ def api_users_assign_plan(user_id):
                 "target": user.get("username"),
                 "plan": plan_slug,
                 "daily_quota": user.get("daily_quota"),
-                "trovoedas": user.get("trovoedas_balance"),
+                "monthly_quota": user.get("monthly_quota"),
             },
         )
         _invalidate_cache()

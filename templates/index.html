@@ -6993,10 +6993,12 @@
             });
 
             filteredLeads.sort((a, b) => {
-                // Descartados sempre no final (mesmo com sort por score)
-                const da = getStatus(a) === 'descartado' ? 1 : 0;
-                const db = getStatus(b) === 'descartado' ? 1 : 0;
-                if (da !== db) return da - db;
+                // Descartados e contactados sempre no final (mesmo com sort por score)
+                const sa = getStatus(a);
+                const sb = getStatus(b);
+                const weightA = sa === 'descartado' ? 2 : sa === 'contactado' ? 1 : 0;
+                const weightB = sb === 'descartado' ? 2 : sb === 'contactado' ? 1 : 0;
+                if (weightA !== weightB) return weightA - weightB;
 
                 let va, vb;
                 if (sortKey === 'status') {

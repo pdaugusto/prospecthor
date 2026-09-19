@@ -1639,6 +1639,240 @@
       letter-spacing: 0;
     }
 
+    /* —— Cards da loja (mesmo lay-out do /shop) —— */
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1100px) {
+      .shop-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .shop-grid { grid-template-columns: 1fr; }
+    }
+    .pkg-card {
+      position: relative;
+      display: flex; flex-direction: column;
+      padding: 0;
+      border-radius: 18px;
+      background: linear-gradient(165deg, #101621 0%, #0a0e16 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .25s, transform .25s cubic-bezier(.2,.8,.2,1);
+      cursor: default;
+    }
+    .pkg-card::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 42%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .pkg-card:hover {
+      border-color: rgba(201, 160, 96, 0.35);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,160,96,0.08);
+      transform: translateY(-4px);
+    }
+    .pkg-card:hover::after { opacity: 1; }
+    .pkg-card .coin-3d { width: 72px; height: 72px; }
+    .pkg-card:hover .coin-3d__face,
+    .pkg-card:hover .coin-3d svg {
+      transform: rotateY(-8deg) rotateX(6deg) scale(1.08);
+    }
+    .pkg-card.featured {
+      border-color: rgba(201, 160, 96, 0.5);
+      background:
+        radial-gradient(ellipse 100% 60% at 50% -10%, rgba(201,160,96,0.2), transparent 55%),
+        linear-gradient(165deg, #141a28 0%, #0a0e16 100%);
+      box-shadow: 0 0 40px rgba(201, 160, 96, 0.12), 0 12px 32px rgba(0,0,0,0.35);
+    }
+    .pkg-card.featured:hover {
+      box-shadow: 0 0 48px rgba(201, 160, 96, 0.18), 0 18px 40px rgba(0,0,0,0.4);
+    }
+    .pkg-card.featured .coin-3d__face {
+      filter: drop-shadow(2px 4px 10px rgba(201, 160, 96, 0.35));
+    }
+    .pkg-card.featured:hover .coin-3d__face {
+      filter: drop-shadow(3px 6px 14px rgba(201, 160, 96, 0.45));
+    }
+    .pkg-badge {
+      position: absolute; top: 14px; right: 14px; z-index: 2;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 5px 10px; border-radius: 999px;
+      background: linear-gradient(135deg, #E8C994, #C9A060, #8F6232);
+      color: #1a1408;
+      box-shadow: 0 2px 10px rgba(201,160,96,0.35);
+    }
+    .pkg-badge.save {
+      right: auto; left: 10px; top: 10px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      font-size: 9px; font-weight: 800;
+      padding: 3px 7px;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #34d399, #10b981, #059669);
+      color: #042f1e;
+      box-shadow: 0 1px 6px rgba(16, 185, 129, 0.3);
+    }
+    .pkg-card.featured .pkg-badge.save { top: 10px; }
+    .pkg-card.featured .pkg-badge:not(.save) { top: 14px; }
+    .pkg-card__top {
+      padding: 22px 20px 8px;
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: 12px;
+    }
+    .pkg-card h3 {
+      font-size: 15px; font-weight: 700; color: var(--muted);
+      margin: 0; letter-spacing: 0.02em;
+    }
+    .pkg-card .pkg-coins {
+      font-size: 32px; font-weight: 900; color: #fff;
+      letter-spacing: -0.04em; line-height: 1;
+    }
+    .pkg-card .pkg-coins small {
+      font-size: 13px; font-weight: 600; color: #A67C3D; margin-left: 6px;
+      letter-spacing: 0;
+    }
+    .pkg-card .pkg-per {
+      margin-top: 6px; font-size: 12px; color: var(--muted);
+    }
+    .pkg-card__bottom {
+      margin-top: auto;
+      padding: 16px 20px 18px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.2);
+    }
+    .pkg-card .pkg-price {
+      font-size: 24px; font-weight: 900; color: #fff;
+      letter-spacing: -0.03em;
+    }
+    .pkg-card .pkg-price span {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      margin-left: 4px;
+    }
+    .pkg-card .btn-buy {
+      position: relative;
+      margin-top: 12px; width: 100%;
+      padding: 12px 14px; border-radius: 12px;
+      font-size: 13px; font-weight: 800;
+      border: none; cursor: pointer;
+      color: #0b1220;
+      background: linear-gradient(135deg, #E8C994, #C9A060 50%, #8F6232);
+      box-shadow: 0 4px 16px rgba(201, 160, 96, 0.22);
+      transition: filter .15s, transform .15s, box-shadow .15s;
+      overflow: hidden;
+      isolation: isolate;
+      display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    .pkg-card .btn-buy .btn-buy-label {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .pkg-card .btn-buy .bolt-fx {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      overflow: hidden;
+      border-radius: inherit;
+    }
+    .pkg-card .btn-buy:hover .bolt-fx,
+    .pkg-card .btn-buy:focus-visible .bolt-fx { opacity: 1; }
+    .pkg-card .btn-buy .bolt-fx::before {
+      content: "";
+      position: absolute;
+      top: -40%; left: -30%;
+      width: 45%; height: 180%;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(255,255,255,0.05) 35%,
+        rgba(255,255,255,0.55) 50%,
+        rgba(255,248,200,0.35) 58%,
+        transparent 72%
+      );
+      transform: translateX(-120%) skewX(-18deg);
+    }
+    .pkg-card .btn-buy:hover .bolt-fx::before,
+    .pkg-card .btn-buy:focus-visible .bolt-fx::before {
+      animation: buy-bolt-sweep 0.7s ease-out 1;
+    }
+    .pkg-card .btn-buy .bolt-ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      opacity: 1;
+      transform: none;
+      flex-shrink: 0;
+    }
+    .pkg-card .btn-buy .bolt-ico .coin-mini {
+      width: 16px; height: 16px; margin: 0;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+      transition: transform .2s ease, filter .2s ease;
+    }
+    .pkg-card .btn-buy:hover .bolt-ico .coin-mini,
+    .pkg-card .btn-buy:focus-visible .bolt-ico .coin-mini {
+      transform: scale(1.08);
+      filter: drop-shadow(0 0 6px rgba(255,220,80,0.65));
+    }
+    @keyframes buy-bolt-sweep {
+      0% { transform: translateX(-120%) skewX(-18deg); }
+      100% { transform: translateX(280%) skewX(-18deg); }
+    }
+    .pkg-card .btn-buy:hover {
+      filter: brightness(1.08);
+      box-shadow:
+        0 6px 22px rgba(201, 160, 96, 0.4),
+        0 0 24px rgba(255, 220, 100, 0.25);
+      transform: translateY(-1px);
+    }
+    .pkg-card .btn-buy:active { transform: translateY(0); }
+    .pkg-card:not(.featured) .btn-buy {
+      background: transparent;
+      color: #C9A060;
+      border: 1px solid rgba(201, 160, 96, 0.35);
+      box-shadow: none;
+    }
+    .pkg-card:not(.featured) .btn-buy:hover {
+      background: rgba(201,160,96,0.12);
+      border-color: rgba(201,160,96,0.65);
+      filter: none;
+      box-shadow: 0 0 20px rgba(201,160,96,0.18);
+    }
+    .pkg-card:not(.featured) .btn-buy .bolt-fx::before {
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(201,160,96,0.05) 35%,
+        rgba(255,230,140,0.45) 50%,
+        rgba(201,160,96,0.15) 58%,
+        transparent 72%
+      );
+    }
+    .coin-3d__face {
+      display: block;
+      width: 100%; height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.5));
+      transition: transform .28s ease, filter .25s;
+      will-change: transform;
+    }
+    .coin-3d svg { filter: none !important; }
+
     /* Trust */
     .trust-row {
       display: grid;
@@ -2470,31 +2704,75 @@
             Planos mensais
           </div>
           <p class="group-sub">Cota fixa de leads por dia, renovada todo mês.</p>
-          <div class="shop-preview">
+          <div class="shop-grid">
             {% for p in planos %}
-            <div class="pkg reveal">
+            <div class="pkg-card reveal" style="border:2px solid {{ p.color }};">
               {% if p.save_pct and p.save_pct > 0 %}
-              <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
+              <span class="pkg-badge save" style="color:{{ p.color }};border-color:{{ p.color }};background:rgba(0,0,0,.15);" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
               {% endif %}
-              <span class="badge plan" title="{{ p.daily_cap }} leads por dia durante {{ p.duration_days }} dias">{{ p.daily_cap }}/dia · {{ p.duration_days }} dias</span>
-              <span class="coin-3d" aria-hidden="true">
-                <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
-              </span>
-              <h3>{{ p.name }}</h3>
-              <div class="coins">{{ p.coins }}<small>Leads/mês</small></div>
-              <div class="price">R$ {{ p.price_brl }}<small>/mês</small></div>
-              <div class="per">
-                {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
-                {% if p.save_pct and p.save_pct > 0 %}
-                · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
-                {% endif %}
+              <span class="pkg-badge" style="background:rgba(0,0,0,.25);color:{{ p.color }};border-color:{{ p.color }};box-shadow:0 2px 10px {{ p.color }}66;">{{ p.daily_cap }}/dia · {{ p.duration_days }} dias</span>
+              <div class="pkg-card__top">
+                <span class="coin-3d" aria-hidden="true">
+                  {% if p.slug == 'loki' %}
+                  <svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 30 Q18 18 13 8 Q20 12 24 24 Q27 16 28 8 Q30 18 28 30" fill="{{ p.color }}"/>
+                    <path d="M50 30 Q54 18 59 8 Q52 12 48 24 Q45 16 44 8 Q42 18 44 30" fill="{{ p.color }}"/>
+                    <path d="M22 30 Q18 46 20 56 Q28 64 36 64 Q44 64 52 56 Q54 46 50 30 Q42 26 36 26 Q30 26 22 30Z" fill="{{ p.color }}"/>
+                    <rect x="33" y="36" width="6" height="16" rx="2" fill="{{ p.color }}" opacity="0.55"/>
+                  </svg>
+                  {% elif p.slug == 'odin' %}
+                  <svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="34" y="4" width="4" height="18" rx="1" fill="{{ p.color }}" opacity="0.8"/>
+                    <polygon points="36,2 32,10 40,10" fill="{{ p.color }}"/>
+                    <circle cx="36" cy="34" r="16" fill="{{ p.color }}"/>
+                    <ellipse cx="30" cy="30" rx="5" ry="3.5" fill="{{ p.color }}" opacity="0.35"/>
+                    <path d="M20 44 Q28 54 36 56 Q44 54 52 44 Q46 50 36 52 Q26 50 20 44Z" fill="{{ p.color }}"/>
+                    <path d="M8 26 Q11 21 15 23 Q13 29 9 31Z M9 31 Q7 37 11 39 Q11 33 9 31Z" fill="{{ p.color }}"/>
+                    <path d="M64 26 Q61 21 57 23 Q61 29 63 31Z M63 31 Q65 37 61 39 Q61 33 63 31Z" fill="{{ p.color }}"/>
+                  </svg>
+                  {% elif p.slug == 'thor' %}
+                  <svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="10" width="36" height="22" rx="5" fill="{{ p.color }}"/>
+                    <rect x="10" y="24" width="52" height="9" rx="3" fill="{{ p.color }}" opacity="0.75"/>
+                    <rect x="32" y="32" width="8" height="28" rx="3" fill="{{ p.color }}"/>
+                    <rect x="29" y="57" width="14" height="6" rx="3" fill="{{ p.color }}"/>
+                  </svg>
+                  {% elif p.slug == 'valhalla' %}
+                  <svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M36 6 L64 20 L64 44 Q64 60 36 68 Q8 60 8 44 L8 20Z" fill="{{ p.color }}" fill-opacity="0.18" stroke="{{ p.color }}" stroke-width="3"/>
+                    <path d="M36 20 L52 42 L44 42 L44 58 L28 58 L28 42 L20 42Z" fill="{{ p.color }}"/>
+                    <path d="M36 16 L55 41 L52 42 L36 22 L20 42 L17 41Z" fill="{{ p.color }}" opacity="0.7"/>
+                  </svg>
+                  {% else %}
+                  <img class="coin-3d__face" src="/static/trovoeda-coin.png?v=15" alt="" width="72" height="72" />
+                  {% endif %}
+                </span>
+                <h3>{{ p.name }}</h3>
+                <div class="pkg-coins" style="color:{{ p.color }};">{{ p.coins }}<small>Leads</small></div>
+                <div class="pkg-per">
+                  {% if p.per_lead %}≈ R$ {{ p.per_lead }} por lead{% endif %}
+                  {% if p.save_pct and p.save_pct > 0 %}
+                  · <strong style="color:{{ p.color }}">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
+                  {% endif %}
+                </div>
               </div>
-              <a class="btn btn-outline pkg-cta" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">Assinar</a>
+              <div class="pkg-card__bottom">
+                <div class="pkg-price">R$ {{ p.price_brl }} <span>pagamento único</span></div>
+                <a class="btn-buy" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
+                  <span class="bolt-fx" aria-hidden="true"></span>
+                  <span class="btn-buy-label">
+                    <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /></span>
+                    <span>Comprar</span>
+                  </span>
+                </a>
+              </div>
             </div>
             {% else %}
-            <div class="pkg reveal">
-              <h3>Em breve</h3>
-              <div class="per">Planos em configuração.</div>
+            <div class="pkg-card reveal">
+              <div class="pkg-card__top">
+                <h3>Em breve</h3>
+                <div class="pkg-per">Planos em configuração.</div>
+              </div>
             </div>
             {% endfor %}
           </div>
@@ -2506,33 +2784,43 @@
             Créditos (Trovoedas)
           </div>
           <p class="group-sub">Compra avulsa — o saldo não expira e você usa quando quiser.</p>
-          <div class="shop-preview">
+          <div class="shop-grid">
             {% for p in moedas %}
-            <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %} reveal">
+            <div class="pkg-card {% if p.slug == 'tempestade' %}featured{% endif %} reveal" style="border-top:3px solid #C9A060;">
               {% if p.save_pct and p.save_pct > 0 %}
-              <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
+              <span class="pkg-badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
               {% endif %}
-              {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
-              <span class="coin-3d" aria-hidden="true">
-                <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
-              </span>
-              <h3>{{ p.name }}</h3>
-              <div class="coins">{{ p.coins }}<small>Trovoedas</small></div>
-              <div class="price">R$ {{ p.price_brl }}</div>
-              <div class="per">
-                {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
-                {% if p.save_pct and p.save_pct > 0 %}
-                · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
-                {% endif %}
+              {% if p.slug == 'tempestade' %}<span class="pkg-badge">Mais popular</span>{% endif %}
+              <div class="pkg-card__top">
+                <span class="coin-3d" aria-hidden="true">
+                  <img class="coin-3d__face" src="/static/trovoeda-coin.png?v=15" alt="" width="72" height="72" />
+                </span>
+                <h3>{{ p.name }}</h3>
+                <div class="pkg-coins" style="color:#C9A060;">{{ p.coins }}<small>Trovoedas</small></div>
+                <div class="pkg-per">
+                  {% if p.per_lead %}≈ R$ {{ p.per_lead }} por lead{% endif %}
+                  {% if p.save_pct and p.save_pct > 0 %}
+                  · <strong style="color:#34d399">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
+                  {% endif %}
+                </div>
               </div>
-              <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
-                {% if p.slug == 'tempestade' %}Escolher pacote{% else %}Começar{% endif %}
-              </a>
+              <div class="pkg-card__bottom">
+                <div class="pkg-price">R$ {{ p.price_brl }} <span>pagamento único</span></div>
+                <a class="btn-buy" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
+                  <span class="bolt-fx" aria-hidden="true"></span>
+                  <span class="btn-buy-label">
+                    <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /></span>
+                    <span>{% if p.slug == 'tempestade' %}Escolher pacote{% else %}Comprar{% endif %}</span>
+                  </span>
+                </a>
+              </div>
             </div>
             {% else %}
-            <div class="pkg reveal">
-              <h3>Em breve</h3>
-              <div class="per">Pacotes em configuração.</div>
+            <div class="pkg-card reveal">
+              <div class="pkg-card__top">
+                <h3>Em breve</h3>
+                <div class="pkg-per">Pacotes em configuração.</div>
+              </div>
             </div>
             {% endfor %}
           </div>

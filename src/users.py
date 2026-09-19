@@ -95,9 +95,13 @@ def _connect():
     return psycopg2.connect(_DATABASE_URL)
 
 
+_schema_ready = False
+
+
 def ensure_schema() -> None:
-    """Cria tabela de usuários e colunas de atribuição nos leads."""
-    if not _DATABASE_URL:
+    """Cria tabela de usuários e colunas de atribuição nos leads (1x por processo)."""
+    global _schema_ready
+    if _schema_ready or not _DATABASE_URL:
         return
     conn = _connect()
     try:
@@ -132,6 +136,13 @@ def ensure_schema() -> None:
             )
             if not cur.fetchone():
                 cur.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ};")
+
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_companies_assigned_to_at
+            ON companies (assigned_to, assigned_at);
+            """
+        )
 
         # IP do cadastro público (anti multi-conta)
         cur.execute(
@@ -219,6 +230,7 @@ def ensure_schema() -> None:
         _trovoeda_schema()
     except Exception as exc:
         logger.warning("[Users] trovoeda schema: %s", exc)
+    _schema_ready = True
 
 
 def authenticate(username: str, password: str) -> dict[str, Any] | None:
@@ -379,31 +391,75 @@ def list_users() -> list[dict[str, Any]]:
     conn = _connect()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        month_prefix = datetime.now().strftime("%Y-%m") + "%"
+        today_prefix = datetime.now().strftime("%Y-%m-%d") + "%"
         cur.execute(
             """
-            SELECT id, username, role, monthly_quota, active, cities, niches, label, created_at,
-                   COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
-                   COALESCE(email, '') AS email,
-                   COALESCE(display_name, '') AS display_name,
-                   plan_slug, daily_quota
-            FROM app_users
-            ORDER BY role DESC, username;
-            """
+            SELECT u.id, u.username, u.role, u.monthly_quota, u.active, u.cities, u.niches,
+                   u.label, u.created_at,
+                   COALESCE(u.trovoedas_balance, 0) AS trovoedas_balance,
+                   COALESCE(u.email, '') AS email,
+                   COALESCE(u.display_name, '') AS display_name,
+                   u.plan_slug, u.daily_quota,
+                   COALESCE(tm.month_count, 0) AS assigned_this_month,
+                   COALESCE(td.today_count, 0) AS assigned_today
+            FROM app_users u
+            LEFT JOIN (
+                SELECT assigned_to AS user_id, COUNT(*) AS month_count
+                FROM companies
+                WHERE assigned_to IS NOT NULL AND assigned_at LIKE %s
+                GROUP BY assigned_to
+            ) tm ON tm.user_id = u.id
+            LEFT JOIN (
+                SELECT assigned_to AS user_id, COUNT(*) AS today_count
+                FROM companies
+                WHERE assigned_to IS NOT NULL AND assigned_at LIKE %s
+                GROUP BY assigned_to
+            ) td ON td.user_id = u.id
+            ORDER BY u.role DESC, u.username;
+            """,
+            (month_prefix, today_prefix),
         )
         rows = [dict(r) for r in cur.fetchall()]
         cur.close()
-        # contagem do mês e do dia
         for u in rows:
             u["cities"] = _parse_json_list(u.get("cities"))
             u["niches"] = _parse_json_list(u.get("niches"))
-            u["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
-            u["assigned_today"] = count_assigned_today(int(u["id"]))
+            u["assigned_this_month"] = int(u.get("assigned_this_month") or 0)
+            u["assigned_today"] = int(u.get("assigned_today") or 0)
             u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
             u["daily_quota"] = u.get("daily_quota")
             u["plan_slug"] = u.get("plan_slug")
         return rows
     finally:
         conn.close()
+
+
+def _counts_this_month_by_user(user_ids: list[int]) -> dict[int, int]:
+    """Leads atribuídos no mês para vários usuários em 1 conexão (GOLPE do pooler)."""
+    if not user_ids:
+        return {}
+    month_prefix = datetime.now().strftime("%Y-%m") + "%"
+    try:
+        conn = _connect()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(
+                """
+                SELECT assigned_to AS user_id, COUNT(*) AS n
+                FROM companies
+                WHERE assigned_to = ANY(%s) AND assigned_at LIKE %s
+                GROUP BY assigned_to;
+                """,
+                (user_ids, month_prefix),
+            )
+            rows = cur.fetchall()
+            cur.close()
+            return {int(r["user_id"]): int(r["n"] or 0) for r in rows}
+        finally:
+            conn.close()
+    except Exception:
+        return {}
 
 
 def count_assigned_this_month(user_id: int) -> int:
@@ -1059,13 +1115,15 @@ def assign_raio_lead(company_id: int) -> int | None:
             logger.warning("[Users] Nenhum client ativo para receber lead.")
             return None
 
+        used_map = _counts_this_month_by_user([int(u["id"]) for u in clients])
+
         candidates: list[tuple[int, int, str]] = []  # (assigned_count, user_id, username)
         for u in clients:
             u["cities"] = _parse_json_list(u.get("cities"))
             u["niches"] = _parse_json_list(u.get("niches"))
             if not _user_accepts_lead(u, company):
                 continue
-            used = count_assigned_this_month(int(u["id"]))
+            used = used_map.get(int(u["id"]), 0)
             quota = int(u.get("monthly_quota") or 0)
             if used >= quota:
                 continue

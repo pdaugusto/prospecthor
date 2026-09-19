@@ -1,26 +1,4 @@
 {
-  "missions": [
-    {
-      "id": "7fabd965",
-      "label": "Missão livre",
-      "user_id": null,
-      "username": "livre",
-      "niche_ids": [
-        "estetica",
-        "mentores_palestrantes",
-        "pet"
-      ],
-      "city_ids": [
-        "curitiba_pr",
-        "florianopolis_sc",
-        "londrina_pr"
-      ],
-      "target_leads": 100,
-      "status": "parada",
-      "created_at": "2026-07-27T22:01:46",
-      "finished_at": "2026-07-27T23:06:49",
-      "notes": ""
-    }
-  ],
-  "updated_at": "2026-07-27T23:06:49"
+  "missions": [],
+  "updated_at": "2026-09-18T23:32:39"
 }

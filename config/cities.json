@@ -331,6 +331,27 @@
       ]
     },
     {
+      "id": "vitoria_da_conquista_ba",
+      "nome": "Vitória da Conquista",
+      "estado": "BA",
+      "ativo": true,
+      "priority": "alta",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "Brasil",
+        "Candeias",
+        "Recreio",
+        "Alto Maron",
+        "Ibirapuera",
+        "Guarani",
+        "Kadija",
+        "Jurema",
+        "Bateias"
+      ]
+    },
+    {
       "id": "goiania_go",
       "nome": "Goiânia",
       "estado": "GO",

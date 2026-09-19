@@ -33,9 +33,8 @@ REASON_SPEND = "spend"  # futuro entrega
 
 
 def _connect():
-    if not _DATABASE_URL:
-        raise RuntimeError("DATABASE_URL não configurada")
-    return psycopg2.connect(_DATABASE_URL)
+    from src.db import connect as _db_connect
+    return _db_connect()
 
 
 def ensure_schema() -> None:

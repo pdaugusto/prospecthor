@@ -95,8 +95,14 @@ _OVERPASS_MIRRORS = [
 ]
 
 
+_BBOX_CACHE: dict[tuple[str, str], tuple[float, float, float, float] | None] = {}
+
+
 def _nominatim_bbox(city: str, state: str) -> tuple[float, float, float, float] | None:
-    """Retorna (south, west, north, east) ou None."""
+    """Retorna (south, west, north, east) ou None. Cache por cidade (evita HTTP repetido)."""
+    key = ((city or "").strip().lower(), (state or "").strip().lower())
+    if key in _BBOX_CACHE:
+        return _BBOX_CACHE[key]
     try:
         q = f"{city}, {state}, Brasil" if state else f"{city}, Brasil"
         r = requests.get(
@@ -113,14 +119,19 @@ def _nominatim_bbox(city: str, state: str) -> tuple[float, float, float, float] 
         r.raise_for_status()
         data = r.json() or []
         if not data:
+            _BBOX_CACHE[key] = None
             return None
         bb = data[0].get("boundingbox")  # [south, north, west, east] as strings
         if not bb or len(bb) < 4:
+            _BBOX_CACHE[key] = None
             return None
         south, north, west, east = map(float, bb[:4])
-        return (south, west, north, east)
+        bbox = (south, west, north, east)
+        _BBOX_CACHE[key] = bbox
+        return bbox
     except Exception as exc:
         logger.warning("[Fonte B] Não achei a cidade no mapa (Nominatim): %s", exc)
+        _BBOX_CACHE[key] = None
         return None
 
 
@@ -515,7 +526,8 @@ def _save_company(company: dict[str, Any], *, assign: bool = True) -> int:
     already_assigned = False
     now = datetime.now().isoformat()
     try:
-        conn = psycopg2.connect(_DATABASE_URL)
+        from src.db import connect as _db_connect
+        conn = _db_connect()
         cur = conn.cursor()
         cur.execute("SELECT assigned_to FROM companies WHERE id = %s;", (int(row_id),))
         arow = cur.fetchone()

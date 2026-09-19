@@ -28,9 +28,8 @@ _DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
 def _connect():
-    if not _DATABASE_URL:
-        raise RuntimeError("DATABASE_URL não configurada")
-    return psycopg2.connect(_DATABASE_URL)
+    from src.db import connect as _db_connect
+    return _db_connect()
 
 
 def _parse_json_dict(raw: Any) -> dict[str, int]:

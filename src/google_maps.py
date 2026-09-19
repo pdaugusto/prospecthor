@@ -337,8 +337,9 @@ class Database:
         self._init_schema()
 
     def _connect(self):
-        """Retorna uma nova conexão psycopg2 ao PostgreSQL."""
-        return psycopg2.connect(_DATABASE_URL)
+        """Conexão (reutilizada via pool — orça no .close())."""
+        from src.db import connect as _db_connect
+        return _db_connect()
 
     def _init_schema(self) -> None:
         """Cria as tabelas se ainda não existirem."""
@@ -791,7 +792,7 @@ class PlaywrightScraper:
                 f"(meta: {target_new} leads contatáveis sem site)"
             )
             page.goto(maps_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
-            _random_delay(1.5, 3.0)
+            _random_delay(1.0, 1.8)
             self._dismiss_consent(page)
 
             try:
@@ -884,7 +885,7 @@ class PlaywrightScraper:
                         f"[Playwright] ⏭ {company['name']!r} tem site — "
                         f"pula sem extrair ({len(companies)}/{target_new})"
                     )
-                    _random_delay(0.12, 0.35)
+                    _random_delay(0.08, 0.2)
                     continue
 
                 # IG no website do Maps (sem site próprio)
@@ -897,7 +898,7 @@ class PlaywrightScraper:
                         f"[Playwright] ⏭ {company['name']!r} sem tel/IG — "
                         f"não conta na meta ({len(companies)}/{target_new})"
                     )
-                    _random_delay(0.15, 0.4)
+                    _random_delay(0.1, 0.25)
                     # parar cedo também conta inspeções sem contato
                     early_n = int(os.getenv("EARLY_STOP_INSPECT", "40"))
                     early_min = int(os.getenv("EARLY_STOP_MIN_LEADS", "2"))
@@ -942,8 +943,8 @@ class PlaywrightScraper:
                     time.sleep(60)
 
                 _random_delay(
-                    max(0.8, _DELAY_MIN * 0.6),
-                    max(1.5, _DELAY_MAX * 0.7),
+                    max(0.4, _DELAY_MIN * 0.6),
+                    max(0.9, _DELAY_MAX * 0.7),
                 )
 
                 early_n = int(os.getenv("EARLY_STOP_INSPECT", "40"))
@@ -1038,11 +1039,11 @@ class PlaywrightScraper:
             # Faz scroll dentro do feed de resultados
             try:
                 feed.evaluate("el => el.scrollBy(0, el.scrollHeight)")
-                _random_delay(1.2, 2.5)
+                _random_delay(0.9, 1.6)
             except Exception:
                 # Fallback: scroll na página inteira
                 page.keyboard.press("End")
-                _random_delay(1.0, 2.0)
+                _random_delay(0.8, 1.4)
 
         return urls[:max_results]
 
@@ -1088,7 +1089,7 @@ class PlaywrightScraper:
 
         # Navega até a página de detalhes
         page.goto(full_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
-        _random_delay(0.35, 0.8)
+        _random_delay(0.2, 0.5)
 
         # Aguarda o painel de detalhes carregar (pelo nome h1)
         try:

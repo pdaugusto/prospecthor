@@ -100,8 +100,9 @@ class ScorerDatabase:
         self._migrate()
 
     def _connect(self):
-        """Retorna uma nova conexão psycopg2."""
-        return psycopg2.connect(_DATABASE_URL)
+        """Conexão (reutilizada via pool — orça no .close())."""
+        from src.db import connect as _db_connect
+        return _db_connect()
 
     def _migrate(self) -> None:
         """Adiciona colunas de qualificação à tabela de empresas se necessário."""
@@ -768,9 +769,7 @@ class LeadScorer:
 
         if self._has_no_website(company):
             self.db.ensure_sem_site_flags(company_id)
-            company = self.db.get_company_by_id(company_id) or company
-            if not company.get("website_status"):
-                company["website_status"] = "sem_site"
+            company["website_status"] = "sem_site"
 
         result = self.calculate_score(company)
         self.db.save_lead_score(result)
@@ -849,7 +848,7 @@ class LeadScorer:
             cid = company.get("id")
             if cid and self._has_no_website(company):
                 self.db.ensure_sem_site_flags(int(cid))
-                company = self.db.get_company_by_id(int(cid)) or company
+                company["website_status"] = "sem_site"
 
             result = self.calculate_score(company)
             self.db.save_lead_score(result)

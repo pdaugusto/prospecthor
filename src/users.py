@@ -90,9 +90,8 @@ def _upgrade_password_hash(user_id: int, password: str) -> None:
 
 
 def _connect():
-    if not _DATABASE_URL:
-        raise RuntimeError("DATABASE_URL não configurada")
-    return psycopg2.connect(_DATABASE_URL)
+    from src.db import connect as _db_connect
+    return _db_connect()
 
 
 _schema_ready = False

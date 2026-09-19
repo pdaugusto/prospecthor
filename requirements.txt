@@ -6,3 +6,5 @@ loguru
 click
 playwright
 stripe
+apscheduler>=3.10,<4
+beautifulsoup4

@@ -1622,6 +1622,23 @@
     }
     .shop-note { font-size: 13px; color: var(--muted); }
 
+    .pkg-group .group-label { margin: 34px 0 12px; }
+    .pkg-group .group-sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin: -4px 0 16px;
+    }
+    .pkg .badge.plan {
+      right: 12px; left: auto;
+      background: linear-gradient(135deg, #6d5df6, #8b5cf6);
+      color: #fff;
+    }
+    .pkg .price small {
+      font-size: 12px; font-weight: 700;
+      color: #A67C3D;
+      letter-spacing: 0;
+    }
+
     /* Trust */
     .trust-row {
       display: grid;
@@ -2032,7 +2049,7 @@
               <a class="btn btn-outline btn-lg" href="#como">Ver como funciona ↓</a>
             </div>
             <div class="hero-micro">
-              <span>Sem mensalidade</span>
+              <span>Modelo flexível</span>
               <span>5 leads grátis no cadastro</span>
               <span>Saldo não expira</span>
             </div>
@@ -2387,7 +2404,7 @@
           </div>
           <h2>Trovoedas: pague pelo lead, não por esperança</h2>
           <p class="lead" style="margin-bottom:0;max-width:560px;">
-            Sem mensalidade amarrando o caixa. Você compra créditos (Trovoedas), pede leads quando quiser e gasta só o que usar.
+            Compre créditos (Trovoedas) e peça leads quando quiser — ou assine um plano mensal com cota fixa de leads por dia. Sem surpresa, sem gorjeta.
           </p>
         </div>
 
@@ -2395,7 +2412,7 @@
           <div class="trovo-step">
             <div class="ts-num">01</div>
             <h3>Compra o pacote</h3>
-            <p>Faísca, Raio, Tempestade ou Trovão — quanto maior o volume, menor o custo por lead.</p>
+            <p>Créditos avulsos (Faísca, Raio, Tempestade, Trovão) ou planos mensais (Loki, Odin, Thor, Valhalla) — quanto maior o volume, menor o custo por lead.</p>
           </div>
           <div class="trovo-step">
             <div class="ts-num">02</div>
@@ -2418,8 +2435,8 @@
             </div>
           </div>
           <div class="trovo-bar-item">
-            <strong>Sem mensalidade</strong>
-            <span>só o que consumir</span>
+            <strong>Modelo flexível</strong>
+            <span>crédito avulso ou plano mensal</span>
           </div>
           <div class="trovo-bar-item">
             <strong>Transparente</strong>
@@ -2439,39 +2456,86 @@
               <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
               Preço transparente
             </div>
-            <h2>Pacotes de Trovoedas</h2>
-            <p class="lead">Quanto maior o pacote, menor o custo por lead. Sem cota mensal escondida.</p>
+            <h2>Preços</h2>
+            <p class="lead">Planos mensais para prospecção contínua ou créditos avulsos — quanto maior o volume, menor o custo por lead.</p>
           </div>
         </div>
-        <div class="shop-preview">
-          {% for p in packages %}
-          <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %} reveal">
-            {% if p.save_pct and p.save_pct > 0 %}
-            <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
-            {% endif %}
-            {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
-            <span class="coin-3d" aria-hidden="true">
-              <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
-            </span>
-            <h3>{{ p.name }}</h3>
-            <div class="coins">{{ p.coins }}<small>Trovoedas</small></div>
-            <div class="price">R$ {{ p.price_brl }}</div>
-            <div class="per">
-              {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
+
+        {% set planos = packages | selectattr('daily_cap') | list %}
+        {% set moedas = packages | rejectattr('daily_cap') | list %}
+
+        <div class="pkg-group reveal">
+          <div class="sec-label gold group-label">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            Planos mensais
+          </div>
+          <p class="group-sub">Cota fixa de leads por dia, renovada todo mês.</p>
+          <div class="shop-preview">
+            {% for p in planos %}
+            <div class="pkg reveal">
               {% if p.save_pct and p.save_pct > 0 %}
-              · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
+              <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
               {% endif %}
+              <span class="badge plan" title="{{ p.daily_cap }} leads por dia durante {{ p.duration_days }} dias">{{ p.daily_cap }}/dia · {{ p.duration_days }} dias</span>
+              <span class="coin-3d" aria-hidden="true">
+                <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
+              </span>
+              <h3>{{ p.name }}</h3>
+              <div class="coins">{{ p.coins }}<small>Leads/mês</small></div>
+              <div class="price">R$ {{ p.price_brl }}<small>/mês</small></div>
+              <div class="per">
+                {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
+                {% if p.save_pct and p.save_pct > 0 %}
+                · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
+                {% endif %}
+              </div>
+              <a class="btn btn-outline pkg-cta" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">Assinar</a>
             </div>
-            <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
-              {% if p.slug == 'tempestade' %}Escolher pacote{% else %}Começar{% endif %}
-            </a>
+            {% else %}
+            <div class="pkg reveal">
+              <h3>Em breve</h3>
+              <div class="per">Planos em configuração.</div>
+            </div>
+            {% endfor %}
           </div>
-          {% else %}
-          <div class="pkg reveal">
-            <h3>Em breve</h3>
-            <div class="per">Pacotes em configuração.</div>
+        </div>
+
+        <div class="pkg-group reveal">
+          <div class="sec-label gold group-label">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            Créditos (Trovoedas)
           </div>
-          {% endfor %}
+          <p class="group-sub">Compra avulsa — o saldo não expira e você usa quando quiser.</p>
+          <div class="shop-preview">
+            {% for p in moedas %}
+            <div class="pkg {% if p.slug == 'tempestade' %}hot{% endif %} reveal">
+              {% if p.save_pct and p.save_pct > 0 %}
+              <span class="badge save" title="Em relação ao pacote {{ p.base_label }}">Economize {{ p.save_pct }}%</span>
+              {% endif %}
+              {% if p.slug == 'tempestade' %}<span class="badge">Mais popular</span>{% endif %}
+              <span class="coin-3d" aria-hidden="true">
+                <img src="/static/trovoeda-coin.png?v=15" alt="" width="58" height="58" />
+              </span>
+              <h3>{{ p.name }}</h3>
+              <div class="coins">{{ p.coins }}<small>Trovoedas</small></div>
+              <div class="price">R$ {{ p.price_brl }}</div>
+              <div class="per">
+                {% if p.per_lead %}≈ R$ {{ p.per_lead }} / lead{% endif %}
+                {% if p.save_pct and p.save_pct > 0 %}
+                · <strong class="save">−{{ p.save_pct }}% vs {{ p.base_label }}</strong>
+                {% endif %}
+              </div>
+              <a class="btn {% if p.slug == 'tempestade' %}pkg-cta{% else %}btn-outline pkg-cta{% endif %}" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
+                {% if p.slug == 'tempestade' %}Escolher pacote{% else %}Começar{% endif %}
+              </a>
+            </div>
+            {% else %}
+            <div class="pkg reveal">
+              <h3>Em breve</h3>
+              <div class="per">Pacotes em configuração.</div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
         <div class="shop-cta reveal">
           <a class="btn btn-gold btn-xl" href="/register">Começar com 5 Trovoedas grátis</a>
@@ -2481,8 +2545,8 @@
         <div class="trust-row reveal">
           <div class="trust-item">
             <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-            <strong>Sem mensalidade</strong>
-            <span>Pague só o que usar</span>
+            <strong>Flexível</strong>
+            <span>Créditos avulsos ou plano mensal</span>
           </div>
           <div class="trust-item">
             <span class="ico-bolt gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
@@ -2545,7 +2609,7 @@
               </summary>
               <p>
                 Cada lead passa por filtro de contato utilizável e score de propensão.
-                Comece com o bônus de 5 leads grátis e julgue na prática — sem mensalidade amarrando você.
+                Comece com o bônus de 5 leads grátis e julgue na prática — sem fidelidade e sem surpresa.
               </p>
             </details>
             <details>
@@ -2554,9 +2618,9 @@
                 <span class="faq-q">Trovoedas expiram? Tem mensalidade?</span>
               </summary>
               <p>
-                <strong style="color:var(--text)">Não expiram</strong> e
-                <strong style="color:var(--text)">não tem mensalidade fixa</strong>.
-                Você compra quando quiser, gasta quando quiser. 1 Trovoeda = 1 lead na conta.
+                Trovoedas avulsas <strong style="color:var(--text)">não expiram</strong>.
+                Quem assina um plano mensal (Loki, Odin, Thor ou Valhalla) renova todo mês com cota fixa de leads por dia —
+                sem fidelidade, cancele quando quiser. 1 Trovoeda = 1 lead na conta.
               </p>
             </details>
           </div>
@@ -2614,7 +2678,7 @@
               <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
             </div>
             <p class="t-quote">
-              Uso as Trovoedas sem medo de mensalidade. Comprei um pacote, pedi 25 leads de odontologia e a equipe já está em follow-up. Valeu o investimento.
+              Uso as Trovoedas sem medo de contratar. Comprei um pacote, pedi 25 leads de odontologia e a equipe já está em follow-up. Valeu o investimento.
             </p>
             <div class="t-person">
               <img class="t-avatar" src="/static/testimonials/marcos.jpg?v=2" alt="Marcos Oliveira" width="48" height="48" loading="lazy" decoding="async" />
@@ -2653,7 +2717,7 @@
           </div>
           <div class="t-proof-item">
             <span class="t-proof-dot" aria-hidden="true"></span>
-            <span><strong>Sem mensalidade</strong> fixa</span>
+            <span><strong>Créditos</strong> ou plano mensal</span>
           </div>
         </div>
       </div>
@@ -2708,7 +2772,7 @@
           thor: 'Plano Thor (30 leads por dia)',
           valhalla: 'Plano Valhalla (50 leads por dia)'
         };
-        msg = 'Oi, tudo bem? Tenho interesse no ' + (planDetails[name] || name) + ' do ProspecThor. Quero saber como funciona e como posso contratar. Pode me ajudar?';
+        msg = 'Oi, tudo bem? Tenho interesse no ' + (planDetails[slug] || name) + ' do ProspecThor. Quero saber como funciona e como posso contratar. Pode me ajudar?';
       } else {
         msg = 'Oi, tudo bem? Quero comprar o pacote ' + name + ' com ' + coins + ' Trovoedas do ProspecThor. Como faço?';
       }

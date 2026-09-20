@@ -200,6 +200,68 @@ def _looks_mobile(phone: Any) -> bool:
     return len(digits) >= 11 and digits[2:3] == "9"
 
 
+def normalize_br_whatsapp(raw: Any) -> str:
+    """Normaliza celular BR para E.164 sem '+': 55 + DDD + 9 + 8 dígitos.
+
+    Aceita '11999991234', '(11) 99999-1234', '5511999991234', '+55 11 99999-1234'.
+    Retorna '' se vazio. NÃO valida se é celular — use is_valid_br_mobile().
+    """
+    digits = re.sub(r"\D", "", str(raw or ""))
+    if not digits:
+        return ""
+    # remove 0 inicial de DDI alternativo (ex: 0055...)
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if digits.startswith("55") and len(digits) in (12, 13):
+        return digits
+    if len(digits) in (10, 11):
+        return "55" + digits
+    return digits
+
+
+def is_valid_br_mobile(raw: Any) -> bool:
+    """True se é celular BR válido: 55 + DDD válido + 9 + 8 dígitos."""
+    digits = normalize_br_whatsapp(raw)
+    if not re.fullmatch(r"55\d{11}", digits or ""):
+        return False
+    national = digits[2:]  # DDD + 9 + 8
+    ddd = int(national[:2])
+    if ddd < 11 or ddd > 99:
+        return False
+    if national[2] != "9":
+        return False  # fixo (8 dígitos) não serve — exigimos celular
+    if len(set(national)) == 1:
+        return False  # 11111111111 etc
+    # DDDs com primeiro dígito 0 são inválidos
+    if national[0] == "0":
+        return False
+    return True
+
+
+def format_br_phone(raw: Any) -> str:
+    """'(11) 99999-1234' para exibir. Retorna original limpo se inválido."""
+    digits = normalize_br_whatsapp(raw)
+    if len(digits) == 13 and digits.startswith("55"):
+        n = digits[2:]
+        return f"({n[:2]}) {n[2:7]}-{n[7:]}"
+    if len(digits) == 12 and digits.startswith("55"):
+        n = digits[2:]
+        return f"({n[:2]}) {n[2:6]}-{n[6:]}"
+    return (str(raw or "")).strip()
+
+
+def wa_link(raw: Any, text: str = "") -> str | None:
+    """Link wa.me só para celular válido. Retorna None se inválido."""
+    if not is_valid_br_mobile(raw):
+        return None
+    base = f"https://wa.me/{normalize_br_whatsapp(raw)}"
+    if (text or "").strip():
+        import urllib.parse
+
+        return base + "?text=" + urllib.parse.quote((text or "").strip())
+    return base
+
+
 def primary_contact_channel(company: dict[str, Any]) -> str:
     """
     Canal principal no painel:

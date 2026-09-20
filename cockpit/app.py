@@ -32,7 +32,12 @@ MISSIONS_PATH = DATA / "missions.json"
 STATE_PATH = DATA / "cockpit_state.json"
 PORT = int(os.getenv("COCKPIT_PORT") or "5055")
 
-app = Flask(__name__, template_folder=str(Path(__file__).parent / "templates"))
+app = Flask(
+    __name__,
+    template_folder=str(Path(__file__).parent / "templates"),
+    static_folder=str(ROOT / "static"),
+    static_url_path="/static",
+)
 
 # Modo "PC fraco": ativo só quando MEMORY_SAFE_MODE=1 no .env local.
 # Na nuvem (sem a flag) a limpeza de processos NÃO roda — robô "bala".

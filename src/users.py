@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import re
+import unicodedata
 from datetime import datetime
 from typing import Any
 
@@ -160,6 +161,29 @@ def ensure_schema() -> None:
             WHERE signup_ip IS NOT NULL AND btrim(signup_ip) <> '';
             """
         )
+        # Anti-abuso forte: 1 conta por WhatsApp e por e-mail (best-effort;
+        # se já existirem duplicados legados o índice falha e o bloqueio segue via código)
+        for _idx_sql in (
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_whatsapp_unique
+            ON app_users (btrim(regexp_replace(COALESCE(whatsapp, ''), '\\D', '', 'g')))
+            WHERE btrim(regexp_replace(COALESCE(whatsapp, ''), '\\D', '', 'g')) <> '';
+            """,
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_email_unique
+            ON app_users (lower(btrim(COALESCE(email, ''))))
+            WHERE btrim(COALESCE(email, '')) <> '';
+            """,
+        ):
+            try:
+                cur.execute("SAVEPOINT _antifarm_idx;")
+                cur.execute(_idx_sql)
+                cur.execute("RELEASE SAVEPOINT _antifarm_idx;")
+            except Exception:
+                try:
+                    cur.execute("ROLLBACK TO SAVEPOINT _antifarm_idx;")
+                except Exception:
+                    pass
 
         # Admin principal FIXO = patrao (nunca o username "admin" do amigo)
         principal = _PRINCIPAL_USERNAME
@@ -351,6 +375,41 @@ def get_user_by_username(username: str) -> dict[str, Any] | None:
         conn.close()
 
 
+def get_user_by_email(email: str) -> dict[str, Any] | None:
+    """Busca por e-mail (case-insensitive). Retorna None se não achar."""
+    email_n = (email or "").strip().lower()
+    if not email_n:
+        return None
+    try:
+        ensure_schema()
+    except Exception:
+        pass
+    conn = _connect()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, username, role, monthly_quota, active, cities, niches, label,
+                   COALESCE(trovoedas_balance, 0) AS trovoedas_balance,
+                   COALESCE(email, '') AS email,
+                   COALESCE(display_name, '') AS display_name
+            FROM app_users WHERE lower(btrim(COALESCE(email, ''))) = %s LIMIT 1;
+            """,
+            (email_n,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return None
+        u = dict(row)
+        u["cities"] = _parse_json_list(u.get("cities"))
+        u["niches"] = _parse_json_list(u.get("niches"))
+        u["trovoedas_balance"] = int(u.get("trovoedas_balance") or 0)
+        return u
+    finally:
+        conn.close()
+
+
 def get_user_by_id(user_id: int) -> dict[str, Any] | None:
     if not user_id:
         return None
@@ -398,6 +457,8 @@ def list_users() -> list[dict[str, Any]]:
                    u.label, u.created_at,
                    COALESCE(u.trovoedas_balance, 0) AS trovoedas_balance,
                    COALESCE(u.email, '') AS email,
+                   COALESCE(u.whatsapp, '') AS whatsapp,
+                   COALESCE(u.signup_ip, '') AS signup_ip,
                    COALESCE(u.display_name, '') AS display_name,
                    u.plan_slug, u.daily_quota,
                    COALESCE(tm.month_count, 0) AS assigned_this_month,
@@ -551,6 +612,65 @@ def count_users_by_signup_ip(ip: str) -> int:
         return 0
 
 
+def _norm_digits(value: str | None) -> str:
+    return re.sub(r"\D", "", str(value or ""))
+
+
+def whatsapp_taken(whatsapp: str) -> bool:
+    """True se este WhatsApp (só dígitos, com ou sem 55) já tem conta."""
+    digits = _norm_digits(whatsapp)
+    if not digits or not _DATABASE_URL:
+        return False
+    national = digits[2:] if digits.startswith("55") and len(digits) in (12, 13) else digits
+    candidates = {digits, national, "55" + national} if national else {digits}
+    try:
+        ensure_schema()
+        conn = _connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT 1 FROM app_users
+                WHERE btrim(regexp_replace(COALESCE(whatsapp, ''), '\\D', '', 'g'))
+                      = ANY(%s)
+                LIMIT 1;
+                """,
+                (list(candidates),),
+            )
+            hit = cur.fetchone()
+            cur.close()
+            return bool(hit)
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("[Users] whatsapp_taken: %s", exc)
+        return False
+
+
+def email_taken(email: str) -> bool:
+    """True se este e-mail (case-insensitive) já tem conta."""
+    email_n = (email or "").strip().lower()
+    if not email_n or not _DATABASE_URL:
+        return False
+    try:
+        ensure_schema()
+        conn = _connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT 1 FROM app_users WHERE lower(btrim(COALESCE(email, ''))) = %s LIMIT 1;",
+                (email_n,),
+            )
+            hit = cur.fetchone()
+            cur.close()
+            return bool(hit)
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("[Users] email_taken: %s", exc)
+        return False
+
+
 def create_user(
     username: str,
     password: str,
@@ -577,12 +697,25 @@ def create_user(
     else:
         role = "client"
     email_n = (email or "").strip().lower()
-    wa = re.sub(r"\D", "", str(whatsapp or ""))
+    from src.contact import is_valid_br_mobile, normalize_br_whatsapp
+
+    wa = normalize_br_whatsapp(whatsapp)
+    if whatsapp and not is_valid_br_mobile(whatsapp):
+        raise ValueError(
+            "Use um celular com DDD + 9 dígitos (ex: 11 99999-1234). Número fixo não serve para WhatsApp."
+        )
     dname = (display_name or label or username).strip()
     terms_at = datetime.now().isoformat() if terms_accepted else None
     ip_n = normalize_signup_ip(signup_ip)
 
-    # Cadastro público: 1 conta por IP (evita farm de bônus / multi-conta)
+    # Cadastro público: 1 conta por pessoa — WhatsApp e e-mail únicos.
+    # IP segue como sinal (família/empresa no mesmo Wi-Fi não é bloqueada se os dados forem únicos).
+    if wa and whatsapp_taken(wa):
+        raise ValueError(
+            "Este WhatsApp já tem conta. Entre com a conta existente ou fale com o suporte."
+        )
+    if email_n and email_taken(email_n):
+        raise ValueError("Este e-mail já está cadastrado. Entre com a conta existente.")
     if enforce_ip_limit and ip_n:
         existing = count_users_by_signup_ip(ip_n)
         if existing > 0:

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova senha — ProspecTHOR</title>
+  <meta name="theme-color" content="#05070b" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png?v=2" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=2" />
+  <link rel="manifest" href="/static/site.webmanifest?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#05070b; --card:#0c111a; --border:#1a2233; --text:#e8eef7; --muted:#8b9bb4; --muted-2:#5a6b82; --neon:#00d4ff; --neon-dim:rgba(0,212,255,.12); --danger:#ff4d6a; --font:"Inter",system-ui,-apple-system,sans-serif; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:var(--font); color:var(--text); background:var(--bg); min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    .bg { position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(ellipse 50% 40% at 50% 0%, rgba(0,212,255,.1), transparent 55%), var(--bg); }
+    .wrap { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px 32px; width:100%; }
+    .brand { display:inline-flex; align-items:center; gap:11px; margin-bottom:28px; }
+    .brand-mark { width:40px; height:40px; border-radius:12px; background:linear-gradient(145deg,#00d4ff 0%,#0a6fa8 100%); display:grid; place-items:center; overflow:hidden; }
+    .brand-mark img { width:26px; height:26px; display:block; }
+    .brand-word { font-size:16px; font-weight:800; color:#fff; }
+    .brand-word span { color:var(--neon); }
+    .card { width:100%; max-width:400px; padding:32px 28px 26px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(165deg,rgba(14,18,28,.98),rgba(8,10,16,.99)); position:relative; }
+    h1 { font-size:22px; font-weight:900; margin-bottom:6px; }
+    .sub { font-size:13px; color:var(--muted); margin-bottom:24px; }
+    .error { background:rgba(255,77,106,.08); border:1px solid rgba(255,77,106,.35); color:#ff8fa3; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:18px; }
+    .ok { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.35); color:#86efac; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:18px; line-height:1.5; }
+    .field { margin-bottom:14px; }
+    label { display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted-2); margin-bottom:7px; }
+    .pw-wrap { position:relative; }
+    .pw-wrap input { width:100%; padding:13px 44px 13px 14px; background:#070b12; border:1px solid var(--border); border-radius:12px; color:#fff; font-size:14px; font-family:var(--font); outline:none; }
+    .pw-wrap input:focus { border-color:rgba(0,212,255,.55); box-shadow:0 0 0 3px var(--neon-dim); }
+    .pw-eye { position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; padding:8px; line-height:1; }
+    .pw-eye:hover { color:var(--text); }
+    .btn-enter { width:100%; border:none; border-radius:12px; padding:14px 16px; margin-top:8px; font-size:14px; font-weight:800; font-family:var(--font); cursor:pointer; color:#031018; background:linear-gradient(135deg,#3de0ff 0%,var(--neon) 40%,#0a8ec4 100%); }
+    .foot { margin-top:22px; text-align:center; font-size:13px; color:var(--muted); }
+    .foot a { color:var(--neon); font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark"><img src="/static/thor-mask.png" alt="" width="26" height="26" /></span><span class="brand-word">Prospec<span>THOR</span></span></a>
+    <div class="card">
+      <h1>Nova senha</h1>
+      {% if done %}
+        <div class="ok" role="status">Senha atualizada! <a href="/entrar" style="color:#fff;font-weight:800;">Entrar agora →</a></div>
+      {% else %}
+        <p class="sub">Escolha uma senha com no mínimo 8 caracteres.</p>
+        {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+        <form method="POST">
+          <div class="field">
+            <label for="password">Nova senha</label>
+            <div class="pw-wrap">
+              <input type="password" id="password" name="password" required minlength="8" maxlength="128" autocomplete="new-password" />
+              <button type="button" class="pw-eye" data-for="password" aria-label="Mostrar senha">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="password2">Repetir senha</label>
+            <div class="pw-wrap">
+              <input type="password" id="password2" name="password2" required minlength="8" maxlength="128" autocomplete="new-password" />
+              <button type="button" class="pw-eye" data-for="password2" aria-label="Mostrar senha">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="btn-enter">Salvar nova senha →</button>
+        </form>
+      {% endif %}
+      <div class="foot"><a href="/entrar">Voltar ao login</a></div>
+    </div>
+  </div>
+  <script>
+    document.querySelectorAll('.pw-eye').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var inp = document.getElementById(btn.getAttribute('data-for'));
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -57,10 +57,36 @@ app.config.update(
     SESSION_COOKIE_PATH="/",
 )
 
-# Rate limit simples de login (por IP) — protege brute force em serverless (best-effort)
+# Rate limit de login por IP: memória (rápido) + Postgres (vale entre instâncias Vercel).
+# Sem DATABASE_URL, só a memória protege (best-effort local).
 _login_attempts: dict[str, list[float]] = defaultdict(list)
 _LOGIN_MAX = 12
 _LOGIN_WINDOW_S = 600  # 10 min
+_RATE_READY = False
+
+
+def _ensure_rate_limit_schema():
+    global _RATE_READY
+    if _RATE_READY or not DATABASE_URL:
+        return
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                ip            TEXT PRIMARY KEY,
+                fails         INTEGER NOT NULL DEFAULT 0,
+                window_start  TEXT NOT NULL DEFAULT (NOW()::TEXT)
+            );
+            """
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        _RATE_READY = True
+    except Exception:
+        pass
 
 _SOCIAL_MARKERS = (
     "instagram.com", "facebook.com", "fb.com", "linktr.ee",
@@ -73,7 +99,8 @@ _LIST_COLS = """
     instagram_url, instagram_username, lead_score, lead_class,
     lead_problems, lead_services, lead_priority,
     contacted_at, notes, created_at, scraped_at,
-    assigned_to, assigned_at
+    assigned_to, assigned_at,
+    contact_status, is_favorite
 """
 
 _SQL_RAIO_BASE = f"""
@@ -274,15 +301,24 @@ def _filter_leads_for_session(leads: list, scope: str = "free", owner_id: int | 
     return out
 
 
-def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None = None):
+def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None = None, q: str | None = None):
     """
     Leads Raio:
     - Patrão: por padrão SÓ sobras (assigned_to NULL); scope=all|user sob demanda
     - Cliente: SOMENTE assigned_to == user_id
+    - q: busca server-side (nome, cidade, telefone, nicho, endereço) via ILIKE
     """
     uid_int = _effective_user_id()
     uname = (_session_user().get("username") or "").lower().strip()
     is_patrao = _is_patrao_view()
+
+    if q is None:
+        try:
+            q = request.args.get("q") or None
+        except Exception:
+            q = None
+    q = (q or "").strip()[:60]
+    q_esc = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") if q else ""
 
     if is_patrao:
         if scope is None:
@@ -294,7 +330,7 @@ def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None
         scope = "own"
         owner_id = uid_int
 
-    cache_key = f"{scope}:{owner_id}:{uid_int}:{uname}"
+    cache_key = f"{scope}:{owner_id}:{uid_int}:{uname}:{q_esc.lower()}"
 
     now = time.time()
     if (
@@ -317,33 +353,48 @@ def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None
             ensure_schema()
         except Exception:
             pass
+        try:
+            _ensure_leads_extra_schema()
+        except Exception:
+            pass
 
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
+        search_sql = ""
+        search_params: list = []
+        if q_esc:
+            like = f"%{q_esc}%"
+            search_sql = (
+                " AND (name ILIKE %s ESCAPE '\\' OR city ILIKE %s ESCAPE '\\'"
+                " OR phone ILIKE %s ESCAPE '\\' OR niche ILIKE %s ESCAPE '\\'"
+                " OR address ILIKE %s ESCAPE '\\')"
+            )
+            search_params = [like] * 5
+
         if is_patrao:
             if scope == "all":
-                sql = _SQL_RAIO_BASE + " ORDER BY lead_score DESC NULLS LAST;"
-                cur.execute(sql)
+                sql = _SQL_RAIO_BASE + search_sql + " ORDER BY lead_score DESC NULLS LAST;"
+                cur.execute(sql, search_params)
             elif scope == "user" and owner_id:
                 sql = (
                     _SQL_RAIO_BASE
-                    + " AND assigned_to = %s ORDER BY lead_score DESC NULLS LAST;"
+                    + " AND assigned_to = %s" + search_sql + " ORDER BY lead_score DESC NULLS LAST;"
                 )
-                cur.execute(sql, (int(owner_id),))
+                cur.execute(sql, [int(owner_id)] + search_params)
             else:
                 # default: sobras
                 sql = (
                     _SQL_RAIO_BASE
-                    + " AND assigned_to IS NULL ORDER BY lead_score DESC NULLS LAST;"
+                    + " AND assigned_to IS NULL" + search_sql + " ORDER BY lead_score DESC NULLS LAST;"
                 )
-                cur.execute(sql)
+                cur.execute(sql, search_params)
         else:
             sql = (
                 _SQL_RAIO_BASE
-                + " AND assigned_to = %s ORDER BY lead_score DESC NULLS LAST;"
+                + " AND assigned_to = %s" + search_sql + " ORDER BY lead_score DESC NULLS LAST;"
             )
-            cur.execute(sql, (uid_int,))
+            cur.execute(sql, [uid_int] + search_params)
 
         rows = cur.fetchall()
         cur.close()
@@ -433,6 +484,10 @@ def get_lead_by_id(lead_id):
         if not DATABASE_URL:
             return None
         try:
+            _ensure_leads_extra_schema()
+        except Exception:
+            pass
+        try:
             conn = get_db()
             cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute(f"SELECT {_LIST_COLS} FROM companies WHERE id = %s LIMIT 1;", (lead_id,))
@@ -453,6 +508,52 @@ def _invalidate_cache():
     _cache["leads_at"] = {}
     _cache["stats"] = {}
     _cache["stats_at"] = {}
+
+
+_LEADS_EXTRA_READY = False
+
+
+def _ensure_leads_extra_schema():
+    """Adiciona contact_status/is_favorite em companies se faltar (best-effort)."""
+    global _LEADS_EXTRA_READY
+    if _LEADS_EXTRA_READY or not DATABASE_URL:
+        return
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        for col, ddl in (
+            ("contact_status", "ALTER TABLE companies ADD COLUMN contact_status TEXT DEFAULT 'novo';"),
+            ("is_favorite", "ALTER TABLE companies ADD COLUMN is_favorite BOOLEAN DEFAULT FALSE;"),
+        ):
+            cur.execute(
+                """
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'companies' AND column_name = %s
+                """,
+                (col,),
+            )
+            if not cur.fetchone():
+                cur.execute(ddl)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_companies_fav ON companies (assigned_to, is_favorite);"
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        _LEADS_EXTRA_READY = True
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        try:
+            cur.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.before_request
@@ -510,11 +611,79 @@ def _login_rate_limited(ip: str) -> bool:
     window = _login_attempts[ip]
     # limpa antigos
     _login_attempts[ip] = [t for t in window if now - t < _LOGIN_WINDOW_S]
-    return len(_login_attempts[ip]) >= _LOGIN_MAX
+    if len(_login_attempts[ip]) >= _LOGIN_MAX:
+        return True
+    # fonte da verdade entre instâncias: Postgres
+    if not DATABASE_URL or not (ip or "").strip():
+        return False
+    try:
+        _ensure_rate_limit_schema()
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT fails, window_start FROM login_attempts WHERE ip = %s;", (ip,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return False
+        fails, window_start = int(row[0] or 0), str(row[1] or "")
+        try:
+            start_ts = datetime.fromisoformat(window_start).timestamp()
+        except Exception:
+            start_ts = 0
+        if now - start_ts >= _LOGIN_WINDOW_S:
+            return False
+        return fails >= _LOGIN_MAX
+    except Exception:
+        return False
 
 
 def _login_register_fail(ip: str) -> None:
     _login_attempts[ip].append(time.time())
+    if not DATABASE_URL or not (ip or "").strip():
+        return
+    try:
+        _ensure_rate_limit_schema()
+        now_iso = datetime.now().isoformat()
+        cutoff_iso = datetime.fromtimestamp(time.time() - _LOGIN_WINDOW_S).isoformat()
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO login_attempts (ip, fails, window_start)
+            VALUES (%s, 1, %s)
+            ON CONFLICT (ip) DO UPDATE SET
+                fails = CASE WHEN login_attempts.window_start < %s THEN 1
+                             ELSE login_attempts.fails + 1 END,
+                window_start = CASE WHEN login_attempts.window_start < %s THEN %s
+                                    ELSE login_attempts.window_start END;
+            """,
+            (ip, now_iso, cutoff_iso, cutoff_iso, now_iso),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+
+
+def _login_clear(ip: str) -> None:
+    """Sucesso no login: zera contador (memória + banco)."""
+    try:
+        _login_attempts.pop(ip, None)
+    except Exception:
+        pass
+    if not DATABASE_URL or not (ip or "").strip():
+        return
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM login_attempts WHERE ip = %s;", (ip,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
 
 
 def _packages_for_view():
@@ -643,40 +812,46 @@ def register():
             error = "Este nome de usuário não está disponível."
         else:
             try:
-                from src.users import (
-                    create_user,
-                    get_user_by_username,
-                    count_users_by_signup_ip,
-                    normalize_signup_ip,
-                )
-                from src.trovoeda import ensure_schema as t_schema
-                t_schema()
-                ip_n = normalize_signup_ip(client_ip)
-                # Anti multi-conta: 1 cadastro público por IP
-                if ip_n and count_users_by_signup_ip(ip_n) > 0:
-                    error = (
-                        "Já existe uma conta criada nesta rede/dispositivo. "
-                        "Entre com a conta existente ou fale com o suporte se precisar de ajuda."
-                    )
-                elif get_user_by_username(form["username"]):
-                    error = "Usuário já existe. Escolha outro login."
+                from src.contact import format_br_phone, is_valid_br_mobile, normalize_br_whatsapp
+
+                if not is_valid_br_mobile(form["whatsapp"]):
+                    error = "Use um celular com DDD + 9 dígitos (ex: 11 99999-1234). Número fixo não serve."
                 else:
-                    import psycopg2
-                    # check email
+                    form["whatsapp"] = normalize_br_whatsapp(form["whatsapp"]) or form["whatsapp"]
                     try:
-                        conn = psycopg2.connect(os.getenv("DATABASE_URL") or "")
-                        cur = conn.cursor()
-                        cur.execute(
-                            "SELECT 1 FROM app_users WHERE lower(COALESCE(email,'')) = %s LIMIT 1;",
-                            (form["email"],),
-                        )
-                        if cur.fetchone():
-                            error = "Este e-mail já está cadastrado."
-                        cur.close()
-                        conn.close()
+                        form["whatsapp_display"] = format_br_phone(form["whatsapp"])
                     except Exception:
                         pass
-                    if not error:
+            except Exception:
+                pass
+            if not error:
+                try:
+                    from src.users import (
+                        create_user,
+                        email_taken,
+                        get_user_by_username,
+                        count_users_by_signup_ip,
+                        normalize_signup_ip,
+                        whatsapp_taken,
+                    )
+                    from src.trovoeda import ensure_schema as t_schema
+
+                    t_schema()
+                    ip_n = normalize_signup_ip(client_ip)
+                    # Anti-abuso: WhatsApp e e-mail únicos primeiro (mensagem específica),
+                    # IP por último (mesmo Wi-Fi com dados únicos não é bloqueado aqui).
+                    if whatsapp_taken(form["whatsapp"]):
+                        error = "Este WhatsApp já tem conta. Entre com a conta existente."
+                    elif email_taken(form["email"]):
+                        error = "Este e-mail já está cadastrado. Entre com a conta existente."
+                    elif ip_n and count_users_by_signup_ip(ip_n) > 0:
+                        error = (
+                            "Já existe uma conta criada nesta rede/dispositivo. "
+                            "Entre com a conta existente ou fale com o suporte se precisar de ajuda."
+                        )
+                    elif get_user_by_username(form["username"]):
+                        error = "Usuário já existe. Escolha outro login."
+                    else:
                         user = create_user(
                             username=form["username"],
                             password=password,
@@ -708,18 +883,22 @@ def register():
                         except Exception:
                             pass
                         return redirect("/shop?welcome=1")
-            except Exception as exc:
-                msg = str(exc)
-                if "já existe uma conta" in msg.lower() or "rede/dispositivo" in msg.lower():
-                    error = msg
-                elif "unique" in msg.lower() or "duplicate" in msg.lower():
-                    error = "Usuário ou e-mail já cadastrado."
-                else:
-                    error = "Não foi possível criar a conta. Tente de novo."
-                    try:
-                        app.logger.warning("register fail: %s", exc)
-                    except Exception:
-                        pass
+                except Exception as exc:
+                    msg = str(exc)
+                    if "celular com DDD" in msg or "fixo não serve" in msg.lower():
+                        error = msg
+                    elif "WhatsApp já tem conta" in msg or "e-mail já está cadastrado" in msg.lower():
+                        error = msg
+                    elif "já existe uma conta" in msg.lower() or "rede/dispositivo" in msg.lower():
+                        error = msg
+                    elif "unique" in msg.lower() or "duplicate" in msg.lower():
+                        error = "Usuário ou e-mail já cadastrado."
+                    else:
+                        error = "Não foi possível criar a conta. Tente de novo."
+                        try:
+                            app.logger.warning("register fail: %s", exc)
+                        except Exception:
+                            pass
     return render_template("register.html", error=error, form=form)
 
 
@@ -795,6 +974,10 @@ def login():
                 session["role"] = role
                 session["label"] = user.get("label") or raw_uname
                 session["user_id"] = user.get("id")
+            try:
+                _login_clear(ip)
+            except Exception:
+                pass
             return redirect("/")
         _login_register_fail(ip)
         error = "Usuário ou senha incorretos."
@@ -812,6 +995,177 @@ def logout():
         path=app.config.get("SESSION_COOKIE_PATH") or "/",
     )
     return resp
+
+
+_RESET_READY = False
+
+
+def _ensure_password_reset_schema():
+    """Tabela de tokens de redefinição de senha (best-effort)."""
+    global _RESET_READY
+    if _RESET_READY or not DATABASE_URL:
+        return
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id          SERIAL PRIMARY KEY,
+                user_id     INTEGER NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+                token_hash  TEXT NOT NULL UNIQUE,
+                expires_at  TEXT NOT NULL,
+                used        INTEGER NOT NULL DEFAULT 0,
+                created_at  TEXT NOT NULL DEFAULT (NOW()::TEXT)
+            );
+            """
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);"
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        _RESET_READY = True
+    except Exception:
+        pass
+
+
+def _send_password_reset_email(to_email: str, reset_url: str) -> bool:
+    """Envia link por SMTP se configurado. Retorna False se sem SMTP (logui o link)."""
+    host = (os.getenv("SMTP_HOST") or "").strip()
+    if not host:
+        try:
+            app.logger.warning("password reset (sem SMTP) %s -> %s", to_email, reset_url)
+        except Exception:
+            pass
+        return False
+    try:
+        import smtplib
+        from email.message import EmailMessage
+
+        port = int(os.getenv("SMTP_PORT") or "587")
+        user = (os.getenv("SMTP_USER") or "").strip()
+        pwd = os.getenv("SMTP_PASS") or ""
+        mail_from = (os.getenv("SMTP_FROM") or user or "no-reply@prospecthor.online").strip()
+        msg = EmailMessage()
+        msg["Subject"] = "ProspecTHOR — redefinir sua senha"
+        msg["From"] = f"ProspecTHOR <{mail_from}>"
+        msg["To"] = to_email
+        msg.set_content(
+            "Olá!\n\nVocê pediu para redefinir sua senha no ProspecTHOR.\n"
+            f"Acesse o link (vale por 1 hora):\n{reset_url}\n\n"
+            "Se não foi você, ignore este e-mail.\n"
+        )
+        with smtplib.SMTP(host, port, timeout=15) as s:
+            s.starttls()
+            if user:
+                s.login(user, pwd)
+            s.send_message(msg)
+        return True
+    except Exception as exc:
+        try:
+            app.logger.warning("password reset email falhou: %s", exc)
+        except Exception:
+            pass
+        return False
+
+
+@app.route("/esqueci", methods=["GET", "POST"])
+def forgot_password():
+    """Pede e-mail, gera token de 1h e envia link (nunca revela se o e-mail existe)."""
+    if session.get("logged_in"):
+        return redirect("/")
+    error = None
+    sent = False
+    if request.method == "POST":
+        ip = _client_ip()
+        if _login_rate_limited(ip):
+            return render_template("forgot.html", error="Muitas tentativas. Aguarde alguns minutos.", sent=False), 429
+        email = (request.form.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            error = "Informe um e-mail válido."
+        else:
+            try:
+                _ensure_password_reset_schema()
+                from src.users import get_user_by_email
+
+                user = get_user_by_email(email)
+                if user:
+                    token = secrets.token_urlsafe(32)
+                    digest = _hashlib.sha256(token.encode("utf-8")).hexdigest()
+                    expires = (datetime.now() + timedelta(hours=1)).isoformat()
+                    try:
+                        conn = get_db()
+                        cur = conn.cursor()
+                        cur.execute(
+                            "INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (%s, %s, %s);",
+                            (int(user["id"]), digest, expires),
+                        )
+                        conn.commit()
+                        cur.close()
+                        conn.close()
+                    except Exception:
+                        pass
+                    base = (request.url_root or "").rstrip("/")
+                    reset_url = f"{base}/reset/{token}"
+                    _send_password_reset_email(email, reset_url)
+                _login_register_fail(ip)
+            except Exception:
+                pass
+            # resposta genérica anti-enumeração
+            sent = True
+    return render_template("forgot.html", error=error, sent=sent)
+
+
+@app.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    """Valida token (1h, uso único) e define nova senha."""
+    if session.get("logged_in"):
+        return redirect("/")
+    error = None
+    try:
+        _ensure_password_reset_schema()
+    except Exception:
+        pass
+    digest = _hashlib.sha256((token or "").encode("utf-8")).hexdigest()
+    row = None
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM password_resets WHERE token_hash = %s LIMIT 1;", (digest,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            row = dict(row)
+    except Exception:
+        row = None
+    valid = bool(row) and not int(row.get("used") or 0) and str(row.get("expires_at") or "") > datetime.now().isoformat()
+    if not valid:
+        return render_template("reset.html", error="Link inválido ou expirado. Peça um novo em /esqueci.", done=False, token=token)
+    if request.method == "POST":
+        pwd = request.form.get("password") or ""
+        pwd2 = request.form.get("password2") or ""
+        if len(pwd) < 8:
+            error = "Senha deve ter no mínimo 8 caracteres."
+        elif pwd != pwd2:
+            error = "As senhas não conferem."
+        else:
+            try:
+                from src.users import update_user
+
+                update_user(int(row["user_id"]), password=pwd)
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute("UPDATE password_resets SET used = 1 WHERE id = %s;", (int(row["id"]),))
+                conn.commit()
+                cur.close()
+                conn.close()
+                return render_template("reset.html", error=None, done=True, token=token)
+            except Exception:
+                error = "Não foi possível redefinir. Tente de novo."
+    return render_template("reset.html", error=error, done=False, token=token)
 
 
 @app.route("/")
@@ -1436,10 +1790,12 @@ def api_impersonate_stop():
 def api_leads():
     # Patrão: scope=free (default) | all | user&user_id=
     # Cliente: só os dele
+    # q: busca server-side opcional (?q=maria)
+    q = (request.args.get("q") or "").strip()[:60] or None
     if _is_patrao_view():
         scope, owner_id = _parse_leads_scope()
-        return jsonify(get_all_leads(use_cache=True, scope=scope, owner_id=owner_id))
-    return jsonify(get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id()))
+        return jsonify(get_all_leads(use_cache=True, scope=scope, owner_id=owner_id, q=q))
+    return jsonify(get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id(), q=q))
 
 
 @app.route("/api/leads/<int:lead_id>")
@@ -1471,6 +1827,10 @@ def api_update_status(lead_id):
     try:
         from src.audit import log_action
         audit_uid, audit_uname = _audit_actor()
+        try:
+            _ensure_leads_extra_schema()
+        except Exception:
+            pass
         conn = get_db()
         cur = conn.cursor()
         now = datetime.now().isoformat()
@@ -1501,6 +1861,14 @@ def api_update_status(lead_id):
                     """,
                     (lead_id,),
                 )
+            # espelha no campo dedicado (o front já lê contact_status)
+            try:
+                cur.execute(
+                    "UPDATE companies SET contact_status = %s WHERE id = %s",
+                    ("novo" if status == "recuperar" else status, lead_id),
+                )
+            except Exception:
+                pass
             log_action(
                 f"status_{status}",
                 user_id=audit_uid,
@@ -1538,6 +1906,59 @@ def api_update_status(lead_id):
         conn.close()
         _invalidate_cache()
         return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/leads/<int:lead_id>/favorite", methods=["PUT", "POST"])
+@login_required
+def api_toggle_favorite(lead_id):
+    """Favorita/desfavorita um lead (cliente só os dele)."""
+    lead = get_lead_by_id(lead_id)
+    if not lead:
+        return jsonify({"error": "Not found"}), 404
+    data = request.get_json(silent=True) or {}
+    if "fav" in data:
+        raw = data.get("fav")
+    elif "is_favorite" in data:
+        raw = data.get("is_favorite")
+    elif "favorite" in data:
+        raw = data.get("favorite")
+    else:
+        raw = not bool(lead.get("is_favorite"))  # sem parâmetro = alterna
+    if isinstance(raw, str):
+        fav_bool = raw.strip().lower() not in ("false", "0", "no", "n", "")
+    else:
+        fav_bool = bool(raw)
+    try:
+        from src.audit import log_action
+        audit_uid, audit_uname = _audit_actor()
+        try:
+            _ensure_leads_extra_schema()
+        except Exception:
+            pass
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE companies SET is_favorite = %s WHERE id = %s",
+            (bool(fav_bool), lead_id),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        _invalidate_cache()
+        try:
+            log_action(
+                "favorite" if fav_bool else "unfavorite",
+                user_id=audit_uid,
+                username=audit_uname,
+                lead_id=lead_id,
+                company_name=lead.get("name"),
+                details={"fav": bool(fav_bool)},
+            )
+        except Exception:
+            pass
+        return jsonify({"success": True, "is_favorite": bool(fav_bool)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

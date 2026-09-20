@@ -6,8 +6,11 @@
     <meta name="theme-color" content="#05070b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" type="image/svg+xml" href="/static/thor-mask.svg">
-    <link rel="apple-touch-icon" href="/static/thor-mask.png">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=2">
+    <link rel="manifest" href="/static/site.webmanifest?v=2">
     <title>ProspecTHOR — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3503,6 +3506,7 @@
                 <button type="button" class="chip" data-st="contactado" onclick="setStatusChip('contactado', this)">Contactados</button>
                 <button type="button" class="chip" data-st="convertido" onclick="setStatusChip('convertido', this)">Convertidos</button>
                 <button type="button" class="chip" data-st="descartado" onclick="setStatusChip('descartado', this)">Descartados</button>
+                <button type="button" class="chip" data-st="favorito" onclick="setStatusChip('favorito', this)">★ Favoritos</button>
             </div>
             <div class="filters leads-toolbar">
                 <select id="filter-scope" style="display:none;" title="Escopo do Patrão">
@@ -3524,6 +3528,7 @@
                     <option value="contactado">Contactado</option>
                     <option value="convertido">Convertido</option>
                     <option value="descartado">Descartado</option>
+                    <option value="favorito">★ Favoritos</option>
                 </select>
             </div>
             <div class="table-wrap" id="leads-table-wrap">
@@ -3874,6 +3879,30 @@
             return 'novo';
         }
 
+        function isFav(l) {
+            const v = l.is_favorite;
+            return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+        }
+
+        async function toggleFavorite(id) {
+            const lead = (allLeads || []).find(x => Number(x.id) === Number(id));
+            const next = lead ? !isFav(lead) : true;
+            try {
+                const res = await fetch(`/api/leads/${id}/favorite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fav: next })
+                });
+                if (!res.ok) throw new Error('fav falhou');
+                if (lead) lead.is_favorite = next;
+                leadsCacheAt = 0;
+                applyFilters();
+            } catch (e) {
+                console.error(e);
+                alert('Não foi possível favoritar.');
+            }
+        }
+
         function statusLabel(s) {
             return ({ novo:'Novo', contactado:'Contactado', convertido:'Convertido', descartado:'Descartado' })[s] || s;
         }
@@ -4073,9 +4102,14 @@
         }
 
         function waLink(phone, text) {
-            const d = phoneDigits(phone);
+            let d = phoneDigits(phone);
             if (!d) return null;
-            const full = d.length <= 11 ? '55' + d : d;
+            if (d.slice(0, 2) === '55') d = d.slice(2);
+            // exige celular BR: 11 dígitos, DDD 11-99, 3º dígito 9 (fixo não gera link)
+            if (d.length !== 11) return null;
+            const ddd = parseInt(d.slice(0, 2), 10);
+            if (!(ddd >= 11 && ddd <= 99) || d[2] !== '9') return null;
+            const full = '55' + d;
             let url = `https://wa.me/${full}`;
             if (text && String(text).trim()) {
                 url += `?text=${encodeURIComponent(String(text).trim())}`;
@@ -4380,10 +4414,18 @@
         }
 
         function leadsQueryString() {
-            if (!isPatraoSession()) return '';
+            if (!isPatraoSession()) {
+                const p = new URLSearchParams();
+                const q = ((document.getElementById('filter-search')?.value) || '').trim().slice(0, 60);
+                if (q.length >= 2) p.set('q', q);
+                const s = p.toString();
+                return s ? '?' + s : '';
+            }
             const p = new URLSearchParams();
             p.set('scope', leadsScope || 'free');
             if (leadsScope === 'user' && leadsOwnerId) p.set('user_id', leadsOwnerId);
+            const q = ((document.getElementById('filter-search')?.value) || '').trim().slice(0, 60);
+            if (q.length >= 2) p.set('q', q);
             return '?' + p.toString();
         }
 
@@ -6188,7 +6230,8 @@
             if (!meReady) return allLeads;
             const now = Date.now();
             const q = leadsQueryString();
-            const key = (isPatraoSession() ? (leadsScope || 'free') : 'own') + ':' + (leadsOwnerId || '') + ':' + (currentUser.id || '');
+            const srvQ = (((document.getElementById('filter-search')?.value) || '').trim().slice(0, 60)).toLowerCase();
+            const key = (isPatraoSession() ? (leadsScope || 'free') : 'own') + ':' + (leadsOwnerId || '') + ':' + (currentUser.id || '') + ':' + srvQ;
             if (!force && allLeads.length && leadsScopeKey === key && (now - leadsCacheAt) < CACHE_MS) {
                 return allLeads;
             }
@@ -6987,10 +7030,10 @@
             const status = document.getElementById('filter-status').value;
 
             filteredLeads = allLeads.filter(l => {
-                const hay = `${l.name || ''} ${l.city || ''} ${l.phone || ''}`.toLowerCase();
+                const hay = `${l.name || ''} ${l.city || ''} ${l.phone || ''} ${l.niche || ''} ${l.address || ''}`.toLowerCase();
                 const okQ = !q || hay.includes(q);
                 const okN = !niche || l.niche === niche;
-                const okS = !status || getStatus(l) === status;
+                const okS = !status || (status === 'favorito' ? isFav(l) : getStatus(l) === status);
                 return okQ && okN && okS;
             });
 
@@ -7064,6 +7107,7 @@
             }
             return `
                 <button class="icon-btn prompt" type="button" title="Montar mensagem (seu nome)" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
+                <button class="icon-btn fav${isFav(l) ? ' on' : ''}" type="button" title="${isFav(l) ? 'Desfavoritar' : 'Favoritar'}" aria-label="Favoritar" aria-pressed="${isFav(l) ? 'true' : 'false'}" onclick="${stop}toggleFavorite(${id})" style="${isFav(l) ? 'color:#E8C994;' : ''}">${isFav(l) ? '★' : '☆'}</button>
                 ${primaryBtn}
                 ${tel && ch !== 'whatsapp' ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
                 ${tel && ch === 'whatsapp' ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
@@ -7144,7 +7188,8 @@
             if (status) status.value = '';
             syncStatusChips();
             currentPage = 1;
-            applyFilters();
+            try { lastServerQ = ''; } catch (_) {}
+            fetchLeads(true).then(() => applyFilters()).catch(() => applyFilters());
         }
 
         function renderTable() {
@@ -8198,7 +8243,22 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape' && !tourState.active) closeSidebar();
         });
-        document.getElementById('filter-search').oninput = applyFilters;
+        // Busca: filtro instantâneo local + refetch server-side com debounce (q>=2 letras)
+        let searchDebounce = null;
+        let lastServerQ = '';
+        function onSearchInput() {
+            applyFilters();
+            const q = ((document.getElementById('filter-search')?.value) || '').trim().slice(0, 60);
+            const srvQ = q.length >= 2 ? q.toLowerCase() : '';
+            if (srvQ === lastServerQ) return;
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(async () => {
+                lastServerQ = srvQ;
+                await fetchLeads(true);
+                applyFilters();
+            }, 350);
+        }
+        document.getElementById('filter-search').oninput = onSearchInput;
         document.getElementById('filter-niche').onchange = applyFilters;
         document.getElementById('filter-status').onchange = applyFilters;
         document.getElementById('prompt-modal').addEventListener('click', e => {

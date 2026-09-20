@@ -3933,7 +3933,7 @@
             }).filter(r => r && r.label);
         }
 
-        function scoreBadgeHtml(sc, problemsRaw) {
+        function scoreBadgeHtml(sc, problemsRaw, conf) {
             const n = Number(sc) || 0;
             const rows = parseScoreBreakdown(problemsRaw);
             // data-attribute: JSON escapado (sem encodeURIComponent — evita % quebra no HTML)
@@ -3941,6 +3941,12 @@
                 .replace(/&/g, '&amp;')
                 .replace(/"/g, '&quot;')
                 .replace(/</g, '&lt;');
+            let confBadge = '';
+            if (conf) {
+                const confLabel = conf === 'alta' ? 'alta' : (conf === 'media' ? 'média' : 'baixa');
+                const confColor = conf === 'alta' ? '#22c55e' : (conf === 'media' ? '#f59e0b' : '#9ca3af');
+                confBadge = `<span style="display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px;font-size:10px;font-weight:600;border-radius:99px;border:1px solid ${confColor}33;color:${confColor};background:${confColor}1a;vertical-align:2px;" title="Confiança da nota: ${confLabel}">● ${confLabel}</span>`;
+            }
             return `<span class="score-tip-wrap"
                 data-score-tip="${payload}"
                 onmouseenter="showScoreTip(event)"
@@ -3950,7 +3956,7 @@
                 tabindex="0"
                 role="img"
                 aria-label="Score ${n} de 100 — passe o mouse para ver o breakdown">
-                <span class="badge raio ${scoreTier(n)}">${n}</span>
+                <span class="badge raio ${scoreTier(n)}">${n}</span>${confBadge}
             </span>`;
         }
 
@@ -6606,7 +6612,7 @@
                                 <div class="meta">${esc(l.city || '')}${l.state ? ' · ' + esc(l.state) : ''}${l.phone ? ' · ' + esc(l.phone) : ''}</div>
                             </div>
                         </div>
-                        <div onclick="event.stopPropagation()">${scoreBadgeHtml(l.lead_score || 0, l.lead_problems)}</div>
+                        <div onclick="event.stopPropagation()">${scoreBadgeHtml(l.lead_score || 0, l.lead_problems, l.score_confidence)}</div>
                     </div>
                 `).join('');
                 }
@@ -7189,7 +7195,7 @@
                         </td>
                         <td>${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}</td>
                         <td class="phone-cell">${esc(l.phone || (hasInstagramLead(l) ? '@' + (l.instagram_username || 'instagram') : '—'))}</td>
-                        <td onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</td>
+                        <td onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems, l.score_confidence)}</td>
                         <td><span class="badge-status ${st}">${statusLabel(st)}</span></td>
                         <td onclick="event.stopPropagation()"><div class="actions-cell">${actionButtons(l, true)}</div></td>
                     </tr>
@@ -7205,7 +7211,7 @@
                     <div class="m-card">
                         <div class="row">
                             <div class="name" onclick="openLead(${id})">${fireIcoHtml(rank)}${esc(l.name)}${contactBadgeHtml(l)}</div>
-                            <div onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems)}</div>
+                            <div onclick="event.stopPropagation()">${scoreBadgeHtml(sc, l.lead_problems, l.score_confidence)}</div>
                         </div>
                         <div class="meta" onclick="openLead(${id})">${esc(l.city || '—')}${l.state ? ' / ' + esc(l.state) : ''}<br>${esc(l.phone || (hasInstagramLead(l) ? 'Instagram' : 'Sem contato'))}</div>
                         <div class="m-status"><span class="badge-status ${st}">${statusLabel(st)}</span></div>
@@ -7316,7 +7322,7 @@
                                     <h2>${esc(lead.name)}</h2>
                                     <p>${esc(lead.address || 'Endereço não informado')}</p>
                                 </div>
-                                ${scoreBadgeHtml(lead.lead_score || 0, lead.lead_problems)} <span style="font-size:11px;color:var(--muted);margin-left:4px;">/100</span>
+                                ${scoreBadgeHtml(lead.lead_score || 0, lead.lead_problems, lead.score_confidence)} <span style="font-size:11px;color:var(--muted);margin-left:4px;">/100</span>
                             </div>
                             <ul class="meta-list">
                                 <li><strong>Contato</strong> ${contactBadgeHtml(lead)} <span style="color:var(--muted);font-size:12px;">${esc(primaryContactChannel(lead))}</span></li>

@@ -34,6 +34,12 @@ PORT = int(os.getenv("COCKPIT_PORT") or "5055")
 
 app = Flask(__name__, template_folder=str(Path(__file__).parent / "templates"))
 
+# Modo "PC fraco": ativo só quando MEMORY_SAFE_MODE=1 no .env local.
+# Na nuvem (sem a flag) a limpeza de processos NÃO roda — robô "bala".
+_MEMORY_SAFE: bool = os.getenv("MEMORY_SAFE_MODE", "0").lower() in (
+    "1", "true", "yes", "sim",
+)
+
 _lock = threading.Lock()
 _worker: threading.Thread | None = None
 _stop_flag = threading.Event()
@@ -684,6 +690,64 @@ def api_clear_done():
     return jsonify({"ok": True, "missions": missions})
 
 
+def _cleanup_leftover_processes() -> None:
+    """Mata sobras do robô de execuções anteriores (ata só o Chromium do
+    Playwright — pasta ms-playwright — e o python do main.py run/fonte-b),
+    sem encostar no Chrome/Edge do usuário nem no próprio cockpit."""
+    killed: list[int] = []
+    try:
+        r = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance Win32_Process | ForEach-Object { "
+                "'{0}|{1}' -f $_.ProcessId, $_.CommandLine }",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except Exception as exc:
+        append_log(f"🧹 Varredura de processos falhou: {exc}", "WARN", src="sys")
+        return
+    my_pid = os.getpid()
+    for line in (r.stdout or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            pid_s, cmd = line.split("|", 1)
+            pid = int(pid_s)
+        except ValueError:
+            continue
+        if pid == my_pid:
+            continue
+        low = (cmd or "").lower()
+        is_playwright_chrome = (
+            "ms-playwright" in low and ("chrome" in low or "chromium" in low)
+        )
+        is_bot_python = "main.py" in low and (
+            " run" in low.replace("\\", "/") or "fonte-b" in low
+        )
+        if not (is_playwright_chrome or is_bot_python):
+            continue
+        subprocess.run(
+            ["taskkill", "/PID", str(pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+        )
+        killed.append(pid)
+    if killed:
+        append_log(
+            f"🧹 {len(killed)} processo(s) órfão(s) encerrados da RAM: {killed}",
+            "WARN",
+            src="sys",
+        )
+    else:
+        append_log("🧹 RAM limpa: nenhum processo órfão do robô.", src="sys")
+
+
 def _kill_one(proc: subprocess.Popen | None) -> None:
     if proc is None:
         return
@@ -770,6 +834,9 @@ def _run_one_mission(mission: dict) -> int:
     from src.bot_plan import save_plan
 
     mid = mission.get("id")
+    if _MEMORY_SAFE:
+        # PC fraco: limpa sobras de execuções anteriores antes de começar.
+        _cleanup_leftover_processes()
     save_plan(
         target_leads=int(mission.get("target_leads") or 20),
         city_ids=list(mission.get("city_ids") or []),

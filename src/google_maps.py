@@ -67,6 +67,16 @@ _TIMEOUT_MS: int = int(os.getenv("PLAYWRIGHT_TIMEOUT_MS", "30000"))
 _DELAY_MIN: float = float(os.getenv("REQUEST_DELAY_MIN_S", "2.0"))
 _DELAY_MAX: float = float(os.getenv("REQUEST_DELAY_MAX_S", "5.0"))
 
+# Modo "PC fraco": só ativo quando MEMORY_SAFE_MODE=1 (máquina local).
+# Na nuvem, basta NÃO definir a flag → Chromium com todos os recursos ("bala").
+_MEMORY_SAFE: bool = os.getenv("MEMORY_SAFE_MODE", "0").lower() in (
+    "1", "true", "yes", "sim",
+)
+if _MEMORY_SAFE:
+    logger.warning("[Playwright] MEMORY_SAFE_MODE ativo — limites de memória aplicados.")
+# Recicla o navegador a cada N painéis abertos (só no modo memória).
+_RECYCLE_EVERY: int = max(5, int(os.getenv("RECYCLE_BROWSER_EVERY", "20")))
+
 # Google Places API — endpoints
 _PLACES_TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 _PLACES_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
@@ -689,15 +699,25 @@ class PlaywrightScraper:
         """Inicia o Playwright e abre o navegador Chromium."""
         logger.info("[Playwright] Iniciando navegador Chromium...")
         self._playwright = sync_playwright().start()
+        _launch_args = [
+            "--no-sandbox",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+            "--disable-extensions",
+            "--lang=pt-BR,pt",
+        ]
+        if _MEMORY_SAFE:
+            # Restringe memória: sem GPU, sem cache em disco e menos renderers.
+            _launch_args += [
+                "--disable-gpu",
+                "--disable-software-rasterizer",
+                "--disk-cache-size=1",
+                "--renderer-process-limit=3",
+                "--js-flags=--max-old-space-size=512",
+            ]
         self._browser = self._playwright.chromium.launch(
             headless=_HEADLESS,
-            args=[
-                "--no-sandbox",
-                "--disable-blink-features=AutomationControlled",
-                "--disable-dev-shm-usage",
-                "--disable-extensions",
-                "--lang=pt-BR,pt",
-            ],
+            args=_launch_args,
         )
         self._context = self._browser.new_context(
             user_agent=random.choice(self._USER_AGENTS),
@@ -823,6 +843,7 @@ class PlaywrightScraper:
                 logger.warning("[Playwright] Nenhuma URL de resultado encontrada.")
                 return companies
 
+            tries_since_recycle = 0
             for idx, result_url in enumerate(result_urls, start=1):
                 if len(companies) >= target_new:
                     break
@@ -841,6 +862,29 @@ class PlaywrightScraper:
                     f"({len(companies)}/{target_new} novas | "
                     f"url {idx}/{len(result_urls)}): {result_url[:70]}..."
                 )
+                tries_since_recycle += 1
+                if _MEMORY_SAFE and tries_since_recycle >= _RECYCLE_EVERY:
+                    tries_since_recycle = 0
+                    logger.info(
+                        f"[Playwright] ♻ reciclando navegador "
+                        f"({_RECYCLE_EVERY} painéis) para aliviar a memória..."
+                    )
+                    try:
+                        self.stop()
+                    except Exception as exc:
+                        logger.warning(f"[Playwright] recycle stop falhou: {exc}")
+                    self.start()
+                    page = self._new_page()
+                    try:
+                        page.goto(
+                            maps_url,
+                            wait_until="domcontentloaded",
+                            timeout=_TIMEOUT_MS,
+                        )
+                        _random_delay(1.0, 1.8)
+                        self._dismiss_consent(page)
+                    except Exception as exc:
+                        logger.warning(f"[Playwright] warmup pós-recycle falhou: {exc}")
                 try:
                     company = self._extract_details(
                         page, result_url, niche, city, state

@@ -49,6 +49,7 @@ _SCORER_COLUMNS: list[tuple[str, str]] = [
     ("lead_problems",    "TEXT"),     # JSON list de strings
     ("lead_services",    "TEXT"),     # JSON list de sugeridos
     ("lead_priority",    "TEXT"),     # alta|media|baixa|nenhuma
+    ("score_confidence", "TEXT"),     # alta|media|baixa (nº de sinais coletados)
     ("scored_at",        "TEXT"),     # ISO-8601
 ]
 
@@ -59,6 +60,7 @@ UPDATE companies SET
     lead_problems = %(lead_problems)s,
     lead_services = %(lead_services)s,
     lead_priority = %(lead_priority)s,
+    score_confidence = %(score_confidence)s,
     scored_at     = %(scored_at)s
 WHERE id = %(id)s;
 """
@@ -525,6 +527,10 @@ class LeadScorer:
         # Instagram conta como canal de contato (Fonte B e Maps)
         has_ig_contact = has_ig
 
+        # Sinais "extra" que CADA fonte entrega de verdade (sem neutro chutado)
+        has_cnpj = bool(str(company.get("cnpj") or "").strip())
+        has_google = (rating > 0 or reviews > 0)
+
         # Acumula (label, contribuição_ao_score) — convertido em "(+XX)" no final
         _factors: list[tuple[str, float]] = []
 
@@ -594,10 +600,8 @@ class LeadScorer:
         # porte (ajuste fino ±8) — só quando TEM dado do Google Maps
         # (Fonte B/OSM sem nota não deve cair todo mundo no mesmo teto "pouca prova social")
         src = (company.get("source") or "").strip().lower()
-        maps_data_missing = (rating <= 0 and reviews <= 0)
-        partial_source = src in ("osm", "cnpj", "cnpj+osm", "fonte_b", "fonte-b")
 
-        if not maps_data_missing:
+        if has_google:
             if 12 <= reviews <= 60:
                 cap = min(100, cap + 8)
                 _factors.append((f"Porte saudável ({reviews} avaliações)", W_CAP * 8))
@@ -610,55 +614,55 @@ class LeadScorer:
             elif reviews <= 1:
                 cap = max(0, cap - 8)
                 _factors.append(("Pouca prova social no Maps", -(W_CAP * 8)))
-        elif partial_source:
-            # mesma fórmula de blocos; sem punir por "0 reviews" se nunca teve Maps
-            _factors.append(("Sem nota/avaliações no Google ainda", 0.0))
 
-        # ── C) Visibilidade 0–100 ────────────────────────────────────────
+        if has_cnpj:
+            cap = min(100, cap + 8)
+            _factors.append(("CNPJ ativo — empresa formalizada", W_CAP * 8))
+
+        # ── C) Visibilidade 0–100 (só quando há dado real) ─────────────────
         # nota Maps (0–55) + volume (0–35) + social (0–10)
         W_VIS = 0.23
-        if maps_data_missing and partial_source:
-            # neutro (não "nota fraca 5") — evita todos com 56 por falta de Google
-            r_pts = 30
-            v_pts = 12
-            _factors.append(("Visibilidade parcial (sem Google) — base neutra", W_VIS * (r_pts + v_pts)))
-        elif rating >= 4.7 and reviews >= 3:
-            r_pts = 55
-            _factors.append((f"Nota excelente ({rating:.1f})", W_VIS * 55))
-        elif rating >= 4.3 and reviews >= 2:
-            r_pts = 48
-            _factors.append((f"Nota alta ({rating:.1f})", W_VIS * 48))
-        elif rating >= 4.0:
-            r_pts = 40
-            _factors.append((f"Boa reputação Maps ({rating:.1f})", W_VIS * 40))
-        elif rating >= 3.5:
-            r_pts = 28
-            _factors.append((f"Reputação ok ({rating:.1f})", W_VIS * 28))
-        elif rating > 0:
-            r_pts = 12
-            _factors.append((f"Nota fraca ({rating:.1f})", W_VIS * 12))
-        else:
-            r_pts = 5
+        vis = None
+        if has_google or has_ig:
+            r_pts = 0
+            if has_google:
+                if rating >= 4.7 and reviews >= 3:
+                    r_pts = 55
+                    _factors.append((f"Nota excelente ({rating:.1f})", W_VIS * 55))
+                elif rating >= 4.3 and reviews >= 2:
+                    r_pts = 48
+                    _factors.append((f"Nota alta ({rating:.1f})", W_VIS * 48))
+                elif rating >= 4.0:
+                    r_pts = 40
+                    _factors.append((f"Boa reputação Maps ({rating:.1f})", W_VIS * 40))
+                elif rating >= 3.5:
+                    r_pts = 28
+                    _factors.append((f"Reputação ok ({rating:.1f})", W_VIS * 28))
+                elif rating > 0:
+                    r_pts = 12
+                    _factors.append((f"Nota fraca ({rating:.1f})", W_VIS * 12))
 
-        if not (maps_data_missing and partial_source):
-            if reviews >= 15:
-                v_pts = 35
-                _factors.append((f"Volume forte de avaliações ({reviews})", W_VIS * 35))
-            elif reviews >= 8:
-                v_pts = 30
-                _factors.append((f"Volume bom de avaliações ({reviews})", W_VIS * 30))
-            elif reviews >= 3:
-                v_pts = 22
-                _factors.append((f"Algumas avaliações ({reviews})", W_VIS * 22))
-            elif reviews >= 1:
-                v_pts = 10
+            if has_google:
+                if reviews >= 15:
+                    v_pts = 35
+                    _factors.append((f"Volume forte de avaliações ({reviews})", W_VIS * 35))
+                elif reviews >= 8:
+                    v_pts = 30
+                    _factors.append((f"Volume bom de avaliações ({reviews})", W_VIS * 30))
+                elif reviews >= 3:
+                    v_pts = 22
+                    _factors.append((f"Algumas avaliações ({reviews})", W_VIS * 22))
+                elif reviews >= 1:
+                    v_pts = 10
+                else:
+                    v_pts = 0
             else:
                 v_pts = 0
 
-        s_pts = 10 if (no_website and has_ig) else (4 if has_ig else 0)
-        if s_pts >= 10:
-            _factors.append(("Presença social (IG) ativa", W_VIS * 10))
-        vis = min(100, r_pts + v_pts + s_pts)
+            s_pts = 10 if (no_website and has_ig) else (4 if has_ig else 0)
+            if s_pts >= 10:
+                _factors.append(("Presença social (IG) ativa", W_VIS * 10))
+            vis = min(100, r_pts + v_pts + s_pts)
 
         # ── D) Abordabilidade 0–100 ──────────────────────────────────────
         W_AB = 0.15
@@ -690,12 +694,26 @@ class LeadScorer:
                 services.insert(0, "Site responsivo (mobile)")
 
         # ── Combinação ponderada → 0–100 ─────────────────────────────────
-        # pesos somam 1.0; escala cheia usada de ponta a ponta
-        w_dor, w_cap, w_vis, w_ab = 0.32, 0.30, 0.23, 0.15
+        # Sem Google, o bloco Visibilidade migra o peso p/ Dor/Capac/Abord.
+        base_w = {"dor": 0.32, "cap": 0.30, "vis": 0.23, "ab": 0.15}
+        if vis is None:
+            _sum = base_w["dor"] + base_w["cap"] + base_w["ab"]
+            w_dor = base_w["dor"] / _sum
+            w_cap = base_w["cap"] / _sum
+            w_ab = base_w["ab"] / _sum
+            w_vis = 0.0
+            _factors.append(
+                ("Sem nota/avaliações no Google — peso da visibilidade redistribuído",
+                 0.0),
+            )
+        else:
+            w_dor, w_cap, w_vis, w_ab = (
+                base_w["dor"], base_w["cap"], base_w["vis"], base_w["ab"],
+            )
         raw = (
             w_dor * dor
             + w_cap * cap
-            + w_vis * vis
+            + w_vis * (vis or 0)
             + w_ab * ab
         )
         score = int(round(max(0.0, min(100.0, raw))))
@@ -711,6 +729,42 @@ class LeadScorer:
         if is_foodtruck and score > 62:
             _factors.append(("Perfil food truck/carrinho — ticket de site costuma ser menor", 0.0))
             score = 62
+
+        # ── Teto honesto por sinais coletados (Fonte A e B comparáveis) ──
+        # Sem Google a nota não mente: cada fonte só sobe se entregou dado real.
+        if has_google:
+            teto = 100
+        elif has_cnpj and (has_mobile or has_landline):
+            teto = 78
+        elif has_mobile or has_landline:
+            teto = 65
+        elif has_ig_contact:
+            teto = 55
+        else:
+            teto = 48
+        if score > teto:
+            _factors.append((
+                f"Poucos sinais coletados — teto honesto {teto}/100",
+                0.0,
+            ))
+            score = teto
+
+        # selo de confiança = quantos sinais REAIS a nota conseguiu usar
+        n_signals = (
+            int(has_google)
+            + int(has_cnpj)
+            + int(has_ig)
+            + int(has_mobile or has_landline)
+        )
+        if n_signals >= 3:
+            score_confidence = "alta"
+        elif n_signals == 2:
+            score_confidence = "media"
+        else:
+            score_confidence = "baixa"
+        _factors.append(
+            (f"Confiança da nota: {score_confidence} ({n_signals}/4 sinais)", 0.0),
+        )
 
         # ── Montar problems com pontuação anotada (+XX) ──────────────────
         # Converte _factors em "Label (+XX)" para o tooltip do dashboard
@@ -750,6 +804,7 @@ class LeadScorer:
             "lead_problems": json.dumps(problems, ensure_ascii=False),
             "lead_services": json.dumps(dedup_services, ensure_ascii=False),
             "lead_priority": priority,
+            "score_confidence": score_confidence,
             "scored_at": datetime.now().isoformat(),
         }
 

@@ -567,6 +567,39 @@ def run_export(tipo: str, cidade: str | None, nicho: str | None) -> None:
         sys.exit(1)
 
 
+# ── COMANDO: score ──────────────────────────────────────────────────────────
+
+@cli.command("score")
+@click.option("--force", is_flag=True, help="Recalcula TODAS as notas (raio / sem site / Fonte B), mesmo já pontuadas.")
+def run_score(force: bool) -> None:
+    """Recalcula as notas 0–100 dos leads (fonte A e B na mesma régua)."""
+    from src.scorer import LeadScorer
+
+    click.echo(click.style("\n🎯 RE-SCORE DE LEADS", fg="cyan", bold=True))
+    click.echo(click.style("=" * 45, fg="cyan"))
+    modo = "FORÇADO (recalculando raios / sem-site / Fonte B)" if force else "pendentes (sem scored_at)"
+    click.echo(f"  Modo         : {modo}")
+
+    try:
+        scorer = LeadScorer()
+        leads = scorer.score_all(force=force)
+    except Exception as exc:
+        click.echo(click.style(f"\n  ❌ Erro ao pontuar: {exc}", fg="red"))
+        raise SystemExit(1)
+
+    if not leads:
+        click.echo("  Nenhum lead precisava ser (re)pontuado.")
+    else:
+        click.echo(click.style("-" * 45, fg="cyan"))
+        from collections import Counter
+        conf = Counter(l.get("score_confidence") for l in leads)
+        click.echo(f"  ✅ {len(leads)} leads qualificados / re-pontuados")
+        click.echo(f"     Confiança alta  : {conf.get('alta', 0)}")
+        click.echo(f"     Confiança média : {conf.get('media', 0)}")
+        click.echo(f"     Confiança baixa : {conf.get('baixa', 0)}\n")
+    click.echo(click.style("=" * 45 + "\n", fg="cyan"))
+
+
 # ── COMANDO: status ────────────────────────────────────────────────────────
 
 @cli.command("status")

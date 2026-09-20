@@ -616,6 +616,55 @@
             display: flex; flex-wrap: wrap; gap: 10px;
             margin-top: 22px;
         }
+        /* Checklist de ativação (3 passos, some ao concluir) */
+        .onboard-check {
+            margin-top: 18px; border-radius: 14px; border: 1px solid var(--border);
+            background: linear-gradient(165deg, rgba(14,18,28,.98), rgba(8,10,16,.99));
+            padding: 16px 18px;
+        }
+        .onboard-check.done { display: none; }
+        .onboard-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+        .onboard-head h3 { font-size: 14px; font-weight: 800; letter-spacing: -.01em; }
+        .onboard-head span { font-size: 12px; color: var(--muted); font-weight: 600; }
+        .onboard-bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; margin: 10px 0 12px; }
+        .onboard-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--neon), #7ddfff); transition: width .3s; }
+        .onboard-step { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.05); font-size: 13px; }
+        .onboard-step:first-of-type { border-top: none; }
+        .onboard-step .dot-ok {
+            width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+            display: grid; place-items: center; font-size: 13px; font-weight: 800;
+            border: 1px solid var(--border); color: var(--muted-2); background: rgba(255,255,255,.03);
+        }
+        .onboard-step.ok .dot-ok { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.12); color: #86efac; }
+        .onboard-step.ok .lbl { color: var(--muted); text-decoration: line-through; }
+        .onboard-step .lbl { flex: 1; line-height: 1.4; }
+        .onboard-step .mini-in { display: flex; gap: 6px; flex: 1; }
+        .onboard-step input {
+            flex: 1; min-width: 0; padding: 9px 10px; border-radius: 9px;
+            border: 1px solid var(--border); background: #070b12; color: #fff; font-size: 13px; outline: none;
+        }
+        .onboard-step input:focus { border-color: rgba(0,212,255,.5); }
+        .onboard-step button {
+            border: none; border-radius: 9px; padding: 9px 12px; font-size: 12px; font-weight: 800;
+            cursor: pointer; color: #031018; background: linear-gradient(135deg, #3de0ff, var(--neon) 50%, #0a8ec4);
+            white-space: nowrap;
+        }
+        .onboard-step button.ghost { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--border); }
+        /* Toast */
+        #toast {
+            position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+            background: #0c111a; border: 1px solid rgba(0,212,255,.35); color: var(--text);
+            font-size: 13px; font-weight: 600; padding: 12px 18px; border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0,0,0,.5); opacity: 0; pointer-events: none;
+            transition: opacity .2s, transform .2s; z-index: 9999; max-width: 90vw; text-align: center;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        /* Pulso de saldo baixo */
+        @keyframes chip-pulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(201,160,96,.15); }
+            50% { box-shadow: 0 0 26px rgba(201,160,96,.5); border-color: rgba(201,160,96,.9); }
+        }
+        .wallet-chip.low { animation: chip-pulse 1.6s ease-in-out infinite; }
         .home-cta {
             display: inline-flex; align-items: center; gap: 8px;
             padding: 12px 18px; border-radius: 12px;
@@ -741,13 +790,13 @@
             width: 16px; height: 16px; margin: 0;
             display: block;
             object-fit: contain;
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
-            transition: transform .2s ease, filter .2s ease;
+            filter: none;
+            transition: transform .2s ease;
         }
         .pkg-card .btn-buy:hover .bolt-ico .coin-mini,
         .pkg-card .btn-buy:focus-visible .bolt-ico .coin-mini {
             transform: scale(1.08);
-            filter: drop-shadow(0 0 6px rgba(255,220,80,0.65));
+            filter: none;
         }
         #quota-badge {
             font-size: 12px !important; font-weight: 500;
@@ -2906,6 +2955,7 @@
                     </div>
                 </div>
                 <div class="shop-note">
+                    <span>🛡 <strong>Número inválido?</strong> Peça reposição na ficha do lead e devolvemos 1 Trovoeda.</span>
                     <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
                 </div>
             </div>
@@ -3206,6 +3256,16 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Checklist de ativação -->
+                <div class="onboard-check" id="onboard-check" hidden>
+                    <div class="onboard-head">
+                        <h3>Comece por aqui ⚡</h3>
+                        <span id="onboard-count">0 de 3</span>
+                    </div>
+                    <div class="onboard-bar"><i id="onboard-fill"></i></div>
+                    <div id="onboard-steps"></div>
                 </div>
 
                 <div class="stats">
@@ -4827,6 +4887,10 @@
                 chip.title = infinite
                     ? 'Trovoedas ilimitadas (host)'
                     : 'Abrir carteira e extrato';
+                const n = Number(balance);
+                const low = !infinite && Number.isFinite(n) && n <= 2;
+                chip.classList.toggle('low', low);
+                if (low) chip.title = 'Saldo acabando — toque para recarregar';
             }
             if (btnRecharge) {
                 // host não precisa recarregar
@@ -6669,6 +6733,7 @@
                     if (tb) tb.innerHTML = '<p class="empty">Erro ao carregar a home. Clique de novo em Visão geral.</p>';
                 }
             }
+            try { renderChecklist(); } catch (_) {}
         }
 
         let distFreeLeads = [];
@@ -7419,6 +7484,9 @@
                                     : `<button class="btn btn-danger" id="btn-discard-toggle" onclick="updateStatus(${lead.id}, 'descartado')">Descartar</button>`}
                                 ${canAssign ? `<button class="btn btn-danger" type="button" onclick="deleteLead(${lead.id}, true)">✕ Apagar lead de vez</button>` : ''}
                                 <button class="btn" onclick="copySummary(${lead.id})">Copiar resumo</button>
+                                ${canAssign
+                                    ? `<button class="btn btn-success" type="button" onclick="resolveReport(${lead.id}, true)">🛡 Repor +1 Trovoeda</button>`
+                                    : `<button class="btn" type="button" title="Número inválido ou fora de serviço? Peça 1 Trovoeda de volta" onclick="reportLead(${lead.id})">Número inválido? Pedir reposição</button>`}
                             </div>
                         </div>
                         <div class="panel" style="margin-bottom:14px;">
@@ -7510,6 +7578,42 @@
                     loadDetail(id);
                 }
             } catch (e) { console.error(e); }
+        }
+
+        async function reportLead(id) {
+            if (!confirm('O número deste lead é inválido ou fora de serviço?\nVamos analisar e repor 1 Trovoeda se confirmado.')) return;
+            try {
+                const res = await fetch(`/api/leads/${id}/report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: 'numero_invalido' })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Não foi possível pedir a reposição.'); return; }
+                showToast('Pedido enviado ✓ Analisamos e repomos em até 2 dias úteis.');
+            } catch (e) {
+                console.error(e);
+                alert('Falha ao pedir reposição.');
+            }
+        }
+
+        async function resolveReport(id, approve) {
+            if (!confirm(approve ? 'Devolver 1 Trovoeda ao dono deste lead?' : 'Recusar a reposição?')) return;
+            try {
+                const res = await fetch(`/api/leads/${id}/resolve-report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approve })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Falha ao resolver.'); return; }
+                showToast(approve ? '1 Trovoeda devolvida ✓' : 'Reposição recusada.');
+                leadsCacheAt = 0;
+                loadDetail(id);
+            } catch (e) {
+                console.error(e);
+                alert('Falha ao resolver.');
+            }
         }
 
         async function copySummary(id) {
@@ -7809,12 +7913,94 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             const t = document.getElementById('prompt-text');
             try {
                 await navigator.clipboard.writeText(t.value);
-                alert('Mensagem copiada.');
+                showToast('Mensagem copiada ✓');
             } catch (_) {
                 t.select();
                 document.execCommand('copy');
-                alert('Mensagem copiada.');
+                showToast('Mensagem copiada ✓');
             }
+        }
+
+        function showToast(msg) {
+            let el = document.getElementById('toast');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'toast';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+        }
+
+        /* Checklist de ativação: nome → ver leads → chamar 1 */
+        function onboardKey() {
+            const id = (currentUser && currentUser.id != null) ? currentUser.id : 'anon';
+            return 'prospecthor_check_' + id;
+        }
+        function renderChecklist() {
+            const card = document.getElementById('onboard-check');
+            if (!card) return;
+            // patrão não precisa
+            try {
+                if (isPatraoSession()) { card.classList.add('done'); card.hidden = true; return; }
+            } catch (_) {}
+            let dismissed = false;
+            try { dismissed = localStorage.getItem(onboardKey()) === 'done'; } catch (_) {}
+            if (dismissed) { card.classList.add('done'); card.hidden = true; return; }
+            const hasName = !!(typeof getSellerName === 'function' && getSellerName());
+            const leads = Array.isArray(allLeads) ? allLeads : [];
+            const hasLeads = leads.length > 0;
+            let contacted = false;
+            try {
+                contacted = leads.some(l => {
+                    const st = typeof getStatus === 'function' ? getStatus(l) : 'novo';
+                    return st === 'contactado' || st === 'convertido';
+                });
+            } catch (_) {}
+            const steps = [
+                { ok: hasName, label: 'Coloque seu nome (vale pra todas as abordagens)' },
+                { ok: hasLeads, label: 'Veja seus leads (bônus de 5 já na conta)' },
+                { ok: contacted, label: 'Chame 1 lead no WhatsApp' },
+            ];
+            const n = steps.filter(s => s.ok).length;
+            if (n >= 3) {
+                try { localStorage.setItem(onboardKey(), 'done'); } catch (_) {}
+                card.classList.add('done'); card.hidden = true;
+                return;
+            }
+            card.hidden = false;
+            card.classList.remove('done');
+            document.getElementById('onboard-count').textContent = n + ' de 3';
+            document.getElementById('onboard-fill').style.width = Math.round(n / 3 * 100) + '%';
+            const box = document.getElementById('onboard-steps');
+            const escName = (typeof esc === 'function' ? esc : String)(typeof getSellerName === 'function' ? (getSellerName() || '') : '');
+            box.innerHTML = steps.map((s, i) => {
+                const dot = s.ok ? '✓' : (i + 1);
+                let action = '';
+                if (!s.ok) {
+                    if (i === 0) {
+                        action = `<span class="mini-in"><input id="check-name" placeholder="Seu nome" value="${escName}" maxlength="40" /><button type="button" onclick="checkSaveName()">Salvar</button></span>`;
+                    } else if (i === 1) {
+                        action = `<button type="button" class="ghost" onclick="navigateTo('${hasLeads ? '/leads' : '/orders'}')">${hasLeads ? 'Ver leads' : 'Pedir leads'}</button>`;
+                    } else {
+                        action = `<button type="button" class="ghost" onclick="navigateTo('/leads')">Chamar agora</button>`;
+                    }
+                }
+                return `<div class="onboard-step${s.ok ? ' ok' : ''}"><span class="dot-ok">${dot}</span><span class="lbl">${s.label}</span>${action}</div>`;
+            }).join('');
+        }
+        function checkSaveName() {
+            const inp = document.getElementById('check-name');
+            const v = (inp && inp.value || '').trim();
+            if (!v) { if (inp) inp.focus(); return; }
+            try {
+                if (typeof saveSellerName === 'function') saveSellerName(v, true);
+                else localStorage.setItem('prospecthor_seller_name', v);
+            } catch (_) {}
+            showToast('Nome salvo ✓');
+            renderChecklist();
         }
 
         function openSidebar() {

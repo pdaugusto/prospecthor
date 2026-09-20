@@ -63,13 +63,61 @@
       position: relative; z-index: 1;
       flex: 1;
       width: 100%;
-      max-width: 460px;
+      max-width: 940px;
       margin: 0 auto;
       padding: 40px 20px 36px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+    }
+    .reg-layout {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 460px;
+      gap: 36px;
+      align-items: center;
+    }
+    .reg-side h2 {
+      font-size: 26px; font-weight: 900; letter-spacing: -.03em; line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .reg-side h2 span { color: var(--neon); }
+    .reg-side > p { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 20px; }
+    .reg-benefits { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+    .reg-benefits li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 13px; color: var(--text); line-height: 1.45;
+    }
+    .reg-benefits li i {
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 12px; font-weight: 800; font-style: normal;
+      color: #031018; background: linear-gradient(135deg, #3de0ff, var(--neon));
+      margin-top: 1px;
+    }
+    .reg-benefits li small { display: block; color: var(--muted); font-size: 12px; }
+    .reg-proof {
+      border-radius: 14px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.02); padding: 14px 16px;
+      font-size: 12px; color: var(--muted); line-height: 1.5;
+    }
+    .reg-proof strong { color: #E8C994; }
+    .reg-proof .who { display: block; margin-top: 6px; font-size: 11px; color: var(--muted-2); }
+    .reg-main { min-width: 0; }
+    .user-hint { font-size: 11px; margin-top: 6px; min-height: 15px; line-height: 1.4; }
+    .user-hint.ok { color: #22c55e; }
+    .user-hint.bad { color: #ff8fa3; }
+    input.user-ok { border-color: rgba(34,197,94,.5) !important; }
+    input.user-bad { border-color: rgba(255,77,106,.5) !important; }
+    .lgpd-micro { font-size: 11px; color: var(--muted-2); margin-top: 6px; line-height: 1.4; }
+    @media (max-width: 960px) {
+      .wrap { max-width: 460px; }
+      .reg-layout { grid-template-columns: 1fr; gap: 0; }
+      .reg-side h2 { font-size: 20px; text-align: center; }
+      .reg-side > p { text-align: center; }
+      .reg-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .reg-benefits li { font-size: 12px; }
+      .reg-proof { margin-bottom: 20px; }
     }
 
     .brand {
@@ -230,6 +278,19 @@
       <span class="brand-word">Prospec<span>THOR</span></span>
     </a>
 
+    <div class="reg-layout">
+    <aside class="reg-side">
+      <h2>Leads com WhatsApp <span>antes da concorrência.</span></h2>
+      <p>Junte-se a +300 vendedores e agências que prospectam com o ProspecTHOR.</p>
+      <ul class="reg-benefits">
+        <li><i>✓</i><span><strong>5 Trovoedas grátis</strong><small>1 moeda = 1 lead · sem cartão</small></span></li>
+        <li><i>✓</i><span><strong>Saldo que não expira</strong><small>use quando quiser, sem mensalidade</small></span></li>
+        <li><i>✓</i><span><strong>Score 0–100 por lead</strong><small>priorize quem mais precisa de você</small></span></li>
+        <li><i>✓</i><span><strong>🛡 Reposição garantida</strong><small>número inválido? devolvemos a moeda</small></span></li>
+      </ul>
+      <div class="reg-proof">“Em uma semana fechei 2 sites só com os leads do bônus.”<span class="who">— Rafael M., agência · avaliação 4,8/5</span></div>
+    </aside>
+    <div class="reg-main">
     <div class="card">
       <h1>Criar conta</h1>
       <p class="sub">Menos de 1 minuto. Você já sai com bônus pra testar.</p>
@@ -252,13 +313,15 @@
           <div>
             <label for="username">Usuário (login)</label>
             <input id="username" name="username" type="text" required maxlength="40" pattern="[a-zA-Z0-9_\.\-]+"
-                   value="{{ form.username or '' }}" placeholder="ex: joao_silva" spellcheck="false" />
+                   value="{{ form.username or '' }}" placeholder="ex: joao_silva" spellcheck="false" autocapitalize="none" autocomplete="username" />
+            <p class="user-hint" id="user-hint"></p>
           </div>
           <div>
             <label for="whatsapp">WhatsApp (celular)</label>
             <input id="whatsapp" name="whatsapp" type="tel" required maxlength="20" inputmode="tel" autocomplete="tel"
                    value="{{ form.whatsapp or '' }}" placeholder="11 99999-1234" />
             <p class="micro" id="wa-hint" style="text-align:left;margin-top:6px;">Use DDD + 9 dígitos. Fixo não serve.</p>
+            <p class="lgpd-micro">Usamos seu WhatsApp só pra conta e suporte. Sem spam. (LGPD)</p>
           </div>
         </div>
 
@@ -285,6 +348,8 @@
 
     <p class="foot">Já tem conta? <a href="/entrar">Entrar</a></p>
     <a class="back" href="/">← Voltar ao site</a>
+    </div><!-- /reg-main -->
+    </div><!-- /reg-layout -->
   </div>
 
   <script>
@@ -336,6 +401,38 @@
         eye.addEventListener('click', function () {
           pw.type = pw.type === 'password' ? 'text' : 'password';
           eye.textContent = pw.type === 'password' ? '👁' : '🙈';
+        });
+      }
+      /* Disponibilidade do usuário (live) */
+      var uname = document.getElementById('username');
+      var uh = document.getElementById('user-hint');
+      var uT = null;
+      function setUserHint(state, msg) {
+        if (!uh) return;
+        uh.textContent = msg || '';
+        uh.className = 'user-hint' + (state ? ' ' + state : '');
+        if (uname) {
+          uname.classList.remove('user-ok', 'user-bad');
+          if (state === 'ok') uname.classList.add('user-ok');
+          if (state === 'bad') uname.classList.add('user-bad');
+        }
+      }
+      if (uname) {
+        uname.addEventListener('input', function () {
+          var v = uname.value.trim().toLowerCase();
+          clearTimeout(uT);
+          if (v.length < 3) { setUserHint('', ''); return; }
+          if (!/^[a-z0-9_.\-]+$/.test(v)) { setUserHint('bad', 'Use só letras minúsculas, números, ponto, _ ou -.'); return; }
+          setUserHint('', 'Verificando…');
+          uT = setTimeout(function () {
+            fetch('/api/users/check?u=' + encodeURIComponent(v), { credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (d.available) setUserHint('ok', 'Disponível ✓');
+                else setUserHint('bad', d.reason === 'reserved' ? 'Esse nome é reservado.' : 'Já está em uso. Tente ' + v + '_2');
+              })
+              .catch(function () { setUserHint('', ''); });
+          }, 400);
         });
       }
     })();

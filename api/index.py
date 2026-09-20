@@ -1963,6 +1963,92 @@ def api_toggle_favorite(lead_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/leads/<int:lead_id>/report", methods=["POST"])
+@login_required
+def api_report_lead(lead_id):
+    """Cliente reporta número inválido (garantia). Teto: 3 pedidos/7 dias."""
+    lead = get_lead_by_id(lead_id)
+    if not lead:
+        return jsonify({"error": "Not found"}), 404
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "numero_invalido").strip()[:60] or "numero_invalido"
+    uid = _effective_user_id()
+    try:
+        from src.audit import ensure_schema as audit_schema, log_action
+        audit_uid, audit_uname = _audit_actor()
+        try:
+            audit_schema()
+        except Exception:
+            pass
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT COUNT(*) FROM audit_log WHERE action = 'report_invalid' AND user_id = %s AND created_at >= %s;",
+            (uid, week_ago),
+        )
+        n = int((cur.fetchone() or [0])[0] or 0)
+        cur.close()
+        conn.close()
+        if n >= 3:
+            return jsonify({"error": "Limite de 3 pedidos de reposição por semana."}), 429
+        log_action(
+            "report_invalid",
+            user_id=audit_uid,
+            username=audit_uname,
+            lead_id=lead_id,
+            company_name=lead.get("name"),
+            details={"reason": reason, "phone": lead.get("phone")},
+        )
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/leads/<int:lead_id>/resolve-report", methods=["POST"])
+@admin_required
+def api_resolve_report(lead_id):
+    """Patrão aprova (devolve 1 Trovoeda ao dono) ou recusa a reposição."""
+    lead = get_lead_by_id(lead_id)
+    if not lead:
+        return jsonify({"error": "Not found"}), 404
+    data = request.get_json(silent=True) or {}
+    approve = bool(data.get("approve", True))
+    try:
+        from src.audit import log_action
+        from src.trovoeda import admin_grant
+        audit_uid, audit_uname = _audit_actor()
+        owner = lead.get("assigned_to")
+        if approve:
+            if not owner:
+                return jsonify({"error": "Lead sem dono — nada a repor."}), 400
+            admin_grant(int(owner), 1, created_by=audit_uid, note=f"reposicao lead {lead_id}")
+            try:
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute(
+                    "UPDATE companies SET contact_status = 'reposto' WHERE id = %s;",
+                    (lead_id,),
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+            except Exception:
+                pass
+        log_action(
+            "report_resolved",
+            user_id=audit_uid,
+            username=audit_uname,
+            lead_id=lead_id,
+            company_name=lead.get("name"),
+            details={"approve": approve},
+        )
+        _invalidate_cache()
+        return jsonify({"success": True, "approve": approve})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/stats")
 @login_required
 def api_stats():
@@ -2140,6 +2226,27 @@ def api_export_csv():
     resp.headers["Content-Disposition"] = "attachment; filename=leads_raio.csv"
     resp.headers["Content-type"] = "text/csv; charset=utf-8"
     return resp
+
+
+@app.route("/api/users/check")
+def api_users_check():
+    """Disponibilidade de login no cadastro (público, com rate-limit)."""
+    ip = _client_ip()
+    if _login_rate_limited(ip):
+        return jsonify({"available": False, "reason": "ratelimit"}), 429
+    u = (request.args.get("u") or "").strip().lower()[:40]
+    if len(u) < 3:
+        return jsonify({"available": False, "reason": "short"})
+    if u in ("patrao", "admin", "root", "sistema"):
+        return jsonify({"available": False, "reason": "reserved"})
+    if any(not (c.isalnum() or c in "_.-") for c in u):
+        return jsonify({"available": False, "reason": "invalid"})
+    try:
+        from src.users import get_user_by_username
+        taken = get_user_by_username(u) is not None
+    except Exception:
+        taken = False
+    return jsonify({"available": not taken, "reason": "taken" if taken else "ok"})
 
 
 @app.route("/api/users", methods=["GET"])

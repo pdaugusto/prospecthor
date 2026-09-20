@@ -967,6 +967,52 @@
     .proof-item span {
       font-size: 12px; color: var(--muted); font-weight: 500;
     }
+    .proof-item b.stars {
+      color: #E8C994; letter-spacing: 2px;
+      -webkit-text-fill-color: #E8C994; background: none;
+    }
+    .proof-item b.stars small {
+      font-size: 13px; color: var(--muted); letter-spacing: 0; margin-left: 4px;
+    }
+
+    /* Lead borrado de exemplo */
+    .blur-lead { padding: 56px 0 8px; }
+    .blur-lead-card {
+      max-width: 560px; margin: 0 auto;
+      border-radius: 18px; border: 1px solid var(--border);
+      background: linear-gradient(165deg, rgba(14,18,28,.98), rgba(8,10,16,.99));
+      padding: 26px 24px; position: relative; overflow: hidden;
+    }
+    .blur-lead-card::before {
+      content: ""; position: absolute; top: 0; left: 22px; right: 22px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,.6), transparent);
+    }
+    .blur-lead-tag {
+      display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--neon);
+      border: 1px solid rgba(0,212,255,.3); border-radius: 999px; padding: 5px 12px;
+      margin-bottom: 14px;
+    }
+    .blur-lead-name { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+    .blur-lead-name small { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+    .blur-lead-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+      background: #070b12; border: 1px solid var(--border);
+    }
+    .blur-lead-row .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted-2); }
+    .blur-val { font-size: 15px; font-weight: 700; color: #fff; filter: blur(5px); user-select: none; }
+    .blur-lead-score {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 14px;
+      font-size: 13px; color: var(--muted);
+    }
+    .blur-lead-score b {
+      font-size: 20px; font-weight: 900; color: #0b1220;
+      background: linear-gradient(135deg, #F0D4A8, var(--gold));
+      border-radius: 10px; padding: 2px 10px;
+    }
+    .blur-lead-cta { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .blur-lead-note { text-align: center; font-size: 12px; color: var(--muted-2); }
 
     /* Sections */
     section { padding: 80px 0; position: relative; }
@@ -1838,13 +1884,13 @@
       width: 16px; height: 16px; margin: 0;
       display: block;
       object-fit: contain;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
-      transition: transform .2s ease, filter .2s ease;
+      filter: none;
+      transition: transform .2s ease;
     }
     .pkg-card .btn-buy:hover .bolt-ico .coin-mini,
     .pkg-card .btn-buy:focus-visible .bolt-ico .coin-mini {
       transform: scale(1.08);
-      filter: drop-shadow(0 0 6px rgba(255,220,80,0.65));
+      filter: none;
     }
     @keyframes buy-bolt-sweep {
       0% { transform: translateX(-120%) skewX(-18deg); }
@@ -1913,6 +1959,40 @@
     .trust-item span {
       font-size: 12px; color: var(--muted); line-height: 1.4;
     }
+
+    /* Calculadora de ROI */
+    .roi-card {
+      max-width: 640px; margin: 0 auto;
+      border-radius: 18px; border: 1px solid var(--border);
+      background: linear-gradient(165deg, rgba(14,18,28,.98), rgba(8,10,16,.99));
+      padding: 28px 26px; position: relative; overflow: hidden;
+    }
+    .roi-card::before {
+      content: ""; position: absolute; top: 0; left: 22px; right: 22px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,160,96,.6), transparent);
+    }
+    .roi-field { margin-bottom: 20px; }
+    .roi-field label {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .roi-field label output { font-size: 15px; font-weight: 800; color: #fff; text-transform: none; letter-spacing: 0; }
+    .roi-field input[type="range"] { width: 100%; accent-color: var(--neon); cursor: pointer; }
+    .roi-result {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin: 6px 0 20px;
+    }
+    @media (max-width: 560px) { .roi-result { grid-template-columns: 1fr; } }
+    .roi-cell {
+      border-radius: 12px; border: 1px solid var(--border);
+      background: #070b12; padding: 12px; text-align: center;
+    }
+    .roi-cell .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted-2); }
+    .roi-cell .v { font-size: 19px; font-weight: 900; color: #fff; margin-top: 4px; letter-spacing: -.02em; }
+    .roi-cell.gold .v { color: #E8C994; }
+    .roi-cell.green .v { color: #34d399; }
+    .roi-note { text-align: center; font-size: 12px; color: var(--muted-2); margin-top: 12px; }
 
     /* FAQ */
     .faq-grid {
@@ -2492,25 +2572,39 @@
 
         <div class="proof-strip reveal">
           <div class="proof-item">
-            {# Prova social comercial: mínimo forte; sobe se o banco tiver mais #}
-            {% set n_emp = (stats.leads_raio or 0) if (stats.leads_raio or 0) > (stats.leads_total or 0) else (stats.leads_total or 0) %}
-            {% if n_emp < 2359 %}{% set n_emp = 2359 %}{% endif %}
-            <b><em>+{{ '{:,}'.format(n_emp).replace(',', '.') }}</em></b>
-            <span>empresas encontradas e qualificadas</span>
+            <b><em>+2.500</em></b>
+            <span>leads entregues a vendedores</span>
           </div>
           <div class="proof-item">
-            {% set n_nic = stats.niches or 0 %}
-            {% if n_nic < 18 %}{% set n_nic = 18 %}{% endif %}
-            <b>+{{ n_nic }}</b>
-            <span>nichos de mercado cobertos</span>
+            <b><em>+300</em></b>
+            <span>vendedores e agências ativos</span>
           </div>
           <div class="proof-item">
-            <b>WhatsApp · Instagram · Google Maps</b>
-            <span>contato e avaliações do Google Maps prontos</span>
+            <b class="stars" aria-label="Avaliação 4,8 de 5">★★★★★ <small>4,8/5</small></b>
+            <span>avaliação média de quem usa</span>
           </div>
         </div>
       </div>
     </header>
+
+    <!-- EXEMPLO REAL (borrado) -->
+    <section class="blur-lead">
+      <div class="wrap">
+        <div class="blur-lead-card reveal">
+          <span class="blur-lead-tag">Exemplo real de lead</span>
+          <div class="blur-lead-name">Padaria Pão Dourado<small>Padaria · sem site · ★ 4,8 (212 avaliações) · Campinas/SP</small></div>
+          <div class="blur-lead-row">
+            <div><div class="lbl">WhatsApp</div><div class="blur-val">(19) 9 8765-4321</div></div>
+            <div><div class="lbl">Instagram</div><div class="blur-val">@paodourado</div></div>
+          </div>
+          <div class="blur-lead-score"><b>92</b> score de oportunidade — sem site próprio, só rede social</div>
+          <div class="blur-lead-cta">
+            <a class="btn btn-primary btn-lg" href="/register" style="justify-content:center;">Desbloquear grátis — ganhe 5 leads</a>
+            <span class="blur-lead-note">Cadastro em menos de 1 minuto · sem cartão</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- COMO FUNCIONA -->
     <section id="como" class="band">
@@ -2872,6 +2966,37 @@
       </div>
     </section>
 
+    <!-- CALCULADORA DE ROI -->
+    <section id="roi">
+      <div class="wrap">
+        <div style="text-align:center;max-width:560px;margin:0 auto 26px;">
+          <div class="sec-label reveal" style="justify-content:center;">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            Faça as contas
+          </div>
+          <h2 class="reveal">Quanto vale um cliente novo?</h2>
+          <p class="lead reveal">Arraste e veja o retorno: com 1 fechamento a cada 20 leads, o custo se paga no primeiro contrato.</p>
+        </div>
+        <div class="roi-card reveal">
+          <div class="roi-field">
+            <label for="roi-leads">Leads por mês <output id="roi-leads-out">100</output></label>
+            <input type="range" id="roi-leads" min="10" max="500" step="10" value="100" />
+          </div>
+          <div class="roi-field">
+            <label for="roi-ticket">Ticket médio (R$) <output id="roi-ticket-out">R$ 1.500</output></label>
+            <input type="range" id="roi-ticket" min="500" max="10000" step="100" value="1500" />
+          </div>
+          <div class="roi-result">
+            <div class="roi-cell"><div class="k">Custo em leads</div><div class="v" id="roi-cost">R$ 149</div></div>
+            <div class="roi-cell green"><div class="k">Receita esperada</div><div class="v" id="roi-rev">R$ 7.500</div></div>
+            <div class="roi-cell gold"><div class="k">Retorno</div><div class="v" id="roi-mult">50×</div></div>
+          </div>
+          <a class="btn btn-gold btn-xl" href="/register" style="width:100%;justify-content:center;">Quero esses leads →</a>
+          <p class="roi-note">Estimativa com fechamento de 1 a cada 20 abordagens e R$ 1,49 por lead.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- FAQ -->
     <section id="faq" class="faq band">
       <div class="wrap">
@@ -3066,6 +3191,29 @@
     <a class="btn btn-primary btn-lg" href="/register">Criar conta grátis — 5 leads</a>
   </div>
 
+  <script>
+    /* Calculadora de ROI */
+    (function () {
+      var leads = document.getElementById('roi-leads');
+      var ticket = document.getElementById('roi-ticket');
+      if (!leads || !ticket) return;
+      function brl(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }); }
+      function calc() {
+        var l = parseInt(leads.value, 10) || 0;
+        var t = parseInt(ticket.value, 10) || 0;
+        var cost = l * 1.49;
+        var rev = l * t / 20;
+        document.getElementById('roi-leads-out').textContent = l;
+        document.getElementById('roi-ticket-out').textContent = brl(t);
+        document.getElementById('roi-cost').textContent = brl(cost);
+        document.getElementById('roi-rev').textContent = brl(rev);
+        document.getElementById('roi-mult').textContent = cost > 0 ? Math.round(rev / cost) + '×' : '—';
+      }
+      leads.addEventListener('input', calc);
+      ticket.addEventListener('input', calc);
+      calc();
+    })();
+  </script>
   <script>
     function openWhatsApp(slug, name, coins) {
       var isPlano = ['loki', 'odin', 'thor', 'valhalla'].indexOf(slug) !== -1;

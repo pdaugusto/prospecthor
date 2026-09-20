@@ -71,7 +71,7 @@ _LIST_COLS = """
     id, name, phone, city, state, niche, category, address,
     website, website_status, maps_url, rating, review_count,
     instagram_url, instagram_username, lead_score, lead_class,
-    lead_problems, lead_services, lead_priority, score_confidence,
+    lead_problems, lead_services, lead_priority,
     contacted_at, notes, created_at, scraped_at,
     assigned_to, assigned_at
 """

@@ -49,7 +49,6 @@ _SCORER_COLUMNS: list[tuple[str, str]] = [
     ("lead_problems",    "TEXT"),     # JSON list de strings
     ("lead_services",    "TEXT"),     # JSON list de sugeridos
     ("lead_priority",    "TEXT"),     # alta|media|baixa|nenhuma
-    ("score_confidence", "TEXT"),     # alta|media|baixa (nº de sinais coletados)
     ("scored_at",        "TEXT"),     # ISO-8601
 ]
 
@@ -60,7 +59,6 @@ UPDATE companies SET
     lead_problems = %(lead_problems)s,
     lead_services = %(lead_services)s,
     lead_priority = %(lead_priority)s,
-    score_confidence = %(score_confidence)s,
     scored_at     = %(scored_at)s
 WHERE id = %(id)s;
 """
@@ -749,23 +747,6 @@ class LeadScorer:
             ))
             score = teto
 
-        # selo de confiança = quantos sinais REAIS a nota conseguiu usar
-        n_signals = (
-            int(has_google)
-            + int(has_cnpj)
-            + int(has_ig)
-            + int(has_mobile or has_landline)
-        )
-        if n_signals >= 3:
-            score_confidence = "alta"
-        elif n_signals == 2:
-            score_confidence = "media"
-        else:
-            score_confidence = "baixa"
-        _factors.append(
-            (f"Confiança da nota: {score_confidence} ({n_signals}/4 sinais)", 0.0),
-        )
-
         # ── Montar problems com pontuação anotada (+XX) ──────────────────
         # Converte _factors em "Label (+XX)" para o tooltip do dashboard
         for label, contrib in _factors:
@@ -804,7 +785,6 @@ class LeadScorer:
             "lead_problems": json.dumps(problems, ensure_ascii=False),
             "lead_services": json.dumps(dedup_services, ensure_ascii=False),
             "lead_priority": priority,
-            "score_confidence": score_confidence,
             "scored_at": datetime.now().isoformat(),
         }
 

@@ -591,12 +591,7 @@ def run_score(force: bool) -> None:
         click.echo("  Nenhum lead precisava ser (re)pontuado.")
     else:
         click.echo(click.style("-" * 45, fg="cyan"))
-        from collections import Counter
-        conf = Counter(l.get("score_confidence") for l in leads)
-        click.echo(f"  ✅ {len(leads)} leads qualificados / re-pontuados")
-        click.echo(f"     Confiança alta  : {conf.get('alta', 0)}")
-        click.echo(f"     Confiança média : {conf.get('media', 0)}")
-        click.echo(f"     Confiança baixa : {conf.get('baixa', 0)}\n")
+        click.echo(f"  ✅ {len(leads)} leads qualificados / re-pontuados\n")
     click.echo(click.style("=" * 45 + "\n", fg="cyan"))
 
 

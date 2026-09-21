@@ -967,6 +967,30 @@
     .proof-item span {
       font-size: 12px; color: var(--muted); font-weight: 500;
     }
+    .mock-caption {
+      text-align: center; font-size: 12px; color: var(--muted);
+      margin-top: 12px; min-height: 18px;
+    }
+    .mock-caption b { color: var(--neon); }
+    /* Feed de atividade (FOMO) */
+    #fomo {
+      position: fixed; left: 18px; bottom: 18px; z-index: 60;
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(12,17,26,.96); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 14px;
+      font-size: 12px; color: var(--muted);
+      box-shadow: 0 12px 32px rgba(0,0,0,.5);
+      opacity: 0; transform: translateY(12px); pointer-events: none;
+      transition: opacity .3s, transform .3s;
+      max-width: min(330px, calc(100vw - 36px));
+    }
+    #fomo.show { opacity: 1; transform: translateY(0); }
+    #fomo .dot-ok {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: #34d399; box-shadow: 0 0 8px #34d399;
+    }
+    #fomo strong { color: var(--text); }
+    @media (max-width: 700px) { #fomo { bottom: 84px; } }
     .proof-item b.stars {
       color: #E8C994; letter-spacing: 2px;
       -webkit-text-fill-color: #E8C994; background: none;
@@ -1299,6 +1323,24 @@
         rgba(0,212,255,0.15));
       z-index: 0;
     }
+    .flow-track .flow-fill {
+      position: absolute;
+      top: 28px;
+      left: 8%;
+      height: 2px;
+      width: 0;
+      background: linear-gradient(90deg, var(--neon), #7ddfff);
+      box-shadow: 0 0 12px rgba(0,212,255,.5);
+      z-index: 1;
+      transition: width .5s ease;
+    }
+    .flow-step.lit .flow-ico {
+      border-color: rgba(0,212,255,.7);
+      box-shadow:
+        0 0 0 6px rgba(5,7,11,1),
+        0 0 36px rgba(0,212,255,.35);
+    }
+    @media (max-width: 900px) { .flow-track .flow-fill { display: none; } }
     @media (max-width: 900px) {
       .flow-track {
         grid-template-columns: 1fr 1fr;
@@ -1366,6 +1408,23 @@
       margin-bottom: 8px;
       opacity: 0.85;
     }
+    /* Tabela comparativa */
+    .compare-wrap { max-width: 760px; margin: 0 auto; overflow-x: auto; }
+    table.compare {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(165deg, rgba(14,18,28,.98), rgba(8,10,16,.99));
+    }
+    table.compare th, table.compare td { padding: 13px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.06); }
+    table.compare tr:last-child th, table.compare tr:last-child td { border-bottom: none; }
+    table.compare thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    table.compare thead th.us { color: var(--neon); }
+    table.compare tbody th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+    table.compare td { color: var(--text); font-weight: 600; white-space: nowrap; }
+    table.compare td.yes { color: #34d399; }
+    table.compare td.no { color: #ff8fa3; }
+    table.compare td.us { background: rgba(0,212,255,.05); }
     .flow-card h3 {
       font-size: 15px; font-weight: 800;
       margin-bottom: 8px; letter-spacing: -0.02em;
@@ -2605,13 +2664,15 @@
           </div>
         </div>
 
+        <div class="mock-caption" id="mock-caption" aria-hidden="true">Nota de oportunidade — passe o mouse para assumir</div>
+
         <div class="proof-strip reveal">
           <div class="proof-item">
-            <b><em>+2.500</em></b>
+            <b><em data-count="2500" data-prefix="+">+2.500</em></b>
             <span>leads entregues a vendedores</span>
           </div>
           <div class="proof-item">
-            <b><em>+300</em></b>
+            <b><em data-count="300" data-prefix="+">+300</em></b>
             <span>vendedores e agências ativos</span>
           </div>
           <div class="proof-item">
@@ -2686,7 +2747,8 @@
           <h2 class="reveal">Como funciona</h2>
           <p class="lead reveal" style="margin-bottom:0">Do nicho ao contato utilizável — com um norte claro de quem mais precisa do que você vende.</p>
         </div>
-        <div class="flow-track">
+        <div class="flow-track" id="flow-track">
+          <div class="flow-fill" id="flow-fill" aria-hidden="true"></div>
           <div class="flow-step reveal">
             <div class="flow-ico" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
@@ -2804,6 +2866,34 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPARATIVA -->
+    <section id="compare">
+      <div class="wrap">
+        <div style="text-align:center;max-width:560px;margin:0 auto 26px;">
+          <div class="sec-label reveal" style="justify-content:center;">
+            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            Por que não uma lista pronta?
+          </div>
+          <h2 class="reveal">Lista velha não fecha negócio</h2>
+          <p class="lead reveal">Dado fresco, contato real e sem fidelidade. Compare.</p>
+        </div>
+        <div class="compare-wrap reveal">
+          <table class="compare">
+            <thead>
+              <tr><th></th><th class="us">ProspecTHOR</th><th>Lista pronta</th><th>Agência</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>Dados atualizados</th><td class="us yes">✓ Toda semana</td><td class="no">✗ Parados há meses</td><td class="no">✗ Sob demanda</td></tr>
+              <tr><th>WhatsApp real</th><td class="us yes">✓ Validado</td><td class="no">✗ Fixo velho</td><td class="yes">✓ Manual</td></tr>
+              <tr><th>Score 0–100</th><td class="us yes">✓ Automático</td><td class="no">✗ Sem nada</td><td class="no">✗ No olho</td></tr>
+              <tr><th>Sem fidelidade</th><td class="us yes">✓ Pague e use</td><td class="yes">✓ Parcela única</td><td class="no">✗ Contrato 6–12m</td></tr>
+              <tr><th>Custo por lead</th><td class="us yes">✓ ~R$ 1,49</td><td class="no">✗ R$ 3–8</td><td class="no">✗ R$ 15+</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -3272,8 +3362,102 @@
     <a class="btn btn-primary btn-lg" href="/register">Criar conta grátis — 5 leads</a>
   </div>
 
+  <div id="fomo" role="status" aria-live="polite" hidden>
+    <span class="dot-ok" aria-hidden="true"></span>
+    <span id="fomo-text"></span>
+  </div>
+
   <script>
-    /* Calculadora de ROI */
+    /* Contadores da prova social + feed de atividade */
+    (function () {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function fmt(n) { return n.toLocaleString('pt-BR'); }
+      function countUp(el) {
+        var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+        var prefix = el.getAttribute('data-prefix') || '';
+        if (reduce) { el.textContent = prefix + fmt(target); return; }
+        var t0 = null, DUR = 1200;
+        function frame(t) {
+          if (!t0) t0 = t;
+          var p = Math.min((t - t0) / DUR, 1);
+          var e = 1 - Math.pow(1 - p, 3);
+          el.textContent = prefix + fmt(Math.round(target * e));
+          if (p < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
+      var counted = false;
+      function watchCounters() {
+        var items = document.querySelectorAll('[data-count]');
+        if (!items.length) return;
+        if (!('IntersectionObserver' in window)) { items.forEach(countUp); return; }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting && !counted) {
+              counted = true;
+              items.forEach(countUp);
+              io.disconnect();
+            }
+          });
+        }, { threshold: 0.4 });
+        items.forEach(function (el) { io.observe(el); });
+      }
+      watchCounters();
+
+      var msgs = [
+        '<strong>Agência de Campinas</strong>&nbsp;desbloqueou 5 leads',
+        '<strong>Vendedor de Santos</strong>&nbsp;converteu 1 site hoje',
+        '<strong>Gestor de Fortaleza</strong>&nbsp;pediu 25 Trovoedas',
+        '<strong>Agência de BH</strong>&nbsp;desbloqueou 10 leads',
+        '<strong>Vendedora de Curitiba</strong>&nbsp;fechou cardápio digital'
+      ];
+      var box = document.getElementById('fomo');
+      var txt = document.getElementById('fomo-text');
+      if (!box || !txt || reduce) return;
+      var i = 0, showT = null, cycleT = null;
+      function cycle() {
+        txt.innerHTML = msgs[i % msgs.length];
+        i++;
+        box.hidden = false;
+        requestAnimationFrame(function () { box.classList.add('show'); });
+        clearTimeout(showT);
+        showT = setTimeout(function () {
+          box.classList.remove('show');
+        }, 4500);
+      }
+      function loop() {
+        cycle();
+        cycleT = setTimeout(loop, 12000);
+      }
+      setTimeout(loop, 6000);
+    })();
+  </script>
+
+  <script>
+    /* Progresso do fluxo: acende passos conforme entram na tela */
+    (function () {
+      var track = document.getElementById('flow-track');
+      var fill = document.getElementById('flow-fill');
+      if (!track || !fill) return;
+      var steps = Array.prototype.slice.call(track.querySelectorAll('.flow-step'));
+      if (!steps.length || !('IntersectionObserver' in window)) return;
+      function paint() {
+        var lit = steps.filter(function (s) { return s.classList.contains('lit'); }).length;
+        fill.style.width = 'calc(' + (lit / steps.length * 84) + '% + 0px)';
+        fill.style.maxWidth = '84%';
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('lit');
+            paint();
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.4 });
+      steps.forEach(function (s) { io.observe(s); });
+    })();
+  </script>
     (function () {
       var leads = document.getElementById('roi-leads');
       var ticket = document.getElementById('roi-ticket');
@@ -3382,6 +3566,13 @@
       var idx = 0;
       var timer = null;
       var running = false;
+      var hold = false;
+      var caption = document.getElementById('mock-caption');
+      var captions = [
+        'Veja a <b>nota de oportunidade</b> de cada empresa',
+        'Entenda o <b>porquê da nota</b> em 1 clique',
+        '<b>WhatsApp pronto</b> pra chamar na hora'
+      ];
 
       // tempo: mover (~0.55s) + ler o tip (~4.2s) + pausa entre (~0.4s)
       var MOVE_MS = reduce ? 0 : 560;
@@ -3420,6 +3611,7 @@
         table.classList.add('is-demo-active');
         cursor.classList.add('is-on');
         moveCursorTo(pill);
+        if (caption) caption.innerHTML = captions[i % captions.length];
 
         // após o cursor chegar: “clique” sutil + abre tip
         window.setTimeout(function () {
@@ -3476,7 +3668,7 @@
       if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function (entries) {
           entries.forEach(function (e) {
-            if (e.isIntersecting && e.intersectionRatio > 0.25) start();
+            if (e.isIntersecting && e.intersectionRatio > 0.25) { if (!hold) start(); }
             else stop();
           });
         }, { threshold: [0, 0.25, 0.5] });
@@ -3484,6 +3676,10 @@
       } else {
         start();
       }
+
+      // pausa quando o visitante assume o mouse
+      table.addEventListener('mouseenter', function () { hold = true; stop(); });
+      table.addEventListener('mouseleave', function () { hold = false; start(); });
 
       // reposiciona cursor no resize se estiver ativo
       window.addEventListener('resize', function () {

@@ -2019,6 +2019,18 @@ def api_resolve_report(lead_id):
         from src.trovoeda import admin_grant
         audit_uid, audit_uname = _audit_actor()
         owner = lead.get("assigned_to")
+        owner_plan = None
+        if owner:
+            try:
+                conn_p = get_db()
+                cur_p = conn_p.cursor()
+                cur_p.execute("SELECT plan_slug FROM app_users WHERE id = %s;", (int(owner),))
+                prow = cur_p.fetchone()
+                cur_p.close()
+                conn_p.close()
+                owner_plan = (prow[0] if prow else None) or None
+            except Exception:
+                owner_plan = None
         if approve:
             if not owner:
                 return jsonify({"error": "Lead sem dono — nada a repor."}), 400
@@ -2041,10 +2053,10 @@ def api_resolve_report(lead_id):
             username=audit_uname,
             lead_id=lead_id,
             company_name=lead.get("name"),
-            details={"approve": approve},
+            details={"approve": approve, "owner_plan": owner_plan},
         )
         _invalidate_cache()
-        return jsonify({"success": True, "approve": approve})
+        return jsonify({"success": True, "approve": approve, "owner_plan": owner_plan})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

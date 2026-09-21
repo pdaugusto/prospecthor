@@ -469,6 +469,11 @@
     .mock-table.has-score-hover.is-demo-active .mock-tr:not(.head):not(.is-hover) {
       opacity: 0.68;
     }
+    /* Mock é vitrine: botões de contato NÃO clicam */
+    .mock-table a.mt-btn {
+      pointer-events: none;
+      cursor: default;
+    }
     .mock-tr.is-hover {
       background: linear-gradient(90deg, rgba(201,160,96,0.12), transparent 75%);
       z-index: 6;
@@ -2541,7 +2546,7 @@
                       <span class="mt-name">Clínica Odonto Horizonte<small>Odontologia · sem site</small></span>
                       <span class="mt-city">Campinas</span>
                       <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5519999887766" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
+                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990001" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
                           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
                           <span>WhatsApp</span>
                         </a>
@@ -2573,7 +2578,7 @@
                       <span class="mt-name">Advocacia Mendes &amp; Silva<small>Advocacia · sem site</small></span>
                       <span class="mt-city">São Paulo</span>
                       <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511988776655" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
+                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990002" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
                           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
                           <span>WhatsApp</span>
                         </a>
@@ -2601,7 +2606,7 @@
                       <span class="mt-name">Studio Belle Estética<small>Estética · sem site</small></span>
                       <span class="mt-city">Santos</span>
                       <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5513999776655" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
+                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990003" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
                           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
                           <span>WhatsApp</span>
                         </a>
@@ -2633,7 +2638,7 @@
                       <span class="mt-name">Construtora Vale Norte<small>Construção · sem site</small></span>
                       <span class="mt-city">Ribeirão</span>
                       <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5516999554433" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
+                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990004" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
                           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
                           <span>WhatsApp</span>
                         </a>
@@ -3076,7 +3081,7 @@
                     <span>Comprar</span>
                   </span>
                 </a>
-                <div class="pkg-guarantee">🛡 Número inválido? Repomos 1 Trovoeda</div>
+                <div class="pkg-guarantee">🛡 Número inválido? Repomos 1 lead</div>
               </div>
             </div>
             {% else %}
@@ -3458,6 +3463,8 @@
       steps.forEach(function (s) { io.observe(s); });
     })();
   </script>
+  <script>
+    /* Calculadora de ROI */
     (function () {
       var leads = document.getElementById('roi-leads');
       var ticket = document.getElementById('roi-ticket');

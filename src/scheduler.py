@@ -107,7 +107,7 @@ class SchedulerDatabase:
         self._init_db()
 
     def _connect(self):
-        return psycopg2.connect(_DATABASE_URL)
+        return psycopg2.connect(_DATABASE_URL, connect_timeout=4)
 
     def _init_db(self) -> None:
         """Cria tabelas de histórico e estado do scheduler."""
@@ -279,7 +279,7 @@ class LeadGenerationPipeline:
           AND website NOT ILIKE '%%wa.me%%'
         """
         try:
-            conn = psycopg2.connect(_DATABASE_URL)
+            conn = psycopg2.connect(_DATABASE_URL, connect_timeout=4)
             cur = conn.cursor()
             cur.execute(sql, (now, now, now))
             skipped = cur.rowcount

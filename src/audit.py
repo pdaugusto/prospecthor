@@ -23,7 +23,7 @@ _DATABASE_URL = os.getenv("DATABASE_URL", "")
 def _connect():
     if not _DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada")
-    return psycopg2.connect(_DATABASE_URL)
+    return psycopg2.connect(_DATABASE_URL, connect_timeout=4)
 
 
 def ensure_schema() -> None:

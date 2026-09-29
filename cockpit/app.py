@@ -27,6 +27,39 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 load_dotenv(ROOT / ".env")
 
+
+def _activate_local_mirror() -> str | None:
+    """Usa o espelho Postgres local no PROCESSO (sem tocar no arquivo .env).
+
+    Motivo: a rede atual bloqueia a porta 5432 do Supabase. O .env segue
+    com a URL original, mas todo acesso via psycopg2 neste processo (e nos
+    workers filhos, que herdam o environ) usa o espelho local em
+    .env.local_db. A ponte com a nuvem é feita via REST (443) pelo
+    sync_supabase.py.
+    """
+    try:
+        mirror_file = ROOT / ".env.local_db"
+        if not mirror_file.exists():
+            return None
+        uri = mirror_file.read_text(encoding="utf-8").strip().split("=", 1)[1].strip()
+        if not uri:
+            return None
+        os.environ["DATABASE_URL"] = uri
+        # garante que módulos src já importados releiam na próxima importação
+        for mod in [m for m in list(sys.modules) if m == "src" or m.startswith("src.")]:
+            try:
+                del sys.modules[mod]
+            except KeyError:
+                pass
+        print(f"[cockpit] espelho local ativo (processo). .env intacto.", flush=True)
+        return uri
+    except Exception as exc:
+        print(f"[cockpit] sem espelho local ({exc}); usando DATABASE_URL do .env", flush=True)
+        return None
+
+
+_LOCAL_DB_URI = _activate_local_mirror()
+
 DATA = ROOT / "data"
 MISSIONS_PATH = DATA / "missions.json"
 STATE_PATH = DATA / "cockpit_state.json"
@@ -415,10 +448,17 @@ def append_log(
             st["message"] = clean[:200]
     save_state(st)
     if not from_bot:
+        # fire-and-forget: add_log toca o Supabase e não pode travar a resposta
         try:
-            from src.bot_status import add_log
+            def _bg_log(msg: str = clean, lvl: str = level) -> None:
+                try:
+                    from src.bot_status import add_log
 
-            add_log(f"[cockpit] {clean}", level=level)
+                    add_log(f"[cockpit] {msg}", level=lvl)
+                except Exception:
+                    pass
+
+            threading.Thread(target=_bg_log, daemon=True).start()
         except Exception:
             pass
 
@@ -495,15 +535,114 @@ def home():
     return render_template("cockpit.html", port=PORT)
 
 
+def _local_mirror_users() -> list[dict] | None:
+    """Espelho local (sync via REST 443) quando o Supabase direto falha.
+
+    Lê .env.local_db e devolve usuários (exceto patrao) com contagem
+    do mês calculada no banco local. None = sem espelho disponível.
+    """
+    import datetime
+
+    local_uri = ""
+    try:
+        with open(ROOT / ".env.local_db", encoding="utf-8") as f:
+            local_uri = f.read().strip().split("=", 1)[1]
+    except OSError:
+        return None
+    if not local_uri:
+        return None
+    try:
+        import psycopg2
+        import psycopg2.extras
+
+        conn = psycopg2.connect(local_uri, connect_timeout=4)
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(
+                """
+                SELECT id, username, label, active, monthly_quota
+                FROM app_users WHERE lower(username) <> 'patrao'
+                ORDER BY username;
+                """
+            )
+            rows = [dict(r) for r in cur.fetchall()]
+            month = datetime.datetime.now().strftime("%Y-%m")
+            for u in rows:
+                try:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*) FROM companies
+                        WHERE assigned_to = %s
+                          AND assigned_at LIKE %s;
+                        """,
+                        (int(u["id"]), f"{month}%"),
+                    )
+                    u["used"] = int((cur.fetchone() or [0])[0] or 0)
+                except Exception:
+                    u["used"] = 0
+            cur.close()
+            return [
+                {
+                    "id": u.get("id"),
+                    "username": u.get("username"),
+                    "label": u.get("label") or u.get("username"),
+                    "active": u.get("active"),
+                    "quota": u.get("monthly_quota"),
+                    "used": u.get("used", 0),
+                }
+                for u in rows
+            ]
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
 @app.get("/api/catalog")
 def api_catalog():
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
     from src.bot_plan import load_catalog
     from src.users import list_users
 
     cat = load_catalog()
     users = []
+    warning = None
     try:
-        for u in list_users():
+        # list_users pode travar minutos se o Supabase estiver inacessível
+        # (psycopg2.connect sem timeout). Roda com timeout curto e
+        # devolve o catálogo local mesmo sem usuários.
+        # NOTA: não usar `with ThreadPoolExecutor` pois o __exit__ faz
+        # shutdown(wait=True) e travaria junto. shutdown(wait=False).
+        pool = ThreadPoolExecutor(max_workers=1)
+        try:
+            fut = pool.submit(list_users)
+            try:
+                rows = fut.result(timeout=7)
+            except FuturesTimeout:
+                # Fallback: espelho local sincronizado via REST (443)
+                mirror = _local_mirror_users()
+                if mirror:
+                    return jsonify(
+                        {
+                            "users": mirror,
+                            "catalog": cat,
+                            "warning": "Supabase direto bloqueado nesta rede — usando espelho local (sync via REST).",
+                        }
+                    ), 200
+                warning = "Banco inacessível (timeout 7s) — cidades/nichos locais OK, lista de pessoas vazia."
+                return jsonify({"users": [], "catalog": cat, "warning": warning}), 200
+            finally:
+                try:
+                    pool.shutdown(wait=False, cancel_futures=True)
+                except TypeError:
+                    pool.shutdown(wait=False)
+        except Exception:
+            try:
+                pool.shutdown(wait=False)
+            except Exception:
+                pass
+            raise
+        for u in rows or []:
             un = (u.get("username") or "").lower()
             if un == "patrao":
                 continue
@@ -518,7 +657,9 @@ def api_catalog():
                 }
             )
     except Exception as exc:
-        return jsonify({"error": str(exc), "users": [], "catalog": cat}), 500
+        # Não quebra cidades/nichos por causa do banco: retorna 200 parcial
+        warning = f"Banco indisponível: {str(exc)[:200]}"
+        return jsonify({"users": [], "catalog": cat, "warning": warning}), 200
     return jsonify({"users": users, "catalog": cat})
 
 
@@ -1092,6 +1233,44 @@ def _pending_in_order(
     return [m for m in missions if (m.get("status") or "") == "pendente"]
 
 
+def _local_max_company_id() -> int:
+    """Maior id local em companies (marca d'água p/ push pós-missão)."""
+    try:
+        with open(ROOT / ".env.local_db", encoding="utf-8") as f:
+            uri = f.read().strip().split("=", 1)[1].strip()
+        import psycopg2
+
+        conn = psycopg2.connect(uri, connect_timeout=4)
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COALESCE(MAX(id), 0) FROM companies;")
+            return int((cur.fetchone() or [0])[0] or 0)
+        finally:
+            conn.close()
+    except Exception:
+        return 0
+
+
+def _auto_push_to_site(mission: dict, before_id: int) -> None:
+    """Envia ao site (Supabase via REST) os leads achados nesta missão.
+
+    Roda em thread: achou + nota → sobe sozinho na conta do dono.
+    """
+    try:
+        owner = mission.get("username") or "livre"
+        append_log(f"↑ Enviando leads ao site (conta: {owner})…", src="sys")
+        sys.path.insert(0, str(ROOT))
+        from sync_supabase import push_companies
+
+        n = push_companies(since_id=before_id)
+        append_log(
+            f"↑ {n} lead(s) com score no site · conta: {owner}",
+            src="sys",
+        )
+    except Exception as exc:
+        append_log(f"↑ Push ao site falhou: {str(exc)[:200]}", "WARN", src="sys")
+
+
 def _queue_worker(only_ids: list[str] | None = None) -> None:
     """Roda missões pendentes em sequência. only_ids = só essas (ordem do pedido)."""
     global _worker, _proc
@@ -1130,6 +1309,7 @@ def _queue_worker(only_ids: list[str] | None = None) -> None:
             st["queue_pos"] = pos
             save_state(st)
 
+            m["_push_mark"] = _local_max_company_id()
             code = _run_one_mission(m)
 
             missions = load_missions()
@@ -1143,6 +1323,15 @@ def _queue_worker(only_ids: list[str] | None = None) -> None:
                         x["status"] = "erro"
                     x["finished_at"] = _now()
             save_missions(missions)
+
+            # achou + nota → sobe sozinho p/ o site (não espera; próxima já roda)
+            try:
+                before_id = int(m.get("_push_mark") or 0)
+                threading.Thread(
+                    target=_auto_push_to_site, args=(m, before_id), daemon=True
+                ).start()
+            except Exception:
+                pass
 
             if _stop_flag.is_set():
                 break
@@ -1287,6 +1476,21 @@ def api_stop():
             m["finished_at"] = _now()
     save_missions(missions)
     append_log("Bot parado pelo cockpit", "WARN")
+    # parou → sobe tudo que tem score (garante que nada fica preso no local)
+    try:
+        def _push_on_stop() -> None:
+            try:
+                sys.path.insert(0, str(ROOT))
+                from sync_supabase import push_companies
+
+                n = push_companies()
+                append_log(f"↑ Stop: {n} lead(s) com score garantidos no site", src="sys")
+            except Exception as exc:
+                append_log(f"↑ Stop: push falhou: {str(exc)[:150]}", "WARN", src="sys")
+
+        threading.Thread(target=_push_on_stop, daemon=True).start()
+    except Exception:
+        pass
     return jsonify({"ok": True, "state": st})
 
 

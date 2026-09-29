@@ -119,7 +119,7 @@ def connect():
         except Exception:
             pass
         # descarta e tenta outra conexão quente (ou cria nova)
-    return _PooledConnection(psycopg2.connect(_DATABASE_URL))
+    return _PooledConnection(psycopg2.connect(_DATABASE_URL, connect_timeout=4))
 
 
 def close_all() -> None:

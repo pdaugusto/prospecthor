@@ -1,714 +1,1273 @@
 {
   "status": "parado",
-  "message": "Missão removida: 20bb96a8 (Missão livre)",
+  "message": "Cockpit pronto",
   "pid": null,
   "current_mission_id": null,
-  "session_leads": 0,
-  "mission_target": 200,
-  "mission_label": "Missão livre",
+  "session_leads": 20,
+  "mission_target": 0,
+  "mission_label": "",
   "log": [
     {
-      "t": "2026-07-29T21:51:56",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "▶ Missão «Missão livre» · meta 200 leads · nichos: fotografia, hotel, otica, psicologia, seguradora · 10 cidade(s) · dono: livre · 2 workers (Google Maps + Fonte B)",
-      "bot": false,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:52:03",
-      "level": "INFO",
-      "msg": "Meta 0/200 zerada (Maps+Fonte B juntos, sem cota por nicho)",
-      "bot": false,
-      "src": "sys"
-    },
-    {
-      "t": "2026-07-29T21:52:08",
-      "level": "INFO",
-      "msg": "📦 Fonte B ligada em paralelo (mapa/CNPJ) · pid 7112",
-      "bot": false,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:11",
-      "level": "INFO",
-      "msg": "Meta da missão: 0/200 leads (Maps↔Fonte B ligados)",
-      "bot": false,
-      "src": "sys"
-    },
-    {
-      "t": "2026-07-29T21:52:20",
-      "level": "INFO",
-      "msg": "[2026-07-29 21:52:20] [__main__] [INFO] Bot iniciado com sucesso.",
+      "msg": "🗺 [2026-09-28 13:23:16] [src.scheduler] [INFO] [Pipeline] 11 NOVAS sem site — score na hora (sem web/IG em massa)",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:52:20",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "📦 Fonte B (mapa/CNPJ) começou 52:20] [__main__] [INFO] [Fonte B] ========== INÍCIO ==========",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:20",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:52:20] [__main__] [INFO] [Fonte B] Só grava se: SEM site próprio e COM telefone ou Instagram.",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:22",
-      "level": "INFO",
-      "msg": "[2026-07-29 21:52:22] [__main__] [INFO] Montando fila por BAIRRO (cities.json + plano do painel)...",
+      "msg": "'Léo Resolve Prestador de serviço'",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:52:24",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "[bot_plan] fila: 10 cidade(s), 5 nicho(s), meta_leads=200",
+      "msg": "'PH SOLUÇÕES'",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:52:24",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "nichos=['fotografia', 'hotel', 'otica', 'psicologia', 'seguradora']",
+      "msg": "'S.O.S Elétrica e Reparos'",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:52:28",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "[Fonte B] [bot_plan] fila: 10 cidade(s), 5 nicho(s), meta_leads=200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:29",
-      "level": "INFO",
-      "msg": "[Fonte B] nichos=fotografia, hotel, otica, psicologia, seguradora",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:29",
-      "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:52:29] [src.google_maps] [INFO] [GoogleMapsSearcher] API key não configurada. Usando apenas Playwright (scraping).",
+      "msg": "'HELP - Serviços e Manutenções Prediais'",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:52:34",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "📦 Fonte B (mapa/CNPJ) começou 52:34] [src.cnpj_source] [INFO] [Fonte B] ========== INÍCIO ==========",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:34",
-      "level": "INFO",
-      "msg": "📦 Meta TOTAL: 0/200 (Maps+Fonte B, SEM divisão por nicho — pode encher de qualquer um)",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:34",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:52:34] [src.cnpj_source] [INFO] [Fonte B] Ordem: fotografia → hotel → otica → psicologia → seguradora",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:38",
-      "level": "INFO",
-      "msg": "📦 meta total Maps+Fonte B",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:55",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:52:55] [src.cnpj_source] [INFO] [Fonte B] → Aracaju / fotografia · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:55",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 52:55] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Aracaju / SE · nicho fotografia",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:52:56",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 52:56] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:53:08",
-      "level": "INFO",
-      "msg": "meta 0/200",
+      "msg": "'O&M Service'",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:53:09",
-      "level": "ERROR",
-      "msg": "📦 [2026-07-29 21:53:09] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'AR Serviços Marido de Aluguel'",
       "bot": true,
-      "src": "fonteb"
+      "src": "maps"
     },
     {
-      "t": "2026-07-29T21:53:14",
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'Ysmael eletricista predial e residencial 24 hrs'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'Lumiery Serviços'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'RenatoConstruservice'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'MDI Marido de aluguel / reparo residencial, montagem, instalações.'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "'AF Eletricista e encanador'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "Alto Maron → 11 leads",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "Alto Maron (11 leads)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "meta 11/20",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
       "msg": "instagram=off",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:53:14",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
       "msg": "3 queries",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:53:39",
+      "t": "2026-09-28T13:23:16",
       "level": "INFO",
-      "msg": "meta 0/200",
+      "msg": "meta 11/20",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:53:50",
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:23:16] [src.google_maps] [INFO] [Playwright] Executando busca via scraping...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:23:16] [src.google_maps] [INFO] [Playwright] Iniciando navegador Chromium...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:16",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:23:16] [src.google_maps] [INFO] [Playwright] Navegador pronto.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:17",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:23:17] [src.google_maps] [INFO] [Playwright] Abrindo: https://www.google.com/maps/search/seguradora+corretora+de+Alto+Maron+Vit%C3%B3ria+da+Conquista (meta: 18 leads contatáveis sem site)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:19",
       "level": "WARN",
-      "msg": "📦 [2026-07-29 21:53:50] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (ReadTimeout), tentando outro…",
+      "msg": "📦 [2026-09-28 13:23:19] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (ReadTimeout), tentando outro…",
       "bot": true,
       "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:53:58",
+      "t": "2026-09-28T13:23:21",
       "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:53:58] [src.google_maps] [INFO] [Playwright] Executando busca via scraping...",
+      "msg": "📦 [2026-09-28 13:23:21] [src.cnpj_source] [INFO] [Fonte B] Mapa (modo 2) devolveu 0 empresas em Vitória da Conquista / seguradora",
       "bot": true,
-      "src": "maps"
+      "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:53:58",
+      "t": "2026-09-28T13:23:21",
       "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:53:58] [src.google_maps] [INFO] [Playwright] Iniciando navegador Chromium...",
+      "msg": "📦 [2026-09-28 13:23:21] [src.cnpj_source] [INFO] [Fonte B] Vitória da Conquista/seguradora: 0 no mapa · 0 com site · 0 sem contato · 0 prontos",
       "bot": true,
-      "src": "maps"
+      "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:54:03",
-      "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:54:03] [src.google_maps] [INFO] [Playwright] Navegador pronto.",
+      "t": "2026-09-28T13:23:21",
+      "level": "WARN",
+      "msg": "📦 Fonte B: nada no mapa para este nicho/cidade 23:21] [src.cnpj_source] [WARNING] [Fonte B] Zero no mapa para Vitória da Conquista / seguradora. OpenStreetMap pode estar vazio nesse nicho/cidade.",
       "bot": true,
-      "src": "maps"
+      "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:54:06",
+      "t": "2026-09-28T13:23:21",
       "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:54:06] [src.google_maps] [INFO] [Playwright] Abrindo: https://www.google.com/maps/search/est%C3%BAdio+13+de+Julho+Aracaju (meta: 24 leads contatáveis sem site)",
+      "msg": "📦 [2026-09-28 13:23:21] [src.cnpj_source] [INFO] [Fonte B] Par Vitória da Conquista/seguradora: +0 missão · +0 sobras · meta 11/20",
       "bot": true,
-      "src": "maps"
+      "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:54:26",
+      "t": "2026-09-28T13:23:23",
       "level": "ERROR",
-      "msg": "📦 [2026-07-29 21:54:26] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "msg": "[Fonte B] erros=0",
       "bot": true,
       "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:54:27",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:54:27] [src.cnpj_source] [INFO] [Fonte B] Mapa (modo 2) devolveu 4 empresas em Aracaju / fotografia",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:54:27",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:54:27] [src.cnpj_source] [INFO] [Fonte B] Aracaju/fotografia: 4 no mapa · 0 com site · 4 sem contato · 0 prontos",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:54:28",
+      "t": "2026-09-28T13:23:23",
       "level": "WARN",
-      "msg": "📦 [2026-07-29 21:54:27] [src.cnpj_source] [WARNING] [Fonte B] Achei 4 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
+      "msg": "📦 Fonte B: 0 leads novos nesta rodada (normal se o mapa não tem tel) 23:23] [src.cnpj_source] [WARNING] [Fonte B] Nenhum lead novo. Motivos comuns: mapa vazio no nicho, empresas só com site, ou sem celular/Instagram n…",
       "bot": true,
       "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:54:36",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:54:36] [src.cnpj_source] [INFO] [Fonte B] Par Aracaju/fotografia: +0 missão · +0 sobras · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:54:53",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:54:53] [src.cnpj_source] [INFO] [Fonte B] → Aracaju / hotel · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:54:53",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 54:53] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Aracaju / SE · nicho hotel",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:54:54",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 54:54] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:01",
-      "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:55:01] [src.google_maps] [INFO] [Playwright] Sem novos resultados após 3 tentativas de scroll. Encerrando coleta.",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:01",
-      "level": "INFO",
-      "msg": "🗺 [2026-07-29 21:55:01] [src.google_maps] [INFO] [Playwright] Pool de 35 URLs (meta 24 novas sem site).",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:01",
-      "level": "INFO",
-      "msg": "url 1/35): https://www.google.com/maps/place/Diego+Torres+Studio+Personal+-+13+de...",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:10",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:10] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 59 empresas no mapa empresas em Aracaju / hotel",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:10",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:10] [src.cnpj_source] [INFO] [Fonte B] Aracaju/hotel: 59 no mapa · 16 com site · 43 sem contato · 0 prontos",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:10",
-      "level": "WARN",
-      "msg": "📦 [2026-07-29 21:55:10] [src.cnpj_source] [WARNING] [Fonte B] Achei 59 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:11",
-      "level": "INFO",
-      "msg": "✅ Maps: lead contatável 55:11] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [1/24]: 'Diego Torres Studio Personal - 13 de julho' (whatsapp)",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:19",
-      "level": "INFO",
-      "msg": "url 2/35): https://www.google.com/maps/place/13+de+Julho/data=!4m7!3m6!1s0x71ab38...",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:20",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:20] [src.cnpj_source] [INFO] [Fonte B] Par Aracaju/hotel: +0 missão · +0 sobras · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:36",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:36] [src.cnpj_source] [INFO] [Fonte B] → Aracaju / otica · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:37",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 55:36] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Aracaju / SE · nicho otica",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:37",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 55:37] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:38",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:38] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 53 empresas no mapa empresas em Aracaju / otica",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:38",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:38] [src.cnpj_source] [INFO] [Fonte B] Aracaju/otica: 53 no mapa · 1 com site · 52 sem contato · 0 prontos",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:39",
-      "level": "WARN",
-      "msg": "📦 [2026-07-29 21:55:38] [src.cnpj_source] [WARNING] [Fonte B] Achei 53 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:42",
-      "level": "INFO",
-      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 55:42] [src.google_maps] [INFO] [Playwright] ⏭ '13 de Julho' sem tel/IG — não conta na meta (1/24)",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:43",
-      "level": "INFO",
-      "msg": "url 3/35): https://www.google.com/maps/place/Carinne+Mendes/data=!4m7!3m6!1s0x71a...",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:47",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:55:47] [src.cnpj_source] [INFO] [Fonte B] Par Aracaju/otica: +0 missão · +0 sobras · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:55:49",
-      "level": "INFO",
-      "msg": "✅ Maps: lead contatável 55:49] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [2/24]: 'Carinne Mendes' (whatsapp)",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:55:57",
-      "level": "INFO",
-      "msg": "url 4/35): https://www.google.com/maps/place/STUDIO+S+Centro+de+Beleza/data=!4m7!...",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:56:02",
-      "level": "INFO",
-      "msg": "🗺 Maps: empresa com site — pulou 56:02] [src.google_maps] [INFO] [Playwright] ⏭ 'STUDIO S Centro de Beleza' tem site — pula sem extrair (2/24)",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:56:02",
-      "level": "INFO",
-      "msg": "url 5/35): https://www.google.com/maps/place/Studio+Thaize+Fonseca+%7C+Alongament...",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:56:03",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:56:03] [src.cnpj_source] [INFO] [Fonte B] → Aracaju / psicologia · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:56:03",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 56:03] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Aracaju / SE · nicho psicologia",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:56:03",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 56:03] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:56:10",
-      "level": "INFO",
-      "msg": "Aracaju' (whatsapp)",
-      "bot": true,
-      "src": "maps"
-    },
-    {
-      "t": "2026-07-29T21:56:17",
+      "t": "2026-09-28T13:23:23",
       "level": "ERROR",
-      "msg": "📦 [2026-07-29 21:56:16] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
+      "msg": "📦 [2026-09-28 13:23:23] [__main__] [INFO] [Fonte B] Resultado: 0 lead(s) salvos · 0 no mapa · 0 sem contato · 0 erros",
       "bot": true,
       "src": "fonteb"
     },
     {
-      "t": "2026-07-29T21:56:18",
+      "t": "2026-09-28T13:23:29",
       "level": "INFO",
-      "msg": "url 6/35): https://www.google.com/maps/place/Sant%C3%A9+Studio+Pilates/data=!4m7!...",
+      "msg": "🗺 [2026-09-28 13:23:29] [src.google_maps] [INFO] [Playwright] Sem novos resultados após 3 tentativas de scroll. Encerrando coleta.",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:29",
+      "t": "2026-09-28T13:23:29",
       "level": "INFO",
-      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 56:29] [src.google_maps] [INFO] [Playwright] ⏭ 'Santé Studio Pilates' sem tel/IG — não conta na meta (3/24)",
+      "msg": "🗺 [2026-09-28 13:23:29] [src.google_maps] [INFO] [Playwright] Pool de 17 URLs (meta 18 novas sem site).",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:29",
+      "t": "2026-09-28T13:23:29",
       "level": "INFO",
-      "msg": "url 7/35): https://www.google.com/maps/place/Real+Tra%C3%A7o/data=!4m7!3m6!1s0x71...",
+      "msg": "url 1/17): https://www.google.com/maps/place/Sert%C3%A3o+Corretora+de+Seguros/dat...",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:36",
+      "t": "2026-09-28T13:23:31",
       "level": "INFO",
-      "msg": "✅ Maps: lead contatável 56:36] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [4/24]: 'Real Traço' (whatsapp)",
+      "msg": "🗺 Maps: empresa com site — pulou 23:31] [src.google_maps] [INFO] [Playwright] ⏭ 'Sertão Corretora de Seguros' tem site — pula sem extrair (0/18)",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:43",
+      "t": "2026-09-28T13:23:31",
       "level": "INFO",
-      "msg": "url 8/35): https://www.google.com/maps/place/Fabr%C3%ADcio+Rosa+Studio+Pilates/da...",
+      "msg": "url 2/17): https://www.google.com/maps/place/PLATAFORMA+SEGUROS/data=!4m7!3m6!1s0...",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:51",
+      "t": "2026-09-28T13:23:33",
       "level": "INFO",
-      "msg": "✅ Maps: lead contatável 56:50] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [5/24]: 'Fabrício Rosa Studio Pilates' (whatsapp)",
+      "msg": "🗺 Maps: empresa com site — pulou 23:33] [src.google_maps] [INFO] [Playwright] ⏭ 'PLATAFORMA SEGUROS' tem site — pula sem extrair (0/18)",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:56:53",
-      "level": "ERROR",
-      "msg": "📦 [2026-07-29 21:56:53] [src.cnpj_source] [WARNING] [Fonte B] Servidor de mapa falhou (HTTPError), tentando outro…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:56:59",
+      "t": "2026-09-28T13:23:33",
       "level": "INFO",
-      "msg": "url 9/35): https://www.google.com/maps/place/Studio+Dez+-+Treinamento+Personaliza...",
+      "msg": "url 3/17): https://www.google.com/maps/place/Viconseg+Seguros/data=!4m7!3m6!1s0x7...",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:57:01",
+      "t": "2026-09-28T13:23:35",
       "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:01] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 53 empresas no mapa empresas em Aracaju / psicologia",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:02",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:01] [src.cnpj_source] [INFO] [Fonte B] Aracaju/psicologia: 53 no mapa · 1 com site · 52 sem contato · 0 prontos",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:02",
-      "level": "WARN",
-      "msg": "📦 [2026-07-29 21:57:01] [src.cnpj_source] [WARNING] [Fonte B] Achei 53 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:11",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:11] [src.cnpj_source] [INFO] [Fonte B] Par Aracaju/psicologia: +0 missão · +0 sobras · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:12",
-      "level": "INFO",
-      "msg": "✅ Maps: lead contatável 57:12] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [6/24]: 'Studio Dez - Treinamento Personalizado' (whatsapp)",
+      "msg": "🗺 Maps: empresa com site — pulou 23:35] [src.google_maps] [INFO] [Playwright] ⏭ 'Viconseg Seguros' tem site — pula sem extrair (0/18)",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:57:21",
+      "t": "2026-09-28T13:23:35",
       "level": "INFO",
-      "msg": "url 10/35): https://www.google.com/maps/place/Galeria+Center+Treze/data=!4m7!3m6!1...",
+      "msg": "url 4/17): https://www.google.com/maps/place/Vilmar+Administradora+e+Corret/data=...",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:57:28",
+      "t": "2026-09-28T13:23:44",
       "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:28] [src.cnpj_source] [INFO] [Fonte B] → Aracaju / seguradora · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:28",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 57:28] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Aracaju / SE · nicho seguradora",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:28",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 57:28] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:29",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:29] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 5 empresas no mapa empresas em Aracaju / seguradora",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:29",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:29] [src.cnpj_source] [INFO] [Fonte B] Aracaju/seguradora: 5 no mapa · 1 com site · 4 sem contato · 0 prontos",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:30",
-      "level": "WARN",
-      "msg": "📦 [2026-07-29 21:57:29] [src.cnpj_source] [WARNING] [Fonte B] Achei 5 no mapa, mas nenhum com celular/WA ou Instagram (e sem site). Por isso não grava lead.",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:38",
-      "level": "INFO",
-      "msg": "📦 [2026-07-29 21:57:38] [src.cnpj_source] [INFO] [Fonte B] Par Aracaju/seguradora: +0 missão · +0 sobras · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:57:55",
-      "level": "INFO",
-      "msg": "✅ Maps: lead contatável 57:55] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [7/24]: 'Galeria Center Treze' (instagram)",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 23:44] [src.google_maps] [INFO] [Playwright] ⏭ 'Vilmar Administradora e Corret' sem tel/IG — não conta na meta (0/18)",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:58:02",
+      "t": "2026-09-28T13:23:44",
       "level": "INFO",
-      "msg": "📦 [2026-07-29 21:58:02] [src.cnpj_source] [INFO] [Fonte B] → Belo Horizonte / fotografia · pede até 20 · meta 0/200",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:58:02",
-      "level": "INFO",
-      "msg": "📦 Fonte B: consultando OpenStreetMap… 58:02] [src.cnpj_source] [INFO] [Fonte B] Buscando no mapa (OpenStreetMap) · Belo Horizonte / MG · nicho fotografia",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:58:04",
-      "level": "INFO",
-      "msg": "📦 Fonte B: cidade encontrada no mapa 58:04] [src.cnpj_source] [INFO] [Fonte B] Cidade localizada no mapa — buscando empresas…",
-      "bot": true,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:58:06",
-      "level": "INFO",
-      "msg": "url 11/35): https://www.google.com/maps/place/Espa%C3%A7o+Lord+%7C+13+de+Julho/dat...",
+      "msg": "url 5/17): https://www.google.com/maps/place/Viver+Lemos+Corretora+de+Seguros/dat...",
       "bot": true,
       "src": "maps"
     },
     {
-      "t": "2026-07-29T21:58:14",
+      "t": "2026-09-28T13:23:45",
       "level": "INFO",
-      "msg": "📦 [2026-07-29 21:58:14] [src.cnpj_source] [INFO] [Fonte B] 📦 Fonte B: 1 empresas no mapa empresas em Belo Horizonte / fotografia",
+      "msg": "🗺 Maps: empresa com site — pulou 23:45] [src.google_maps] [INFO] [Playwright] ⏭ 'Viver Lemos Corretora de Seguros' tem site — pula sem extrair (0/18)",
       "bot": true,
-      "src": "fonteb"
+      "src": "maps"
     },
     {
-      "t": "2026-07-29T21:58:14",
+      "t": "2026-09-28T13:23:46",
       "level": "INFO",
-      "msg": "📦 [2026-07-29 21:58:14] [src.cnpj_source] [INFO] [Fonte B] Belo Horizonte/fotografia: 1 no mapa · 0 com site · 0 sem contato · 1 prontos",
+      "msg": "url 6/17): https://www.google.com/maps/place/Vilmar+Seguros/data=!4m7!3m6!1s0x746...",
       "bot": true,
-      "src": "fonteb"
+      "src": "maps"
     },
     {
-      "t": "2026-07-29T21:58:15",
-      "level": "WARN",
-      "msg": "Parada pedida — encerrando Maps + Fonte B",
-      "bot": false,
-      "src": "fonteb"
-    },
-    {
-      "t": "2026-07-29T21:58:27",
+      "t": "2026-09-28T13:23:47",
       "level": "INFO",
-      "msg": "Score: só pendentes (sem scored_at)…",
+      "msg": "🗺 Maps: empresa com site — pulou 23:47] [src.google_maps] [INFO] [Playwright] ⏭ 'Vilmar Seguros' tem site — pula sem extrair (0/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:47",
+      "level": "INFO",
+      "msg": "url 7/17): https://www.google.com/maps/place/NOVA+DIAMANTINA+CORRETORA+DE+SEGUROS...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:49",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 23:49] [src.google_maps] [INFO] [Playwright] ⏭ 'NOVA DIAMANTINA CORRETORA DE SEGUROS - VITÓRIA DA CONQUISTA' tem site — pula sem extrair (0/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:49",
+      "level": "INFO",
+      "msg": "url 8/17): https://www.google.com/maps/place/Alfa+e+Omega+-+Corretora+de+Seguros+...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:51",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 23:51] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [1/18]: 'Alfa e Omega - Corretora de Seguros e Imóves' (instagram)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:53",
+      "level": "INFO",
+      "msg": "url 9/17): https://www.google.com/maps/place/Soruges+Corretora+-+Seguros+e+Planos...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:56",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 23:56] [src.google_maps] [INFO] [Playwright] ⏭ 'Soruges Corretora - Seguros e Planos de Saúde' tem site — pula sem extrair (1/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:57",
+      "level": "INFO",
+      "msg": "url 10/17): https://www.google.com/maps/place/Porto+Seguro+Cia.+de+Seguros+Gerais/...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:58",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 23:58] [src.google_maps] [INFO] [Playwright] ⏭ 'Porto Seguro Cia. de Seguros Gerais' tem site — pula sem extrair (1/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:23:58",
+      "level": "INFO",
+      "msg": "url 11/17): https://www.google.com/maps/place/Permanente+Mutual+Prote%C3%A7%C3%A3o...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:00",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:00] [src.google_maps] [INFO] [Playwright] ⏭ 'Permanente Mutual Proteção Veicular - Vitória da Conquista' tem site — pula sem extrair (1/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:00",
+      "level": "INFO",
+      "msg": "url 12/17): https://www.google.com/maps/place/H%C3%B3rus+corretora+de+seguros/data...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:03",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 24:03] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [2/18]: 'Hórus corretora de seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:06",
+      "level": "INFO",
+      "msg": "url 13/17): https://www.google.com/maps/place/PORTO+PARAGUA%C3%87U+CORRETORA+DE+SE...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:08",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:08] [src.google_maps] [INFO] [Playwright] ⏭ 'PORTO PARAGUAÇU CORRETORA DE SEGUROS LTDA ME' tem site — pula sem extrair (2/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:08",
+      "level": "INFO",
+      "msg": "url 14/17): https://www.google.com/maps/place/Oikonomia+Seguros/data=!4m7!3m6!1s0x...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:09",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:09] [src.google_maps] [INFO] [Playwright] ⏭ 'Oikonomia Seguros' tem site — pula sem extrair (2/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:10",
+      "level": "INFO",
+      "msg": "url 15/17): https://www.google.com/maps/place/Alves+%26+Maia+Corretora+de+Seguros/...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:13",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 24:13] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [3/18]: 'Alves & Maia Corretora de Seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:15",
+      "level": "INFO",
+      "msg": "url 16/17): https://www.google.com/maps/place/%C3%81guia+Seguros/data=!4m7!3m6!1s0...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:18",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 24:18] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [4/18]: 'Águia Seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:20",
+      "level": "INFO",
+      "msg": "url 17/17): https://www.google.com/maps/place/Veredicto+Consultoria/data=!4m7!3m6!...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:21",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:21] [src.google_maps] [INFO] [Playwright] ⏭ 'Veredicto Consultoria' tem site — pula sem extrair (4/18)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "17 painéis",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +1] meta 12/20: 'Alfa e Omega - Corretora de Seguros e Imóves'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "'Alfa e Omega - Corretora de Seguros e Imóves'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +2] meta 13/20: 'Hórus corretora de seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "'Hórus corretora de seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +3] meta 14/20: 'Alves & Maia Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "'Alves & Maia Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +4] meta 15/20: 'Águia Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "'Águia Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "meta 15/20",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [Playwright] Executando busca via scraping...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:22",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:22] [src.google_maps] [INFO] [Playwright] Iniciando navegador Chromium...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:23",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:23] [src.google_maps] [INFO] [Playwright] Navegador pronto.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:23",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:23] [src.google_maps] [INFO] [Playwright] Abrindo: https://www.google.com/maps/search/seguradora+corretora+de+seguros+seguros+Alto+Maron+Vit%C3%B3ria+da+Conquista (meta: 11 leads contatáveis sem site)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:46",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:46] [src.google_maps] [INFO] [Playwright] Sem novos resultados após 3 tentativas de scroll. Encerrando coleta.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:46",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:46] [src.google_maps] [INFO] [Playwright] Pool de 41 URLs (meta 11 novas sem site).",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:46",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:46] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (0/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:46",
+      "level": "INFO",
+      "msg": "url 10/41): https://www.google.com/maps/place/Turin+Corretora+-+Seguros+e+Planos+d...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:48",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 24:48] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [1/11]: 'Turin Corretora - Seguros e Planos de saúde' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:50",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:24:50] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (1/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:50",
+      "level": "INFO",
+      "msg": "url 12/41): https://www.google.com/maps/place/CONFISEG+CORRETORA+DE+SEGUROS/data=!...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:52",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:52] [src.google_maps] [INFO] [Playwright] ⏭ 'CONFISEG CORRETORA DE SEGUROS' tem site — pula sem extrair (1/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:52",
+      "level": "INFO",
+      "msg": "url 13/41): https://www.google.com/maps/place/JBRAZ+SEGUROS/data=!4m7!3m6!1s0x7463...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:55",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 24:55] [src.google_maps] [INFO] [Playwright] ⏭ 'JBRAZ SEGUROS' sem tel/IG — não conta na meta (1/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:56",
+      "level": "INFO",
+      "msg": "url 14/41): https://www.google.com/maps/place/WMG+Corretora+de+Seguros+e+Certifica...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:57",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 24:57] [src.google_maps] [INFO] [Playwright] ⏭ 'WMG Corretora de Seguros e Certificação Digital' tem site — pula sem extrair (1/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:24:57",
+      "level": "INFO",
+      "msg": "url 15/41): https://www.google.com/maps/place/PROTECT+CENTER+CORRETORA/data=!4m7!3...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:04",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 25:04] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [2/11]: 'PROTECT CENTER CORRETORA' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:06",
+      "level": "INFO",
+      "msg": "url 16/41): https://www.google.com/maps/place/Benchmark+Corretora+de+Seguros/data=...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:11",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 25:11] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [3/11]: 'Benchmark Corretora de Seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:12",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:25:12] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (3/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:12",
+      "level": "INFO",
+      "msg": "url 18/41): https://www.google.com/maps/place/TrustSegur+Corretora+de+Seguros/data...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:18",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 25:18] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [4/11]: 'TrustSegur Corretora de Seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:19",
+      "level": "INFO",
+      "msg": "url 19/41): https://www.google.com/maps/place/ZuricH+Corretora/data=!4m7!3m6!1s0x7...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:28",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 25:28] [src.google_maps] [INFO] [Playwright] ⏭ 'ZuricH Corretora' sem tel/IG — não conta na meta (4/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:28",
+      "level": "INFO",
+      "msg": "url 20/41): https://www.google.com/maps/place/Corretor+de+seguros+%7C+SS+ADM/data=...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:30",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:30",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:25:30] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (4/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:30",
+      "level": "INFO",
+      "msg": "url 22/41): https://www.google.com/maps/place/Asvic+Plus+-+Prote%C3%A7%C3%A3o+Veic...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:32",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 25:32] [src.google_maps] [INFO] [Playwright] ⏭ 'Asvic Plus - Proteção Veicular' tem site — pula sem extrair (4/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:32",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:25:32] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (4/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:32",
+      "level": "INFO",
+      "msg": "url 24/41): https://www.google.com/maps/place/2rios+Seguros/data=!4m7!3m6!1s0x7463...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:33",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 25:33] [src.google_maps] [INFO] [Playwright] ⏭ '2rios Seguros' tem site — pula sem extrair (4/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:33",
+      "level": "INFO",
+      "msg": "url 25/41): https://www.google.com/maps/place/Ivana+Souza+Corretora/data=!4m7!3m6!...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:39",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 25:39] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [5/11]: 'Ivana Souza Corretora' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:42",
+      "level": "INFO",
+      "msg": "url 26/41): https://www.google.com/maps/place/ASVIC+ALFA/data=!4m7!3m6!1s0x7463bb9...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:44",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 25:44] [src.google_maps] [INFO] [Playwright] ⏭ 'ASVIC ALFA' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:44",
+      "level": "INFO",
+      "msg": "url 27/41): https://www.google.com/maps/place/Loja+De+Planos+-+REDECOOP+Corretora/...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:47",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 25:47] [src.google_maps] [INFO] [Playwright] ⏭ 'Loja De Planos - REDECOOP Corretora' sem tel/IG — não conta na meta (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:48",
+      "level": "INFO",
+      "msg": "url 28/41): https://www.google.com/maps/place/AXO+Brasil+Neg%C3%B3cios+%26+Seguros...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:49",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 25:49] [src.google_maps] [INFO] [Playwright] ⏭ 'AXO Brasil Negócios & Seguros' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:49",
+      "level": "INFO",
+      "msg": "url 29/41): https://www.google.com/maps/place/Prates+Corretora/data=!4m7!3m6!1s0x7...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:51",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 25:51] [src.google_maps] [INFO] [Playwright] ⏭ 'Prates Corretora' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:25:52",
+      "level": "INFO",
+      "msg": "url 30/41): https://www.google.com/maps/place/Djs+Corretora+De+Seguros/data=!4m7!3...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:03",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 26:03] [src.google_maps] [INFO] [Playwright] ⏭ 'Djs Corretora De Seguros' sem tel/IG — não conta na meta (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:04",
+      "level": "INFO",
+      "msg": "url 31/41): https://www.google.com/maps/place/Texas+Conquista/data=!4m7!3m6!1s0x74...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:13",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 26:13] [src.google_maps] [INFO] [Playwright] ⏭ 'Texas Conquista' sem tel/IG — não conta na meta (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:13",
+      "level": "INFO",
+      "msg": "url 32/41): https://www.google.com/maps/place/ALMEIDA+BOTELHO+ADM+E+CORRETORA+DE+S...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:15",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 26:15] [src.google_maps] [INFO] [Playwright] ⏭ 'ALMEIDA BOTELHO ADM E CORRETORA DE SEGUROS LTDA' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:15",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:15] [src.google_maps] [INFO] [Playwright] ⏭ já no banco (5/11 novas) — pula painel",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:15",
+      "level": "INFO",
+      "msg": "url 34/41): https://www.google.com/maps/place/Conquista+Premium+Seguros/data=!4m7!...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:16",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 26:16] [src.google_maps] [INFO] [Playwright] ⏭ 'Conquista Premium Seguros' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:17",
+      "level": "INFO",
+      "msg": "url 35/41): https://www.google.com/maps/place/Passic+Administradora+e+Corretora+de...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:22",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 26:22] [src.google_maps] [INFO] [Playwright] ⏭ 'Passic Administradora e Corretora de Seguros' sem tel/IG — não conta na meta (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:23",
+      "level": "INFO",
+      "msg": "url 36/41): https://www.google.com/maps/place/CORRETORA+DE+SEGUROS+ALVES+%26+MAIA/...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:24",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 26:24] [src.google_maps] [INFO] [Playwright] ⏭ 'CORRETORA DE SEGUROS ALVES & MAIA' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:24",
+      "level": "INFO",
+      "msg": "url 37/41): https://www.google.com/maps/place/Tix+Corretora/data=!4m7!3m6!1s0x7463...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:26",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 26:26] [src.google_maps] [INFO] [Playwright] ⏭ 'Tix Corretora' tem site — pula sem extrair (5/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:26",
+      "level": "INFO",
+      "msg": "url 38/41): https://www.google.com/maps/place/Brasil+Corretora/data=!4m7!3m6!1s0x7...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:28",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 26:28] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [6/11]: 'Brasil Corretora' (instagram)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:30",
+      "level": "INFO",
+      "msg": "url 39/41): https://www.google.com/maps/place/Seguralta+-+Conquista+Corretora+de+S...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:31",
+      "level": "INFO",
+      "msg": "🗺 Maps: empresa com site — pulou 26:31] [src.google_maps] [INFO] [Playwright] ⏭ 'Seguralta - Conquista Corretora de Seguros' tem site — pula sem extrair (6/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:31",
+      "level": "INFO",
+      "msg": "url 40/41): https://www.google.com/maps/place/CredCapital+Consignados,+corretora+d...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:37",
+      "level": "INFO",
+      "msg": "🗺 Maps: sem telefone/Instagram — não conta na meta 26:37] [src.google_maps] [INFO] [Playwright] ⏭ 'CredCapital Consignados, corretora de seguros e escritório virtual' sem tel/IG — não conta na meta (6/11)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:38",
+      "level": "INFO",
+      "msg": "url 41/41): https://www.google.com/maps/place/Efat%C3%A1+Corretora+de+Seguros/data...",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:44",
+      "level": "INFO",
+      "msg": "✅ Maps: lead contatável 26:44] [src.google_maps] [INFO] [Playwright] ✓ lead contatável [7/11]: 'Efatá Corretora de Seguros' (whatsapp)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "27 painéis",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:47] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +5] meta 16/20: 'Turin Corretora - Seguros e Planos de saúde'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "'Turin Corretora - Seguros e Planos de saúde'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:47] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +6] meta 17/20: 'PROTECT CENTER CORRETORA'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "'PROTECT CENTER CORRETORA'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:47] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +7] meta 18/20: 'Benchmark Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:47",
+      "level": "INFO",
+      "msg": "'Benchmark Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +8] meta 19/20: 'TrustSegur Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'TrustSegur Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.google_maps] [INFO] [GoogleMapsSearcher] Salva contatável [maps +9] meta 20/20: 'Ivana Souza Corretora'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Ivana Souza Corretora'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.google_maps] [INFO] [GoogleMapsSearcher] 🛑 META BATEU 20/20 — resto do lote → SOBRAS",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "SOBRA (sem dono)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.google_maps] [INFO] [GoogleMapsSearcher] 📦 SOBRA (sem dono): 'Brasil Corretora'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "SOBRA (sem dono)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.google_maps] [INFO] [GoogleMapsSearcher] 📦 SOBRA (sem dono): 'Efatá Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "parou novas buscas (meta/nicho)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🗺 [2026-09-28 13:26:48] [src.scheduler] [INFO] [Pipeline] 9 NOVAS sem site — score na hora (sem web/IG em massa)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Alfa e Omega - Corretora de Seguros e Imóves'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Hórus corretora de seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Alves & Maia Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Águia Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Turin Corretora - Seguros e Planos de saúde'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'PROTECT CENTER CORRETORA'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "🛑 META BATEU 20/20 — aguarda 4s p/ score/assign do último, depois encerra os 2",
       "bot": false,
       "src": "sys"
     },
     {
-      "t": "2026-07-29T21:58:31",
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Benchmark Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'TrustSegur Corretora de Seguros'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "'Ivana Souza Corretora'",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "Alto Maron → 9 leads",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "Alto Maron (9 leads)",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "📦 [2026-09-28 13:26:48] [__main__] [INFO] 🛑 META BATEU 20/20 após job — Maps PARA (Fonte B também para).",
+      "bot": true,
+      "src": "fonteb"
+    },
+    {
+      "t": "2026-09-28T13:26:48",
+      "level": "INFO",
+      "msg": "por nicho (maps): eletrica=11, seguradora=9.",
+      "bot": true,
+      "src": "maps"
+    },
+    {
+      "t": "2026-09-28T13:26:52",
+      "level": "INFO",
+      "msg": "✓ Missão e8024d29 ok · meta 20/20 · seguindo fila sem espera",
+      "bot": false,
+      "src": "sys"
+    },
+    {
+      "t": "2026-09-28T13:26:52",
+      "level": "INFO",
+      "msg": "✓ Missão «Missão David» finalizada · 1/1",
+      "bot": false,
+      "src": "sys"
+    },
+    {
+      "t": "2026-09-28T13:26:52",
+      "level": "INFO",
+      "msg": "Fila sem mais pendentes — fim.",
+      "bot": false,
+      "src": "sys"
+    },
+    {
+      "t": "2026-09-28T13:26:52",
+      "level": "INFO",
+      "msg": "Fila vazia — cockpit em espera",
+      "bot": false,
+      "src": "sys"
+    },
+    {
+      "t": "2026-09-28T13:27:47",
       "level": "WARN",
       "msg": "Bot parado pelo cockpit",
       "bot": false,
       "src": "sys"
     },
     {
-      "t": "2026-07-29T21:58:31",
+      "t": "2026-09-28T18:26:54",
       "level": "INFO",
-      "msg": "Nada pendente — todos já têm score. Use «Score force» para recalcular (ex.: CNPJ com nota errada).",
-      "bot": false,
-      "src": "sys"
-    },
-    {
-      "t": "2026-07-29T21:58:33",
-      "level": "WARN",
-      "msg": "Bot parado pelo cockpit",
-      "bot": false,
-      "src": "sys"
-    },
-    {
-      "t": "2026-07-29T21:58:34",
-      "level": "INFO",
-      "msg": "Score finalizado",
-      "bot": false,
-      "src": "sys"
-    },
-    {
-      "t": "2026-09-18T23:32:39",
-      "level": "INFO",
-      "msg": "Missão removida: 20bb96a8 (Missão livre)",
+      "msg": "↑ Stop: 140 lead(s) com score garantidos no site",
       "bot": false,
       "src": "sys"
     }
   ],
   "queue_pos": null,
-  "pid_fonte_b": 7112,
   "run_mission_ids": null
 }

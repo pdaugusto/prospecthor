@@ -46,6 +46,10 @@ data/leads.db-shm
 *.sqlite
 *.sqlite3
 *.db
+# Espelho Postgres local (pgserver) e plano offline do cockpit
+data/pgdata/
+data/bot_plan.json
+.env.local_db
 
 # Cobertura local de bairros (não versionar progresso da máquina)
 data/search_coverage.json

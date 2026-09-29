@@ -43,7 +43,7 @@ class CompanyCheckpoint:
             logger.warning("[Checkpoint] DATABASE_URL ausente — checkpoint vazio.")
             return cls()
         try:
-            conn = psycopg2.connect(_DATABASE_URL)
+            conn = psycopg2.connect(_DATABASE_URL, connect_timeout=4)
             cur = conn.cursor()
             cur.execute(
                 "SELECT place_id FROM companies WHERE place_id IS NOT NULL AND place_id <> '';"

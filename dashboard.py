@@ -51,7 +51,7 @@ def _run_migrations() -> None:
     if not _DATABASE_URL:
         return
     try:
-        conn = psycopg2.connect(_DATABASE_URL)
+        conn = psycopg2.connect(_DATABASE_URL, connect_timeout=4)
         cur = conn.cursor()
         cur.execute("""
         CREATE TABLE IF NOT EXISTS companies (
@@ -197,7 +197,7 @@ _MOCK_LEADS = [
 
 
 def _get_db_connection():
-    return psycopg2.connect(_DATABASE_URL)
+    return psycopg2.connect(_DATABASE_URL, connect_timeout=4)
 
 
 _SOCIAL_MARKERS = (

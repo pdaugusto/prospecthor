@@ -36,6 +36,30 @@ def _connect():
     return _db_connect()
 
 
+_PLAN_PATH = _BASE / "data" / "bot_plan.json"
+
+
+def _save_local_plan(payload: dict[str, Any]) -> None:
+    try:
+        _PLAN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_PLAN_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        logger.warning("[bot_plan] plano local: %s", exc)
+
+
+def _load_local_plan() -> dict[str, Any] | None:
+    try:
+        if _PLAN_PATH.exists():
+            with open(_PLAN_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return data
+    except Exception as exc:
+        logger.warning("[bot_plan] ler plano local: %s", exc)
+    return None
+
+
 def ensure_schema() -> None:
     if not _DATABASE_URL:
         return
@@ -129,7 +153,6 @@ def load_catalog() -> dict[str, Any]:
 
 def get_plan() -> dict[str, Any]:
     """Plano atual + catálogo (para o painel)."""
-    ensure_schema()
     catalog = load_catalog()
     default = {
         "target_leads": 20,
@@ -140,39 +163,55 @@ def get_plan() -> dict[str, Any]:
         "updated_by": None,
         "catalog": catalog,
     }
-    if not _DATABASE_URL:
-        return default
-    try:
-        conn = _connect()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(
-            """
-            SELECT target_leads, city_ids, niche_ids, notes, updated_at, updated_by
-            FROM bot_run_plan WHERE id = 1 LIMIT 1;
-            """
-        )
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        if not row:
-            return default
-        city_ids = _parse_list(row.get("city_ids"))
-        niche_ids = _parse_list(row.get("niche_ids"))
-        # se nichos vazios no plano, default = todos do catálogo
+    # 1) tenta Supabase (rápido com connect_timeout)
+    if _DATABASE_URL:
+        try:
+            ensure_schema()
+            conn = _connect()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(
+                """
+                SELECT target_leads, city_ids, niche_ids, notes, updated_at, updated_by
+                FROM bot_run_plan WHERE id = 1 LIMIT 1;
+                """
+            )
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                city_ids = _parse_list(row.get("city_ids"))
+                niche_ids = _parse_list(row.get("niche_ids"))
+                if not niche_ids:
+                    niche_ids = [n["id"] for n in catalog.get("niches") or [] if n.get("id")]
+                return {
+                    "target_leads": int(row.get("target_leads") or 20),
+                    "city_ids": city_ids,
+                    "niche_ids": niche_ids,
+                    "notes": row.get("notes") or "",
+                    "updated_at": row.get("updated_at"),
+                    "updated_by": row.get("updated_by"),
+                    "catalog": catalog,
+                }
+        except Exception as exc:
+            logger.warning("[bot_plan] get_plan (nuvem falhou, tenta local): %s", exc)
+    # 2) fallback: plano local salvo pelo cockpit (offline)
+    local = _load_local_plan()
+    if local:
+        city_ids = [str(x) for x in (local.get("city_ids") or [])]
+        niche_ids = [str(x) for x in (local.get("niche_ids") or [])]
         if not niche_ids:
             niche_ids = [n["id"] for n in catalog.get("niches") or [] if n.get("id")]
-        return {
-            "target_leads": int(row.get("target_leads") or 20),
-            "city_ids": city_ids,
-            "niche_ids": niche_ids,
-            "notes": row.get("notes") or "",
-            "updated_at": row.get("updated_at"),
-            "updated_by": row.get("updated_by"),
-            "catalog": catalog,
-        }
-    except Exception as exc:
-        logger.warning("[bot_plan] get_plan: %s", exc)
-        return default
+        default.update(
+            {
+                "target_leads": int(local.get("target_leads") or 20),
+                "city_ids": city_ids,
+                "niche_ids": niche_ids,
+                "notes": local.get("notes") or "",
+                "updated_at": local.get("updated_at"),
+                "updated_by": local.get("updated_by"),
+            }
+        )
+    return default
 
 
 def save_plan(
@@ -188,7 +227,22 @@ def save_plan(
     cities = [str(x).strip() for x in (city_ids or []) if str(x).strip()]
     niches = [str(x).strip() for x in (niche_ids or []) if str(x).strip()]
     now = datetime.now().isoformat()
-    conn = _connect()
+    payload = {
+        "target_leads": target,
+        "city_ids": cities,
+        "niche_ids": niches,
+        "notes": (notes or "")[:500],
+        "updated_at": now,
+        "updated_by": (updated_by or "")[:80],
+    }
+    # 1) tenta Supabase; 2) fallback local (offline) — nunca trava o cockpit
+    try:
+        ensure_schema()
+        conn = _connect()
+    except Exception as exc:
+        logger.warning("[bot_plan] nuvem indisponível, salvando plano local: %s", exc)
+        _save_local_plan(payload)
+        return get_plan()
     try:
         cur = conn.cursor()
         cur.execute(
@@ -216,6 +270,7 @@ def save_plan(
         cur.close()
     finally:
         conn.close()
+    _save_local_plan(payload)  # espelha local sempre
     logger.warning(
         "[bot_plan] salvo: target=%s cities=%s niches=%s by=%s",
         target,

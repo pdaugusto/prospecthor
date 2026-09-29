@@ -8,3 +8,5 @@ playwright
 stripe
 apscheduler>=3.10,<4
 beautifulsoup4
+lxml
+pgserver  # banco local embutido (uso offline sem Supabase)

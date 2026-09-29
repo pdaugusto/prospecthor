@@ -876,6 +876,22 @@
         "Tibery",
         "Umuarama"
       ]
+    },
+    {
+      "id": "brumado_ba",
+      "nome": "Brumado",
+      "estado": "BA",
+      "ativo": true,
+      "priority": "media",
+      "allow_citywide": false,
+      "max_results_bairro": 12,
+      "bairros": [
+        "Centro",
+        "São Félix",
+        "Novo Brumado",
+        "Dr. Juracy",
+        "Olhos d'Água"
+      ]
     }
   ]
 }

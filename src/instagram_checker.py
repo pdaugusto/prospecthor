@@ -224,7 +224,7 @@ class InstagramDatabase:
         self._migrate()
 
     def _connect(self):
-        return psycopg2.connect(_DATABASE_URL)
+        return psycopg2.connect(_DATABASE_URL, connect_timeout=4)
 
     def _migrate(self) -> None:
         """

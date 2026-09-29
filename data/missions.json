@@ -1,4 +1,24 @@
 {
-  "missions": [],
-  "updated_at": "2026-09-18T23:32:39"
+  "missions": [
+    {
+      "id": "e8024d29",
+      "label": "Missão David",
+      "user_id": 23,
+      "username": "David",
+      "niche_ids": [
+        "eletrica",
+        "seguradora"
+      ],
+      "city_ids": [
+        "vitoria_da_conquista_ba"
+      ],
+      "target_leads": 20,
+      "status": "ok",
+      "created_at": "2026-09-28T13:20:27",
+      "finished_at": "2026-09-28T13:26:52",
+      "notes": "",
+      "leads_found": 20
+    }
+  ],
+  "updated_at": "2026-09-28T18:26:50"
 }

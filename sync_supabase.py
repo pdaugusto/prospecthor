@@ -10,19 +10,32 @@ import os
 import sys
 import urllib.request
 import urllib.parse
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(".env")
+# Âncora no diretório do projeto (este arquivo), NÃO no cwd:
+# o cockpit pode ser iniciado de qualquer pasta via comando `prospecthor`.
+ROOT = Path(__file__).resolve().parent
+load_dotenv(ROOT / ".env")
 
 BASE = (os.getenv("SUPABASE_URL") or "").rstrip("/")
 KEY = os.getenv("SUPABASE_SERVICE_KEY") or ""
-LOCAL_URI = ""
-try:
-    with open(".env.local_db", encoding="utf-8") as f:
-        LOCAL_URI = f.read().strip().split("=", 1)[1]
-except OSError:
-    pass
+
+
+def _local_uri() -> str:
+    """URI do espelho local, lida na hora (nunca vazia silenciosa)."""
+    try:
+        with open(ROOT / ".env.local_db", encoding="utf-8") as f:
+            uri = f.read().strip().split("=", 1)[1].strip()
+        if uri:
+            return uri
+    except OSError:
+        pass
+    raise RuntimeError(
+        "Espelho local indisponível (.env.local_db não encontrado) — "
+        "rode `prospecthor` para ligar o banco local antes do push."
+    )
 
 
 def rest(path: str, params: str = ""):
@@ -43,7 +56,7 @@ def sync_users() -> int:
     import psycopg2
 
     rows = rest("app_users", "?select=*&order=id&limit=1000")
-    conn = psycopg2.connect(LOCAL_URI, connect_timeout=5)
+    conn = psycopg2.connect(_local_uri(), connect_timeout=5)
     conn.autocommit = True
     cur = conn.cursor()
     n = 0
@@ -131,7 +144,7 @@ def push_companies(since_id: int = 0) -> int:
     import psycopg2
     import psycopg2.extras
 
-    conn = psycopg2.connect(LOCAL_URI, connect_timeout=5)
+    conn = psycopg2.connect(_local_uri(), connect_timeout=5)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
         "SELECT * FROM companies WHERE id > %s AND scored_at IS NOT NULL ORDER BY id;",
@@ -159,9 +172,6 @@ def push_companies(since_id: int = 0) -> int:
 def main() -> None:
     if not BASE or not KEY:
         print("Faltam SUPABASE_URL / SUPABASE_SERVICE_KEY no .env")
-        sys.exit(1)
-    if not LOCAL_URI:
-        print("Sem .env.local_db (banco local fora do ar?)")
         sys.exit(1)
     if "--push" in sys.argv:
         n = push_companies()

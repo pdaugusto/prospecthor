@@ -2662,6 +2662,51 @@
         transform: none;
       }
     }
+
+    /* —— Trovoedas (versão enxuta) —— */
+    .trv-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 28px 40px; align-items: center; }
+    @media (max-width: 880px) { .trv-grid { grid-template-columns: 1fr; } }
+    .trv-side .lead { margin-bottom: 22px; }
+    .trv-eq { display: inline-flex; align-items: center; gap: 16px; padding: 14px 20px 14px 14px; border-radius: 18px;
+      border: 1px solid rgba(201,160,96,0.35); background: radial-gradient(ellipse 80% 120% at 0% 50%, rgba(201,160,96,0.14), transparent 60%), var(--card); }
+    .trv-eq img { width: 64px; height: 64px; }
+    .trv-eq-op { font-size: 30px; font-weight: 900; color: var(--gold); }
+    .trv-eq-lead b { display: block; font-size: 24px; font-weight: 900; letter-spacing: -0.03em; }
+    .trv-eq-lead small { font-size: 12px; color: var(--muted); }
+    .trv-ways { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .trv-ways { grid-template-columns: 1fr; } }
+    .trv-way { display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 18px; border: 1px solid var(--border); background: var(--card); }
+    .trv-way.plan { border-color: rgba(0,212,255,0.28); }
+    .trv-way-head { display: flex; align-items: center; gap: 10px; }
+    .trv-way-head b { font-size: 18px; font-weight: 900; letter-spacing: -0.02em; }
+    .trv-tag { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; color: var(--gold); background: rgba(201,160,96,0.12); border: 1px solid rgba(201,160,96,0.3); }
+    .trv-way.plan .trv-tag { color: var(--neon); background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3); }
+    .trv-way p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+    .trv-way p strong { color: var(--text); }
+    .trv-way-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); display: grid; gap: 4px; font-size: 12px; color: var(--muted-2); }
+    .trv-way-foot span:last-child { color: #c5d0e0; font-weight: 700; }
+    .trv-rules { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    @media (max-width: 560px) { .trv-rules { grid-template-columns: 1fr; } }
+    .trv-rules div { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(0,0,0,0.25); }
+    .trv-rules b { display: block; font-size: 14px; font-weight: 800; }
+    .trv-rules span { font-size: 12px; color: var(--muted); }
+
+    /* —— FAQ (lista limpa, um painel só) —— */
+    .faq .faq-list { gap: 0; border: 1px solid var(--border); border-radius: 18px; background: var(--card); overflow: hidden; }
+    .faq .faq-list details { border: 0; border-radius: 0; background: transparent; box-shadow: none; border-top: 1px solid rgba(255,255,255,0.06); }
+    .faq .faq-list details:first-child { border-top: 0; }
+    .faq .faq-list details[open] { background: rgba(0,212,255,0.04); box-shadow: none; }
+    .faq .faq-list summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; cursor: pointer; list-style: none; }
+    .faq .faq-list summary::-webkit-details-marker { display: none; }
+    .faq .faq-list .faq-q { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+    .faq .faq-list .faq-n { display: none; }
+    .faq-tg { position: relative; width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border); transition: transform .25s, border-color .2s, background .2s; }
+    .faq-tg::before, .faq-tg::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 2px; margin: -1px 0 0 -5.5px; border-radius: 2px; background: var(--muted); }
+    .faq-tg::after { transform: rotate(90deg); transition: transform .25s; }
+    .faq .faq-list details[open] .faq-tg { border-color: rgba(0,212,255,0.5); background: rgba(0,212,255,0.1); }
+    .faq .faq-list details[open] .faq-tg::before, .faq .faq-list details[open] .faq-tg::after { background: var(--neon); }
+    .faq .faq-list details[open] .faq-tg::after { transform: rotate(0deg); }
+    .faq .faq-list details p { padding: 0 22px 18px; margin: 0; font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 620px; }
   </style>
 </head>
 <body>
@@ -2804,58 +2849,6 @@
       </div>
     </header>
 
-    <!-- EXEMPLOS REAIS (borrados) -->
-    <section class="blur-lead">
-      <div class="wrap">
-        <div class="blur-lead-head reveal">
-          <div class="sec-label" style="justify-content:center;">
-            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
-            Direto do radar
-          </div>
-          <h2>É assim que um lead chega pra você</h2>
-          <p>Empresa real, contato real, nota real. O telefone só abre depois do desbloqueio.</p>
-        </div>
-        <div class="blur-lead-grid">
-          <div class="blur-lead-card reveal">
-            <span class="blur-lead-tag">Padaria · sem site</span>
-            <div class="blur-lead-name">Padaria Pão Dourado<small>★ 4,8 (212 avaliações) · Campinas/SP</small></div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">WhatsApp</div><div class="blur-val">(19) 9 8765-4321</div></div>
-            </div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">Instagram</div><div class="blur-val">@paodourado</div></div>
-            </div>
-            <div class="blur-lead-score"><b style="background:linear-gradient(135deg,#F0D4A8,var(--gold));">92</b> sem site próprio, só rede social</div>
-          </div>
-          <div class="blur-lead-card reveal">
-            <span class="blur-lead-tag">Odontologia · sem site</span>
-            <div class="blur-lead-name">Clínica Odonto Horizonte<small>★ 4,9 (340 avaliações) · Campinas/SP</small></div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">WhatsApp</div><div class="blur-val">(19) 9 7654-3210</div></div>
-            </div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">Instagram</div><div class="blur-val">@odonto.horizonte</div></div>
-            </div>
-            <div class="blur-lead-score"><b style="background:linear-gradient(135deg,#c4b5fd,#8b5cf6);">87</b> nicho S, nota excelente</div>
-          </div>
-          <div class="blur-lead-card reveal">
-            <span class="blur-lead-tag">Estética · sem site</span>
-            <div class="blur-lead-name">Studio Belle Estética<small>★ 4,6 (158 avaliações) · Santos/SP</small></div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">WhatsApp</div><div class="blur-val">(13) 9 6543-2109</div></div>
-            </div>
-            <div class="blur-lead-row">
-              <div><div class="lbl">Instagram</div><div class="blur-val">@belle.estetica</div></div>
-            </div>
-            <div class="blur-lead-score"><b style="background:linear-gradient(135deg,#6ee7b7,#34d399);">81</b> tração alta no Maps</div>
-          </div>
-        </div>
-        <div class="blur-lead-cta reveal" style="max-width:420px;margin:24px auto 0;">
-          <a class="btn btn-primary btn-lg" href="/register" style="justify-content:center;">Desbloquear grátis — ganhe 5 leads</a>
-          <span class="blur-lead-note">Cadastro em menos de 1 minuto · sem cartão</span>
-        </div>
-      </div>
-    </section>
 
     <!-- COMO FUNCIONA -->
     <section id="como" class="band">
@@ -3075,58 +3068,6 @@
       </div>
     </section>
 
-    <!-- TROVOEDAS -->
-    <section id="trovoedas" class="band">
-      <div class="wrap">
-        <div class="trovo-head reveal">
-          <div class="sec-label gold">
-            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
-            Modelo de créditos
-          </div>
-          <h2>Trovoedas: pague pelo lead, não por esperança</h2>
-          <p class="lead" style="margin-bottom:0;max-width:560px;">
-            Compre créditos (Trovoedas) e peça leads quando quiser — ou assine um plano mensal com cota fixa de leads por dia. Sem surpresa, sem gorjeta.
-          </p>
-        </div>
-
-        <div class="trovo-model reveal">
-          <div class="trovo-step">
-            <div class="ts-num">01</div>
-            <h3>Compra o pacote</h3>
-            <p>Créditos avulsos (Faísca, Raio, Tempestade, Trovão) ou planos mensais (Loki, Odin, Thor, Valhalla) — quanto maior o volume, menor o custo por lead.</p>
-          </div>
-          <div class="trovo-step">
-            <div class="ts-num">02</div>
-            <h3>1 Trovoeda = 1 lead</h3>
-            <p>Cada crédito vira um lead com contato na sua conta. Sem surpresa de “pacote engessado”.</p>
-          </div>
-          <div class="trovo-step">
-            <div class="ts-num">03</div>
-            <h3>Saldo não expira</h3>
-            <p>Sobrou crédito esse mês? Continua na carteira. Você decide o ritmo da prospecção.</p>
-          </div>
-        </div>
-
-        <div class="trovo-bar reveal">
-          <div class="trovo-bar-item">
-            <img src="/static/trovoeda-coin.png?v=15" alt="" width="28" height="28" />
-            <div>
-              <strong>5 Trovoedas grátis</strong>
-              <span>no cadastro · sem cartão</span>
-            </div>
-          </div>
-          <div class="trovo-bar-item">
-            <strong>Modelo flexível</strong>
-            <span>crédito avulso ou plano mensal</span>
-          </div>
-          <div class="trovo-bar-item">
-            <strong>Transparente</strong>
-            <span>extrato na carteira</span>
-          </div>
-          <a class="btn btn-gold" href="#precos">Ver pacotes</a>
-        </div>
-      </div>
-    </section>
 
     <!-- CALCULADORA DE ROI -->
     <section id="roi" class="band">
@@ -3203,6 +3144,44 @@
           </div>
         </div>
         <p class="roi-note">Estimativa média, não promessa: o resultado depende da sua abordagem.</p>
+      </div>
+    </section>
+
+    <!-- TROVOEDAS -->
+    <section id="trovoedas" class="band">
+      <div class="wrap">
+        <div class="trv-grid">
+          <div class="trv-side reveal">
+            <div class="sec-label gold">
+              <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+              Como funcionam as Trovoedas
+            </div>
+            <h2>Uma moeda, uma regra: 1 Trovoeda = 1 lead.</h2>
+            <p class="lead">Você só paga pelo lead que entra na sua conta, com contato. Sem taxa escondida e sem contrato.</p>
+            <div class="trv-eq" aria-label="1 Trovoeda vale 1 lead">
+              <img src="/static/trovoeda-coin.png?v=16" alt="" width="64" height="64" />
+              <span class="trv-eq-op">=</span>
+              <span class="trv-eq-lead"><b>1 lead</b><small>com WhatsApp, telefone ou Instagram</small></span>
+            </div>
+          </div>
+          <div class="trv-ways reveal">
+            <div class="trv-way">
+              <div class="trv-way-head"><span class="trv-tag">Avulso</span><b>Créditos</b></div>
+              <p>Compre um pacote e use quando quiser. <strong>O saldo não expira.</strong></p>
+              <div class="trv-way-foot"><span>Faísca, Raio, Tempestade, Trovão</span><span>R$ 1,49 → R$ 1,00 por lead</span></div>
+            </div>
+            <div class="trv-way plan">
+              <div class="trv-way-head"><span class="trv-tag">30 dias</span><b>Planos</b></div>
+              <p>Uma cota de leads por dia, entregue na sua conta. <strong>O lead sai mais barato.</strong></p>
+              <div class="trv-way-foot"><span>Loki, Odin, Thor, Valhalla</span><span>R$ 0,89 → R$ 0,56 por lead</span></div>
+            </div>
+            <div class="trv-rules">
+              <div><b>5 grátis</b><span>no cadastro, sem cartão</span></div>
+              <div><b>Reposição</b><span>número inválido devolve a moeda</span></div>
+              <div><b>Extrato</b><span>cada entrada e saída na carteira</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -3288,7 +3267,7 @@
               {% if p.slug == 'tempestade' %}<span class="pkg-badge">Mais popular</span>{% endif %}
               <div class="pkg-card__top">
                 <span class="coin-3d" aria-hidden="true">
-                  <img class="coin-3d__face" src="/static/trovoeda-coin.png?v=15" alt="" width="72" height="72" />
+                  <img class="coin-3d__face" src="/static/trovoeda-coin.png?v=16" alt="" width="72" height="72" />
                 </span>
                 <h3>{{ p.name }}</h3>
                 <div class="pkg-coins" style="color:#C9A060;">{{ p.coins }}<small>Trovoedas</small></div>
@@ -3304,7 +3283,7 @@
                 <a class="btn-buy" href="#" onclick="event.preventDefault(); openWhatsApp('{{ p.slug }}', '{{ p.name }}', {{ p.coins }});">
                   <span class="bolt-fx" aria-hidden="true"></span>
                   <span class="btn-buy-label">
-                    <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.png?v=15" alt="" /></span>
+                    <span class="bolt-ico" aria-hidden="true"><img class="coin-mini" src="/static/trovoeda-coin.png?v=16" alt="" /></span>
                     <span>{% if p.slug == 'tempestade' %}Escolher pacote{% else %}Comprar{% endif %}</span>
                   </span>
                 </a>
@@ -3326,28 +3305,6 @@
           <span class="shop-note">Sem cartão no cadastro · teste o fluxo completo</span>
         </div>
 
-        <div class="trust-row reveal">
-          <div class="trust-item">
-            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-            <strong>Flexível</strong>
-            <span>Créditos avulsos ou plano mensal</span>
-          </div>
-          <div class="trust-item">
-            <span class="ico-bolt gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
-            <strong>Saldo permanente</strong>
-            <span>Trovoedas não expiram</span>
-          </div>
-          <div class="trust-item">
-            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-            <strong>Contato real</strong>
-            <span>WhatsApp, Instagram e avaliações no Google Maps</span>
-          </div>
-          <div class="trust-item">
-            <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></span>
-            <strong>Score 0–100</strong>
-            <span>Priorize quem fecha</span>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -3360,52 +3317,34 @@
               <span class="ico-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
               Antes de criar a conta
             </div>
-            <h2>Perguntas que todo mundo faz</h2>
-            <p>Direto — sem enrolação. Se ainda tiver dúvida, crie a conta e use os 5 leads grátis.</p>
+            <h2>Perguntas frequentes</h2>
+            <p>O essencial antes de criar a conta. Ficou alguma dúvida? Teste com os 5 leads grátis.</p>
             <a class="btn btn-outline faq-cta" href="/register">Testar com 5 leads grátis</a>
           </div>
           <div class="faq-list reveal" id="faq-accordion">
             <details open>
-              <summary>
-                <span class="faq-n">01</span>
-                <span class="faq-q">Os leads são exclusivos pra mim?</span>
-              </summary>
-              <p>
-                Quando um lead é atribuído à sua conta, ele fica na sua lista.
-                Não entregamos o mesmo lead “ativo” pra dois clientes ao mesmo tempo.
-              </p>
+              <summary><span class="faq-q">Os leads são só meus?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Sim. Quando um lead entra na sua conta, ele não é entregue para outro cliente ao mesmo tempo.</p>
             </details>
             <details>
-              <summary>
-                <span class="faq-n">02</span>
-                <span class="faq-q">Como eu recebo os leads?</span>
-              </summary>
-              <p>
-                Você cria a conta, pede leads (nicho e cidade) e a entrega entra no painel:
-                contato, WhatsApp, Instagram, avaliações no Google Maps e score de propensão.
-                Abordar é com você — a gente entrega o alvo pronto.
-              </p>
+              <summary><span class="faq-q">Como eu recebo os leads?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Você escolhe nicho e cidade e os leads aparecem no painel com contato, avaliações do Google Maps e a nota de 0 a 100 com o motivo.</p>
             </details>
             <details>
-              <summary>
-                <span class="faq-n">03</span>
-                <span class="faq-q">E se eu não gostar da qualidade?</span>
-              </summary>
-              <p>
-                Cada lead passa por filtro de contato utilizável e score de propensão.
-                Comece com o bônus de 5 leads grátis e julgue na prática — sem fidelidade e sem surpresa.
-              </p>
+              <summary><span class="faq-q">E se o número não funcionar?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Você reporta na ficha do lead e a gente devolve a Trovoeda (ou o lead, no plano).</p>
             </details>
             <details>
-              <summary>
-                <span class="faq-n">04</span>
-                <span class="faq-q">Trovoedas expiram? Tem mensalidade?</span>
-              </summary>
-              <p>
-                Trovoedas avulsas <strong style="color:var(--text)">não expiram</strong>.
-                Os planos (Loki, Odin, Thor e Valhalla) valem por 30 dias, com cota fixa de leads por dia —
-                sem fidelidade: renova só se você quiser. 1 Trovoeda = 1 lead na conta.
-              </p>
+              <summary><span class="faq-q">As Trovoedas expiram?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Não. Crédito avulso fica na carteira até você usar. Os planos valem por 30 dias e renovam só se você quiser.</p>
+            </details>
+            <details>
+              <summary><span class="faq-q">Tem fidelidade ou contrato?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Não. Você compra quando precisar e para quando quiser.</p>
+            </details>
+            <details>
+              <summary><span class="faq-q">Posso testar antes de pagar?</span><span class="faq-tg" aria-hidden="true"></span></summary>
+              <p>Pode. A conta já começa com 5 Trovoedas grátis, sem cartão.</p>
             </details>
           </div>
         </div>

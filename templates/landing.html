@@ -2707,6 +2707,29 @@
     .faq .faq-list details[open] .faq-tg::before, .faq .faq-list details[open] .faq-tg::after { background: var(--neon); }
     .faq .faq-list details[open] .faq-tg::after { transform: rotate(0deg); }
     .faq .faq-list details p { padding: 0 22px 18px; margin: 0; font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 620px; }
+
+    /* —— Comparativa em cartões —— */
+    .cmp-grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 14px; align-items: stretch; max-width: 1040px; margin: 0 auto; }
+    @media (max-width: 900px) { .cmp-grid { grid-template-columns: 1fr; max-width: 520px; } }
+    .cmp-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 26px 22px 22px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); }
+    .cmp-card.us { border-color: rgba(0,212,255,0.45); background: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(0,212,255,0.14), transparent 60%), linear-gradient(165deg, #101824, #0a0e16); box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(0,212,255,0.08); }
+    .cmp-badge { position: absolute; top: -12px; left: 22px; padding: 5px 12px; border-radius: 999px; background: var(--neon); color: #031018; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .cmp-card h3 { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; }
+    .cmp-card.us h3 { color: #fff; }
+    .cmp-sub { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .cmp-card ul { list-style: none; display: grid; gap: 14px; flex: 1; }
+    .cmp-card li { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; color: var(--muted); line-height: 1.45; }
+    .cmp-card li b { display: block; font-size: 14px; color: var(--text); font-weight: 800; }
+    .cmp-i { width: 24px; height: 24px; flex-shrink: 0; border-radius: 8px; display: grid; place-items: center; margin-top: 1px; }
+    .cmp-i svg { width: 14px; height: 14px; }
+    li.ok .cmp-i { color: #34d399; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); }
+    .cmp-card.us li.ok .cmp-i { color: var(--neon); background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.35); }
+    li.no .cmp-i { color: #fca5a5; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.28); }
+    li.mid .cmp-i { color: #fcd34d; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.28); }
+    .cmp-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: baseline; gap: 8px; }
+    .cmp-foot b { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; color: var(--neon); }
+    .cmp-foot span { font-size: 13px; color: var(--muted); }
+    .cmp-foot.muted span { color: var(--muted-2); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -3049,21 +3072,30 @@
             Por que não uma lista pronta?
           </div>
           <h2 class="reveal">Lista velha não fecha negócio</h2>
-          <p class="lead reveal">Dado fresco, contato real e sem fidelidade. Compare.</p>
+          <p class="lead reveal">Compare com as duas formas mais comuns de conseguir leads.</p>
         </div>
-        <div class="compare-wrap reveal">
-          <table class="compare">
-            <thead>
-              <tr><th></th><th class="us">ProspecTHOR</th><th>Lista pronta</th><th>Agência</th></tr>
-            </thead>
-            <tbody>
-              <tr><th>Dados atualizados</th><td class="us yes">✓ Toda semana</td><td class="no">✗ Parados há meses</td><td class="no">✗ Sob demanda</td></tr>
-              <tr><th>WhatsApp real</th><td class="us yes">✓ Validado</td><td class="no">✗ Fixo velho</td><td class="yes">✓ Manual</td></tr>
-              <tr><th>Score 0–100</th><td class="us yes">✓ Automático</td><td class="no">✗ Sem nada</td><td class="no">✗ No olho</td></tr>
-              <tr><th>Sem fidelidade</th><td class="us yes">✓ Pague e use</td><td class="yes">✓ Parcela única</td><td class="no">✗ Contrato 6–12m</td></tr>
-              <tr><th>Custo por lead</th><td class="us yes">✓ R$ 0,56–1,49</td><td class="no">✗ R$ 3–8</td><td class="no">✗ R$ 15+</td></tr>
-            </tbody>
-          </table>
+        <div class="cmp-grid">
+          <article class="cmp-card us reveal">
+            <span class="cmp-badge">Recomendado</span>
+            <h3>ProspecTHOR</h3>
+            <p class="cmp-sub">Leads buscados para a sua missão</p>
+            <ul><li class="ok"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Dado do dia</b>buscado quando você pede, não meses atrás</span></li><li class="ok"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Contato conferido</b>WhatsApp, telefone ou Instagram; inválido é reposto</span></li><li class="ok"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Nota de 0 a 100</b>você sabe por quem começar e por quê</span></li><li class="ok"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Sem contrato</b>paga só o lead que entra na conta</span></li></ul>
+            <div class="cmp-foot"><b>R$ 0,56 a R$ 1,49</b><span>por lead</span></div>
+          </article>
+          <article class="cmp-card  reveal">
+            
+            <h3>Lista pronta</h3>
+            <p class="cmp-sub">Planilha comprada de terceiros</p>
+            <ul><li class="no"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span><span><b>Dado envelhecido</b>coletado uma vez e revendido para muita gente</span></li><li class="no"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span><span><b>Muito número morto</b>fixo antigo, empresa fechada, sem WhatsApp</span></li><li class="no"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span><span><b>Sem prioridade</b>milhares de linhas na mesma ordem</span></li><li class="mid"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 12h10"/></svg></span><span><b>Paga tudo de uma vez</b>inclusive o que não serve</span></li></ul>
+            <div class="cmp-foot muted"><span>Você paga pela lista inteira</span></div>
+          </article>
+          <article class="cmp-card  reveal">
+            
+            <h3>Garimpar na mão</h3>
+            <p class="cmp-sub">Google Maps e Instagram, um por um</p>
+            <ul><li class="ok"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Dado atual</b>mas só o que você conseguir olhar</span></li><li class="mid"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 12h10"/></svg></span><span><b>Confere tudo sozinho</b>abre ficha, testa número, anota</span></li><li class="no"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span><span><b>Prioridade no olho</b>sem critério, sem histórico</span></li><li class="no"><span class="cmp-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></span><span><b>Custa o seu tempo</b>horas por dia que não viram venda</span></li></ul>
+            <div class="cmp-foot muted"><span>Grátis, mas o tempo é seu</span></div>
+          </article>
         </div>
       </div>
     </section>

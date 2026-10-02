@@ -1459,6 +1459,92 @@
     .why2-statement p { font-size: clamp(17px, 2vw, 21px); line-height: 1.55; color: #c5d0e0; letter-spacing: -0.015em; }
     .why2-statement strong { color: #fff; font-weight: 800; }
     /* Why — split statement + comparison cards */
+    /* —— Demo animada do topo (5 cenas em loop) —— */
+    .hd {
+      position: relative; z-index: 1;
+      border-radius: 20px; border: 1px solid var(--border);
+      background: linear-gradient(165deg, #0e1420, #080b12);
+      box-shadow: 0 30px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(0,212,255,.05);
+      overflow: hidden;
+    }
+    .hd-bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 11px; color: var(--muted-2); }
+    .hd-bar i { width: 9px; height: 9px; border-radius: 50%; background: #2a3344; }
+    .hd-bar i:nth-child(1) { background: #ff5f57; } .hd-bar i:nth-child(2) { background: #febc2e; } .hd-bar i:nth-child(3) { background: #28c840; }
+    .hd-bar span { margin-left: 6px; }
+    .hd-bar b { margin-left: auto; font-weight: 700; color: var(--neon); }
+    .hd-stage { position: relative; height: 330px; }
+    .hd-scene { position: absolute; inset: 0; padding: 20px 20px 16px; display: flex; flex-direction: column; gap: 12px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity .45s, transform .45s, visibility 0s .45s; }
+    .hd-scene.on { opacity: 1; visibility: visible; transform: none; transition: opacity .45s, transform .45s; }
+    .hd-h { font-size: 18px; font-weight: 900; letter-spacing: -.03em; }
+    .hd-k { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); }
+    .hd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .hd-chip { padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); color: var(--muted); transition: all .3s; }
+    .hd-chip.on { border-color: rgba(0,212,255,.6); color: var(--neon); background: rgba(0,212,255,.1); }
+    .hd-go { align-self: flex-start; margin-top: 4px; padding: 11px 18px; border-radius: 11px; font-size: 13px; font-weight: 800; background: #1a2233; color: var(--muted); transition: all .3s; }
+    .hd-go.on { background: var(--neon); color: #031018; box-shadow: 0 0 24px rgba(0,212,255,.35); }
+    .hd-radar-wrap { display: flex; gap: 18px; align-items: center; flex: 1; }
+    .hd-radar { position: relative; width: 190px; height: 190px; flex-shrink: 0; border-radius: 50%; border: 1px solid #12404d; overflow: hidden;
+      background-color: #071017; background-image: linear-gradient(#0f1d26 1px, transparent 1px), linear-gradient(90deg, #0f1d26 1px, transparent 1px); background-size: 24px 24px; }
+    .hd-radar::before, .hd-radar::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid #12404d; }
+    .hd-radar::before { inset: 34px; } .hd-radar::after { inset: 68px; }
+    .hd-sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(0,212,255,.35), rgba(0,212,255,0) 70deg, transparent 360deg); animation: hd-spin 2.6s linear infinite; }
+    @keyframes hd-spin { to { transform: rotate(360deg); } }
+    .hd-dot { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: #3a475c; opacity: 0; transform: scale(.3); transition: opacity .3s, transform .3s; }
+    .hd-dot.hit { background: var(--neon); box-shadow: 0 0 0 4px rgba(0,212,255,.18); }
+    .hd-dot.on { opacity: 1; transform: none; }
+    .hd-stats { flex: 1; display: grid; gap: 10px; }
+    .hd-stat { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); }
+    .hd-stat small { display: block; font-size: 11px; color: var(--muted); }
+    .hd-stat b { font-size: 24px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .hd-stat.cy { border-color: rgba(0,212,255,.3); } .hd-stat.cy b { color: var(--neon); }
+    .hd-pbar { height: 6px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; }
+    .hd-pbar i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--neon); transition: width .15s linear; }
+    .hd-list { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .hd-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid rgba(255,255,255,.05); opacity: 0; transform: translateX(-10px); transition: opacity .35s, transform .35s; }
+    .hd-row:first-child { border-top: 0; background: rgba(0,212,255,.05); }
+    .hd-row.on { opacity: 1; transform: none; }
+    .hd-row b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hd-row small { font-size: 11px; color: var(--muted); }
+    .hd-ch { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; border: 1px solid #14532d; color: #4ade80; }
+    .hd-ch.ig { border-color: #701a75; color: #f0abfc; } .hd-ch.tel { border-color: #155e75; color: #7dd3fc; }
+    .hd-sc { font-size: 13px; font-weight: 900; padding: 3px 8px; border-radius: 7px; background: #1a2233; color: var(--text); min-width: 34px; text-align: center; }
+    .hd-sc.hot { background: var(--gold); color: #1a1205; }
+    .hd-lead { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(201,160,96,.35);
+      background: radial-gradient(ellipse 80% 100% at 100% 0%, rgba(201,160,96,.14), transparent 60%), var(--card); }
+    .hd-lead b { font-size: 15px; } .hd-lead small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .hd-total { font-size: 46px; font-weight: 900; line-height: 1; letter-spacing: -.04em; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+    .hd-f { display: grid; gap: 4px; }
+    .hd-f div { display: flex; justify-content: space-between; font-size: 12px; color: #c5d0e0; }
+    .hd-f div b { font-family: ui-monospace, Menlo, monospace; color: var(--neon); }
+    .hd-f.g div b { color: var(--gold); }
+    .hd-f .hd-pbar i { transition: width .35s ease; }
+    .hd-f.g .hd-pbar i { background: var(--gold); }
+    .hd-contact { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hd-contact div { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); }
+    .hd-contact div.wa { border-color: #14532d; background: #06140c; }
+    .hd-contact small { display: block; font-size: 11px; color: var(--muted); }
+    .hd-contact b { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+    .hd-contact .wa b { color: #4ade80; }
+    .hd-call { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; background: #22c55e; color: #03140a; font-weight: 900; font-size: 14px; animation: hd-pulse 1.4s ease-out infinite; }
+    @keyframes hd-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.45); } 50% { box-shadow: 0 0 0 10px rgba(34,197,94,0); } }
+    .hd-coin { font-size: 11px; font-weight: 800; color: var(--gold-light); border: 1px solid rgba(201,160,96,.4); border-radius: 999px; padding: 4px 10px; }
+    .hd-foot { padding: 12px 16px 14px; border-top: 1px solid rgba(255,255,255,.06); display: grid; gap: 10px; }
+    .hd-cap { display: flex; align-items: baseline; gap: 10px; min-height: 20px; }
+    .hd-cap span { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--neon); }
+    .hd-cap b { font-size: 14px; font-weight: 800; }
+    .hd-cap small { font-size: 12px; color: var(--muted); }
+    .hd-prog { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .hd-prog i { height: 3px; border-radius: 999px; background: #1a2233; overflow: hidden; position: relative; }
+    .hd-prog i::after { content: ""; position: absolute; inset: 0; width: var(--w, 0%); background: var(--neon); }
+    @media (max-width: 560px) {
+      .hd-stage { height: 350px; }
+      .hd-radar { width: 140px; height: 140px; }
+      .hd-radar::before { inset: 24px; } .hd-radar::after { inset: 50px; }
+      .hd-cap small { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hd-sweep, .hd-call { animation: none; }
+    }
     /* —— O que você recebe (anatomia do lead) —— */
     .anat-layout {
       display: grid;
@@ -2629,191 +2715,74 @@
             </div>
           </div>
 
-          <div class="hero-visual" aria-hidden="true">
+          <div class="hero-visual">
             <div class="mock-glow"></div>
             <div class="mock-glow gold"></div>
-
-            <div class="mock-float coin">
-              <img src="/static/trovoeda-coin.png?v=15" alt="" width="36" height="36" />
-              <div>
-                <strong>1 Trovoeda</strong>
-                <span>= 1 lead na conta</span>
-              </div>
-            </div>
-
-            <!-- Preview do painel (lista de leads fiel ao produto) -->
-            <div class="dash-shot" id="hero-panel-preview">
-              <div class="dash-chrome">
-                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-                <span class="chrome-title">prospec thor · /leads</span>
-              </div>
-              <div class="dash-body">
-                <aside class="dash-shot-side">
-                  <div class="sm-logo">
-                    <span class="m"><img src="/static/thor-mask.png" alt="" width="15" height="15" /></span>
-                    <span class="brand-word" style="font-size:10px;">Prospec<span>THOR</span></span>
-                  </div>
-                  <div class="dnav"><i></i> Início</div>
-                  <div class="dnav active"><i></i> Leads</div>
-                  <div class="dnav"><i></i> Relatórios</div>
-                  <div class="dnav sep">Créditos</div>
-                  <div class="dnav"><i></i> Loja</div>
-                  <div class="dnav"><i></i> Carteira</div>
-                  <div class="dnav"><i></i> Pedidos</div>
-                </aside>
-                <div class="dash-shot-main">
-                  <div class="dash-toolbar">
-                    <div class="dash-search">⌕ Buscar empresa, cidade…</div>
-                    <div class="wallet-pill">
-                      <img src="/static/trovoeda-coin.png?v=15" alt="" width="14" height="14" />
-                      24
-                    </div>
-                  </div>
-                  <div class="dash-chips">
-                    <span class="dchip on">Todos</span>
-                    <span class="dchip">Novos</span>
-                    <span class="dchip">Contactados</span>
-                    <span class="dchip">Convertidos</span>
-                  </div>
-                  <!-- Demo: cursor em loop passa no score e abre “por que esta nota” -->
-                  <div class="mock-table has-score-hover" id="mock-score-demo" aria-hidden="false">
-                    <svg class="mock-cursor" id="mock-score-cursor" viewBox="0 0 24 24" fill="#e8eef7" aria-hidden="true">
-                      <path d="M5.5 3.2 18.8 12.1c.5.3.3 1.1-.3 1.2l-5.1.7 2.3 5.7c.2.5-.1 1.1-.6 1.2l-2.2.5c-.5.1-1-.2-1.2-.7l-2.2-5.5-3.4 3.2c-.5.5-1.3.1-1.3-.6V4c0-.7.8-1.1 1.4-.8z"/>
-                    </svg>
-                    <div class="mock-tr head">
-                      <span>Empresa</span>
-                      <span>Cidade</span>
-                      <span>Contato</span>
-                      <span style="text-align:right">Score</span>
-                    </div>
-                    <div class="mock-tr hot" data-score-row>
-                      <span class="mt-name">Clínica Odonto Horizonte<small>Odontologia · sem site</small></span>
-                      <span class="mt-city">Campinas</span>
-                      <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990001" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-                          <span>WhatsApp</span>
-                        </a>
-                        <a class="mt-btn mt-btn-ig" href="https://instagram.com/" target="_blank" rel="noopener noreferrer" title="Abrir Instagram">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4zm6.4-8.5a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0zM12 4.2c-2.1 0-2.4 0-3.2.1-.8 0-1.4.2-1.9.4-.5.2-.9.5-1.3.9-.4.4-.7.8-.9 1.3-.2.5-.3 1.1-.4 1.9 0 .8-.1 1.1-.1 3.2s0 2.4.1 3.2c0 .8.2 1.4.4 1.9.2.5.5.9.9 1.3.4.4.8.7 1.3.9.5.2 1.1.3 1.9.4.8 0 1.1.1 3.2.1s2.4 0 3.2-.1c.8 0 1.4-.2 1.9-.4.5-.2.9-.5 1.3-.9.4-.4.7-.8.9-1.3.2-.5.3-1.1.4-1.9 0-.8.1-1.1.1-3.2s0-2.4-.1-3.2c0-.8-.2-1.4-.4-1.9-.2-.5-.5-.9-.9-1.3-.4-.4-.8-.7-1.3-.9-.5-.2-1.1-.3-1.9-.4-.8 0-1.1-.1-3.2-.1zm0-1.7c2.2 0 2.4 0 3.3.1 1 0 1.7.2 2.3.4.6.3 1.2.6 1.7 1.1.5.5.8 1.1 1.1 1.7.2.6.4 1.3.4 2.3 0 .9.1 1.1.1 3.3s0 2.4-.1 3.3c0 1-.2 1.7-.4 2.3a4.7 4.7 0 0 1-1.1 1.7c-.5.5-1.1.8-1.7 1.1-.6.2-1.3.4-2.3.4-.9 0-1.1.1-3.3.1s-2.4 0-3.3-.1c-1 0-1.7-.2-2.3-.4a4.7 4.7 0 0 1-1.7-1.1 4.7 4.7 0 0 1-1.1-1.7c-.2-.6-.4-1.3-.4-2.3 0-.9-.1-1.1-.1-3.3s0-2.4.1-3.3c0-1 .2-1.7.4-2.3.3-.6.6-1.2 1.1-1.7.5-.5 1.1-.8 1.7-1.1.6-.2 1.3-.4 2.3-.4.9 0 1.1-.1 3.3-.1z"/></svg>
-                          <span>Instagram</span>
-                        </a>
-                      </span>
-                      <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-gold" data-score-pill>92</span>
-                        <div class="score-tip" data-score-tip role="tooltip">
-                          <div class="score-tip-head">
-                            <strong>Por que este score</strong>
-                            <b>92<small>/100 · Elite</small></b>
-                          </div>
-                          <ul class="score-tip-rows">
-                            <li><span>Sem site próprio (dor alta)</span><em>+28</em></li>
-                            <li><span>Só rede social no lugar do site</span><em>+8</em></li>
-                            <li><span>Nicho S · odontologia</span><em>+22</em></li>
-                            <li><span>Nota excelente (4.9)</span><em>+14</em></li>
-                            <li><span>Volume forte no Maps</span><em>+12</em></li>
-                            <li><span>Celular / WhatsApp</span><em>+8</em></li>
-                          </ul>
-                          <div class="score-tip-total"><span>Total</span><b>92/100</b></div>
-                        </div>
-                      </span>
-                    </div>
-                    <div class="mock-tr" data-score-row>
-                      <span class="mt-name">Advocacia Mendes &amp; Silva<small>Advocacia · sem site</small></span>
-                      <span class="mt-city">São Paulo</span>
-                      <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990002" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-                          <span>WhatsApp</span>
-                        </a>
-                      </span>
-                      <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-purple" data-score-pill>87</span>
-                        <div class="score-tip" data-score-tip role="tooltip">
-                          <div class="score-tip-head">
-                            <strong>Por que este score</strong>
-                            <b style="color:#c4b5fd">87<small>/100 · Alto</small></b>
-                          </div>
-                          <ul class="score-tip-rows">
-                            <li><span>Sem site próprio (dor alta)</span><em>+26</em></li>
-                            <li><span>Nicho S · advocacia</span><em>+22</em></li>
-                            <li><span>Nota excelente (4.8)</span><em>+14</em></li>
-                            <li><span>Volume forte no Maps</span><em>+12</em></li>
-                            <li><span>Celular / WhatsApp</span><em>+8</em></li>
-                            <li><span>Porte saudável</span><em>+5</em></li>
-                          </ul>
-                          <div class="score-tip-total"><span>Total</span><b style="color:#c4b5fd">87/100</b></div>
-                        </div>
-                      </span>
-                    </div>
-                    <div class="mock-tr" data-score-row>
-                      <span class="mt-name">Studio Belle Estética<small>Estética · sem site</small></span>
-                      <span class="mt-city">Santos</span>
-                      <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990003" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-                          <span>WhatsApp</span>
-                        </a>
-                        <a class="mt-btn mt-btn-ig" href="https://instagram.com/" target="_blank" rel="noopener noreferrer" title="Abrir Instagram">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4zm6.4-8.5a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0zM12 4.2c-2.1 0-2.4 0-3.2.1-.8 0-1.4.2-1.9.4-.5.2-.9.5-1.3.9-.4.4-.7.8-.9 1.3-.2.5-.3 1.1-.4 1.9 0 .8-.1 1.1-.1 3.2s0 2.4.1 3.2c0 .8.2 1.4.4 1.9.2.5.5.9.9 1.3.4.4.8.7 1.3.9.5.2 1.1.3 1.9.4.8 0 1.1.1 3.2.1s2.4 0 3.2-.1c.8 0 1.4-.2 1.9-.4.5-.2.9-.5 1.3-.9.4-.4.7-.8.9-1.3.2-.5.3-1.1.4-1.9 0-.8.1-1.1.1-3.2s0-2.4-.1-3.2c0-.8-.2-1.4-.4-1.9-.2-.5-.5-.9-.9-1.3-.4-.4-.8-.7-1.3-.9-.5-.2-1.1-.3-1.9-.4-.8 0-1.1-.1-3.2-.1zm0-1.7c2.2 0 2.4 0 3.3.1 1 0 1.7.2 2.3.4.6.3 1.2.6 1.7 1.1.5.5.8 1.1 1.1 1.7.2.6.4 1.3.4 2.3 0 .9.1 1.1.1 3.3s0 2.4-.1 3.3c0 1-.2 1.7-.4 2.3a4.7 4.7 0 0 1-1.1 1.7c-.5.5-1.1.8-1.7 1.1-.6.2-1.3.4-2.3.4-.9 0-1.1.1-3.3.1s-2.4 0-3.3-.1c-1 0-1.7-.2-2.3-.4a4.7 4.7 0 0 1-1.7-1.1 4.7 4.7 0 0 1-1.1-1.7c-.2-.6-.4-1.3-.4-2.3 0-.9-.1-1.1-.1-3.3s0-2.4.1-3.3c0-1 .2-1.7.4-2.3.3-.6.6-1.2 1.1-1.7.5-.5 1.1-.8 1.7-1.1.6-.2 1.3-.4 2.3-.4.9 0 1.1-.1 3.3-.1z"/></svg>
-                          <span>Instagram</span>
-                        </a>
-                      </span>
-                      <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-purple" data-score-pill>81</span>
-                        <div class="score-tip tip-up" data-score-tip role="tooltip">
-                          <div class="score-tip-head">
-                            <strong>Por que este score</strong>
-                            <b style="color:#c4b5fd">81<small>/100 · Alto</small></b>
-                          </div>
-                          <ul class="score-tip-rows">
-                            <li><span>Sem site próprio (dor alta)</span><em>+24</em></li>
-                            <li><span>Nicho S · estética</span><em>+20</em></li>
-                            <li><span>Nota alta (4.6)</span><em>+12</em></li>
-                            <li><span>Tração no Maps</span><em>+10</em></li>
-                            <li><span>Instagram ativo</span><em>+8</em></li>
-                            <li><span>Celular / WhatsApp</span><em>+7</em></li>
-                          </ul>
-                          <div class="score-tip-total"><span>Total</span><b style="color:#c4b5fd">81/100</b></div>
-                        </div>
-                      </span>
-                    </div>
-                    <div class="mock-tr" data-score-row>
-                      <span class="mt-name">Construtora Vale Norte<small>Construção · sem site</small></span>
-                      <span class="mt-city">Ribeirão</span>
-                      <span class="mt-actions">
-                        <a class="mt-btn mt-btn-wa" href="https://wa.me/5511999990004" target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.8 3 .6.5-.1 1.6-.6 1.8-1.3.2-.6.2-1.2.1-1.3-.1-.1-.2-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15l-1.1 4 4.1-1.1A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.6.7.7-2.5-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-                          <span>WhatsApp</span>
-                        </a>
-                      </span>
-                      <span class="mt-score-wrap">
-                        <span class="mt-score-pill s-green" data-score-pill>74</span>
-                        <div class="score-tip tip-up" data-score-tip role="tooltip">
-                          <div class="score-tip-head">
-                            <strong>Por que este score</strong>
-                            <b style="color:#34d399">74<small>/100 · Médio</small></b>
-                          </div>
-                          <ul class="score-tip-rows">
-                            <li><span>Sem site próprio (dor alta)</span><em>+22</em></li>
-                            <li><span>Nicho A · construção</span><em>+18</em></li>
-                            <li><span>Boa reputação (4.2)</span><em>+12</em></li>
-                            <li><span>Volume de avaliações</span><em>+10</em></li>
-                            <li><span>Celular / WhatsApp</span><em>+7</em></li>
-                            <li><span>Porte em crescimento</span><em>+5</em></li>
-                          </ul>
-                          <div class="score-tip-total"><span>Total</span><b style="color:#34d399">74/100</b></div>
-                        </div>
-                      </span>
+            <div class="hd" id="hero-demo" role="img" aria-label="Demonstração: escolha nicho e cidade, o radar varre a região, os leads chegam com nota e o contato é liberado">
+              <div class="hd-bar" aria-hidden="true"><i></i><i></i><i></i><span>prospecthor · /leads</span><b id="hd-step">01 / 05</b></div>
+              <div class="hd-stage" aria-hidden="true">
+                <!-- 1 · mercado -->
+                <div class="hd-scene on" data-scene="0">
+                  <div class="hd-h">Quais empresas você quer encontrar?</div>
+                  <div class="hd-k">Nicho</div>
+                  <div class="hd-chips"><span class="hd-chip" id="hd-c1">Odontologia</span><span class="hd-chip">Barbearia</span><span class="hd-chip">Construção</span><span class="hd-chip">Estética</span></div>
+                  <div class="hd-k">Cidade</div>
+                  <div class="hd-chips"><span class="hd-chip" id="hd-c2">Vitória da Conquista · BA</span><span class="hd-chip">Feira de Santana · BA</span></div>
+                  <div class="hd-go" id="hd-go">Buscar 20 leads</div>
+                </div>
+                <!-- 2 · radar -->
+                <div class="hd-scene" data-scene="1">
+                  <div class="hd-k" style="color:var(--neon)">Varrendo Vitória da Conquista · odontologia</div>
+                  <div class="hd-radar-wrap">
+                    <div class="hd-radar" id="hd-radar"><div class="hd-sweep"></div></div>
+                    <div class="hd-stats">
+                      <div class="hd-stat"><small>Empresas analisadas</small><b id="hd-scan">0</b></div>
+                      <div class="hd-stat cy"><small>Sem site, com contato</small><b id="hd-found">0</b></div>
+                      <div class="hd-pbar"><i id="hd-pbar"></i></div>
                     </div>
                   </div>
                 </div>
+                <!-- 3 · lista -->
+                <div class="hd-scene" data-scene="2">
+                  <div class="hd-h">Seus leads, já com nota</div>
+                  <div class="hd-list" id="hd-list">
+                    <div class="hd-row"><div><b>Clínica Odonto Horizonte</b><small>★ 4,9 · Centro</small></div><span class="hd-ch">WhatsApp</span><span class="hd-sc hot">92</span></div>
+                    <div class="hd-row"><div><b>Sorriso Prime Odontologia</b><small>★ 4,8 · Candeias</small></div><span class="hd-ch">WhatsApp</span><span class="hd-sc hot">88</span></div>
+                    <div class="hd-row"><div><b>Dra. Paula Ortodontia</b><small>★ 4,7 · Recreio</small></div><span class="hd-ch ig">Instagram</span><span class="hd-sc">81</span></div>
+                    <div class="hd-row"><div><b>OdontoVida Conquista</b><small>★ 4,5 · Brasil</small></div><span class="hd-ch">WhatsApp</span><span class="hd-sc">77</span></div>
+                    <div class="hd-row"><div><b>Consultório Dr. Ramos</b><small>★ 4,6 · Patagônia</small></div><span class="hd-ch tel">Telefone</span><span class="hd-sc">69</span></div>
+                  </div>
+                </div>
+                <!-- 4 · por que a nota -->
+                <div class="hd-scene" data-scene="3">
+                  <div class="hd-lead"><div><b>Clínica Odonto Horizonte</b><small>Odontologia · sem site · ★ 4,9 · 340 avaliações</small></div><span class="hd-total" id="hd-total">0</span></div>
+                  <div class="hd-f"><div><span>Sem site próprio</span><b>+28</b></div><div class="hd-pbar"><i data-w="100"></i></div></div>
+                  <div class="hd-f"><div><span>Nicho com alta procura</span><b>+22</b></div><div class="hd-pbar"><i data-w="79"></i></div></div>
+                  <div class="hd-f g"><div><span>Muitas avaliações, nota 4,9</span><b>+26</b></div><div class="hd-pbar"><i data-w="93"></i></div></div>
+                  <div class="hd-f g"><div><span>Celular com WhatsApp</span><b>+16</b></div><div class="hd-pbar"><i data-w="57"></i></div></div>
+                </div>
+                <!-- 5 · contato -->
+                <div class="hd-scene" data-scene="4">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                    <div class="hd-h">Contato liberado. Agora é com você.</div>
+                    <span class="hd-coin">−1 Trovoeda</span>
+                  </div>
+                  <div class="hd-contact">
+                    <div class="wa"><small>WhatsApp</small><b>(77) 9 ••••-4471</b></div>
+                    <div><small>Instagram</small><b>@odontohorizonte</b></div>
+                  </div>
+                  <div class="hd-call">Chamar no WhatsApp</div>
+                  <div style="font-size:12px;color:var(--muted)">Número inválido? Você reporta e a gente devolve a Trovoeda.</div>
+                </div>
+              </div>
+              <div class="hd-foot" aria-hidden="true">
+                <div class="hd-cap"><span id="hd-num">01</span><b id="hd-title">Você escolhe o mercado</b><small id="hd-sub">nicho + cidade, em dois cliques</small></div>
+                <div class="hd-prog" id="hd-prog"><i></i><i></i><i></i><i></i><i></i></div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="mock-caption" id="mock-caption" aria-hidden="true">Nota de oportunidade — passe o mouse para assumir</div>
 
         {% if stats and stats.leads_total %}
         {# números reais do banco (src/trovoeda.py · public_stats) #}
@@ -3660,6 +3629,78 @@
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
       nodes.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+  <script>
+    /* Demo do topo: 5 cenas de 4 s em loop (pausa fora da tela) */
+    (function () {
+      var root = document.getElementById('hero-demo');
+      if (!root) return;
+      var scenes = root.querySelectorAll('.hd-scene');
+      var bars = root.querySelectorAll('#hd-prog i');
+      var caps = [
+        ['Você escolhe o mercado', 'nicho + cidade, em dois cliques'],
+        ['O radar varre a região', 'Google Maps e bases públicas, bairro a bairro'],
+        ['Os leads chegam com nota', 'de 0 a 100: comece pelos mais quentes'],
+        ['Cada nota tem um motivo', 'você sabe por onde puxar a conversa'],
+        ['Contato liberado, só pra você', '1 Trovoeda = 1 lead']
+      ];
+      var radar = document.getElementById('hd-radar');
+      var spots = [[24,30,1],[70,24,0],[78,62,1],[36,74,0],[56,42,1],[18,58,0],[62,82,1],[84,40,0],[42,20,1],[30,48,0]];
+      var dots = spots.map(function (d) {
+        var el = document.createElement('span');
+        el.className = 'hd-dot' + (d[2] ? ' hit' : '');
+        el.style.left = d[0] + '%'; el.style.top = d[1] + '%';
+        radar.appendChild(el);
+        return el;
+      });
+      var rows = root.querySelectorAll('.hd-row');
+      var fbars = root.querySelectorAll('.hd-f .hd-pbar i');
+      var $ = function (id) { return document.getElementById(id); };
+      var t = 0, last = -1, timer = null, visible = true;
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function paint() {
+        var scene = Math.floor(t / 40), p = (t % 40) / 40;
+        if (scene !== last) {
+          scenes.forEach(function (el, i) { el.classList.toggle('on', i === scene); });
+          $('hd-step').textContent = '0' + (scene + 1) + ' / 05';
+          $('hd-num').textContent = '0' + (scene + 1);
+          $('hd-title').textContent = caps[scene][0];
+          $('hd-sub').textContent = caps[scene][1];
+          last = scene;
+        }
+        bars.forEach(function (b, i) { b.style.setProperty('--w', (i < scene ? 100 : (i === scene ? Math.round(p * 100) : 0)) + '%'); });
+        if (scene === 0) {
+          $('hd-c1').classList.toggle('on', p > 0.2);
+          $('hd-c2').classList.toggle('on', p > 0.45);
+          $('hd-go').classList.toggle('on', p > 0.7);
+        } else if (scene === 1) {
+          var n = Math.floor(p * 13);
+          dots.forEach(function (d, i) { d.classList.toggle('on', i < n); });
+          $('hd-scan').textContent = Math.round(p * 41);
+          $('hd-found').textContent = Math.round(p * 14);
+          $('hd-pbar').style.width = Math.round(p * 100) + '%';
+        } else if (scene === 2) {
+          var k = 1 + Math.floor(p * 6);
+          rows.forEach(function (r, i) { r.classList.toggle('on', i < k); });
+        } else if (scene === 3) {
+          var pts = [28, 22, 26, 16], acc = 0;
+          fbars.forEach(function (b, i) {
+            var f = Math.max(0, Math.min(1, p * 4 - i * 0.7));
+            b.style.width = Math.round(f * b.getAttribute('data-w')) + '%';
+            acc += Math.round(pts[i] * f);
+          });
+          $('hd-total').textContent = acc;
+        }
+      }
+      function tick() { if (!visible) return; t = (t + 1) % 200; paint(); }
+      if (reduce) { t = 112; paint(); return; }   // mostra a lista pronta, sem animar
+      paint();
+      timer = setInterval(tick, 100);
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+      }
     })();
   </script>
   <script>

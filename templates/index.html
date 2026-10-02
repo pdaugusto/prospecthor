@@ -3774,7 +3774,7 @@
                 #view-board .board-search{flex:1;min-width:200px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.35);color:var(--text);font-family:inherit;font-size:13px;outline:none}
                 #view-board .board-search:focus{border-color:rgba(0,212,255,.4)}
                 #view-board .board-count{font-size:12px;color:var(--muted);font-weight:600}
-                #view-board .board-cols{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;align-items:start}
+                #view-board .board-cols{display:grid;grid-template-columns:repeat(5,minmax(190px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:4px}
                 @media (max-width:1200px){ #view-board .board-cols{grid-template-columns:repeat(3,minmax(210px,1fr))}}
                 @media (max-width:820px){ #view-board .board-cols{grid-template-columns:repeat(2,minmax(180px,1fr))}}
                 @media (max-width:560px){ #view-board .board-cols{grid-template-columns:1fr}}
@@ -3784,7 +3784,10 @@
                 #view-board .bcol-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
                 #view-board .bcol-head h3{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;flex:1}
                 #view-board .bcol-num{font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border-radius:999px;padding:2px 9px}
-                #view-board .bcol-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+                #view-board .bcol-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;max-height:min(62vh,640px);overflow-y:auto;overscroll-behavior:contain}
+                #view-board .bcol-more{margin-top:2px;padding:9px;border-radius:10px;border:1px dashed rgba(255,255,255,.14);background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+                #view-board .bcol-more:hover{border-color:rgba(0,212,255,.45);color:var(--neon)}
+                #view-board .board-lost .bcol-body{max-height:320px}
                 #view-board .bcol-won{border-color:rgba(201,160,96,.45);background:linear-gradient(180deg,rgba(201,160,96,.1),rgba(255,255,255,.015))}
                 #view-board .bcol-won .bcol-head h3{color:#E8C994}
                 #view-board .bcard{border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.3);padding:10px 11px;cursor:grab;transition:transform .12s,border-color .15s,box-shadow .15s}
@@ -3817,8 +3820,8 @@
                 <span class="board-count" id="board-count"></span>
             </div>
             <div class="board-cols" id="board-cols"></div>
-            <details class="board-lost" id="board-lost-wrap" open>
-                <summary id="board-lost-title">Perdidos (0) — clique para recolher</summary>
+            <details class="board-lost" id="board-lost-wrap">
+                <summary id="board-lost-title">Perdidos (0) — clique para abrir</summary>
                 <div class="bcol-body" id="board-lost"></div>
             </details>
             <script>
@@ -3875,6 +3878,26 @@
                     }
                     renderBoard();
                 };
+                document.addEventListener('toggle', e => {
+                    if (e.target && e.target.id === 'board-lost-wrap') {
+                        const t = document.getElementById('board-lost-title');
+                        if (t) t.textContent = t.textContent.replace(/clique para (abrir|recolher)/, 'clique para ' + (e.target.open ? 'recolher' : 'abrir'));
+                    }
+                }, true);
+                const BOARD_PAGE = 40;
+                const boardLimits = {};
+                window.boardShowMore = function (stage) {
+                    boardLimits[stage] = (boardLimits[stage] || BOARD_PAGE) + BOARD_PAGE;
+                    renderBoard();
+                };
+                function boardColCards(stage, list) {
+                    const lim = boardLimits[stage] || BOARD_PAGE;
+                    const html = list.slice(0, lim).map(cardHtml).join('');
+                    const rest = list.length - lim;
+                    return html + (rest > 0
+                        ? '<button type="button" class="bcol-more" onclick="boardShowMore(\'' + stage + '\')">Mostrar mais ' + Math.min(rest, BOARD_PAGE) + ' (faltam ' + rest + ')</button>'
+                        : '');
+                }
                 window.renderBoard = function () {
                     const cols = document.getElementById('board-cols');
                     const lostBox = document.getElementById('board-lost');
@@ -3887,7 +3910,7 @@
                     groups[LOST] = [];
                     boardLeads.forEach(l => { if (match(l)) groups[normStage(l)].push(l); });
                     cols.innerHTML = STAGES.map(s => {
-                        const cards = groups[s.id].map(cardHtml).join('') || '<div class="bcol-empty">Arraste cards pra cá</div>';
+                        const cards = boardColCards(s.id, groups[s.id]) || '<div class="bcol-empty">Arraste cards pra cá</div>';
                         return '<div class="bcol' + (s.won ? ' bcol-won' : '') + '" data-stage="' + s.id + '">'
                             + '<div class="bcol-head"><span class="bcol-dot" style="background:' + s.color + ';box-shadow:0 0 8px ' + s.color + '"></span>'
                             + '<h3>' + s.label + '</h3><span class="bcol-num">' + groups[s.id].length + '</span></div>'
@@ -3903,8 +3926,11 @@
                         });
                     });
                     const lost = groups[LOST];
-                    lostBox.innerHTML = lost.map(cardHtml).join('') || '<div class="bcol-empty">Nenhum perdido 🎯</div>';
-                    if (lostTitle) lostTitle.textContent = 'Perdidos (' + lost.length + ') — clique para recolher';
+                    lostBox.innerHTML = boardColCards(LOST, lost) || '<div class="bcol-empty">Nenhum perdido</div>';
+                    if (lostTitle) {
+                        const open = document.getElementById('board-lost-wrap').open;
+                        lostTitle.textContent = 'Perdidos (' + lost.length + ') — clique para ' + (open ? 'recolher' : 'abrir');
+                    }
                     const total = boardLeads.length;
                     const won = groups.fechado.length;
                     const cc = document.getElementById('board-count');

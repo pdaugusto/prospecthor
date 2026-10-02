@@ -2862,6 +2862,101 @@
         .period-seg button:hover { color: var(--text); }
         .period-seg button.on { background: rgba(0,212,255,.12); color: var(--neon); box-shadow: inset 0 0 0 1px rgba(0,212,255,.35); }
         #view-reports .charts .panel h3, #view-home .charts .panel h3 { margin-bottom: 14px; }
+
+        /* ═══ Acabamento profissional: barra do topo, Loja, Carteira, Pedidos ═══ */
+        /* barra do topo: um bloco só (saldo | plano | recarregar) */
+        .wallet-bar {
+            display: inline-flex; align-items: center; gap: 0; padding: 4px;
+            border-radius: 14px; border: 1px solid var(--border);
+            background: rgba(10, 14, 22, 0.85);
+            box-shadow: 0 8px 24px rgba(0,0,0,.25);
+        }
+        .wallet-bar .wallet-chip {
+            background: transparent; border: 0; box-shadow: none; border-radius: 10px;
+            padding: 5px 14px 5px 8px; gap: 10px; transform: none !important;
+        }
+        .wallet-bar .wallet-chip:hover { background: rgba(255,255,255,.05); box-shadow: none; }
+        .wallet-bar .wallet-chip + .wallet-chip { position: relative; }
+        .wallet-bar .wallet-chip + .wallet-chip::before {
+            content: ""; position: absolute; left: -1px; top: 8px; bottom: 8px; width: 1px; background: var(--border);
+        }
+        .wallet-bar .wallet-label { color: var(--muted); font-size: 10px; letter-spacing: .07em; }
+        .wallet-bar #wallet-amt { color: #E8C994; font-size: 15px; }
+        .wallet-bar #plan-chip-name { color: var(--text); font-size: 14px; }
+        .wallet-bar .btn-recharge {
+            margin-left: 6px; min-height: 36px; padding: 0 14px; border-radius: 10px;
+            box-shadow: none; border: 0;
+        }
+        .wallet-bar .btn-recharge:hover { box-shadow: 0 0 18px rgba(201,160,96,.35); }
+
+        /* topo das páginas: painel escuro, saldo em destaque */
+        #view-shop .shop-hero, #view-wallet .shop-hero, #view-orders .shop-hero {
+            border: 1px solid var(--border);
+            background:
+                radial-gradient(ellipse 70% 120% at 100% 0%, rgba(201,160,96,0.10), transparent 60%),
+                radial-gradient(ellipse 50% 90% at 0% 0%, rgba(0,212,255,0.07), transparent 60%),
+                linear-gradient(165deg, #0f1521, #0a0e16);
+            box-shadow: 0 20px 50px rgba(0,0,0,.3);
+            padding: 30px 30px 28px;
+        }
+        #view-shop .shop-hero::before, #view-wallet .shop-hero::before, #view-orders .shop-hero::before { display: none; }
+        .shop-hero h2 { font-size: clamp(24px, 3vw, 32px); }
+        .shop-hero p { color: #aab7cb; }
+        .shop-balance-card {
+            min-width: 240px; padding: 20px 22px; border-radius: 16px;
+            border: 1px solid rgba(201,160,96,0.35);
+            background: radial-gradient(ellipse 90% 120% at 100% 0%, rgba(201,160,96,0.16), transparent 60%), #0c0f15;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+        }
+        .shop-balance-card .lbl { color: #C9A060; font-size: 10px; letter-spacing: .1em; }
+        .shop-balance-card strong { font-size: 34px; letter-spacing: -.03em; }
+
+        /* Carteira: resumo + extrato */
+        .wallet-stat {
+            border: 1px solid var(--border); background: var(--card); border-radius: 16px; padding: 18px 20px;
+        }
+        .wallet-stat .ws-label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+        .wallet-stat .ws-value { font-size: 28px; letter-spacing: -.03em; }
+        .wallet-ledger-card { border: 1px solid var(--border); background: var(--card); border-radius: 18px; overflow: hidden; }
+        .wallet-ledger-head { padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .wallet-ledger-head h3 { font-size: 16px; }
+        .tx-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 14px 22px; border-top: 1px solid rgba(255,255,255,.05); transition: background .15s; }
+        .tx-row:first-child { border-top: 0; }
+        .tx-row:hover { background: rgba(255,255,255,.025); }
+        .tx-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; }
+        .tx-ico svg { width: 18px; height: 18px; }
+        .tx-row.in .tx-ico { color: #4ade80; background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.25); }
+        .tx-row.out .tx-ico { color: #fca5a5; background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.22); }
+        .tx-row.zero .tx-ico { color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--border); }
+        .tx-main { min-width: 0; }
+        .tx-main b { display: block; font-size: 14px; font-weight: 700; color: var(--text); }
+        .tx-main span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tx-amt { text-align: right; }
+        .tx-amt b { display: block; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .tx-row.in .tx-amt b { color: #4ade80; } .tx-row.out .tx-amt b { color: #fca5a5; }
+        .tx-amt span { font-size: 11px; color: var(--muted-2); }
+        .wallet-empty { padding: 44px 20px; }
+
+        /* Pedidos: passos e formulário com o mesmo cartão */
+        .orders-howto-step {
+            border: 1px solid var(--border); background: var(--card); border-radius: 16px; padding: 16px;
+        }
+        .orders-howto-step .n {
+            width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+            background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.3); color: var(--neon); font-weight: 800;
+        }
+        .orders-howto-step strong { font-size: 14px; }
+        .orders-howto-step span { font-size: 12px; color: var(--muted); }
+        .card-panel, .orders-create {
+            border: 1px solid var(--border) !important; background: var(--card) !important; border-radius: 18px !important;
+            box-shadow: 0 16px 40px rgba(0,0,0,.25);
+        }
+        .orders-create-head { padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .order-field { padding-top: 18px; }
+        .order-field-label strong { font-size: 14px; }
+
+        /* Loja: aviso de reposição como faixa discreta */
+        .shop-note { border: 1px solid var(--border); background: var(--card); border-radius: 14px; }
     </style>
 </head>
 <body>
@@ -3020,7 +3115,7 @@
                     <div class="wallet-chip" id="plan-chip" onclick="navigateTo('/shop')" title="Ver planos na Loja">
                         <span id="plan-chip-icon" style="width:32px;height:32px;margin-right:-2px;display:none;align-items:center;justify-content:center;flex-shrink:0;"></span>
                         <div class="wallet-meta">
-                            <span class="wallet-label">Plano Atual</span>
+                            <span class="wallet-label">Plano</span>
                             <span class="wallet-amt" id="plan-chip-name">—</span>
                         </div>
                     </div>
@@ -5318,7 +5413,7 @@
             const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
             const planColors = PLAN_COLORS;
             const planSlug = currentUser && currentUser.plan_slug;
-            const planLabel = planSlug && planNames[planSlug] ? planNames[planSlug] : '—';
+            const planLabel = planSlug && planNames[planSlug] ? planNames[planSlug] : 'Sem plano';
             const planColor = planColors[planSlug] || '#666';
             const hasPlan = !!planSlug;
 
@@ -6009,23 +6104,29 @@
                         </div>`;
                     return;
                 }
-                const head = `
-                    <div class="ledger-row ledger-row--head">
-                        <div>Data</div><div>Tipo</div><div>Valor</div><div>Saldo</div><div>Detalhe</div>
-                    </div>`;
+                const fmtWhen = iso => {
+                    const d = new Date(String(iso || '').replace(' ', 'T'));
+                    if (isNaN(d)) return String(iso || '');
+                    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                };
+                const IN_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
+                const OUT_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+                const head = '';
                 const lines = rows.map(r => {
                     const d = Number(r.delta) || 0;
-                    const cls = d > 0 ? 'pos' : (d < 0 ? 'neg' : '');
-                    const dot = d > 0 ? 'credit' : (d < 0 ? 'debit' : 'neutral');
-                    const dTxt = (d > 0 ? '+' : '') + d;
-                    const when = String(r.created_at || '').replace('T', ' ').slice(0, 19);
+                    const kind = d > 0 ? 'in' : (d < 0 ? 'out' : 'zero');
+                    const detail = r.note || r.ref_id || '';
                     return `
-                        <div class="ledger-row">
-                            <div class="lg-date ledger-muted">${esc(when)}</div>
-                            <div class="ledger-type"><span class="ledger-dot ${dot}"></span>${esc(ledgerReasonLabel(r.reason))}</div>
-                            <div class="ledger-delta ${cls}">${dTxt}</div>
-                            <div><img class="coin-mini" src="/static/trovoeda-coin.png?v=16" alt="" /> ${esc(String(r.balance_after ?? '—'))}</div>
-                            <div class="lg-detail ledger-muted">${esc(r.note || r.ref_id || '—')}</div>
+                        <div class="tx-row ${kind}">
+                            <span class="tx-ico" aria-hidden="true">${d >= 0 ? IN_ICO : OUT_ICO}</span>
+                            <div class="tx-main">
+                                <b>${esc(ledgerReasonLabel(r.reason))}</b>
+                                <span>${detail ? esc(detail) + ' · ' : ''}${esc(fmtWhen(r.created_at))}</span>
+                            </div>
+                            <div class="tx-amt">
+                                <b>${d > 0 ? '+' : (d < 0 ? '−' : '')}${Math.abs(d)}</b>
+                                <span>saldo ${esc(String(r.balance_after ?? '—'))}</span>
+                            </div>
                         </div>`;
                 }).join('');
                 body.innerHTML = head + lines;

@@ -9,6 +9,7 @@ http://127.0.0.1:5055
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import signal
@@ -1049,6 +1050,7 @@ def _run_one_mission(mission: dict) -> int:
     st["pid"] = _proc.pid
     st["pid_fonte_b"] = _proc_fonte_b.pid if _proc_fonte_b else None
     st["current_mission_id"] = mid
+    st["mission_started_at"] = _now()
     st["session_leads"] = 0
     st["mission_target"] = target
     st["mission_label"] = mission.get("label") or mid
@@ -1336,6 +1338,12 @@ def _queue_worker(only_ids: list[str] | None = None) -> None:
             if _stop_flag.is_set():
                 break
             append_log(f"✓ Missão «{m.get('label') or m.get('id')}» finalizada · {pos}")
+            st = load_state()
+            if st.get("stop_after_current"):
+                st["stop_after_current"] = False
+                save_state(st)
+                append_log("⏸ Pausado após a missão, como pedido no cockpit", src="sys")
+                break
             # próxima já — sem pausa
             more = _pending_in_order(load_missions(), run_ids)
             if more:
@@ -1366,6 +1374,7 @@ def _queue_worker(only_ids: list[str] | None = None) -> None:
         _stop_flag.clear()
         st = load_state()
         st["run_mission_ids"] = None
+        st["stop_after_current"] = False
         save_state(st)
 
 
@@ -1494,6 +1503,61 @@ def api_stop():
     return jsonify({"ok": True, "state": st})
 
 
+@app.post("/api/stop-after")
+def api_stop_after():
+    """Liga/desliga 'parar depois da missão atual' (a fila não pega a próxima)."""
+    data = request.get_json(silent=True) or {}
+    st = load_state()
+    st["stop_after_current"] = bool(data.get("on", not st.get("stop_after_current")))
+    save_state(st)
+    append_log(
+        "⏸ Vai pausar ao fim desta missão" if st["stop_after_current"] else "▶ Pausa cancelada — a fila segue",
+        src="sys",
+    )
+    return jsonify({"ok": True, "stop_after_current": st["stop_after_current"]})
+
+
+def _norm_key(txt: str) -> str:
+    import unicodedata
+
+    t = unicodedata.normalize("NFKD", str(txt or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "", t.lower())
+
+
+@app.get("/api/coverage")
+def api_coverage():
+    """Leads por cidade × nicho (banco local) + última varredura de cada par."""
+    cells: dict[str, dict[str, int]] = {}
+    try:
+        import psycopg2
+
+        conn = psycopg2.connect(os.environ.get("DATABASE_URL", ""), connect_timeout=4)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT city, niche, COUNT(*) FROM companies "
+                "WHERE city IS NOT NULL AND niche IS NOT NULL GROUP BY 1, 2;"
+            )
+            for city, niche, n in cur.fetchall():
+                cells.setdefault(city, {})[niche] = int(n)
+        finally:
+            conn.close()
+    except Exception as exc:
+        return jsonify({"cells": {}, "swept": {}, "error": str(exc)[:200]})
+
+    # última varredura por nicho|cidade (search_coverage.json, bairros incluídos)
+    swept: dict[str, str] = {}
+    cov = _load_json(DATA / "search_coverage.json", {}) or {}
+    for item in (cov.get("done") or {}).values():
+        if item.get("seeded"):
+            continue
+        key = f"{item.get('niche')}|{_norm_key(item.get('city'))}"
+        when = item.get("completed_at") or ""
+        if when > swept.get(key, ""):
+            swept[key] = when
+    return jsonify({"cells": cells, "swept": swept})
+
+
 @app.post("/api/score")
 def api_score():
     """Pontua leads pendentes (útil após Ctrl+C). Não compete com run se bot ativo."""
@@ -1580,6 +1644,17 @@ def api_status():
             "process_alive": is_bot_process_alive(),
         }
     )
+
+
+class _QuietStatusPolls:
+    """Filtro do log do werkzeug: esconde só as consultas de status da tela."""
+
+    def filter(self, record) -> bool:
+        return "/api/status" not in record.getMessage()
+
+
+# vale para app.py direto e para cockpit/start.py (que importa o app)
+logging.getLogger("werkzeug").addFilter(_QuietStatusPolls())
 
 
 def main() -> None:

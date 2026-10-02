@@ -4,851 +4,899 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ProspecTHOR — Cockpit</title>
-  <meta name="theme-color" content="#05070b" />
+  <meta name="theme-color" content="#070a10" />
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=5" />
   <link rel="icon" type="image/png" href="/static/favicon-32x32.png?v=5" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=5" />
   <link rel="manifest" href="/static/site.webmanifest?v=5" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #05070b; --card: #0a0e17; --border: #1a2233; --text: #e8eef7;
-      --muted: #8b9bb4; --neon: #00d4ff; --ok: #22c55e; --warn: #f59e0b; --danger: #ff4d6a;
-      --font: Inter, system-ui, sans-serif;
+      --bg: #070a10; --panel: #0d121c; --panel-2: #0a0f17; --inset: #070a10;
+      --border: #1b2433; --text: #e6edf6; --muted: #93a3ba; --dim: #64748b;
+      --cyan: #22d3ee; --cyan-soft: #0b2a33; --cyan-line: #155e75; --cyan-text: #67e8f9;
+      --violet: #a78bfa; --violet-soft: #1e1b3a; --violet-text: #c4b5fd;
+      --amber: #fbbf24; --amber-soft: #3f2d0b;
+      --green: #34d399; --red: #f87171; --red-soft: #1a0d10; --red-line: #7f1d1d;
+      --display: 'Space Grotesk', system-ui, sans-serif;
+      --sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--font); background: var(--bg); color: var(--text);
-      min-height: 100vh;
-      background-image: radial-gradient(ellipse 60% 40% at 10% 0%, rgba(0,212,255,.12), transparent 55%);
-      padding: 20px;
-    }
-    .wrap { max-width: 1100px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-    h1 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
-    h1 span { color: var(--neon); }
-    .pill {
-      font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
-      border: 1px solid var(--border); color: var(--muted);
-    }
-    .pill.on { color: var(--ok); border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.1); }
-    .pill.run { color: var(--neon); border-color: rgba(0,212,255,.35); background: rgba(0,212,255,.1); }
-    .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    .card {
-      background: linear-gradient(165deg, rgba(14,20,32,.95), rgba(10,14,23,.98));
-      border: 1px solid var(--border); border-radius: 14px; padding: 16px 16px 14px;
-    }
-    .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
-    label.f { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
-    select, input[type=number], input[type=text] {
-      width: 100%; background: #070b12; border: 1px solid var(--border); color: var(--text);
-      border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
-    }
-    select:focus, input:focus { border-color: var(--neon); }
-    .checks {
-      max-height: 180px; overflow: auto; border: 1px solid var(--border); border-radius: 10px;
-      padding: 8px; background: #070b12;
-    }
-    .checks label {
-      display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 4px 2px; cursor: pointer;
-    }
-    .checks label.hidden { display: none; }
-    .checks input { accent-color: var(--neon); }
-    .sel-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-      margin: 10px 0 6px;
-    }
-    .sel-head .f { margin: 0; }
-    .sel-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .sel-actions button {
-      padding: 6px 10px; font-size: 11px; border-radius: 8px;
-    }
-    .filter-input {
-      width: 100%; background: #070b12; border: 1px solid var(--border); color: var(--text);
-      border-radius: 10px; padding: 9px 12px; font: inherit; outline: none; margin-bottom: 6px;
-    }
-    .filter-input:focus { border-color: var(--neon); }
-    .filter-input::placeholder { color: var(--muted); }
-    .sel-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-    button {
-      border: 1px solid var(--border); background: var(--card); color: var(--text);
-      border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer;
-    }
-    button:hover { border-color: var(--neon); color: var(--neon); }
+    body { font-family: var(--sans); font-size: 14px; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px 24px 40px; }
+    .wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    button { font: inherit; cursor: pointer; }
     button:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-run {
-      background: linear-gradient(135deg, #00d4ff, #0090c4); color: #031018; border: none;
-      box-shadow: 0 0 18px rgba(0,212,255,.25);
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
+    .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .hidden { display: none !important; }
+
+    /* ── topo ── */
+    .top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--cyan); display: grid; place-items: center; }
+    .brand span.thor { color: var(--cyan); }
+    .brand span.sub { color: var(--muted); font-weight: 500; }
+    .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-weight: 600; font-size: 13px; }
+    .status-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+    .status-pill.run { background: var(--cyan-soft); border-color: var(--cyan-line); color: var(--cyan-text); }
+    .status-pill.run i { background: var(--cyan); box-shadow: 0 0 0 4px rgba(34,211,238,.15); }
+    .health { flex: 1 1 320px; font-size: 12px; color: var(--muted); }
+    .health .dot { color: var(--green); }
+    .health .dot.warn { color: var(--amber); }
+    .health .dot.bad { color: var(--red); }
+    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { min-height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--border); background: #111827; color: var(--text); font-weight: 600; }
+    .btn:hover { border-color: #2b3a52; }
+    .btn-stop { border-color: var(--red-line); background: var(--red-soft); color: #fca5a5; }
+    .btn-pause.on { border-color: #6b4d12; background: var(--amber-soft); color: var(--amber); }
+    .btn-primary { border: 0; background: var(--cyan); color: #04131a; font-weight: 700; }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost { border-color: var(--cyan-line); background: transparent; color: var(--cyan-text); }
+    .btn-sm { min-height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12px; }
+
+    /* ── faixa da missão atual ── */
+    .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .tile { padding: 16px; }
+    .tile.wide { grid-column: span 2; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    @media (max-width: 640px) { .tile.wide { grid-column: auto; } }
+    .tile .big { font-family: var(--display); font-size: 30px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .tile .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+    .tile .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .mission-title { font-family: var(--display); font-size: 20px; font-weight: 600; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .meta-line { display: flex; align-items: baseline; gap: 6px; }
+    .meta-line .got { font-family: var(--display); font-size: 40px; font-weight: 700; color: var(--cyan); line-height: 1; font-variant-numeric: tabular-nums; }
+    .meta-line .of { font-size: 20px; color: var(--muted); }
+    .meta-line .msg { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar { height: 10px; border-radius: 999px; background: #111827; overflow: hidden; }
+    .bar > span { display: block; height: 100%; width: 0; background: var(--cyan); border-radius: 999px; transition: width .4s ease; }
+    .bar.full > span { background: var(--green); }
+
+    /* ── títulos das faixas ── */
+    .band-title { display: flex; align-items: baseline; gap: 10px; margin-top: 8px; }
+    .band-title .n { font-family: var(--mono); font-size: 12px; color: var(--cyan); }
+    .band-title h2 { font-family: var(--display); font-size: 18px; font-weight: 600; }
+    .band-title .s { font-size: 13px; color: var(--muted); }
+    .band-title .line { flex: 1; height: 1px; background: var(--border); align-self: center; }
+
+    /* ── criar missão ── */
+    .create { padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; align-items: stretch; }
+    .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .form-mode { font-size: 12px; font-weight: 600; color: var(--cyan-text); min-height: 1em; }
+    .form-mode:empty { display: none; }
+    label.f { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    select, input[type=number], input[type=text] {
+      min-height: 40px; width: 100%; border-radius: 9px; border: 1px solid var(--border); background: var(--inset);
+      color: var(--text); padding: 0 10px; font: inherit; font-size: 13px; text-transform: none; letter-spacing: 0; outline: none;
     }
-    .btn-run:hover { color: #031018; filter: brightness(1.06); }
-    .btn-stop { border-color: var(--danger); color: var(--danger); }
-    .btn-score { border-color: var(--warn); color: var(--warn); }
-    .btn-add { border-color: var(--neon); color: var(--neon); width: 100%; margin-top: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; color: var(--muted); font-size: 10px; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid var(--border); }
-    td { padding: 8px 4px; border-bottom: 1px solid rgba(26,34,51,.8); vertical-align: top; }
-    .st { font-weight: 700; font-size: 11px; text-transform: uppercase; }
-    .st.pendente { color: var(--muted); }
-    .st.rodando { color: var(--neon); }
-    .st.ok { color: var(--ok); }
-    .st.erro, .st.parada { color: var(--danger); }
-    .log-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    }
-    @media (max-width: 900px) { .log-grid { grid-template-columns: 1fr; } }
-    .log-panel {
-      border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--border);
-      background: #070b12;
-      display: flex; flex-direction: column;
-      min-height: 200px;
-    }
-    .log-panel.maps {
-      border-color: rgba(0, 212, 255, 0.35);
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.06);
-    }
-    .log-panel.fonteb {
-      border-color: rgba(167, 139, 250, 0.4);
-      box-shadow: 0 0 20px rgba(167, 139, 250, 0.08);
-    }
-    .log-panel-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; font-size: 11px; font-weight: 800;
-      letter-spacing: .04em; text-transform: uppercase;
-    }
-    .log-panel.maps .log-panel-head {
-      background: rgba(0, 212, 255, 0.1);
-      color: #5ce1ff;
-      border-bottom: 1px solid rgba(0, 212, 255, 0.2);
-    }
-    .log-panel.fonteb .log-panel-head {
-      background: rgba(167, 139, 250, 0.12);
-      color: #c4b5fd;
-      border-bottom: 1px solid rgba(167, 139, 250, 0.25);
-    }
-    .log-panel-head .dot {
-      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
-      margin-right: 6px;
-    }
-    .log-panel.maps .dot { background: #00d4ff; box-shadow: 0 0 8px #00d4ff; }
-    .log-panel.fonteb .dot { background: #a78bfa; box-shadow: 0 0 8px #a78bfa; }
-    .log {
-      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.55;
-      max-height: 300px; overflow: auto; color: var(--muted);
-      padding: 10px;
-      white-space: pre-wrap; word-break: break-word; flex: 1;
-    }
-    .log .e { color: var(--danger); }
-    .log .w { color: var(--warn); }
-    /* Maps = ciano */
-    .log .src-maps { color: #7dd3fc; }
-    .log .src-maps.e { color: #fca5a5; }
-    .log .src-maps.w { color: #fcd34d; }
-    /* Fonte B / CNPJ = roxo/violeta */
-    .log .src-fonteb { color: #c4b5fd; }
-    .log .src-fonteb.e { color: #f9a8d4; }
-    .log .src-fonteb.w { color: #fde68a; }
-    /* Sistema = cinza/verde suave */
-    .log .src-sys { color: #94a3b8; }
-    .log .src-sys.e { color: var(--danger); }
-    .log .src-sys.w { color: var(--warn); }
-    .log .tag {
-      display: inline-block; font-size: 9px; font-weight: 800;
-      padding: 1px 5px; border-radius: 4px; margin-right: 6px;
-      letter-spacing: .03em; vertical-align: middle;
-    }
-    .log .tag.maps { background: rgba(0,212,255,.15); color: #5ce1ff; }
-    .log .tag.fonteb { background: rgba(167,139,250,.2); color: #c4b5fd; }
-    .log .tag.sys { background: rgba(148,163,184,.15); color: #94a3b8; }
-    .log-empty { color: var(--muted); font-size: 11px; padding: 8px 0; }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
-    .msg { font-size: 13px; color: var(--neon); margin-bottom: 8px; min-height: 1.2em; }
-    .leads-big {
-      font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.03em;
-      margin: 4px 0 6px;
-    }
-    .leads-big .meta-got {
-      color: var(--neon); text-shadow: 0 0 14px rgba(0,212,255,.35);
-    }
-    .leads-big .meta-slash { color: var(--muted); margin: 0 2px; font-weight: 700; }
-    .leads-big .meta-tgt { color: #9fdfff; }
-    .meta-sub {
-      font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.4;
-    }
-    .meta-bar {
-      height: 8px; border-radius: 999px; background: #0e1520;
-      border: 1px solid var(--border); overflow: hidden; margin: 0 0 14px;
-    }
-    .meta-bar > span {
-      display: block; height: 100%; width: 0%;
-      background: linear-gradient(90deg, #00d4ff, #22c55e);
-      transition: width .4s ease;
-      border-radius: 999px;
-    }
-    .meta-bar.full > span {
-      background: linear-gradient(90deg, #22c55e, #4ade80);
-    }
-    .btn-xs {
-      padding: 4px 8px; font-size: 11px; border-radius: 8px; font-weight: 700;
-      min-width: 28px;
-    }
-    .btn-xs.danger { border-color: var(--danger); color: var(--danger); }
-    .btn-xs.edit { border-color: var(--neon); color: var(--neon); }
-    .act-cell { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-    tr.editing { background: rgba(0,212,255,.06); }
-    tr.selected-row { background: rgba(0,212,255,.04); }
-    .form-mode {
-      font-size: 12px; font-weight: 700; color: var(--neon); margin-bottom: 8px;
-      min-height: 1.2em;
-    }
-    .btn-cancel-edit {
-      width: 100%; margin-top: 8px; border-color: var(--muted); color: var(--muted);
-    }
+    select:focus, input:focus { border-color: var(--cyan); }
+    .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip-btn { min-height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: #111827; color: #cbd5e1; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-btn:hover { border-color: var(--cyan-line); color: var(--cyan-text); }
+    .summary { padding: 12px; border-radius: 10px; background: var(--inset); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+    .summary .warn { font-size: 12px; color: var(--amber); }
+    .summary .warn:empty, .summary .muted:empty { display: none; }
+    .summary .muted { font-size: 12px; color: var(--muted); }
+    .create-actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+    .create-actions .btn { flex: 1; min-height: 44px; }
+    .create-actions .btn-primary { flex: 1.4; }
+
+    .pick-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .pick-head .k b { color: var(--cyan); text-transform: none; letter-spacing: 0; font-weight: 600; }
+    .pick-head.cityhead .k b { color: var(--violet); }
+    .pick-box { border: 1px solid var(--border); border-radius: 10px; background: var(--inset); overflow: hidden; display: flex; flex-direction: column; flex: 1; }
+    .pick-box input[type=search] { width: 100%; min-height: 36px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); padding: 0 10px; font: inherit; font-size: 13px; outline: none; }
+    .checks { height: 300px; overflow: auto; padding: 4px; }
+    .checks label { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 6px; border-radius: 6px; font-size: 13px; color: #cbd5e1; cursor: pointer; }
+    .checks label:hover { background: #0f1622; }
+    .checks label.hidden { display: none; }
+    .checks label:has(input:checked) { color: var(--text); background: #0b1820; }
+    .checks.citybox label:has(input:checked) { background: #14122a; }
+    .checks input { width: 16px; height: 16px; margin: 0; accent-color: var(--cyan); }
+    .checks.citybox input { accent-color: var(--violet); }
+    .checks .empty { color: var(--muted); padding: 8px; }
+
+    /* ── acompanhar ── */
+    .follow { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+    .queue { flex: 2 1 480px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .found-panel { flex: 1 1 320px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .panel-head h3 { font-family: var(--display); font-size: 16px; font-weight: 600; }
+    .panel-head h3 span { color: var(--muted); font-weight: 500; }
+    .sel-hint { font-size: 12px; color: var(--muted); }
+    .qcard { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2); display: flex; gap: 12px; align-items: center; }
+    .qcard.running { border-color: var(--cyan-line); background: #08161c; }
+    .qcard.selected { border-color: #23506a; }
+    .qcard.editing { border-color: var(--cyan); }
+    .qcard input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--cyan); flex-shrink: 0; }
+    .qbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .qtop { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .qtop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .qstate { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+    .qstate.rodando { color: var(--cyan-text); }
+    .qstate.ok { color: var(--green); }
+    .qstate.erro, .qstate.parada { color: var(--red); }
+    .qmeta { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .qbar { height: 6px; border-radius: 999px; background: #111827; overflow: hidden; }
+    .qbar > span { display: block; height: 100%; background: var(--cyan); border-radius: 999px; }
+    .qbar.done > span { background: var(--green); }
+    .qacts { display: flex; gap: 4px; flex-shrink: 0; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: #cbd5e1; }
+    .icon-btn:hover { border-color: #2b3a52; }
+    .icon-btn.dup { color: var(--violet-text); }
+    .icon-btn.del { color: #fca5a5; border-color: #3b1219; }
+    .queue-empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
+
+    .chans { font-size: 12px; color: var(--muted); }
+    .found { border: 1px solid var(--border); border-radius: 12px; overflow: auto; max-height: 360px; }
+    .found-item { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    .found-item:last-child { border-bottom: 0; }
+    .found-item .nm { flex: 1; min-width: 0; }
+    .found-item .nm div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .found-item .nm small { display: block; font-size: 11px; color: var(--muted); }
+    .src-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--cyan-soft); color: var(--cyan-text); }
+    .src-tag.b { background: var(--violet-soft); color: var(--violet-text); }
+    .found-item.fresh { animation: fresh 2.5s ease-out; }
+    @keyframes fresh { from { background: rgba(52,211,153,.16); } to { background: transparent; } }
+    .found-empty { padding: 14px 12px; font-size: 12px; color: var(--muted); }
+
+    /* ── diagnóstico ── */
+    .diag { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    .cov { flex: 1 1 460px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .cov-scroll { overflow-x: auto; }
+    .cov table { border-collapse: separate; border-spacing: 4px; font-size: 12px; }
+    .cov th { font-weight: 500; color: var(--muted); padding: 2px 4px; white-space: nowrap; }
+    .cov th.city { text-align: left; color: #cbd5e1; }
+    .cov td { min-width: 52px; text-align: center; padding: 8px 6px; border-radius: 6px; background: #111827; color: var(--dim); cursor: pointer; font-variant-numeric: tabular-nums; }
+    .cov td:hover { outline: 1px solid var(--cyan); }
+    .cov td.l1 { background: #164e63; color: #cffafe; }
+    .cov td.l2 { background: #155e75; color: #cffafe; }
+    .cov td.l3 { background: #0e7490; color: #ecfeff; }
+    .cov .legend { font-size: 12px; color: var(--muted); }
+    .logs { flex: 1 1 460px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .tab { min-height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; }
+    .tab.on { border-color: transparent; background: var(--cyan-soft); color: var(--cyan-text); font-weight: 600; }
+    .tab.warn { color: var(--amber); border-color: var(--amber-soft); }
+    .tab.warn.on { background: var(--amber-soft); }
+    .log { font-family: var(--mono); font-size: 12px; line-height: 1.7; background: var(--inset); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--muted); height: 300px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    .log .t { color: var(--dim); }
+    .log .e { color: #fca5a5; }
+    .log .w { color: #fcd34d; }
+    .log .ok { color: #6ee7b7; }
+    .log .b { color: var(--violet-text); }
+    .log-empty { color: var(--muted); }
+    .tools { display: flex; gap: 6px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Prospec<span>THOR</span> · Cockpit</h1>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span class="pill" id="pill-status">—</span>
-        <span class="pill" id="pill-bot">bot: —</span>
-      </div>
-    </header>
+<div class="wrap">
 
-    <div class="grid">
-      <section class="card">
-        <h2 id="form-title">Nova missão</h2>
-        <p class="form-mode" id="form-mode"></p>
-        <label class="f">Quem recebe os leads</label>
-        <select id="user_id">
-          <option value="">Livre (sem dono forçado)</option>
-        </select>
-
-        <label class="f">Meta de leads</label>
-        <input type="number" id="target" min="1" value="20" />
-
-        <label class="f">Nome da missão (opcional)</label>
-        <input type="text" id="label" placeholder="Ex: Ranso · barbearia Aracaju" />
-
-        <div class="sel-head">
-          <label class="f">Nichos</label>
-          <div class="sel-actions">
-            <button type="button" onclick="selectAll('niche', true)" title="Marcar todos visíveis">Todos</button>
-            <button type="button" onclick="clearChecks('niche')" title="Limpar nichos">Limpar</button>
-          </div>
-        </div>
-        <input type="search" class="filter-input" id="niche-filter" placeholder="Pesquisar nicho…" oninput="filterChecks('niche')" autocomplete="off" />
-        <div class="checks" id="niches"></div>
-        <div class="sel-count" id="niche-count">0 selecionado(s)</div>
-
-        <div class="sel-head">
-          <label class="f">Cidades</label>
-          <div class="sel-actions">
-            <button type="button" onclick="selectAll('city', true)" title="Marcar todas visíveis">Todas</button>
-            <button type="button" onclick="clearChecks('city')" title="Limpar cidades">Limpar</button>
-          </div>
-        </div>
-        <input type="search" class="filter-input" id="city-filter" placeholder="Pesquisar cidade…" oninput="filterChecks('city')" autocomplete="off" />
-        <div class="checks" id="cities"></div>
-        <div class="sel-count" id="city-count">0 selecionada(s)</div>
-
-        <div class="row" style="margin-top:10px;">
-          <button type="button" onclick="clearAllSelections()" style="flex:1;border-color:var(--danger);color:var(--danger);">✕ Limpar nichos e cidades</button>
-        </div>
-
-        <button type="button" class="btn-add" id="btn-save-mission" onclick="saveMissionForm()">+ Adicionar na fila</button>
-        <button type="button" class="btn-cancel-edit" id="btn-cancel-edit" style="display:none;" onclick="cancelEdit()">Cancelar edição</button>
-        <p class="hint">Várias missões = uma atrás da outra. Marque na fila e ▶ roda só as escolhidas. Ordem da lista = ordem de execução.</p>
-      </section>
-
-      <section class="card">
-        <h2>Controles</h2>
-        <p class="msg" id="msg">—</p>
-        <div class="leads-big">
-          Meta:
-          <span class="meta-got" id="sess-leads">0</span><span class="meta-slash">/</span><span class="meta-tgt" id="sess-target">—</span>
-        </div>
-        <p class="meta-sub" id="meta-sub">Leads da missão atual (Maps + Fonte B)</p>
-        <div class="meta-bar" id="meta-bar" title="Progresso da meta"><span id="meta-fill"></span></div>
-        <div class="row">
-          <button type="button" class="btn-run" id="btn-run" onclick="runQueue()">▶ Rodar fila</button>
-          <button type="button" class="btn-stop" onclick="stopBot()">■ Parar</button>
-          <button type="button" class="btn-score" onclick="runScore(false)">⚡ Só score</button>
-          <button type="button" class="btn-score" onclick="runScore(true)">⚡ Score force</button>
-        </div>
-        <p class="hint" id="run-hint">
-          <b>▶ Rodar</b>: se nada marcado → todas as pendentes; se marcar → só as selecionadas.<br />
-          Cada missão sobe <b>Maps + Fonte B</b> (OSM/CNPJ) juntos — só lead com WA/tel ou Instagram.<br />
-          <b>Só score</b> = pontua o que faltou · <b>Score force</b> = recalcula raios.
-        </p>
-
-        <h2 style="margin-top:18px;">Fila</h2>
-        <div class="row" style="margin-top:0;margin-bottom:8px;">
-          <button type="button" class="btn-xs" onclick="selectAllMissions(true)">Marcar todas</button>
-          <button type="button" class="btn-xs" onclick="selectAllMissions(false)">Limpar marcas</button>
-          <button type="button" onclick="clearDone()">Limpar ok/erro</button>
-          <button type="button" onclick="refresh()">Atualizar</button>
-        </div>
-        <p class="hint" style="margin-top:0;margin-bottom:8px;" id="sel-hint">0 missão(ões) marcada(s)</p>
-        <div style="overflow:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:28px;"></th>
-                <th style="width:36px;">#</th>
-                <th>Missão</th>
-                <th>Dono</th>
-                <th>Meta</th>
-                <th>Progresso</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-
-        <h2 style="margin-top:16px;">Logs ao vivo (separados)</h2>
-        <p class="hint" style="margin-top:0;margin-bottom:8px;">
-          <span style="color:#5ce1ff">● Maps</span> = Google ·
-          <span style="color:#c4b5fd">● Fonte B / CNPJ</span> = mapa em paralelo ·
-          eventos do cockpit entram nos dois quando for sistema.
-        </p>
-        <div class="log-grid">
-          <div class="log-panel maps">
-            <div class="log-panel-head"><span><span class="dot"></span>Google Maps</span><span id="log-maps-count" style="font-weight:600;opacity:.8">0</span></div>
-            <div class="log" id="log-maps"></div>
-          </div>
-          <div class="log-panel fonteb">
-            <div class="log-panel-head"><span><span class="dot"></span>Fonte B · CNPJ / mapa</span><span id="log-fonteb-count" style="font-weight:600;opacity:.8">0</span></div>
-            <div class="log" id="log-fonteb"></div>
-          </div>
-        </div>
-      </section>
+  <!-- ══ topo: status, saúde e botões sempre à mão ══ -->
+  <header class="panel top">
+    <div class="brand">
+      <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#04131a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg></span>
+      <span>Prospec<span class="thor">THOR</span> <span class="sub">· Cockpit</span></span>
     </div>
+    <span class="status-pill" id="pill-status"><i></i><span id="pill-text">—</span></span>
+    <div class="health" id="health">—</div>
+    <div class="top-actions">
+      <button type="button" class="btn btn-stop" onclick="stopBot()">■ Parar</button>
+      <button type="button" class="btn btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pausar após esta missão</button>
+    </div>
+  </header>
+
+  <!-- ══ missão atual ══ -->
+  <section class="strip" aria-label="Missão atual">
+    <div class="panel tile wide">
+      <div>
+        <div class="k">Missão atual</div>
+        <div class="mission-title" id="mission-title">Nenhuma missão rodando</div>
+      </div>
+      <div class="meta-line">
+        <span class="got" id="sess-leads">0</span><span class="of">/ <span id="sess-target">—</span> leads</span>
+        <span class="msg" id="msg">—</span>
+      </div>
+      <div class="bar" id="meta-bar"><span id="meta-fill"></span></div>
+    </div>
+    <div class="panel tile">
+      <div class="k">Velocidade</div>
+      <div class="big"><span id="spd-rate">—</span> <small>leads/min</small></div>
+      <div class="sub">rodando há <span id="spd-elapsed">—</span></div>
+    </div>
+    <div class="panel tile">
+      <div class="k">Termina em</div>
+      <div class="big" id="spd-eta">—</div>
+      <div class="sub">fila: <span id="q-left">0</span> missão(ões) pendente(s)</div>
+    </div>
+    <div class="panel tile">
+      <div class="k">Na fila</div>
+      <div class="big"><span id="q-leads">0</span> <small>leads</small></div>
+      <div class="sub"><span id="q-count">0</span> missão(ões) aguardando</div>
+    </div>
+  </section>
+
+  <!-- ══ 01 · criar missão ══ -->
+  <div class="band-title"><span class="n">01</span><h2 id="form-title">Criar missão</h2><span class="s">marque nichos e cidades, escolha o dono e a meta</span><span class="line"></span></div>
+  <section class="panel create" aria-label="Criar missão">
+    <div class="col">
+      <p class="form-mode" id="form-mode"></p>
+      <label class="f">Quem recebe os leads
+        <select id="user_id" onchange="renderSummary()"><option value="">Livre (sem dono forçado)</option></select>
+      </label>
+      <div class="two">
+        <label class="f">Meta de leads
+          <input type="number" id="target" min="1" value="20" oninput="renderSummary()" />
+        </label>
+        <label class="f">Nome (opcional)
+          <input type="text" id="label" placeholder="Ex: David · materiais" />
+        </label>
+      </div>
+      <div class="col" style="gap:6px;">
+        <div class="k">Atalhos</div>
+        <div class="chips" id="shortcuts"><span class="sel-hint">Suas últimas missões aparecem aqui.</span></div>
+      </div>
+      <div class="summary" id="summary">
+        <div class="k">Resumo</div>
+        <div id="sum-main">Marque pelo menos 1 nicho e 1 cidade.</div>
+        <div class="warn" id="sum-warn"></div>
+        <div class="muted" id="sum-eta"></div>
+      </div>
+      <div class="create-actions">
+        <button type="button" class="btn btn-ghost" id="btn-save-mission" onclick="saveMissionForm()">+ Fila</button>
+        <button type="button" class="btn btn-primary" id="btn-add-run" onclick="saveMissionForm(true)">▶ Adicionar e rodar</button>
+        <button type="button" class="btn hidden" id="btn-cancel-edit" onclick="cancelEdit()">Cancelar edição</button>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="pick-head">
+        <div class="k">Nichos <b id="niche-count">· 0 marcados</b></div>
+        <div class="chips">
+          <button type="button" class="btn btn-sm" onclick="selectAll('niche', true)" title="Marcar todos visíveis">Todos</button>
+          <button type="button" class="btn btn-sm" onclick="clearChecks('niche')">Limpar</button>
+        </div>
+      </div>
+      <div class="pick-box">
+        <input type="search" id="niche-filter" placeholder="Pesquisar nicho…" oninput="filterChecks('niche')" autocomplete="off" aria-label="Pesquisar nicho" />
+        <div class="checks" id="niches"></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="pick-head cityhead">
+        <div class="k">Cidades <b id="city-count">· 0 marcadas</b></div>
+        <div class="chips">
+          <button type="button" class="btn btn-sm" onclick="selectAll('city', true)" title="Marcar todas visíveis">Todas</button>
+          <button type="button" class="btn btn-sm" onclick="clearChecks('city')">Limpar</button>
+        </div>
+      </div>
+      <div class="pick-box">
+        <input type="search" id="city-filter" placeholder="Pesquisar cidade…" oninput="filterChecks('city')" autocomplete="off" aria-label="Pesquisar cidade" />
+        <div class="checks citybox" id="cities"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 02 · acompanhar ══ -->
+  <div class="band-title"><span class="n">02</span><h2>Acompanhar</h2><span class="s">fila e leads chegando ao vivo</span><span class="line"></span></div>
+  <div class="follow">
+    <section class="panel queue" aria-label="Fila">
+      <div class="panel-head">
+        <h3>Fila <span id="queue-sum">· 0 missões</span></h3>
+        <div class="chips">
+          <button type="button" class="btn btn-sm" onclick="selectAllMissions(true)">Marcar todas</button>
+          <button type="button" class="btn btn-sm" onclick="selectAllMissions(false)">Limpar marcas</button>
+          <button type="button" class="btn btn-sm" onclick="clearDone()">Limpar ok/erro</button>
+          <button type="button" class="btn btn-sm btn-primary" id="btn-run" onclick="runQueue()">▶ Rodar fila</button>
+        </div>
+      </div>
+      <p class="sel-hint" id="sel-hint">Nenhuma marcada — ▶ roda todas as pendentes na ordem</p>
+      <div id="queue" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </section>
+
+    <section class="panel found-panel" aria-label="Leads achados agora">
+      <div class="panel-head">
+        <h3>Leads achados <span id="found-count" style="color:var(--cyan)">0</span></h3>
+        <span class="chans" id="found-chans"></span>
+      </div>
+      <div class="found" id="found"></div>
+    </section>
   </div>
 
-  <script>
-    let catalog = { cities: [], niches: [] };
-    let users = [];
-    let lastMissions = [];
-    let selectedMissionIds = new Set();
-    let editingId = null;
+  <!-- ══ 03 · diagnóstico ══ -->
+  <div class="band-title"><span class="n">03</span><h2>Diagnóstico</h2><span class="s">onde já varreu e o que o robô está fazendo</span><span class="line"></span></div>
+  <div class="diag">
+    <section class="panel cov" aria-label="Cobertura">
+      <div class="panel-head">
+        <h3>Cobertura <span>· leads por cidade × nicho</span></h3>
+        <div class="tools">
+          <button type="button" class="btn btn-sm" onclick="runScore(false)" title="Pontua o que ficou sem nota">⚡ Só score</button>
+          <button type="button" class="btn btn-sm" onclick="runScore(true)" title="Recalcula a nota de todos os raios">⚡ Score force</button>
+        </div>
+      </div>
+      <div class="cov-scroll" id="coverage"><span class="sel-hint">Carregando…</span></div>
+      <div class="legend">Clique numa célula para preparar uma missão com aquela cidade e nicho.</div>
+    </section>
 
-    async function jfetch(url, opts) {
-      const res = await fetch(url, {
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        ...opts,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-      return data;
+    <section class="panel logs" aria-label="Logs">
+      <div class="panel-head">
+        <h3>Logs</h3>
+        <div class="tabs" role="tablist" aria-label="Fonte do log">
+          <button type="button" class="tab on" data-tab="maps" role="tab" onclick="setLogTab('maps')">Maps <span id="cnt-maps">0</span></button>
+          <button type="button" class="tab" data-tab="fonteb" role="tab" onclick="setLogTab('fonteb')">Fonte B <span id="cnt-fonteb">0</span></button>
+          <button type="button" class="tab" data-tab="sys" role="tab" onclick="setLogTab('sys')">Sistema</button>
+          <button type="button" class="tab warn" data-tab="warn" role="tab" onclick="setLogTab('warn')">Só avisos <span id="cnt-warn">0</span></button>
+        </div>
+      </div>
+      <div class="log" id="log-box"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  let catalog = { cities: [], niches: [] };
+  let users = [];
+  let lastMissions = [];
+  let lastLogs = [];
+  let lastState = {};
+  let coverage = { cells: {}, swept: {} };
+  let selectedMissionIds = new Set();
+  let editingId = null;
+  let logTab = 'maps';
+
+  async function jfetch(url, opts) {
+    const res = await fetch(url, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...opts });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  const nicheLabel = id => { const n = (catalog.niches || []).find(x => String(x.id) === String(id)); return n ? (n.label || n.id) : id; };
+  const cityObj = id => (catalog.cities || []).find(x => String(x.id) === String(id));
+  const cityLabel = id => { const c = cityObj(id); return c ? (c.nome || c.id) : id; };
+  const normKey = s => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+  // ── catálogo (dono, nichos, cidades) ──
+  async function loadCatalog() {
+    const data = await jfetch('/api/catalog');
+    catalog = data.catalog || { cities: [], niches: [] };
+    users = data.users || [];
+    const sel = document.getElementById('user_id');
+    sel.innerHTML = '<option value="">Livre (sem dono forçado)</option>' +
+      users.map(u => {
+        const left = (u.quota || 0) - (u.used || 0);
+        const extra = u.quota ? ` · faltam ${Math.max(0, left)} na cota` : '';
+        return `<option value="${u.id}">${esc(u.label || u.username)} (@${esc(u.username)})${extra}</option>`;
+      }).join('');
+    const sortPt = (a, b) => String(a).localeCompare(String(b), 'pt-BR', { sensitivity: 'base' });
+    const niches = [...(catalog.niches || [])].sort((a, b) => sortPt(a.label || a.id, b.label || b.id));
+    const cities = [...(catalog.cities || [])].sort((a, b) => sortPt(a.nome || a.id, b.nome || b.id));
+    document.getElementById('niches').innerHTML = niches.map(n => {
+      const lab = n.label || n.id;
+      const q = `${lab} ${n.id} ${n.query_term || ''}`.toLowerCase();
+      return `<label data-q="${esc(q)}"><input type="checkbox" class="niche" value="${esc(n.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
+    }).join('') || '<div class="empty">Sem nichos</div>';
+    document.getElementById('cities').innerHTML = cities.map(c => {
+      const lab = `${c.nome || c.id}${c.estado ? ' / ' + c.estado : ''}`;
+      const q = `${lab} ${c.id || ''}`.toLowerCase();
+      return `<label data-q="${esc(q)}"><input type="checkbox" class="city" value="${esc(c.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
+    }).join('') || '<div class="empty">Sem cidades</div>';
+    updateSelCounts();
+  }
+
+  function checked(cls) { return [...document.querySelectorAll('.' + cls + ':checked')].map(el => el.value); }
+  function updateSelCounts() {
+    const nc = document.querySelectorAll('.niche:checked').length;
+    const cc = document.querySelectorAll('.city:checked').length;
+    document.getElementById('niche-count').textContent = `· ${nc} marcado${nc === 1 ? '' : 's'}`;
+    document.getElementById('city-count').textContent = `· ${cc} marcada${cc === 1 ? '' : 's'}`;
+    renderSummary();
+  }
+  function filterChecks(kind) {
+    const q = (document.getElementById(kind === 'niche' ? 'niche-filter' : 'city-filter').value || '').toLowerCase().trim();
+    document.querySelectorAll(`#${kind === 'niche' ? 'niches' : 'cities'} label[data-q]`).forEach(lab => {
+      lab.classList.toggle('hidden', !!(q && !(lab.getAttribute('data-q') || '').includes(q)));
+    });
+  }
+  function clearChecks(kind) {
+    document.querySelectorAll('.' + (kind === 'niche' ? 'niche' : 'city')).forEach(el => { el.checked = false; });
+    updateSelCounts();
+  }
+  function selectAll(kind, onlyVisible) {
+    const cls = kind === 'niche' ? 'niche' : 'city';
+    document.querySelectorAll(`#${kind === 'niche' ? 'niches' : 'cities'} label`).forEach(lab => {
+      if (onlyVisible && lab.classList.contains('hidden')) return;
+      const inp = lab.querySelector('input.' + cls);
+      if (inp) inp.checked = true;
+    });
+    updateSelCounts();
+  }
+  function clearAllSelections() {
+    clearChecks('niche'); clearChecks('city');
+    document.getElementById('niche-filter').value = '';
+    document.getElementById('city-filter').value = '';
+    filterChecks('niche'); filterChecks('city');
+  }
+  function setChecks(nicheIds, cityIds) {
+    const ns = new Set((nicheIds || []).map(String)), cs = new Set((cityIds || []).map(String));
+    document.querySelectorAll('.niche').forEach(el => { el.checked = ns.has(el.value); });
+    document.querySelectorAll('.city').forEach(el => { el.checked = cs.has(el.value); });
+    document.getElementById('niche-filter').value = '';
+    document.getElementById('city-filter').value = '';
+    filterChecks('niche'); filterChecks('city');
+    updateSelCounts();
+  }
+
+  // ── resumo da missão (com aviso de "já varrido") ──
+  function _daysAgo(iso) {
+    const t = Date.parse(String(iso || '').replace(' ', 'T'));
+    return isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000);
+  }
+  function renderSummary() {
+    const ns = checked('niche'), cs = checked('city');
+    const tgt = parseInt(document.getElementById('target').value || '0', 10) || 0;
+    const sel = document.getElementById('user_id');
+    const owner = sel.value ? (sel.selectedOptions[0].textContent.split('(@')[0] || '').trim() : 'livre (sobras)';
+    const main = document.getElementById('sum-main');
+    const warn = document.getElementById('sum-warn');
+    const eta = document.getElementById('sum-eta');
+    if (!ns.length || !cs.length) {
+      main.textContent = 'Marque pelo menos 1 nicho e 1 cidade.';
+      warn.textContent = ''; eta.textContent = '';
+      return;
     }
-
-    function esc(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    main.innerHTML = `${ns.length} nicho${ns.length > 1 ? 's' : ''} × ${cs.length} cidade${cs.length > 1 ? 's' : ''} · meta ${tgt} → <b>${esc(owner)}</b>`;
+    let recent = null;
+    for (const n of ns) for (const c of cs) {
+      const when = (coverage.swept || {})[`${n}|${normKey(cityLabel(c))}`];
+      const d = when != null ? _daysAgo(when) : null;
+      if (d != null && d <= 7 && (!recent || d < recent.d)) recent = { n, c, d };
     }
+    warn.textContent = recent
+      ? `${nicheLabel(recent.n)} em ${cityLabel(recent.c)} foi varrido ${recent.d === 0 ? 'hoje' : 'há ' + recent.d + ' dia(s)'}. Tente outro nicho ou cidade.`
+      : '';
+    const rate = window._lastRate || 2;
+    eta.textContent = tgt ? `Tempo estimado: ~${Math.max(1, Math.round(tgt / rate))} min` : '';
+  }
 
-    async function loadCatalog() {
-      const data = await jfetch('/api/catalog');
-      catalog = data.catalog || { cities: [], niches: [] };
-      users = data.users || [];
-      const sel = document.getElementById('user_id');
-      sel.innerHTML = '<option value="">Livre (sem dono forçado)</option>' +
-        users.map(u => `<option value="${u.id}">${esc(u.label || u.username)} (@${esc(u.username)}) · cota ${u.used||0}/${u.quota||0}</option>`).join('');
+  // ── atalhos: repetir missões recentes ──
+  function renderShortcuts() {
+    const box = document.getElementById('shortcuts');
+    const seen = new Set();
+    const recent = [...lastMissions].reverse().filter(m => {
+      const key = (m.niche_ids || []).join(',') + '|' + (m.city_ids || []).join(',') + '|' + (m.user_id || '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 4);
+    if (!recent.length) { box.innerHTML = '<span class="sel-hint">Suas últimas missões aparecem aqui.</span>'; return; }
+    box.innerHTML = recent.map((m, i) =>
+      `<button type="button" class="chip-btn" title="Preencher com esta missão" onclick="fillFromMission('${esc(m.id)}')">${i === 0 ? '↻ ' : ''}${esc(m.label || m.id)}</button>`
+    ).join('');
+  }
+  function fillFromMission(id) {
+    const m = lastMissions.find(x => String(x.id) === String(id));
+    if (!m) return;
+    setFormMode(null);
+    document.getElementById('target').value = m.target_leads || 20;
+    document.getElementById('user_id').value = m.user_id != null ? String(m.user_id) : '';
+    document.getElementById('label').value = '';
+    setChecks(m.niche_ids, m.city_ids);
+  }
 
-      const sortPt = (a,b) => String(a).localeCompare(String(b), 'pt-BR', {sensitivity:'base'});
-      const niches = [...(catalog.niches||[])].sort((a,b)=>sortPt(a.label||a.id, b.label||b.id));
-      const cities = [...(catalog.cities||[])].sort((a,b)=>sortPt(a.nome||a.id, b.nome||b.id));
-
-      document.getElementById('niches').innerHTML = niches.map(n => {
-        const lab = n.label || n.id;
-        const q = `${lab} ${n.id} ${n.query_term || ''}`.toLowerCase();
-        return `<label data-q="${esc(q)}"><input type="checkbox" class="niche" value="${esc(n.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
-      }).join('') || '<span style="color:var(--muted)">Sem nichos</span>';
-
-      document.getElementById('cities').innerHTML = cities.map(c => {
-        const lab = `${c.nome || c.id}${c.estado ? ' / ' + c.estado : ''}`;
-        const q = `${lab} ${c.id || ''}`.toLowerCase();
-        return `<label data-q="${esc(q)}"><input type="checkbox" class="city" value="${esc(c.id)}" onchange="updateSelCounts()"> ${esc(lab)}</label>`;
-      }).join('') || '<span style="color:var(--muted)">Sem cidades</span>';
-
-      updateSelCounts();
-      filterChecks('niche');
-      filterChecks('city');
-    }
-
-    function checked(cls) {
-      return [...document.querySelectorAll('.' + cls + ':checked')].map(el => el.value);
-    }
-
-    function updateSelCounts() {
-      const nc = document.querySelectorAll('.niche:checked').length;
-      const cc = document.querySelectorAll('.city:checked').length;
-      const ne = document.getElementById('niche-count');
-      const ce = document.getElementById('city-count');
-      if (ne) ne.textContent = nc + ' selecionado(s)';
-      if (ce) ce.textContent = cc + ' selecionada(s)';
-    }
-
-    function filterChecks(kind) {
-      const inputId = kind === 'niche' ? 'niche-filter' : 'city-filter';
-      const boxId = kind === 'niche' ? 'niches' : 'cities';
-      const q = (document.getElementById(inputId)?.value || '').toLowerCase().trim();
-      const box = document.getElementById(boxId);
-      if (!box) return;
-      box.querySelectorAll('label[data-q]').forEach(lab => {
-        const hay = lab.getAttribute('data-q') || '';
-        lab.classList.toggle('hidden', !!(q && !hay.includes(q)));
-      });
-    }
-
-    function clearChecks(kind) {
-      const cls = kind === 'niche' ? 'niche' : 'city';
-      document.querySelectorAll('.' + cls).forEach(el => { el.checked = false; });
-      updateSelCounts();
-    }
-
-    function selectAll(kind, onlyVisible) {
-      const cls = kind === 'niche' ? 'niche' : 'city';
-      const boxId = kind === 'niche' ? 'niches' : 'cities';
-      const box = document.getElementById(boxId);
-      if (!box) return;
-      box.querySelectorAll('label').forEach(lab => {
-        if (onlyVisible && lab.classList.contains('hidden')) return;
-        const inp = lab.querySelector('input.' + cls);
-        if (inp) inp.checked = true;
-      });
-      updateSelCounts();
-    }
-
-    function clearAllSelections() {
-      clearChecks('niche');
-      clearChecks('city');
-      const nf = document.getElementById('niche-filter');
-      const cf = document.getElementById('city-filter');
-      if (nf) nf.value = '';
-      if (cf) cf.value = '';
-      filterChecks('niche');
-      filterChecks('city');
-    }
-
-    function missionBodyFromForm() {
-      const userSel = document.getElementById('user_id');
-      const opt = userSel.selectedOptions[0];
-      return {
-        user_id: userSel.value || null,
-        username: opt && userSel.value ? (opt.textContent.split('(@')[0] || '').trim() : '',
-        niche_ids: checked('niche'),
-        city_ids: checked('city'),
-        target_leads: parseInt(document.getElementById('target').value || '20', 10),
-        label: document.getElementById('label').value || '',
-      };
-    }
-
-    function setFormMode(id) {
-      editingId = id || null;
-      const title = document.getElementById('form-title');
-      const mode = document.getElementById('form-mode');
-      const btn = document.getElementById('btn-save-mission');
-      const cancel = document.getElementById('btn-cancel-edit');
+  // ── salvar / editar / duplicar / apagar ──
+  function missionBodyFromForm() {
+    const userSel = document.getElementById('user_id');
+    const opt = userSel.selectedOptions[0];
+    return {
+      user_id: userSel.value || null,
+      username: opt && userSel.value ? (opt.textContent.split('(@')[0] || '').trim() : '',
+      niche_ids: checked('niche'),
+      city_ids: checked('city'),
+      target_leads: parseInt(document.getElementById('target').value || '20', 10),
+      label: document.getElementById('label').value || '',
+    };
+  }
+  function setFormMode(id) {
+    editingId = id || null;
+    document.getElementById('form-title').textContent = editingId ? 'Editar missão' : 'Criar missão';
+    document.getElementById('form-mode').textContent = editingId ? `Editando #${editingId} — salve ou cancele` : '';
+    document.getElementById('btn-save-mission').textContent = editingId ? '💾 Salvar alterações' : '+ Fila';
+    document.getElementById('btn-add-run').classList.toggle('hidden', !!editingId);
+    document.getElementById('btn-cancel-edit').classList.toggle('hidden', !editingId);
+    renderMissions(lastMissions);
+  }
+  function cancelEdit() {
+    setFormMode(null);
+    document.getElementById('label').value = '';
+    clearAllSelections();
+    document.getElementById('target').value = '20';
+    document.getElementById('user_id').value = '';
+    renderSummary();
+  }
+  async function saveMissionForm(runNow) {
+    const body = missionBodyFromForm();
+    if (!body.niche_ids.length || !body.city_ids.length) { alert('Escolha pelo menos 1 nicho e 1 cidade.'); return; }
+    try {
       if (editingId) {
-        if (title) title.textContent = 'Editar missão';
-        if (mode) mode.textContent = 'Editando #' + editingId + ' — salve ou cancele';
-        if (btn) btn.textContent = '💾 Salvar alterações';
-        if (cancel) cancel.style.display = '';
+        await jfetch('/api/missions/' + editingId, { method: 'POST', body: JSON.stringify(body) });
+        setFormMode(null);
       } else {
-        if (title) title.textContent = 'Nova missão';
-        if (mode) mode.textContent = '';
-        if (btn) btn.textContent = '+ Adicionar na fila';
-        if (cancel) cancel.style.display = 'none';
+        const res = await jfetch('/api/missions', { method: 'POST', body: JSON.stringify(body) });
+        if (runNow) {
+          const mid = res && res.mission && res.mission.id;
+          await jfetch('/api/run', { method: 'POST', body: JSON.stringify(mid ? { mission_ids: [String(mid)] } : {}) });
+        }
       }
-      renderMissions(lastMissions);
-    }
-
-    function cancelEdit() {
-      setFormMode(null);
       document.getElementById('label').value = '';
-      clearAllSelections();
-      document.getElementById('target').value = '20';
-      document.getElementById('user_id').value = '';
-    }
-
-    async function saveMissionForm() {
-      const body = missionBodyFromForm();
-      if (!body.niche_ids.length || !body.city_ids.length) {
-        alert('Escolha pelo menos 1 nicho e 1 cidade.');
-        return;
-      }
-      try {
-        if (editingId) {
-          await jfetch('/api/missions/' + editingId, {
-            method: 'POST',
-            body: JSON.stringify(body),
-          });
-          setFormMode(null);
-          document.getElementById('label').value = '';
-        } else {
-          await jfetch('/api/missions', { method: 'POST', body: JSON.stringify(body) });
-          document.getElementById('label').value = '';
-        }
-        await refresh();
-      } catch (e) {
-        alert(e.message);
-      }
-    }
-
-    function startEditMission(id) {
-      const m = lastMissions.find(x => String(x.id) === String(id));
-      if (!m) {
-        alert('Missão não encontrada na fila.');
-        return;
-      }
-      if (m.status === 'rodando') {
-        alert('Missão em execução. Pare o bot para editar.');
-        return;
-      }
-      setFormMode(String(m.id));
-      document.getElementById('label').value = m.label || '';
-      document.getElementById('target').value = m.target_leads || 20;
-      document.getElementById('user_id').value = m.user_id != null ? String(m.user_id) : '';
-
-      const niches = new Set((m.niche_ids || []).map(String));
-      const cities = new Set((m.city_ids || []).map(String));
-      document.querySelectorAll('.niche').forEach(el => { el.checked = niches.has(el.value); });
-      document.querySelectorAll('.city').forEach(el => { el.checked = cities.has(el.value); });
-      updateSelCounts();
-      // limpa filtros pra achar os marcados
-      const nf = document.getElementById('niche-filter');
-      const cf = document.getElementById('city-filter');
-      if (nf) nf.value = '';
-      if (cf) cf.value = '';
-      filterChecks('niche');
-      filterChecks('city');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    async function delMission(id) {
-      const m = lastMissions.find(x => String(x.id) === String(id));
-      const name = (m && (m.label || m.id)) || id;
-      if (!confirm('Apagar missão da fila?\n\n' + name)) return;
-      try {
-        await jfetch('/api/missions/' + id, { method: 'DELETE' });
-        selectedMissionIds.delete(String(id));
-        if (editingId === String(id)) cancelEdit();
-        await refresh();
-      } catch (e) {
-        alert(e.message);
-      }
-    }
-
-    async function moveMission(id, dir) {
-      const ids = lastMissions.map(m => String(m.id));
-      const i = ids.indexOf(String(id));
-      if (i < 0) return;
-      const j = i + dir;
-      if (j < 0 || j >= ids.length) return;
-      const next = ids.slice();
-      const tmp = next[i];
-      next[i] = next[j];
-      next[j] = tmp;
-      try {
-        await jfetch('/api/missions/reorder', {
-          method: 'POST',
-          body: JSON.stringify({ ids: next }),
-        });
-        await refresh();
-      } catch (e) {
-        alert(e.message);
-      }
-    }
-
-    function toggleMissionSelect(id, on) {
-      id = String(id);
-      if (on) selectedMissionIds.add(id);
-      else selectedMissionIds.delete(id);
-      updateSelHint();
-      renderMissions(lastMissions);
-    }
-
-    function selectAllMissions(on) {
-      if (on) {
-        lastMissions.forEach(m => {
-          if (m.status === 'pendente' || m.status === 'parada' || m.status === 'erro') {
-            selectedMissionIds.add(String(m.id));
-          }
-        });
-      } else {
-        selectedMissionIds = new Set();
-      }
-      updateSelHint();
-      renderMissions(lastMissions);
-    }
-
-    function updateSelHint() {
-      const el = document.getElementById('sel-hint');
-      const n = selectedMissionIds.size;
-      const btn = document.getElementById('btn-run');
-      if (el) {
-        el.textContent = n
-          ? n + ' missão(ões) marcada(s) — ▶ roda só essas (ordem da lista)'
-          : 'Nenhuma marcada — ▶ roda todas as pendentes na ordem';
-      }
-      if (btn) {
-        btn.textContent = n ? ('▶ Rodar selecionadas (' + n + ')') : '▶ Rodar fila';
-      }
-    }
-
-    async function clearDone() {
-      await jfetch('/api/missions/clear-done', { method: 'POST', body: '{}' });
       await refresh();
-    }
-
-    async function runQueue() {
-      const btn = document.getElementById('btn-run');
-      btn.disabled = true;
-      const body = {};
-      try {
-        if (selectedMissionIds.size) {
-          // reabre parada/erro/ok → pendente antes de rodar
-          for (const id of selectedMissionIds) {
-            const m = lastMissions.find(x => String(x.id) === String(id));
-            if (!m || m.status === 'pendente' || m.status === 'rodando') continue;
-            await jfetch('/api/missions/' + id, {
-              method: 'POST',
-              body: JSON.stringify({
-                niche_ids: m.niche_ids,
-                city_ids: m.city_ids,
-                target_leads: m.target_leads,
-                label: m.label,
-                user_id: m.user_id,
-                username: m.username,
-              }),
-            });
-          }
-          body.mission_ids = lastMissions
-            .map(m => String(m.id))
-            .filter(id => selectedMissionIds.has(id));
-        }
-        await jfetch('/api/run', { method: 'POST', body: JSON.stringify(body) });
-      } catch (e) {
-        alert(e.message);
-      }
-      btn.disabled = false;
+    } catch (e) { alert(e.message); }
+  }
+  function startEditMission(id) {
+    const m = lastMissions.find(x => String(x.id) === String(id));
+    if (!m) { alert('Missão não encontrada na fila.'); return; }
+    if (m.status === 'rodando') { alert('Missão em execução. Pare o bot para editar.'); return; }
+    setFormMode(String(m.id));
+    document.getElementById('label').value = m.label || '';
+    document.getElementById('target').value = m.target_leads || 20;
+    document.getElementById('user_id').value = m.user_id != null ? String(m.user_id) : '';
+    setChecks(m.niche_ids, m.city_ids);
+    window.scrollTo({ top: document.querySelector('.create').offsetTop - 60, behavior: 'smooth' });
+  }
+  function duplicateMission(id) {
+    const m = lastMissions.find(x => String(x.id) === String(id));
+    if (!m) return;
+    fillFromMission(id);
+    document.getElementById('label').value = m.label ? m.label + ' (cópia)' : '';
+    document.getElementById('form-mode').textContent = 'Cópia de «' + (m.label || m.id) + '» — ajuste e adicione';
+    window.scrollTo({ top: document.querySelector('.create').offsetTop - 60, behavior: 'smooth' });
+  }
+  async function delMission(id) {
+    const m = lastMissions.find(x => String(x.id) === String(id));
+    if (!confirm('Apagar missão da fila?\n\n' + ((m && (m.label || m.id)) || id))) return;
+    try {
+      await jfetch('/api/missions/' + id, { method: 'DELETE' });
+      selectedMissionIds.delete(String(id));
+      if (editingId === String(id)) cancelEdit();
       await refresh();
-    }
+    } catch (e) { alert(e.message); }
+  }
+  async function moveMission(id, dir) {
+    const ids = lastMissions.map(m => String(m.id));
+    const i = ids.indexOf(String(id)), j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    try { await jfetch('/api/missions/reorder', { method: 'POST', body: JSON.stringify({ ids }) }); await refresh(); }
+    catch (e) { alert(e.message); }
+  }
 
-    async function stopBot() {
-      try {
-        await jfetch('/api/stop', { method: 'POST', body: '{}' });
-      } catch (e) {
-        alert(e.message);
-      }
-      await refresh();
-    }
-
-    async function runScore(force) {
-      try {
-        const data = await jfetch('/api/score', {
-          method: 'POST',
-          body: JSON.stringify({ force: !!force }),
-        });
-        alert(data.message || 'Score iniciado');
-      } catch (e) {
-        alert(e.message);
-      }
-      await refresh();
-    }
-
-    function renderMissions(missions) {
-      lastMissions = missions || [];
-      // limpa seleção de ids que sumiram
-      const alive = new Set(lastMissions.map(m => String(m.id)));
-      selectedMissionIds = new Set([...selectedMissionIds].filter(id => alive.has(id)));
-
-      const tb = document.getElementById('tbody');
-      if (!lastMissions.length) {
-        tb.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Fila vazia</td></tr>';
-        updateSelHint();
-        return;
-      }
-      const liveId = window._currentMissionId || '';
-      const liveGot = window._sessionLeads || 0;
-      tb.innerHTML = lastMissions.map((m, idx) => {
-        const id = String(m.id);
-        const st = m.status || 'pendente';
-        const canEdit = st !== 'rodando';
-        const canDel = st !== 'rodando';
-        const canSelect = st === 'pendente' || st === 'parada' || st === 'erro' || st === 'ok';
-        const checked = selectedMissionIds.has(id) ? 'checked' : '';
-        const rowCls = [
-          editingId === id ? 'editing' : '',
-          selectedMissionIds.has(id) ? 'selected-row' : '',
-        ].filter(Boolean).join(' ');
-        const cityPrev = (m.city_ids || []).slice(0, 3).join(', ')
-          + ((m.city_ids || []).length > 3 ? '…' : '');
-        const tgt = parseInt(m.target_leads, 10) || 0;
-        let got = m.leads_found != null ? parseInt(m.leads_found, 10) : null;
-        if (st === 'rodando' && liveId && String(liveId) === id) {
-          got = liveGot;
+  // ── fila ──
+  function toggleMissionSelect(id, on) {
+    id = String(id);
+    if (on) selectedMissionIds.add(id); else selectedMissionIds.delete(id);
+    renderMissions(lastMissions);
+  }
+  function selectAllMissions(on) {
+    if (on) lastMissions.forEach(m => { if (['pendente', 'parada', 'erro'].includes(m.status)) selectedMissionIds.add(String(m.id)); });
+    else selectedMissionIds = new Set();
+    renderMissions(lastMissions);
+  }
+  function updateSelHint() {
+    const n = selectedMissionIds.size;
+    document.getElementById('sel-hint').textContent = n
+      ? n + ' missão(ões) marcada(s) — ▶ roda só essas (ordem da lista)'
+      : 'Nenhuma marcada — ▶ roda todas as pendentes na ordem';
+    document.getElementById('btn-run').textContent = n ? `▶ Rodar selecionadas (${n})` : '▶ Rodar fila';
+  }
+  async function clearDone() { await jfetch('/api/missions/clear-done', { method: 'POST', body: '{}' }); await refresh(); }
+  async function runQueue() {
+    const btn = document.getElementById('btn-run');
+    btn.disabled = true;
+    const body = {};
+    try {
+      if (selectedMissionIds.size) {
+        for (const id of selectedMissionIds) {
+          const m = lastMissions.find(x => String(x.id) === String(id));
+          if (!m || m.status === 'pendente' || m.status === 'rodando') continue;
+          await jfetch('/api/missions/' + id, { method: 'POST', body: JSON.stringify({
+            niche_ids: m.niche_ids, city_ids: m.city_ids, target_leads: m.target_leads,
+            label: m.label, user_id: m.user_id, username: m.username,
+          }) });
         }
-        const prog = (got != null && tgt)
-          ? `${got}/${tgt}`
-          : (st === 'pendente' ? `0/${tgt || '—'}` : (got != null ? String(got) : '—'));
-        const progColor = (got != null && tgt && got >= tgt) ? 'var(--ok)' : 'var(--neon)';
-        return `
-        <tr class="${rowCls}">
-          <td>
-            ${canSelect
-              ? `<input type="checkbox" ${checked} onchange="toggleMissionSelect('${esc(id)}', this.checked)" style="accent-color:var(--neon);" title="Selecionar para rodar">`
-              : ''}
-          </td>
-          <td style="color:var(--muted);font-size:11px;">${idx + 1}</td>
-          <td>
-            <b>${esc(m.label || m.id)}</b>
-            <br><span style="color:var(--muted);font-size:11px">${esc((m.niche_ids||[]).join(', '))}<br>${esc(cityPrev)}</span>
-            <br><span style="color:var(--muted);font-size:10px">id ${esc(id)}</span>
-          </td>
-          <td>${esc(m.username || 'livre')}</td>
-          <td>${esc(tgt || m.target_leads || '—')}</td>
-          <td style="font-weight:800;color:${progColor};font-variant-numeric:tabular-nums;">${esc(prog)}</td>
-          <td><span class="st ${esc(st)}">${esc(st)}</span></td>
-          <td>
-            <div class="act-cell">
-              <button type="button" class="btn-xs" title="Subir na fila" ${idx === 0 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', -1)">↑</button>
-              <button type="button" class="btn-xs" title="Descer na fila" ${idx >= lastMissions.length - 1 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', 1)">↓</button>
-              ${canEdit ? `<button type="button" class="btn-xs edit" title="Editar" onclick="startEditMission('${esc(id)}')">✎</button>` : ''}
-              ${canDel ? `<button type="button" class="btn-xs danger" title="Apagar" onclick="delMission('${esc(id)}')">✕</button>` : ''}
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
-      updateSelHint();
-    }
-
-    function _detectLogSrc(l) {
-      if (l && l.src) return l.src;
-      const m = String((l && l.msg) || '').toLowerCase();
-      if (m.includes('fonte b') || m.startsWith('📦') || m.includes('cnpj') || m.includes('openstreet')) return 'fonteb';
-      if (m.startsWith('🗺') || m.includes('playwright') || m.includes('maps') || m.includes('lead contat')) return 'maps';
-      return 'sys';
-    }
-
-    function _renderLogBox(el, lines, srcKey) {
-      if (!el) return;
-      const arr = [...(lines || [])].reverse();
-      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
-      if (!arr.length) {
-        el.innerHTML = `<div class="log-empty">${srcKey === 'fonteb'
-          ? 'Aguardando Fonte B… (sobe junto com o Maps)'
-          : 'Aguardando Google Maps… aperte ▶ Rodar'}</div>`;
-        return;
+        body.mission_ids = lastMissions.map(m => String(m.id)).filter(id => selectedMissionIds.has(id));
       }
-      el.innerHTML = arr.map(l => {
-        const src = _detectLogSrc(l);
-        let lvl = '';
-        if (l.level === 'ERROR') lvl = 'e';
-        else if (l.level === 'WARN') lvl = 'w';
-        const tag = src === 'fonteb' ? 'B' : (src === 'maps' ? 'M' : '·');
-        const tagCls = src === 'fonteb' ? 'fonteb' : (src === 'maps' ? 'maps' : 'sys');
-        return `<div class="src-${esc(src)} ${lvl}"><span class="tag ${tagCls}">${tag}</span>[${esc((l.t||'').slice(11,19))}] ${esc(l.msg)}</div>`;
-      }).join('');
-      if (atBottom || el.dataset.stick !== '1') {
-        el.scrollTop = 0;
-      }
+      await jfetch('/api/run', { method: 'POST', body: JSON.stringify(body) });
+    } catch (e) { alert(e.message); }
+    btn.disabled = false;
+    await refresh();
+  }
+  async function stopBot() {
+    try { await jfetch('/api/stop', { method: 'POST', body: '{}' }); } catch (e) { alert(e.message); }
+    await refresh();
+  }
+  async function togglePause() {
+    try { await jfetch('/api/stop-after', { method: 'POST', body: JSON.stringify({ on: !lastState.stop_after_current }) }); }
+    catch (e) { alert(e.message); }
+    await refresh();
+  }
+  async function runScore(force) {
+    try {
+      const data = await jfetch('/api/score', { method: 'POST', body: JSON.stringify({ force: !!force }) });
+      alert(data.message || 'Score iniciado');
+    } catch (e) { alert(e.message); }
+    await refresh();
+  }
+
+  function renderMissions(missions) {
+    lastMissions = missions || [];
+    const alive = new Set(lastMissions.map(m => String(m.id)));
+    selectedMissionIds = new Set([...selectedMissionIds].filter(id => alive.has(id)));
+    const box = document.getElementById('queue');
+    const pend = lastMissions.filter(m => m.status === 'pendente');
+    document.getElementById('queue-sum').textContent =
+      `· ${lastMissions.length} missão(ões) · ${lastMissions.reduce((a, m) => a + (parseInt(m.target_leads, 10) || 0), 0)} leads`;
+    document.getElementById('q-count').textContent = pend.length;
+    document.getElementById('q-left').textContent = pend.length;
+    document.getElementById('q-leads').textContent = pend.reduce((a, m) => a + (parseInt(m.target_leads, 10) || 0), 0);
+    updateSelHint();
+    if (!lastMissions.length) { box.innerHTML = '<div class="queue-empty">Fila vazia. Crie uma missão acima.</div>'; return; }
+    const liveId = String(window._currentMissionId || '');
+    const liveGot = window._sessionLeads || 0;
+    const labels = { pendente: 'aguardando', rodando: 'rodando', ok: 'concluída', erro: 'erro', parada: 'parada' };
+    let nextMarked = false;
+    box.innerHTML = lastMissions.map((m, idx) => {
+      const id = String(m.id);
+      const st = m.status || 'pendente';
+      const tgt = parseInt(m.target_leads, 10) || 0;
+      let got = m.leads_found != null ? parseInt(m.leads_found, 10) : null;
+      if (st === 'rodando' && liveId === id) got = liveGot;
+      const pct = got != null && tgt ? Math.min(100, Math.round(got / tgt * 100)) : (st === 'ok' ? 100 : 0);
+      let stTxt = labels[st] || st;
+      if (st === 'pendente' && !nextMarked) { stTxt = 'próxima'; nextMarked = true; }
+      const prog = got != null && tgt ? ` · ${got}/${tgt}` : (tgt ? ` · 0/${tgt}` : '');
+      const niches = (m.niche_ids || []).map(nicheLabel).join(', ');
+      const cities = (m.city_ids || []).map(cityLabel);
+      const cityTxt = cities.slice(0, 3).join(', ') + (cities.length > 3 ? ` +${cities.length - 3}` : '');
+      const canSelect = st !== 'rodando';
+      const cls = ['qcard', st === 'rodando' ? 'running' : '', selectedMissionIds.has(id) ? 'selected' : '', editingId === id ? 'editing' : ''].join(' ');
+      return `<div class="${cls}">
+        ${canSelect ? `<input type="checkbox" ${selectedMissionIds.has(id) ? 'checked' : ''} onchange="toggleMissionSelect('${esc(id)}', this.checked)" aria-label="Selecionar para rodar">` : '<span style="width:16px"></span>'}
+        <div class="qbody">
+          <div class="qtop"><b>${esc(m.label || m.id)}</b><span class="qstate ${esc(st)}">${esc(stTxt)}${esc(prog)}</span></div>
+          <div class="qmeta">${esc(niches || '—')} · ${esc(cityTxt || '—')} · dono: ${esc(m.username || 'livre')}</div>
+          ${st === 'rodando' || st === 'ok' || (got && tgt) ? `<div class="qbar ${pct >= 100 ? 'done' : ''}"><span style="width:${pct}%"></span></div>` : ''}
+        </div>
+        <div class="qacts">
+          <button type="button" class="icon-btn" title="Subir" aria-label="Subir na fila" ${idx === 0 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', -1)">↑</button>
+          <button type="button" class="icon-btn" title="Descer" aria-label="Descer na fila" ${idx >= lastMissions.length - 1 ? 'disabled' : ''} onclick="moveMission('${esc(id)}', 1)">↓</button>
+          ${st !== 'rodando' ? `<button type="button" class="icon-btn" title="Editar" aria-label="Editar" onclick="startEditMission('${esc(id)}')">✎</button>` : ''}
+          <button type="button" class="icon-btn dup" title="Duplicar" aria-label="Duplicar" onclick="duplicateMission('${esc(id)}')">⧉</button>
+          ${st !== 'rodando' ? `<button type="button" class="icon-btn del" title="Apagar" aria-label="Apagar" onclick="delMission('${esc(id)}')">✕</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── logs em abas ──
+  function _detectLogSrc(l) {
+    if (l && l.src) return l.src;
+    const m = String((l && l.msg) || '').toLowerCase();
+    if (m.includes('fonte b') || m.startsWith('📦') || m.includes('cnpj') || m.includes('openstreet')) return 'fonteb';
+    if (m.startsWith('🗺') || m.includes('playwright') || m.includes('maps') || m.includes('lead contat')) return 'maps';
+    return 'sys';
+  }
+  function setLogTab(tab) {
+    logTab = tab;
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    renderLog(lastLogs, true);
+  }
+  function renderLog(lines, force) {
+    const all = lines || [];
+    const isWarn = l => l.level === 'ERROR' || l.level === 'WARN';
+    document.getElementById('cnt-maps').textContent = all.filter(l => _detectLogSrc(l) === 'maps').length;
+    document.getElementById('cnt-fonteb').textContent = all.filter(l => _detectLogSrc(l) === 'fonteb').length;
+    document.getElementById('cnt-warn').textContent = all.filter(isWarn).length;
+    const pick = logTab === 'warn' ? all.filter(isWarn) : all.filter(l => _detectLogSrc(l) === logTab);
+    const el = document.getElementById('log-box');
+    const nearTop = el.scrollTop < 40;
+    if (!pick.length) {
+      el.innerHTML = `<div class="log-empty">${logTab === 'warn' ? 'Nenhum aviso. Tudo certo.' : 'Nada por aqui ainda. Aperte ▶ Rodar.'}</div>`;
+      return;
     }
+    el.innerHTML = [...pick].reverse().map(l => {
+      const cls = l.level === 'ERROR' ? 'e' : (l.level === 'WARN' ? 'w' : (/lead contat|✓|✅/.test(l.msg || '') ? 'ok' : (_detectLogSrc(l) === 'fonteb' ? 'b' : '')));
+      return `<div class="${cls}"><span class="t">${esc((l.t || '').slice(11, 19))}</span> ${esc(l.msg)}</div>`;
+    }).join('');
+    if (nearTop || force) el.scrollTop = 0;
+  }
 
-    function renderLog(lines) {
-      const all = lines || [];
-      // Maps: Google + mensagens do sistema (fila, missão)
-      // Fonte B: só CNPJ / OpenStreetMap
-      const mapsOnly = all.filter(l => {
-        const s = _detectLogSrc(l);
-        return s === 'maps' || s === 'sys';
-      });
-      const bOnly = all.filter(l => _detectLogSrc(l) === 'fonteb');
+  // ── velocidade ──
+  function _fmtDur(sec) {
+    if (!isFinite(sec) || sec < 0) return '—';
+    sec = Math.round(sec);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return h ? `${h}h${String(m).padStart(2, '0')}` : (m ? `${m}m${String(s).padStart(2, '0')}` : `${s}s`);
+  }
+  function _parseT(t) { const d = t ? new Date(String(t).replace(' ', 'T')) : null; return d && !isNaN(d) ? d.getTime() : null; }
+  function renderSpeed(st, logs, sess, tgt) {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const start = [...(logs || [])].reverse().find(l => String(l.msg || '').startsWith('▶ Missão'));
+    const t0 = _parseT(st.mission_started_at) || (start && _parseT(start.t));
+    if (st.status !== 'rodando' || !t0) { set('spd-rate', '—'); set('spd-elapsed', '—'); set('spd-eta', '—'); return; }
+    const el = Math.max(1, (Date.now() - t0) / 1000);
+    const rate = sess / (el / 60);
+    if (sess >= 3) window._lastRate = rate;
+    set('spd-elapsed', _fmtDur(el));
+    set('spd-rate', sess ? rate.toFixed(1).replace('.', ',') : '0');
+    const left = Math.max(0, tgt - sess);
+    set('spd-eta', !tgt ? '—' : (left === 0 ? 'meta ✓' : (rate > 0 ? '~' + _fmtDur(left / rate * 60) : 'calculando…')));
+  }
 
-      _renderLogBox(document.getElementById('log-maps'), mapsOnly, 'maps');
-      _renderLogBox(document.getElementById('log-fonteb'), bOnly, 'fonteb');
-
-      const cm = document.getElementById('log-maps-count');
-      const cb = document.getElementById('log-fonteb-count');
-      if (cm) cm.textContent = String(all.filter(l => _detectLogSrc(l) === 'maps').length);
-      if (cb) cb.textContent = String(bOnly.length);
+  // ── leads achados (lidos do log) ──
+  const _LEAD_RE = /lead contat[aá]vel[^:]*:\s*'(.+?)'\s*(?:\(([^)]+)\))?/i;
+  let _seenLeadKeys = new Set();
+  function _chanOf(c) {
+    c = String(c || '').toLowerCase();
+    if (c.includes('whats') || c === 'wa') return 'WhatsApp';
+    if (c.includes('insta')) return 'Instagram';
+    if (c.includes('tel') || c.includes('fone') || c.includes('phone')) return 'Telefone';
+    return c || 'contato';
+  }
+  function renderFound(logs, running) {
+    const box = document.getElementById('found');
+    const rev = [...(logs || [])].reverse();
+    const start = rev.findIndex(l => String(l.msg || '').startsWith('▶ Missão'));
+    const scope = start >= 0 ? rev.slice(0, start) : rev;
+    const items = [], seen = new Set();
+    for (const l of scope) {
+      const m = String(l.msg || '').match(_LEAD_RE);
+      if (!m || seen.has(m[1])) continue;
+      seen.add(m[1]);
+      items.push({ name: m[1], chan: _chanOf(m[2]), t: l.t || '', src: _detectLogSrc(l) });
     }
-
-    async function refresh() {
-      try {
-        const data = await jfetch('/api/status');
-        const st = data.state || {};
-        const bot = data.bot || {};
-        document.getElementById('msg').textContent = st.message || '—';
-
-        const botSess = bot.session_leads_count != null ? Number(bot.session_leads_count) : 0;
-        const stSess = st.session_leads != null ? Number(st.session_leads) : 0;
-        const sess = Math.max(stSess, botSess) || 0;
-        let tgt = st.mission_target != null ? Number(st.mission_target) : 0;
-        // se missão rodando na fila, pega meta dela
-        const mid = st.current_mission_id || '';
-        const missions = data.missions || [];
-        if (mid) {
-          const cur = missions.find(m => String(m.id) === String(mid));
-          if (cur && cur.target_leads) tgt = Number(cur.target_leads) || tgt;
-        }
-        window._sessionLeads = sess;
-        window._currentMissionId = mid;
-
-        document.getElementById('sess-leads').textContent = String(sess);
-        document.getElementById('sess-target').textContent = tgt > 0 ? String(tgt) : '—';
-
-        const sub = document.getElementById('meta-sub');
-        const label = st.mission_label || (mid ? ('missão ' + mid) : '');
-        if (sub) {
-          if (st.status === 'rodando' && tgt > 0) {
-            const left = Math.max(0, tgt - sess);
-            sub.textContent = (label ? label + ' · ' : '')
-              + (sess >= tgt ? 'Meta batida ✓' : `Faltam ${left} lead(s)`)
-              + ' · Maps + Fonte B';
-          } else if (tgt > 0) {
-            sub.textContent = `Última contagem ${sess}/${tgt}` + (label ? ` · ${label}` : '');
-          } else {
-            sub.textContent = 'Leads da missão atual (Maps + Fonte B)';
-          }
-        }
-        const bar = document.getElementById('meta-bar');
-        const fill = document.getElementById('meta-fill');
-        if (fill && bar) {
-          const pct = tgt > 0 ? Math.min(100, Math.round((sess / tgt) * 100)) : 0;
-          fill.style.width = pct + '%';
-          bar.classList.toggle('full', tgt > 0 && sess >= tgt);
-          bar.title = tgt > 0 ? `Meta ${sess}/${tgt} (${pct}%)` : 'Sem meta definida';
-        }
-
-        const pill = document.getElementById('pill-status');
-        pill.textContent = 'cockpit: ' + (st.status || '—')
-          + (tgt > 0 ? ` · ${sess}/${tgt}` : (sess ? ` · ${sess}` : ''));
-        pill.className = 'pill' + (st.status === 'rodando' ? ' run' : (st.status === 'parado' ? '' : ''));
-        if (st.status === 'rodando') pill.classList.add('run');
-
-        const pb = document.getElementById('pill-bot');
-        const bs = bot.status || '—';
-        pb.textContent = 'bot: ' + bs
-          + (tgt > 0 ? ` · ${sess}/${tgt}` : (botSess ? ` · ${botSess} leads` : ''));
-        pb.className = 'pill' + (bs === 'rodando' ? ' run' : (bs === 'parado' ? ' on' : ''));
-
-        renderMissions(missions);
-        renderLog(st.log || []);
-      } catch (e) {
-        document.getElementById('msg').textContent = 'Erro: ' + e.message;
-      }
+    document.getElementById('found-count').textContent = items.length;
+    const counts = {};
+    items.forEach(i => { counts[i.chan] = (counts[i.chan] || 0) + 1; });
+    document.getElementById('found-chans').textContent = Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(' · ');
+    if (!items.length) {
+      box.innerHTML = `<div class="found-empty">${running ? 'Procurando… o primeiro lead aparece aqui.' : 'Nenhuma missão rodando. Os leads da próxima aparecem aqui.'}</div>`;
+      return;
     }
+    box.innerHTML = items.map(i => {
+      const key = i.name + '|' + i.t;
+      const fresh = !_seenLeadKeys.has(key) && _seenLeadKeys.size ? ' fresh' : '';
+      return `<div class="found-item${fresh}">
+        <div class="nm"><div title="${esc(i.name)}">${esc(i.name)}</div><small>${esc(i.chan)} · ${esc(String(i.t).slice(11, 16))}</small></div>
+        <span class="src-tag ${i.src === 'fonteb' ? 'b' : ''}">${i.src === 'fonteb' ? 'B' : 'M'}</span>
+      </div>`;
+    }).join('');
+    _seenLeadKeys = new Set(items.map(i => i.name + '|' + i.t));
+  }
 
-    loadCatalog().then(refresh);
-    setInterval(refresh, 1500);
-  </script>
+  // ── saúde do sistema (uma linha só; destaca quando algo dá errado) ──
+  function renderHealth(data, logs) {
+    const el = document.getElementById('health');
+    const problems = [];
+    if (data.bot && data.bot.error) problems.push(['bad', 'Banco local fora do ar']);
+    const recent = (logs || []).slice(-60);
+    if (recent.some(l => /bloqueio|captcha|tráfego incomum|unusual traffic/i.test(l.msg || ''))) problems.push(['warn', 'Google pediu verificação (bloqueio)']);
+    if (recent.some(l => /Push ao site falhou|push falhou/i.test(l.msg || ''))) problems.push(['warn', 'Último envio ao site falhou']);
+    const lastPush = [...(logs || [])].reverse().find(l => /^↑ .*lead\(s\)/.test(l.msg || ''));
+    const pushTxt = lastPush ? ` · último envio ao site ${esc(String(lastPush.t).slice(11, 16))}` : '';
+    el.innerHTML = problems.length
+      ? problems.map(([lvl, txt]) => `<span class="dot ${lvl}">●</span> ${esc(txt)}`).join(' &nbsp; ') + pushTxt
+      : `<span class="dot">●</span> Tudo funcionando${pushTxt}`;
+  }
+
+  // ── cobertura cidade × nicho ──
+  async function loadCoverage() {
+    try { coverage = await jfetch('/api/coverage'); } catch (e) { coverage = { cells: {}, swept: {}, error: e.message }; }
+    renderCoverage();
+    renderSummary();
+  }
+  function renderCoverage() {
+    const box = document.getElementById('coverage');
+    const cells = coverage.cells || {};
+    const sumOf = o => Object.values(o || {}).reduce((a, n) => a + n, 0);
+    const cities = Object.keys(cells).sort((a, b) => sumOf(cells[b]) - sumOf(cells[a])).slice(0, 8);
+    if (!cities.length) { box.innerHTML = `<span class="sel-hint">${coverage.error ? 'Banco local indisponível.' : 'Ainda sem leads no banco.'}</span>`; return; }
+    const totals = {};
+    cities.forEach(c => Object.entries(cells[c]).forEach(([n, v]) => { totals[n] = (totals[n] || 0) + v; }));
+    const niches = Object.keys(totals).sort((a, b) => totals[b] - totals[a]).slice(0, 10);
+    const lvl = v => !v ? '' : (v >= 50 ? 'l3' : (v >= 15 ? 'l2' : 'l1'));
+    box.innerHTML = `<table><thead><tr><th></th>${niches.map(n => `<th>${esc(nicheLabel(n))}</th>`).join('')}</tr></thead><tbody>${
+      cities.map(c => `<tr><th class="city">${esc(c)}</th>${niches.map(n => {
+        const v = cells[c][n] || 0;
+        return `<td class="${lvl(v)}" title="${esc(c)} · ${esc(nicheLabel(n))}" onclick="prepFromCell('${esc(n)}','${esc(c)}')">${v || '—'}</td>`;
+      }).join('')}</tr>`).join('')
+    }</tbody></table>`;
+  }
+  function prepFromCell(niche, cityName) {
+    const c = (catalog.cities || []).find(x => normKey(x.nome || x.id) === normKey(cityName));
+    setFormMode(null);
+    setChecks([niche], c ? [c.id] : []);
+    window.scrollTo({ top: document.querySelector('.create').offsetTop - 60, behavior: 'smooth' });
+  }
+
+  // ── atualização ──
+  async function refresh() {
+    try {
+      const data = await jfetch('/api/status');
+      const st = data.state || {};
+      const bot = data.bot || {};
+      lastState = st;
+      lastLogs = st.log || [];
+      document.getElementById('msg').textContent = st.message || '—';
+      const botSess = bot.session_leads_count != null ? Number(bot.session_leads_count) : 0;
+      const stSess = st.session_leads != null ? Number(st.session_leads) : 0;
+      const sess = Math.max(stSess, botSess) || 0;
+      let tgt = st.mission_target != null ? Number(st.mission_target) : 0;
+      const mid = st.current_mission_id || '';
+      const missions = data.missions || [];
+      if (mid) { const cur = missions.find(m => String(m.id) === String(mid)); if (cur && cur.target_leads) tgt = Number(cur.target_leads) || tgt; }
+      window._sessionLeads = sess;
+      window._currentMissionId = mid;
+      const running = st.status === 'rodando';
+
+      document.getElementById('mission-title').textContent = running
+        ? (st.mission_label || ('missão ' + mid))
+        : (st.mission_label ? 'Última: ' + st.mission_label : 'Nenhuma missão rodando');
+      document.getElementById('sess-leads').textContent = sess;
+      document.getElementById('sess-target').textContent = tgt > 0 ? tgt : '—';
+      const pct = tgt > 0 ? Math.min(100, Math.round(sess / tgt * 100)) : 0;
+      document.getElementById('meta-fill').style.width = pct + '%';
+      document.getElementById('meta-bar').classList.toggle('full', tgt > 0 && sess >= tgt);
+
+      const pill = document.getElementById('pill-status');
+      pill.classList.toggle('run', running);
+      document.getElementById('pill-text').textContent = running
+        ? ('Rodando' + (st.queue_pos ? ` · fila ${st.queue_pos}` : ''))
+        : (st.status === 'parado' ? 'Parado' : (st.status || '—'));
+      const pause = document.getElementById('btn-pause');
+      pause.classList.toggle('on', !!st.stop_after_current);
+      pause.textContent = st.stop_after_current ? '⏸ Pausa marcada — cancelar' : '⏸ Pausar após esta missão';
+      pause.disabled = !running;
+
+      renderMissions(missions);
+      renderShortcuts();
+      renderLog(lastLogs);
+      renderSpeed(st, lastLogs, sess, tgt);
+      renderFound(lastLogs, running);
+      renderHealth(data, lastLogs);
+    } catch (e) {
+      document.getElementById('msg').textContent = 'Erro: ' + e.message;
+    }
+  }
+
+  loadCatalog().then(() => { refresh(); loadCoverage(); });
+  // 2,5s com a aba visível; parado quando a aba está escondida
+  setInterval(() => { if (!document.hidden) refresh(); }, 2500);
+  setInterval(() => { if (!document.hidden) loadCoverage(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+</script>
 </body>
 </html>

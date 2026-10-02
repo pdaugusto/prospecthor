@@ -999,6 +999,78 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
         }
+        /* —— Planos (Loki · Odin · Thor · Valhalla) —— */
+        .plans-grid { padding-top: 14px; }
+        .plan-card {
+          --plan: #34d399;
+          position: relative;
+          display: flex; flex-direction: column; gap: 16px;
+          padding: 24px 20px 20px;
+          border-radius: 20px;
+          background:
+            radial-gradient(120% 70% at 50% -20%, color-mix(in srgb, var(--plan) 16%, transparent), transparent 62%),
+            linear-gradient(170deg, #111827 0%, #0a0e16 100%);
+          border: 1px solid color-mix(in srgb, var(--plan) 26%, #1a2233);
+          transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, border-color .2s;
+        }
+        .plan-card:hover {
+          transform: translateY(-4px);
+          border-color: color-mix(in srgb, var(--plan) 60%, transparent);
+          box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 32px color-mix(in srgb, var(--plan) 14%, transparent);
+        }
+        .plan-card.is-featured {
+          border-color: color-mix(in srgb, var(--plan) 70%, transparent);
+          box-shadow: 0 20px 50px rgba(0,0,0,.4), 0 0 44px color-mix(in srgb, var(--plan) 20%, transparent);
+        }
+        .plan-ribbon {
+          position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+          padding: 5px 12px; border-radius: 999px;
+          background: var(--plan); color: #1a1205;
+          font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+        }
+        .plan-head { display: flex; align-items: center; gap: 12px; }
+        .plan-ico {
+          width: 52px; height: 52px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 14px;
+          background: color-mix(in srgb, var(--plan) 12%, #0a0e16);
+          border: 1px solid color-mix(in srgb, var(--plan) 38%, transparent);
+        }
+        .plan-ico svg { width: 30px; height: 30px; }
+        .plan-name { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: #f1f5f9; }
+        .plan-tag { margin: 2px 0 0; font-size: 12px; color: #8b9bb4; }
+        .plan-leads {
+          display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+          padding: 12px 14px; border-radius: 12px;
+          background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+        }
+        .plan-leads b { font-size: 30px; font-weight: 900; line-height: 1; letter-spacing: -.03em; color: var(--plan); font-variant-numeric: tabular-nums; }
+        .plan-leads span { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+        .plan-leads small { flex-basis: 100%; font-size: 12px; color: #8b9bb4; }
+        .plan-price { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+        .plan-price b { font-size: 28px; font-weight: 900; letter-spacing: -.03em; color: #fff; font-variant-numeric: tabular-nums; }
+        .plan-price span { font-size: 12px; color: #8b9bb4; }
+        .plan-per { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: -8px; font-size: 13px; color: #cbd5e1; }
+        .plan-save {
+          padding: 2px 8px; border-radius: 999px;
+          font-size: 11px; font-weight: 700; color: #6ee7b7;
+          background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.3);
+        }
+        .plan-feats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; font-size: 13px; color: #aab7cb; }
+        .plan-feats li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+        .plan-feats li::before { content: "✓"; font-weight: 800; color: var(--plan); }
+        .plan-cta {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; min-height: 46px; border-radius: 12px;
+          font: inherit; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer;
+          color: var(--plan);
+          background: color-mix(in srgb, var(--plan) 10%, transparent);
+          border: 1px solid color-mix(in srgb, var(--plan) 55%, transparent);
+          transition: background .2s, color .2s, filter .2s;
+        }
+        .plan-cta:hover { background: var(--plan); color: #0a0e16; }
+        .plan-card.is-featured .plan-cta { background: var(--plan); color: #1a1205; }
+        .plan-card.is-featured .plan-cta:hover { filter: brightness(1.08); }
         .mini-roi {
             margin-bottom: 14px; padding: 13px 16px; border-radius: 12px;
             border: 1px solid rgba(201,160,96,.35);
@@ -2799,6 +2871,14 @@
                 </a>
             </li>
             <li>
+                <a onclick="navigateTo('/board')" id="nav-board">
+                    <span class="nav-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="5" height="13" rx="1.5"/></svg>
+                    </span>
+                    Quadro <span class="nav-badge" id="nav-board-badge" style="background:linear-gradient(135deg,#F0D4A8,#C9A060);color:#1a1408;">PLUS</span>
+                </a>
+            </li>
+            <li>
                 <a onclick="navigateTo('/reports')" id="nav-reports">
                     <span class="nav-ico" aria-hidden="true">
                         <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
@@ -2963,7 +3043,7 @@
                     </div>
                 </div>
                 <div class="shop-note">
-                    <span>🛡 <strong>Número inválido?</strong> Peça reposição na ficha do lead: devolvemos 1 Trovoeda (ou 1 lead no plano).</span>
+                    <span><strong>Número inválido?</strong> Peça reposição na ficha do lead: devolvemos 1 Trovoeda (ou 1 lead no plano).</span>
                     <a href="/wallet" onclick="event.preventDefault();navigateTo('/wallet');">Ver extrato →</a>
                 </div>
             </div>
@@ -3684,6 +3764,207 @@
             </div>
         </section>
 
+        <section id="view-board" class="view">
+            <style>
+                #view-board .board-gift{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid rgba(201,160,96,.35);background:linear-gradient(90deg,rgba(201,160,96,.12),rgba(0,0,0,.2));margin-bottom:14px}
+                #view-board .board-gift .gift-ico{font-size:26px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+                #view-board .board-gift strong{color:#E8C994}
+                #view-board .board-gift p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+                #view-board .board-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+                #view-board .board-search{flex:1;min-width:200px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.35);color:var(--text);font-family:inherit;font-size:13px;outline:none}
+                #view-board .board-search:focus{border-color:rgba(0,212,255,.4)}
+                #view-board .board-count{font-size:12px;color:var(--muted);font-weight:600}
+                #view-board .board-cols{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;align-items:start}
+                @media (max-width:1200px){ #view-board .board-cols{grid-template-columns:repeat(3,minmax(210px,1fr))}}
+                @media (max-width:820px){ #view-board .board-cols{grid-template-columns:repeat(2,minmax(180px,1fr))}}
+                @media (max-width:560px){ #view-board .board-cols{grid-template-columns:1fr}}
+                #view-board .bcol{border-radius:16px;border:1px solid var(--border);background:rgba(255,255,255,.02);min-height:180px;display:flex;flex-direction:column;overflow:hidden}
+                #view-board .bcol.dragover{border-color:rgba(0,212,255,.6);box-shadow:0 0 0 1px rgba(0,212,255,.4),0 0 24px rgba(0,212,255,.12)}
+                #view-board .bcol-head{display:flex;align-items:center;gap:8px;padding:12px 12px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+                #view-board .bcol-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+                #view-board .bcol-head h3{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;flex:1}
+                #view-board .bcol-num{font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border-radius:999px;padding:2px 9px}
+                #view-board .bcol-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+                #view-board .bcol-won{border-color:rgba(201,160,96,.45);background:linear-gradient(180deg,rgba(201,160,96,.1),rgba(255,255,255,.015))}
+                #view-board .bcol-won .bcol-head h3{color:#E8C994}
+                #view-board .bcard{border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.3);padding:10px 11px;cursor:grab;transition:transform .12s,border-color .15s,box-shadow .15s}
+                #view-board .bcard:hover{border-color:rgba(0,212,255,.35);transform:translateY(-1px)}
+                #view-board .bcard.dragging{opacity:.45;cursor:grabbing}
+                #view-board .bcard-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+                #view-board .bcard-score{font-size:11px;font-weight:900;color:#C9A060;border:1px solid rgba(201,160,96,.5);border-radius:8px;padding:1px 7px;background:rgba(201,160,96,.07)}
+                #view-board .bcard-name{font-size:13px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                #view-board .bcard-meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                #view-board .bcard-foot{display:flex;align-items:center;gap:8px;margin-top:7px}
+                #view-board .bcard-when{font-size:10px;color:var(--muted-2);flex:1}
+                #view-board .bcard-wa{font-size:10px;font-weight:800;color:#6ee7b7;text-decoration:none;border:1px solid rgba(52,211,153,.35);border-radius:8px;padding:3px 8px;background:rgba(52,211,153,.08)}
+                #view-board .bcol-empty{font-size:11px;color:var(--muted-2);text-align:center;padding:14px 6px;border:1px dashed rgba(255,255,255,.1);border-radius:10px}
+                #view-board .board-lost{margin-top:12px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.22)}
+                #view-board .board-lost summary{cursor:pointer;padding:10px 14px;font-size:12px;font-weight:700;color:var(--muted);list-style:none}
+                #view-board .board-lost summary::-webkit-details-marker{display:none}
+                #view-board .board-lost .bcol-body{padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;flex-direction:row}
+                #view-board .board-lost .bcard{opacity:.65;flex:1 1 200px;max-width:280px}
+            </style>
+            <div class="board-gift">
+                <span class="gift-ico">🎁</span>
+                <div>
+                    <strong>Brinde Plus · Quadro de Captação</strong>
+                    <p>Gerencie quem aceitou conversar até o fechamento. Arraste o card de coluna ou clique para abrir a ficha.</p>
+                </div>
+            </div>
+            <div class="board-toolbar">
+                <input class="board-search" id="board-search" placeholder="Buscar empresa, cidade, nicho…" oninput="renderBoard()" maxlength="60" />
+                <button type="button" class="btn btn-sm" onclick="loadBoard(true)">↻ Atualizar</button>
+                <span class="board-count" id="board-count"></span>
+            </div>
+            <div class="board-cols" id="board-cols"></div>
+            <details class="board-lost" id="board-lost-wrap" open>
+                <summary id="board-lost-title">Perdidos (0) — clique para recolher</summary>
+                <div class="bcol-body" id="board-lost"></div>
+            </details>
+            <script>
+            (function () {
+                const STAGES = [
+                    { id: 'novo', label: 'Novos', color: '#38bdf8' },
+                    { id: 'contactado', label: 'Contatados', color: '#a78bfa' },
+                    { id: 'reuniao', label: 'Reunião', color: '#fbbf24' },
+                    { id: 'proposta', label: 'Proposta', color: '#fb923c' },
+                    { id: 'fechado', label: 'Fechados 🎉', color: '#C9A060', won: true },
+                ];
+                const LOST = 'perdido';
+                let boardLeads = [];
+                let boardDragId = null;
+
+                function normStage(l) {
+                    let s = String(l.contact_status || '').toLowerCase().trim();
+                    if (s === 'convertido') return 'fechado';
+                    if (s === 'descartado') return 'perdido';
+                    if (s === 'recuperar') return 'novo';
+                    if (STAGES.some(x => x.id === s) || s === LOST) return s;
+                    if (l.contacted_at) return 'contactado';
+                    return 'novo';
+                }
+                function stageOf(id) {
+                    return STAGES.find(s => s.id === id) || { id: LOST, label: 'Perdidos', color: '#64748b' };
+                }
+                function waLink(l) {
+                    const d = String(l.phone || '').replace(/\D/g, '');
+                    if (d.length < 10) return '';
+                    const num = d.startsWith('55') ? d : '55' + d;
+                    return '<a class="bcard-wa" href="https://wa.me/' + num + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">WhatsApp</a>';
+                }
+                function whenTxt(l) {
+                    const raw = l.contacted_at || l.assigned_at || l.scraped_at || l.created_at || '';
+                    const d = String(raw).replace('T', ' ').slice(0, 10);
+                    return d ? esc(d.split(' ')[0].split('-').reverse().join('/')) : '';
+                }
+                window.loadBoard = async function (force) {
+                    const cols = document.getElementById('board-cols');
+                    if (cols && (!boardLeads.length || force)) {
+                        cols.innerHTML = '<div class="bcol-empty" style="grid-column:1/-1">Carregando quadro…</div>';
+                    }
+                    try {
+                        const scope = (typeof isPatraoSession === 'function' && isPatraoSession()) ? '?scope=all' : '';
+                        const res = await fetch('/api/leads' + scope, { cache: 'no-store', credentials: 'same-origin' });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const data = await res.json();
+                        boardLeads = Array.isArray(data) ? data : [];
+                    } catch (e) {
+                        console.error('loadBoard', e);
+                        if (!boardLeads.length && cols) cols.innerHTML = '<div class="bcol-empty" style="grid-column:1/-1">Erro ao carregar. Tente atualizar.</div>';
+                        return;
+                    }
+                    renderBoard();
+                };
+                window.renderBoard = function () {
+                    const cols = document.getElementById('board-cols');
+                    const lostBox = document.getElementById('board-lost');
+                    const lostTitle = document.getElementById('board-lost-title');
+                    if (!cols) return;
+                    const q = ((document.getElementById('board-search') || {}).value || '').toLowerCase().trim();
+                    const match = l => !q || ((l.name || '') + ' ' + (l.city || '') + ' ' + (l.niche || '') + ' ' + (l.category || '')).toLowerCase().includes(q);
+                    const groups = {};
+                    STAGES.forEach(s => { groups[s.id] = []; });
+                    groups[LOST] = [];
+                    boardLeads.forEach(l => { if (match(l)) groups[normStage(l)].push(l); });
+                    cols.innerHTML = STAGES.map(s => {
+                        const cards = groups[s.id].map(cardHtml).join('') || '<div class="bcol-empty">Arraste cards pra cá</div>';
+                        return '<div class="bcol' + (s.won ? ' bcol-won' : '') + '" data-stage="' + s.id + '">'
+                            + '<div class="bcol-head"><span class="bcol-dot" style="background:' + s.color + ';box-shadow:0 0 8px ' + s.color + '"></span>'
+                            + '<h3>' + s.label + '</h3><span class="bcol-num">' + groups[s.id].length + '</span></div>'
+                            + '<div class="bcol-body">' + cards + '</div></div>';
+                    }).join('');
+                    cols.querySelectorAll('.bcol').forEach(col => {
+                        col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('dragover'); });
+                        col.addEventListener('dragleave', () => col.classList.remove('dragover'));
+                        col.addEventListener('drop', e => {
+                            e.preventDefault();
+                            col.classList.remove('dragover');
+                            if (boardDragId != null) moveBoardCard(boardDragId, col.getAttribute('data-stage'));
+                        });
+                    });
+                    const lost = groups[LOST];
+                    lostBox.innerHTML = lost.map(cardHtml).join('') || '<div class="bcol-empty">Nenhum perdido 🎯</div>';
+                    if (lostTitle) lostTitle.textContent = 'Perdidos (' + lost.length + ') — clique para recolher';
+                    const total = boardLeads.length;
+                    const won = groups.fechado.length;
+                    const cc = document.getElementById('board-count');
+                    if (cc) cc.textContent = total + ' no quadro · ' + won + ' fechados';
+                };
+                function cardHtml(l) {
+                    const score = (l.lead_score != null && l.lead_score !== '') ? '<span class="bcard-score">▲ ' + esc(String(l.lead_score)) + '</span>' : '';
+                    const sub = [l.niche || l.category || '', l.city || ''].filter(Boolean).join(' · ');
+                    return '<div class="bcard" draggable="true" data-id="' + l.id + '">'
+                        + '<div class="bcard-top">' + score + '<span class="bcard-name">' + esc(l.name || ('Lead #' + l.id)) + '</span></div>'
+                        + (sub ? '<div class="bcard-meta">' + esc(sub) + '</div>' : '')
+                        + '<div class="bcard-foot"><span class="bcard-when">' + whenTxt(l) + '</span>' + waLink(l) + '</div>'
+                        + '</div>';
+                }
+                document.addEventListener('dragstart', e => {
+                    const card = e.target && e.target.closest ? e.target.closest('.bcard') : null;
+                    if (!card || !document.getElementById('view-board').classList.contains('active')) return;
+                    boardDragId = parseInt(card.getAttribute('data-id'), 10);
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    try { e.dataTransfer.setData('text/plain', String(boardDragId)); } catch (_) {}
+                });
+                document.addEventListener('dragend', () => {
+                    boardDragId = null;
+                    document.querySelectorAll('#view-board .bcard.dragging').forEach(c => c.classList.remove('dragging'));
+                    document.querySelectorAll('#view-board .bcol.dragover').forEach(c => c.classList.remove('dragover'));
+                });
+                document.addEventListener('click', e => {
+                    const card = e.target && e.target.closest ? e.target.closest('#view-board .bcard') : null;
+                    if (!card) return;
+                    if (e.target.closest('a')) return;
+                    const id = parseInt(card.getAttribute('data-id'), 10);
+                    if (id && typeof openLead === 'function') openLead(id);
+                });
+                async function moveBoardCard(id, stage) {
+                    id = parseInt(id, 10);
+                    const lead = boardLeads.find(x => Number(x.id) === id);
+                    const prev = lead ? normStage(lead) : null;
+                    if (lead) { lead.contact_status = stage; renderBoard(); }
+                    try {
+                        const res = await fetch('/api/leads/' + id + '/status', {
+                            method: 'PUT',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: stage }),
+                        });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        if (typeof showToast === 'function') showToast(stage === 'fechado' ? 'Fechado! 🎉💰' : 'Movido para ' + stageOf(stage).label + ' ✓');
+                        if (typeof clearLeadsCache === 'function') clearLeadsCache();
+                    } catch (err) {
+                        console.error('moveBoardCard', err);
+                        if (lead && prev) { lead.contact_status = prev; renderBoard(); }
+                        if (typeof showToast === 'function') showToast('Erro ao mover. Tente de novo.');
+                    }
+                }
+                window.moveBoardCard = moveBoardCard;
+            })();
+            </script>
+        </section>
+
     </main>
 
     <!-- Distribuir sobra (Patrão) -->
@@ -3794,6 +4075,32 @@
     </div>
 
     <script>
+        // ── Planos: cor, ícone e descrição num lugar só ──
+        const PLAN_COLORS = { loki: '#34d399', odin: '#38bdf8', thor: '#f5b942', valhalla: '#c084fc' };
+        const PLAN_TAGS = { loki: 'Pra começar a prospectar', odin: 'Freelancer em ritmo', thor: 'Agência com time', valhalla: 'Operação em escala' };
+        const PLAN_FEATURED = 'thor';
+        const PLAN_ICON_PATHS = {
+            // capacete com chifres
+            loki: '<path d="M14 22c-4-5-5-11-3-17 3 5 6 9 9 12"/><path d="M34 22c4-5 5-11 3-17-3 5-6 9-9 12"/><path d="M13 27c0-8 5-12 11-12s11 4 11 12v6c0 5-5 9-11 9s-11-4-11-9z"/><path d="M24 24v11"/><path d="M17 28h4M27 28h4"/>',
+            // olho de Odin
+            odin: '<path d="M5 24c5-8 12-12 19-12s14 4 19 12c-5 8-12 12-19 12S10 32 5 24z"/><circle cx="24" cy="24" r="5.5"/><path d="M24 6v4M24 38v4"/>',
+            // Mjölnir
+            thor: '<rect x="9" y="8" width="30" height="14" rx="3"/><path d="M17 8v14M31 8v14"/><path d="M24 22v17"/><circle cx="24" cy="42" r="2"/>',
+            // salão de Valhalla
+            valhalla: '<path d="M6 18 24 7l18 11z"/><path d="M11 22v14M19 22v14M29 22v14M37 22v14"/><path d="M8 40h32M9 36h30"/>',
+        };
+        function planIconMarkup(slug, size, color) {
+            const paths = PLAN_ICON_PATHS[slug];
+            if (!paths) return '';
+            const c = color || PLAN_COLORS[slug] || 'currentColor';
+            return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${paths}</svg>`;
+        }
+        function planIconsAt(size, color) {
+            const out = {};
+            Object.keys(PLAN_ICON_PATHS).forEach(slug => { out[slug] = planIconMarkup(slug, size, color); });
+            return out;
+        }
+
         Chart.defaults.color = '#7a8ba3';
         Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
         Chart.defaults.font.size = 11;
@@ -4619,6 +4926,15 @@
                 document.getElementById('nav-reports').classList.add('active');
                 setPageMeta('Relatórios', 'Indicadores e problemas mais comuns no período.');
                 loadReports();
+            } else if (path === '/board' || path === '/quadro') {
+                destroyHomeCharts();
+                destroySparks();
+                homeLoadSeq++;
+                document.getElementById('view-board').classList.add('active');
+                const navB = document.getElementById('nav-board');
+                if (navB) navB.classList.add('active');
+                setPageMeta('Quadro de Captação', 'Brinde Plus · arraste os cards entre as etapas até o fechamento.');
+                loadBoard();
             } else if (path === '/users') {
                 if (!isPatraoSession()) { navigateTo('/'); return; }
                 destroyHomeCharts();
@@ -4685,17 +5001,12 @@
                     const trovo = Number(u.trovoedas_balance || 0);
                     const planSlug = u.plan_slug || '';
                     const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
-                    const planColors = { loki: '#00ff66', odin: '#00d2ff', thor: '#ff003c', valhalla: '#ffea00' };
+                    const planColors = PLAN_COLORS;
                     const planLabel = planNames[planSlug] || '';
                     const planColor = planColors[planSlug] || 'var(--muted)';
                     const hasPlan = !!planSlug;
 
-                    const planIconSvg = {
-                        thor: `<svg viewBox="0 0 72 72" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="10" width="36" height="22" rx="5" fill="${planColor}"/><rect x="10" y="24" width="52" height="9" rx="3" fill="${planColor}" opacity="0.75"/><rect x="32" y="32" width="8" height="28" rx="3" fill="${planColor}"/><rect x="29" y="57" width="14" height="6" rx="3" fill="${planColor}"/></svg>`,
-                        loki: `<svg viewBox="0 0 72 72" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><path d="M22 30 Q18 18 13 8 Q20 12 24 24 Q27 16 28 8 Q30 18 28 30" fill="${planColor}"/><path d="M50 30 Q54 18 59 8 Q52 12 48 24 Q45 16 44 8 Q42 18 44 30" fill="${planColor}"/><path d="M22 30 Q18 46 20 56 Q28 64 36 64 Q44 64 52 56 Q54 46 50 30 Q42 26 36 26 Q30 26 22 30Z" fill="${planColor}"/></svg>`,
-                        odin: `<svg viewBox="0 0 72 72" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="4" width="4" height="18" rx="1" fill="${planColor}" opacity="0.8"/><polygon points="36,2 32,10 40,10" fill="${planColor}"/><circle cx="36" cy="34" r="16" fill="${planColor}"/><path d="M20 44 Q28 54 36 56 Q44 54 52 44 Q46 50 36 52 Q26 50 20 44Z" fill="${planColor}"/></svg>`,
-                        valhalla: `<svg viewBox="0 0 72 72" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><path d="M36 6 L64 20 L64 44 Q64 60 36 68 Q8 60 8 44 L8 20Z" fill="${planColor}" fill-opacity="0.18" stroke="${planColor}" stroke-width="3"/><path d="M36 20 L52 42 L44 42 L44 58 L28 58 L28 42 L20 42Z" fill="${planColor}"/></svg>`,
-                    };
+                    const planIconSvg = planIconsAt(22, planColor);
 
                     const planIconHtml = hasPlan && planIconSvg[planSlug]
                         ? `<span title="${planLabel}" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:1px solid ${planColor}40;background:${planColor}12;">${planIconSvg[planSlug]}</span>`
@@ -4812,10 +5123,10 @@
 
         async function quickAssignPlan(userId) {
             const plans = [
-                { slug: 'loki', name: 'Loki', daily: 10, total: 300, color: '#00ff66' },
-                { slug: 'odin', name: 'Odin', daily: 20, total: 600, color: '#00d2ff' },
-                { slug: 'thor', name: 'Thor', daily: 30, total: 900, color: '#ff003c' },
-                { slug: 'valhalla', name: 'Valhalla', daily: 50, total: 1500, color: '#ffea00' },
+                { slug: 'loki', name: 'Loki', daily: 10, total: 300, color: PLAN_COLORS.loki },
+                { slug: 'odin', name: 'Odin', daily: 20, total: 600, color: PLAN_COLORS.odin },
+                { slug: 'thor', name: 'Thor', daily: 30, total: 900, color: PLAN_COLORS.thor },
+                { slug: 'valhalla', name: 'Valhalla', daily: 50, total: 1500, color: PLAN_COLORS.valhalla },
             ];
             const user = usersCache.find(u => Number(u.id) === userId);
             const currentPlan = user?.plan_slug || '';
@@ -4914,40 +5225,13 @@
 
         function updatePlanChipUI(currentUser) {
             const planNames = { loki: 'Loki', odin: 'Odin', thor: 'Thor', valhalla: 'Valhalla' };
-            const planColors = { loki: '#00ff66', odin: '#00d2ff', thor: '#ff003c', valhalla: '#ffea00' };
+            const planColors = PLAN_COLORS;
             const planSlug = currentUser && currentUser.plan_slug;
             const planLabel = planSlug && planNames[planSlug] ? planNames[planSlug] : '—';
             const planColor = planColors[planSlug] || '#666';
             const hasPlan = !!planSlug;
 
-            const planIconSvg = {
-                thor: `<svg viewBox="0 0 72 72" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="18" y="10" width="36" height="22" rx="5" fill="${planColor}"/>
-                    <rect x="10" y="24" width="52" height="9" rx="3" fill="${planColor}" opacity="0.75"/>
-                    <rect x="32" y="32" width="8" height="28" rx="3" fill="${planColor}"/>
-                    <rect x="29" y="57" width="14" height="6" rx="3" fill="${planColor}"/>
-                </svg>`,
-                loki: `<svg viewBox="0 0 72 72" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 30 Q18 18 13 8 Q20 12 24 24 Q27 16 28 8 Q30 18 28 30" fill="${planColor}"/>
-                    <path d="M50 30 Q54 18 59 8 Q52 12 48 24 Q45 16 44 8 Q42 18 44 30" fill="${planColor}"/>
-                    <path d="M22 30 Q18 46 20 56 Q28 64 36 64 Q44 64 52 56 Q54 46 50 30 Q42 26 36 26 Q30 26 22 30Z" fill="${planColor}"/>
-                    <rect x="33" y="36" width="6" height="16" rx="2" fill="${planColor}" opacity="0.55"/>
-                </svg>`,
-                odin: `<svg viewBox="0 0 72 72" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="34" y="4" width="4" height="18" rx="1" fill="${planColor}" opacity="0.8"/>
-                    <polygon points="36,2 32,10 40,10" fill="${planColor}"/>
-                    <circle cx="36" cy="34" r="16" fill="${planColor}"/>
-                    <ellipse cx="30" cy="30" rx="5" ry="3.5" fill="${planColor}" opacity="0.35"/>
-                    <path d="M20 44 Q28 54 36 56 Q44 54 52 44 Q46 50 36 52 Q26 50 20 44Z" fill="${planColor}"/>
-                    <path d="M8 26 Q11 21 15 23 Q13 29 9 31Z M9 31 Q7 37 11 39 Q11 33 9 31Z" fill="${planColor}"/>
-                    <path d="M64 26 Q61 21 57 23 Q59 29 63 31Z M63 31 Q65 37 61 39 Q61 33 63 31Z" fill="${planColor}"/>
-                </svg>`,
-                valhalla: `<svg viewBox="0 0 72 72" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M36 6 L64 20 L64 44 Q64 60 36 68 Q8 60 8 44 L8 20Z" fill="${planColor}" fill-opacity="0.18" stroke="${planColor}" stroke-width="3"/>
-                    <path d="M36 20 L52 42 L44 42 L44 58 L28 58 L28 42 L20 42Z" fill="${planColor}"/>
-                    <path d="M36 16 L55 41 L52 42 L36 22 L20 42 L17 41Z" fill="${planColor}" opacity="0.7"/>
-                </svg>`,
-            };
+            const planIconSvg = planIconsAt(28, planColor);
 
             const iconEl = document.getElementById('plan-chip-icon');
             const nameEl = document.getElementById('plan-chip-name');
@@ -5706,34 +5990,7 @@
                     const color = isPlano ? (p.color || '#C9A060') : '#C9A060';
 
                     // Ícones SVG inline por plano (coloridos com a cor do plano)
-                    const planIconSvg = {
-                        thor: `<svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="18" y="10" width="36" height="22" rx="5" fill="${color}"/>
-                            <rect x="10" y="24" width="52" height="9" rx="3" fill="${color}" opacity="0.75"/>
-                            <rect x="32" y="32" width="8" height="28" rx="3" fill="${color}"/>
-                            <rect x="29" y="57" width="14" height="6" rx="3" fill="${color}"/>
-                        </svg>`,
-                        loki: `<svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 30 Q18 18 13 8 Q20 12 24 24 Q27 16 28 8 Q30 18 28 30" fill="${color}"/>
-                            <path d="M50 30 Q54 18 59 8 Q52 12 48 24 Q45 16 44 8 Q42 18 44 30" fill="${color}"/>
-                            <path d="M22 30 Q18 46 20 56 Q28 64 36 64 Q44 64 52 56 Q54 46 50 30 Q42 26 36 26 Q30 26 22 30Z" fill="${color}"/>
-                            <rect x="33" y="36" width="6" height="16" rx="2" fill="${color}" opacity="0.55"/>
-                        </svg>`,
-                        odin: `<svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="34" y="4" width="4" height="18" rx="1" fill="${color}" opacity="0.8"/>
-                            <polygon points="36,2 32,10 40,10" fill="${color}"/>
-                            <circle cx="36" cy="34" r="16" fill="${color}"/>
-                            <ellipse cx="30" cy="30" rx="5" ry="3.5" fill="${color}" opacity="0.35"/>
-                            <path d="M20 44 Q28 54 36 56 Q44 54 52 44 Q46 50 36 52 Q26 50 20 44Z" fill="${color}"/>
-                            <path d="M8 26 Q11 21 15 23 Q13 29 9 31Z M9 31 Q7 37 11 39 Q11 33 9 31Z" fill="${color}"/>
-                            <path d="M64 26 Q61 21 57 23 Q59 29 63 31Z M63 31 Q65 37 61 39 Q61 33 63 31Z" fill="${color}"/>
-                        </svg>`,
-                        valhalla: `<svg viewBox="0 0 72 72" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M36 6 L64 20 L64 44 Q64 60 36 68 Q8 60 8 44 L8 20Z" fill="${color}" fill-opacity="0.18" stroke="${color}" stroke-width="3"/>
-                            <path d="M36 20 L52 42 L44 42 L44 58 L28 58 L28 42 L20 42Z" fill="${color}"/>
-                            <path d="M36 16 L55 41 L52 42 L36 22 L20 42 L17 41Z" fill="${color}" opacity="0.7"/>
-                        </svg>`,
-                    };
+                    const planIconSvg = planIconsAt(72, color);
 
                     const coinHtml = isPlano && planIconSvg[p.slug]
                         ? planIconSvg[p.slug]
@@ -5762,6 +6019,32 @@
                     const saveBadge = savePct > 0
                         ? `<span class="pkg-badge save" style="${isPlano ? `color:${color};border-color:${color};background:rgba(0,0,0,.15);` : ''}" title="Em relação ao pacote ${esc(p.base_label || (isPlano ? 'Loki' : 'Faísca'))}">Economize ${savePct}%</span>`
                         : '';
+                    if (isPlano) {
+                        const slug = p.slug || '';
+                        const isTop = slug === PLAN_FEATURED;
+                        const planColor = PLAN_COLORS[slug] || color;
+                        const days = Number(p.duration_days) || 30;
+                        return `
+                        <article class="plan-card${isTop ? ' is-featured' : ''}" data-slug="${esc(slug)}" style="--plan:${planColor};">
+                            ${isTop ? '<span class="plan-ribbon">Mais escolhido</span>' : ''}
+                            <div class="plan-head">
+                                <span class="plan-ico">${planIconMarkup(slug, 30, planColor)}</span>
+                                <div>
+                                    <h3 class="plan-name">${esc(p.name || slug)}</h3>
+                                    <p class="plan-tag">${esc(PLAN_TAGS[slug] || '')}</p>
+                                </div>
+                            </div>
+                            <div class="plan-leads"><b>${coins}</b><span>leads</span><small>${p.daily_cap} por dia · ${days} dias</small></div>
+                            <div class="plan-price"><b>${formatBRL(cents)}</b><span>por ${days} dias</span></div>
+                            <div class="plan-per">${perTxt}${savePct > 0 ? `<span class="plan-save">${savePct}% mais barato por lead</span>` : ''}</div>
+                            <ul class="plan-feats">
+                                <li>WhatsApp, Instagram ou telefone em todo lead</li>
+                                <li>Nota de oportunidade 0–100</li>
+                                <li>Número inválido? Repomos o lead</li>
+                            </ul>
+                            <button type="button" class="plan-cta" data-slug="${esc(slug)}" data-coins="${coins}" data-name="${esc(p.name || '')}">Assinar ${esc(p.name || '')}</button>
+                        </article>`;
+                    }
                     return `
                         <article class="pkg-card${featured ? ' featured' : ''}" data-slug="${esc(p.slug || '')}" style="${cardBorder}">
                             ${saveBadge}
@@ -5797,11 +6080,11 @@
                     if (!list.length) return '';
                     return `
                         <div class="shop-kicker" style="margin:${marginTop} 0 12px;"><i></i> ${label}</div>
-                        <div class="shop-grid">${list.map(renderCard).join('')}</div>`;
+                        <div class="shop-grid${list === planos ? ' plans-grid' : ''}">${list.map(renderCard).join('')}</div>`;
                 };
 
                 grid.innerHTML = renderGroup(planos, 'PLANOS', '0') + renderGroup(moedas, 'MOEDAS', '32px');
-                grid.querySelectorAll('.btn-buy').forEach(btn => {
+                grid.querySelectorAll('.btn-buy, .plan-cta').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const slug = btn.getAttribute('data-slug') || '';
                         const coins = btn.getAttribute('data-coins') || '';

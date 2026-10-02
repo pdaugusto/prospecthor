@@ -77,6 +77,19 @@ if _MEMORY_SAFE:
 # Recicla o navegador a cada N painéis abertos (só no modo memória).
 _RECYCLE_EVERY: int = max(5, int(os.getenv("RECYCLE_BROWSER_EVERY", "20")))
 
+# Não baixa imagens/fontes/vídeo no Maps (painel e feed funcionam sem eles).
+_BLOCK_RESOURCES: bool = os.getenv("MAPS_BLOCK_RESOURCES", "1").lower() in (
+    "1", "true", "yes", "sim",
+)
+_BLOCKED_TYPES = frozenset({"image", "media", "font"})
+# Pausa entre um lead salvo e o próximo painel (anti-bloqueio)
+_LEAD_PAUSE_MIN: float = float(os.getenv("MAPS_LEAD_PAUSE_MIN_S", "0.3"))
+_LEAD_PAUSE_MAX: float = float(os.getenv("MAPS_LEAD_PAUSE_MAX_S", "0.9"))
+# Abre o painel clicando no card do feed (~0.2s) em vez de page.goto (~1.5s).
+_CLICK_PANELS: bool = os.getenv("MAPS_CLICK_PANELS", "1").lower() in (
+    "1", "true", "yes", "sim",
+)
+
 # Google Places API — endpoints
 _PLACES_TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 _PLACES_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
@@ -101,7 +114,18 @@ _SEL_PANEL_PHONE = "button[data-item-id^='phone'], [data-tooltip='Copiar número
 _SEL_PANEL_WEBSITE = "a[data-item-id='authority'], a[aria-label*='Site']"
 _SEL_PANEL_CATEGORY = "button.DkEaL, span.DkEaL"
 _SEL_PANEL_OPEN_STATUS = "span.ZDu9vd span, [data-item-id='oh'] span"
-_SEL_PANEL_HOURS = "table.WgFkxc"
+_SEL_PANEL_HOURS = "table.eK4R0e, table.WgFkxc"
+
+# Lê do feed, de uma vez: href de cada resultado + link "Website" do card.
+# O card só mostra esse botão quando o Maps tem site cadastrado (pode ser
+# rede social — quem decide se é site próprio é _has_own_website).
+_JS_FEED_CARDS = """(sel) => [...document.querySelectorAll(sel)].map(a => {
+    const card = a.closest('div.Nv2PK');
+    const w = card && card.querySelector(
+        'a[data-value="Website"], a[data-value="Site"], a[aria-label^="Acessar o site"]'
+    );
+    return {href: a.getAttribute('href') || '', site: w ? (w.href || '') : ''};
+})"""
 
 # Strings de detecção de bloqueio pelo Google
 _BLOCK_SIGNALS = [
@@ -286,6 +310,16 @@ def _extract_coordinates_from_url(url: str) -> tuple[float | None, float | None]
             lat = float(coord_match.group(1))
             lon = float(coord_match.group(2))
             # Validação básica de faixas geográficas
+            if -90 <= lat <= 90 and -180 <= lon <= 180:
+                return lat, lon
+        except ValueError:
+            pass
+    # Links do feed não têm /@lat,lon — usam !3d<lat>!4d<lon> no data=
+    data_match = re.search(r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", url)
+    if data_match:
+        try:
+            lat = float(data_match.group(1))
+            lon = float(data_match.group(2))
             if -90 <= lat <= 90 and -180 <= lon <= 180:
                 return lat, lon
         except ValueError:
@@ -690,6 +724,10 @@ class PlaywrightScraper:
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
+        self._card_sites: dict[str, str] = {}
+        # True enquanto a aba está na lista de resultados (dá para clicar nos cards)
+        self._on_feed: bool = False
+        self._last_panel_name: str = ""
 
     # ------------------------------------------------------------------
     # Ciclo de vida do browser
@@ -731,7 +769,20 @@ class PlaywrightScraper:
         self._context.add_init_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
+        if _BLOCK_RESOURCES:
+            self._context.route("**/*", self._route_block_heavy)
         logger.info("[Playwright] Navegador pronto.")
+
+    @staticmethod
+    def _route_block_heavy(route) -> None:
+        """Aborta imagens/fontes/mídia — o scraper só lê texto e atributos."""
+        try:
+            if route.request.resource_type in _BLOCKED_TYPES:
+                route.abort()
+            else:
+                route.continue_()
+        except Exception:
+            pass
 
     def stop(self) -> None:
         """Fecha o navegador e libera recursos."""
@@ -843,6 +894,9 @@ class PlaywrightScraper:
                 logger.warning("[Playwright] Nenhuma URL de resultado encontrada.")
                 return companies
 
+            self._on_feed = True
+            self._last_panel_name = ""
+            skipped_card_site = 0
             tries_since_recycle = 0
             for idx, result_url in enumerate(result_urls, start=1):
                 if len(companies) >= target_new:
@@ -854,6 +908,20 @@ class PlaywrightScraper:
                     logger.info(
                         f"[Playwright] ⏭ já no banco "
                         f"({len(companies)}/{target_new} novas) — pula painel"
+                    )
+                    continue
+
+                # Card do feed já mostra site próprio → nem abre o painel
+                card_site = self._card_sites.get(result_url)
+                if _has_own_website(card_site):
+                    skipped_has_site += 1
+                    skipped_card_site += 1
+                    if place_guess:
+                        known_ids.add(place_guess)
+                        site_cache.mark_has_site(place_guess)
+                    logger.info(
+                        f"[Playwright] ⏭ card já mostra site ({card_site[:40]}) — "
+                        f"pula sem abrir ({len(companies)}/{target_new})"
                     )
                     continue
 
@@ -883,6 +951,8 @@ class PlaywrightScraper:
                         )
                         _random_delay(1.0, 1.8)
                         self._dismiss_consent(page)
+                        self._on_feed = True
+                        self._last_panel_name = ""
                     except Exception as exc:
                         logger.warning(f"[Playwright] warmup pós-recycle falhou: {exc}")
                 try:
@@ -986,10 +1056,7 @@ class PlaywrightScraper:
                     )
                     time.sleep(60)
 
-                _random_delay(
-                    max(0.4, _DELAY_MIN * 0.6),
-                    max(0.9, _DELAY_MAX * 0.7),
-                )
+                _random_delay(_LEAD_PAUSE_MIN, _LEAD_PAUSE_MAX)
 
                 early_n = int(os.getenv("EARLY_STOP_INSPECT", "40"))
                 early_min = int(os.getenv("EARLY_STOP_MIN_LEADS", "2"))
@@ -1002,7 +1069,8 @@ class PlaywrightScraper:
 
             logger.info(
                 f"[Playwright] Fim: {len(companies)}/{target_new} contatáveis | "
-                f"{skipped_known} banco | {skipped_has_site} site | "
+                f"{skipped_known} banco | {skipped_has_site} site "
+                f"({skipped_card_site} pelo card) | "
                 f"{skipped_no_contact} sem contato | {inspected} painéis"
             )
 
@@ -1035,6 +1103,8 @@ class PlaywrightScraper:
         seen: set[str] = set()
         no_new_count = 0
         max_scroll_attempts = math.ceil(max_results / 5) + 10  # heurística
+        # href → link "Website" mostrado no próprio card do feed (se houver)
+        self._card_sites = {}
 
         feed = page.locator(_SEL_RESULTS_FEED)
 
@@ -1042,21 +1112,23 @@ class PlaywrightScraper:
             if len(urls) >= max_results:
                 break
 
-            # Coleta todos os links de resultado visíveis agora
-            all_links = page.locator(_SEL_RESULT_ITEMS).all()
+            # Coleta links + site do card numa única ida ao navegador
+            try:
+                cards = page.evaluate(_JS_FEED_CARDS, _SEL_RESULT_ITEMS)
+            except Exception:
+                cards = []
             new_found = 0
 
-            for link in all_links:
-                try:
-                    href = link.get_attribute("href") or ""
-                    if "/maps/place/" in href and href not in seen:
-                        seen.add(href)
-                        urls.append(href)
-                        new_found += 1
-                        if len(urls) >= max_results:
-                            break
-                except Exception:
-                    continue
+            for card in cards:
+                href = card.get("href") or ""
+                if "/maps/place/" in href and href not in seen:
+                    seen.add(href)
+                    urls.append(href)
+                    if card.get("site"):
+                        self._card_sites[href] = card["site"]
+                    new_found += 1
+                    if len(urls) >= max_results:
+                        break
 
             logger.debug(
                 f"[Playwright] Scroll {attempt + 1}: "
@@ -1131,19 +1203,22 @@ class PlaywrightScraper:
         company["latitude"] = lat
         company["longitude"] = lon
 
-        # Navega até a página de detalhes
-        page.goto(full_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
-        _random_delay(0.2, 0.5)
+        # Abre o painel: clique no card (rápido) ou navegação completa (fallback)
+        if not (_CLICK_PANELS and self._on_feed and self._open_panel_by_click(page, result_url)):
+            self._on_feed = False  # saiu da lista — daqui em diante só goto
+            page.goto(full_url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
+            _random_delay(0.2, 0.5)
 
-        # Aguarda o painel de detalhes carregar (pelo nome h1)
-        try:
-            page.wait_for_selector(_SEL_PANEL_NAME, timeout=_TIMEOUT_MS)
-        except PlaywrightTimeout:
-            logger.warning(f"[Playwright] Painel de detalhes não carregou para: {full_url}")
-            return company
+            # Aguarda o painel de detalhes carregar (pelo nome h1)
+            try:
+                page.wait_for_selector(_SEL_PANEL_NAME, timeout=_TIMEOUT_MS)
+            except PlaywrightTimeout:
+                logger.warning(f"[Playwright] Painel de detalhes não carregou para: {full_url}")
+                return company
 
-        # Atualiza coordenadas da URL final (pode ter redirecionado)
-        final_url = page.url
+        # Atualiza coordenadas da URL final (pode ter redirecionado).
+        # No clique a URL da aba pode demorar a trocar — só usa se já for /place/.
+        final_url = page.url if "/maps/place/" in page.url else full_url
         company["maps_url"] = final_url
         if not company["place_id"]:
             company["place_id"] = _extract_place_id_from_url(final_url)
@@ -1152,10 +1227,19 @@ class PlaywrightScraper:
             company["latitude"] = lat
             company["longitude"] = lon
 
+        # Lê só dentro do painel da empresa: com o clique, o feed segue na
+        # página e tem nota/avaliações de outros cards.
+        panel = page.locator('div[role="main"]').filter(
+            has=page.locator("h1.DUwDvf")
+        ).first
+        if panel.count() == 0:
+            panel = page
+
         # ── Nome + Website PRIMEIRO ─────────────────────────────────────
         # Busca magra: se tem site próprio, abandona SEM telefone/horário/etc.
-        company["name"] = self._get_text(page, _SEL_PANEL_NAME)
-        company["website"] = self._get_href_fast(page, _SEL_PANEL_WEBSITE)
+        company["name"] = self._get_text(panel, _SEL_PANEL_NAME)
+        self._last_panel_name = company["name"]
+        company["website"] = self._get_href_fast(panel, _SEL_PANEL_WEBSITE)
         if _has_own_website(company.get("website")):
             company["scraped_at"] = datetime.now().isoformat()
             company["source"] = "playwright"
@@ -1163,38 +1247,64 @@ class PlaywrightScraper:
             return company
 
         # ── Avaliação ───────────────────────────────────────────────────
-        rating_raw = self._get_text(page, _SEL_PANEL_RATING)
+        rating_raw = self._get_text(panel, _SEL_PANEL_RATING)
         company["rating"] = _parse_rating(rating_raw)
 
         # ── Número de avaliações ────────────────────────────────────────
-        reviews_raw = self._get_aria_label(page, _SEL_PANEL_REVIEWS)
+        reviews_raw = self._get_aria_label(panel, _SEL_PANEL_REVIEWS)
         company["review_count"] = _parse_review_count(reviews_raw)
 
         # ── Endereço ────────────────────────────────────────────────────
-        company["address"] = self._get_button_text(page, _SEL_PANEL_ADDRESS)
+        company["address"] = self._get_button_text(panel, _SEL_PANEL_ADDRESS)
 
         # ── Telefone ────────────────────────────────────────────────────
-        raw_phone = self._get_button_text(page, _SEL_PANEL_PHONE)
+        raw_phone = self._get_button_text(panel, _SEL_PANEL_PHONE)
         company["phone"] = _normalize_phone(raw_phone)
 
         # ── Categoria ───────────────────────────────────────────────────
-        company["category"] = self._get_text(page, _SEL_PANEL_CATEGORY)
+        company["category"] = self._get_text(panel, _SEL_PANEL_CATEGORY)
 
         # ── Status aberto/fechado ───────────────────────────────────────
-        open_text = self._get_text(page, _SEL_PANEL_OPEN_STATUS).lower()
+        open_text = self._get_text(panel, _SEL_PANEL_OPEN_STATUS).lower()
         if "aberto" in open_text or "open" in open_text:
             company["is_open_now"] = 1
         elif "fechado" in open_text or "closed" in open_text:
             company["is_open_now"] = 0
 
         # ── Horários de funcionamento ───────────────────────────────────
-        company["opening_hours"] = self._extract_hours(page)
+        company["opening_hours"] = self._extract_hours(panel)
 
         # ── Timestamp ───────────────────────────────────────────────────
         company["scraped_at"] = datetime.now().isoformat()
         company["source"] = "playwright"
 
         return company
+
+    def _open_panel_by_click(self, page: Page, result_url: str) -> bool:
+        """Clica no card do feed e espera o painel trocar para essa empresa.
+
+        Retorna False (→ caller usa goto) se o card não está no DOM, se o
+        nome é igual ao painel anterior (não dá para saber se trocou) ou se
+        o painel não atualizou a tempo.
+        """
+        try:
+            card = page.locator(f'a.hfpxzc[href="{result_url}"]').first
+            if card.count() == 0:
+                return False
+            name = (card.get_attribute("aria-label", timeout=1500) or "").strip()
+            if not name or name == self._last_panel_name:
+                return False
+            card.click(timeout=5000)
+            page.wait_for_function(
+                "(n) => { const h = document.querySelector('h1.DUwDvf');"
+                " return !!h && h.textContent.trim() === n; }",
+                arg=name,
+                timeout=8000,
+            )
+            return True
+        except Exception as exc:
+            logger.debug(f"[Playwright] clique no card falhou ({exc}); usando goto")
+            return False
 
     # ------------------------------------------------------------------
     # Extração de aceite de cookies/LGPD
@@ -1281,7 +1391,12 @@ class PlaywrightScraper:
             return ""
 
     def _get_href_fast(self, page: Page, selector: str) -> str:
-        """Peek rápido de website (~1.2s) para early-skip quando tem site."""
+        """Peek instantâneo de website (painel já carregado) p/ early-skip."""
+        try:
+            if page.locator(selector).count() == 0:
+                return ""
+        except Exception:
+            return ""
         return self._get_href(page, selector, timeout_ms=1200)
 
     def _extract_hours(self, page: Page) -> str:
@@ -1295,28 +1410,16 @@ class PlaywrightScraper:
             String com horários no formato "Seg: 09:00–22:00 | Ter: ..."
             ou string vazia se não encontrado.
         """
+        # Sem clicar para expandir: horário não entra na nota e o clique
+        # custava ~1s por painel. Lê só o que já está no DOM, numa ida só.
         try:
-            # Tenta expandir o bloco de horários clicando nele
-            toggle = page.locator(
-                "div.t39EBf, [data-item-id='oh'] button, .OMl5r"
-            ).first
-            if toggle.is_visible(timeout=2000):
-                toggle.click()
-                _random_delay(0.3, 0.8)
-        except Exception:
-            pass
-
-        try:
-            rows = page.locator(f"{_SEL_PANEL_HOURS} tr").all()
-            hours_parts = []
-            for row in rows:
-                cells = row.locator("td").all()
-                if len(cells) >= 2:
-                    day = (cells[0].text_content() or "").strip()
-                    time_range = (cells[1].text_content() or "").strip()
-                    if day and time_range:
-                        hours_parts.append(f"{day}: {time_range}")
-            return " | ".join(hours_parts) if hours_parts else ""
+            parts = page.locator(_SEL_PANEL_HOURS).first.evaluate(
+                """t => [...t.rows].map(r => [...r.cells].map(c => c.textContent.trim()))
+                        .filter(c => c.length >= 2 && c[0] && c[1])
+                        .map(c => c[0] + ': ' + c[1])""",
+                timeout=500,
+            )
+            return " | ".join(parts) if parts else ""
         except Exception:
             return ""
 

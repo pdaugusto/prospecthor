@@ -135,10 +135,12 @@ def ensure_schema() -> None:
             ("raio",       "Raio",        25,    3490,  "price_1TwTc1KXomNHAqYluOCBbtZF",    2,     None,      None,          "#60a5fa"),
             ("tempestade", "Tempestade",  50,    5990,  "price_1TwTcLKXomNHAqYlIOEB21IV",    3,     None,      None,          "#a78bfa"),
             ("trovao",     "Trovão",      100,   9990,  "price_1TwTcjKXomNHAqYlsEIfdnKD",    4,     None,      None,          "#f59e0b"),
-            ("loki",       "Loki",        300,   7500,  "",                                  5,     10,        30,            "#00ff66"),
-            ("odin",       "Odin",        600,   15000, "",                                  6,     20,        30,            "#00d2ff"),
-            ("thor",       "Thor",        900,   22000, "",                                  7,     30,        30,            "#ff003c"),
-            ("valhalla",   "Valhalla",    1500,  36000, "",                                  8,     50,        30,            "#ffea00"),
+            # Planos: lead mais barato que o melhor crédito avulso (R$ 1,00) e
+            # caindo a cada degrau — R$ 0,89 → 0,75 → 0,65 → 0,56 por lead.
+            ("loki",       "Loki",        300,   26700, "",                                  5,     10,        30,            "#34d399"),
+            ("odin",       "Odin",        600,   44900, "",                                  6,     20,        30,            "#38bdf8"),
+            ("thor",       "Thor",        900,   58900, "",                                  7,     30,        30,            "#f5b942"),
+            ("valhalla",   "Valhalla",    1500,  83900, "",                                  8,     50,        30,            "#c084fc"),
         ]
         for slug, name, coins, cents, stripe_price_id, order, daily_cap, duration_days, color in packages_seed:
             cur.execute(

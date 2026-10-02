@@ -1178,6 +1178,8 @@ def root_or_landing():
 
 @app.route("/leads")
 @app.route("/lead/<int:lead_id>")
+@app.route("/board")
+@app.route("/quadro")
 @app.route("/reports")
 @app.route("/settings")
 @app.route("/users")

@@ -2112,6 +2112,26 @@
             position: relative; overflow: hidden;
         }
         .chart-box canvas { max-height: 260px !important; }
+        /* Barras horizontais em HTML (status, nichos, relatórios) */
+        .vz { display: flex; flex-direction: column; gap: 14px; min-height: 220px; }
+        .vz-total { display: flex; align-items: baseline; gap: 8px; }
+        .vz-total b { font-size: 30px; font-weight: 900; letter-spacing: -.03em; color: var(--text); font-variant-numeric: tabular-nums; }
+        .vz-total span { font-size: 13px; color: var(--muted); }
+        .vz-stack { display: flex; gap: 2px; height: 12px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.05); }
+        .vz-stack i { display: block; height: 100%; min-width: 3px; }
+        .vz-rows { display: flex; flex-direction: column; gap: 10px; }
+        .vz-row { display: grid; grid-template-columns: minmax(96px, 34%) 1fr auto; gap: 12px; align-items: center; font-size: 13px; }
+        .vz-row .lb { display: flex; align-items: center; gap: 8px; color: var(--text); min-width: 0; }
+        .vz-row .lb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .vz-row .sw { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .vz-row .tr { height: 10px; border-radius: 999px; background: rgba(255,255,255,.05); overflow: hidden; }
+        .vz-row .tr i { display: block; height: 100%; border-radius: 0 4px 4px 0; transition: width .5s ease; }
+        .vz-row .vl { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; min-width: 64px; }
+        .vz-row .vl small { font-weight: 600; color: var(--muted); margin-left: 4px; }
+        .vz-row:hover .lb span { color: #fff; }
+        .vz-row:hover .tr { background: rgba(255,255,255,.09); }
+        .vz-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: var(--muted); font-size: 13px; padding: 20px; border: 1px dashed var(--border); border-radius: 14px; }
+        .vz-empty b { color: var(--text); font-size: 15px; }
 
         /* Top leads */
         .top-list { display: flex; flex-direction: column; gap: 8px; }
@@ -2160,7 +2180,7 @@
             background: radial-gradient(circle at 50% 40%, rgba(240, 212, 168, 0.28), rgba(201, 160, 96, 0.08) 70%);
             border-color: rgba(201, 160, 96, 0.55);
             box-shadow: 0 0 16px rgba(201, 160, 96, 0.4);
-            animation: zap-hot 2.4s ease-in-out infinite;
+            animation: zap-hot 3.2s ease-in-out infinite;
         }
         .top-item.rank-1 .fire-ico { width: 34px; height: 34px; }
         .top-item.rank-1 .fire-ico svg { width: 21px; height: 21px; }
@@ -2197,10 +2217,10 @@
             90% { transform: scale(1.08) rotate(4deg); filter: brightness(1.4); box-shadow: 0 0 18px rgba(34, 211, 238, 0.55); }
         }
         @keyframes zap-hot {
-            0%, 72%, 100% { transform: none; filter: none; box-shadow: 0 0 16px rgba(201, 160, 96, 0.4); }
-            77% { transform: scale(1.16) rotate(-8deg); filter: brightness(1.5); box-shadow: 0 0 28px rgba(240, 212, 168, 0.85); }
-            82% { transform: scale(0.97); filter: none; }
-            87% { transform: scale(1.1) rotate(5deg); filter: brightness(1.35); box-shadow: 0 0 22px rgba(240, 212, 168, 0.65); }
+            0%, 78%, 100% { transform: none; filter: none; box-shadow: 0 0 16px rgba(201, 160, 96, 0.4); }
+            82% { transform: scale(1.16) rotate(-8deg); filter: brightness(1.5); box-shadow: 0 0 28px rgba(240, 212, 168, 0.85); }
+            86% { transform: scale(0.97); filter: none; }
+            90% { transform: scale(1.1) rotate(5deg); filter: brightness(1.35); box-shadow: 0 0 22px rgba(240, 212, 168, 0.65); }
         }
         @media (prefers-reduced-motion: reduce) {
             .fire-ico { animation: none !important; }
@@ -2821,6 +2841,27 @@
             .stat .value { font-size: 20px; }
             .home-hero h2 { font-size: 20px; }
         }
+
+        /* —— Loja / Carteira / Pedidos / Relatórios: acabamento —— */
+        .shop-kicker { color: #C9A060; }
+        .shop-kicker-sub { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--muted); }
+        .shop-ways { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 560px; }
+        @media (max-width: 640px) { .shop-ways { grid-template-columns: 1fr; } }
+        .shop-way { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,.25); display: grid; gap: 4px; }
+        .shop-way b { font-size: 13px; font-weight: 800; }
+        .shop-way span { font-size: 12px; color: var(--muted); line-height: 1.5; }
+        .shop-way.plan { border-color: rgba(0,212,255,.28); } .shop-way.plan b { color: var(--neon); }
+        .shop-way.coin { border-color: rgba(201,160,96,.3); } .shop-way.coin b { color: #E8C994; }
+        .wallet-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (max-width: 720px) { .wallet-stats { grid-template-columns: 1fr; } }
+        .orders-howto { counter-reset: none; }
+        .orders-howto-step { position: relative; }
+        .orders-howto-step .n { flex-shrink: 0; }
+        .period-seg { display: inline-flex; padding: 4px; gap: 4px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,.25); }
+        .period-seg button { min-height: 34px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .period-seg button:hover { color: var(--text); }
+        .period-seg button.on { background: rgba(0,212,255,.12); color: var(--neon); box-shadow: inset 0 0 0 1px rgba(0,212,255,.35); }
+        #view-reports .charts .panel h3, #view-home .charts .panel h3 { margin-bottom: 14px; }
     </style>
 </head>
 <body>
@@ -3000,18 +3041,15 @@
                     <div class="shop-hero__copy">
                         <div class="shop-kicker"><i></i> Planos e Créditos</div>
                         <h2>Escolha como <em>receber leads</em></h2>
-                        <p>
-                            Aqui você escolhe entre um <strong style="color:#fff;">Plano</strong> (cota fixa de leads por dia, distribuídos automaticamente pelo admin)
-                            ou <strong style="color:#fff;">Trovoedas</strong> (moedas pra pedir leads quando quiser na aba Pedidos).
-                        </p>
-                        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,212,255,0.2);background:rgba(0,212,255,0.05);font-size:12px;color:#aaa;line-height:1.5;">
-                                <strong style="color:#00d4ff;">Planos</strong><br>
-                                Cota de leads/dia definida. O admin distribui pra você automaticamente. Basta esperar chegar.
+                        <p>Duas formas, mesma regra: <strong style="color:#fff;">1 Trovoeda = 1 lead</strong> com contato na sua conta.</p>
+                        <div class="shop-ways">
+                            <div class="shop-way plan">
+                                <b>Planos de 30 dias</b>
+                                <span>Cota diária entregue na sua conta. O lead sai mais barato.</span>
                             </div>
-                            <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(201,160,96,0.2);background:rgba(201,160,96,0.05);font-size:12px;color:#aaa;line-height:1.5;">
-                                <strong style="color:#C9A060;">Trovoedas</strong><br>
-                                Compre moedas e use pra pedir leads na aba Pedidos. 1 moeda = 1 lead. Não expiram.
+                            <div class="shop-way coin">
+                                <b>Créditos avulsos</b>
+                                <span>Peça leads quando quiser em Pedidos. Não expiram.</span>
                             </div>
                         </div>
                     </div>
@@ -3026,7 +3064,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="mini-roi">💰 Com <strong>R$ 34,90</strong> você aborda <strong>~25 empresas</strong> — 1 fechamento de R$ 1.500 paga <strong>43×</strong>.</div>
                 <div id="shop-packages">
                     <div class="pkg-card" style="grid-column:1/-1;opacity:0.7;text-align:center;padding:40px;">
                         Carregando pacotes…
@@ -3069,21 +3106,21 @@
                         <div class="n">1</div>
                         <div>
                             <strong>Você pede</strong>
-                            <span>Com 5 moedas: leads aleatórios do estoque. A partir de 10: escolhe cidade e nicho.</span>
+                            <span>Até 9 leads vêm do estoque; a partir de 10 você escolhe cidade e nicho.</span>
                         </div>
                     </div>
                     <div class="orders-howto-step">
                         <div class="n">2</div>
                         <div>
                             <strong>Moedas reservadas</strong>
-                            <span>Saem do saldo na hora. Se recusarem, voltam.</span>
+                            <span>Saem do saldo na hora e voltam se o pedido for recusado.</span>
                         </div>
                     </div>
                     <div class="orders-howto-step">
                         <div class="n">3</div>
                         <div>
                             <strong>Leads na conta</strong>
-                            <span>Aprovado → contato pronto em Meus leads.</span>
+                            <span>Aprovado, o contato aparece em Meus leads.</span>
                         </div>
                     </div>
                 </div>
@@ -3230,17 +3267,9 @@
                     <div class="shop-hero__copy">
                         <div class="shop-kicker"><i></i> Conta</div>
                         <h2>Sua <em>carteira</em></h2>
-                        <p>
-                            Acompanhe saldo, recargas e o consumo de cada lead entregue.
-                            1 Trovoeda = 1 lead · moedas <strong style="color:#e8d48a;">não expiram</strong>.
-                        </p>
-                        <div class="shop-hero__pills" style="margin-top:16px;">
-                            <span class="shop-pill">Extrato em tempo real</span>
-                            <span class="shop-pill">Crédito e débito</span>
-                        </div>
-                        <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;">
+                        <p>Cada entrada e saída de Trovoedas fica no extrato abaixo. 1 Trovoeda = 1 lead e o saldo <strong style="color:#e8d48a;">não expira</strong>.</p>
+                        <div style="margin-top:18px;">
                             <button type="button" class="btn-recharge" onclick="navigateTo('/shop')">＋ Recarregar</button>
-                            <button type="button" class="btn" onclick="navigateTo('/shop')" style="border-radius:999px;font-size:12px;font-weight:700;">Ver pacotes</button>
                         </div>
                     </div>
                     <div class="shop-balance-card">
@@ -3257,17 +3286,12 @@
 
                 <div class="wallet-stats">
                     <div class="wallet-stat">
-                        <div class="ws-label">Saldo</div>
-                        <div class="ws-value gold" id="wallet-stat-bal"><img class="coin-mini lg" src="/static/trovoeda-coin.png?v=16" alt="" />0</div>
-                        <div class="ws-hint">Disponível agora</div>
-                    </div>
-                    <div class="wallet-stat">
-                        <div class="ws-label">Créditos</div>
+                        <div class="ws-label">Entradas</div>
                         <div class="ws-value pos" id="wallet-stat-in">+0</div>
                         <div class="ws-hint">Compras e bônus</div>
                     </div>
                     <div class="wallet-stat">
-                        <div class="ws-label">Consumo</div>
+                        <div class="ws-label">Saídas</div>
                         <div class="ws-value neg" id="wallet-stat-out">−0</div>
                         <div class="ws-hint">Leads entregues</div>
                     </div>
@@ -3399,11 +3423,11 @@
                 <div class="charts">
                     <div class="panel">
                         <h3 id="home-chart-status-title">Status dos leads</h3>
-                        <div class="chart-box"><canvas id="chart-status"></canvas></div>
+                        <div id="chart-status"></div>
                     </div>
                     <div class="panel">
-                        <h3>Por nicho</h3>
-                        <div class="chart-box"><canvas id="chart-niche"></canvas></div>
+                        <h3>Leads por nicho</h3>
+                        <div id="chart-niche"></div>
                     </div>
                 </div>
                 <div class="panel">
@@ -3704,7 +3728,12 @@
                         <p id="reports-sub">Performance da sua carteira de leads no período selecionado.</p>
                     </div>
                     <div class="admin-hero-actions">
-                        <select id="report-period" onchange="loadReports()" class="report-period-select">
+                        <div class="period-seg" role="group" aria-label="Período">
+                            <button type="button" data-p="daily" onclick="setReportPeriod('daily')">Hoje</button>
+                            <button type="button" data-p="weekly" class="on" onclick="setReportPeriod('weekly')">7 dias</button>
+                            <button type="button" data-p="monthly" onclick="setReportPeriod('monthly')">30 dias</button>
+                        </div>
+                        <select id="report-period" onchange="loadReports()" class="report-period-select" hidden>
                             <option value="daily">Hoje</option>
                             <option value="weekly" selected>7 dias</option>
                             <option value="monthly">30 dias</option>
@@ -3738,11 +3767,11 @@
                 <div class="charts">
                     <div class="panel">
                         <h3>Funil do período</h3>
-                        <div class="chart-box"><canvas id="chart-report"></canvas></div>
+                        <div id="chart-report"></div>
                     </div>
                     <div class="panel">
-                        <h3>Sinais / problemas</h3>
-                        <div class="chart-box"><canvas id="chart-problems"></canvas></div>
+                        <h3>Problemas mais comuns nos leads</h3>
+                        <div id="chart-problems"></div>
                     </div>
                 </div>
 
@@ -3968,7 +3997,7 @@
                             body: JSON.stringify({ status: stage }),
                         });
                         if (!res.ok) throw new Error('HTTP ' + res.status);
-                        if (typeof showToast === 'function') showToast(stage === 'fechado' ? 'Fechado! 🎉💰' : 'Movido para ' + stageOf(stage).label + ' ✓');
+                        if (typeof showToast === 'function') showToast(stage === 'fechado' ? 'Negócio fechado!' : 'Movido para ' + stageOf(stage).label + ' ✓');
                         if (typeof clearLeadsCache === 'function') clearLeadsCache();
                     } catch (err) {
                         console.error('moveBoardCard', err);
@@ -4147,6 +4176,52 @@
         let lastHomeSnapshot = null;
 
         let sparkTotal = null, sparkNovos = null, sparkContact = null;
+
+        // Barras horizontais em HTML: status (empilhada + linhas) e ranking (top N + Outros)
+        const VZ = { novo: '#00d4ff', contato: '#a78bfa', ganho: '#C9A060', fora: '#64748b' };
+        function vzPretty(id) {
+            const t = String(id || '').replace(/_/g, ' ').trim();
+            return t ? t.charAt(0).toUpperCase() + t.slice(1) : '—';
+        }
+        function vzEmpty(el, title, sub, cta) {
+            el.innerHTML = `<div class="vz"><div class="vz-empty"><b>${esc(title)}</b><span>${esc(sub)}</span>${cta || ''}</div></div>`;
+        }
+        function vzStatus(el, items, totalLabel) {
+            if (!el) return;
+            const total = items.reduce((a, it) => a + (Number(it.value) || 0), 0);
+            if (!total) return false;
+            const pct = v => Math.round((v / total) * 100);
+            el.innerHTML = `<div class="vz">
+                <div class="vz-total"><b>${total.toLocaleString('pt-BR')}</b><span>${esc(totalLabel)}</span></div>
+                <div class="vz-stack" role="img" aria-label="${esc(items.map(it => it.label + ' ' + it.value).join(', '))}">
+                    ${items.filter(it => it.value > 0).map(it => `<i style="flex:${it.value};background:${it.color}" title="${esc(it.label)}: ${it.value} (${pct(it.value)}%)"></i>`).join('')}
+                </div>
+                <div class="vz-rows">${items.map(it => `
+                    <div class="vz-row" title="${esc(it.label)}: ${it.value} (${pct(it.value)}%)">
+                        <span class="lb"><i class="sw" style="background:${it.color}"></i><span>${esc(it.label)}</span></span>
+                        <span class="tr"><i style="width:${pct(it.value)}%;background:${it.color}"></i></span>
+                        <span class="vl">${Number(it.value).toLocaleString('pt-BR')}<small>${pct(it.value)}%</small></span>
+                    </div>`).join('')}
+                </div></div>`;
+            return true;
+        }
+        function vzRank(el, obj, color, maxRows) {
+            if (!el) return false;
+            const entries = Object.entries(obj || {}).map(([k, v]) => [k, Number(v) || 0]).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1]);
+            if (!entries.length) return false;
+            const n = maxRows || 7;
+            const top = entries.slice(0, n);
+            const rest = entries.slice(n).reduce((a, e) => a + e[1], 0);
+            if (rest) top.push(['__outros', rest]);
+            const max = top.reduce((a, e) => Math.max(a, e[1]), 0) || 1;
+            el.innerHTML = `<div class="vz"><div class="vz-rows">${top.map(([k, v]) => `
+                <div class="vz-row" title="${esc(k === '__outros' ? 'Outros' : vzPretty(k))}: ${v}">
+                    <span class="lb"><span>${esc(k === '__outros' ? `Outros (${entries.length - n})` : vzPretty(k))}</span></span>
+                    <span class="tr"><i style="width:${Math.max(3, Math.round(v / max * 100))}%;background:${k === '__outros' ? '#3a475c' : color}"></i></span>
+                    <span class="vl">${v.toLocaleString('pt-BR')}</span>
+                </div>`).join('')}</div></div>`;
+            return true;
+        }
 
         function destroyHomeCharts() {
             if (chartStatus) {
@@ -6099,7 +6174,8 @@
                         <div class="shop-grid${list === planos ? ' plans-grid' : ''}">${list.map(renderCard).join('')}</div>`;
                 };
 
-                grid.innerHTML = renderGroup(planos, 'PLANOS', '0') + renderGroup(moedas, 'MOEDAS', '32px');
+                grid.innerHTML = renderGroup(planos, 'Planos de 30 dias <span class="shop-kicker-sub">· cota diária, lead mais barato</span>', '0')
+                    + renderGroup(moedas, 'Créditos avulsos <span class="shop-kicker-sub">· use quando quiser, não expiram</span>', '36px');
                 grid.querySelectorAll('.btn-buy, .plan-cta').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const slug = btn.getAttribute('data-slug') || '';
@@ -6940,64 +7016,23 @@
                 const barEl = document.getElementById('chart-niche');
                 destroyHomeCharts();
 
-                if (pieEl && pieEl.offsetParent !== null || pieEl) {
-                    try {
-                        const pieCtx = pieEl.getContext('2d');
-                        const pieLabels = patrao
-                            ? ['Sobras novas', 'Sobras c/ contato', 'Outros']
-                            : ['Novos', 'Contactados', 'Descartados'];
-                        chartStatus = new Chart(pieCtx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: pieLabels,
-                                datasets: [{
-                                    data: [novos, contactados, descartados],
-                                    backgroundColor: ['#00d4ff', '#f59e0b', '#ff4d6a'],
-                                    borderWidth: 0
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                animation: false,
-                                plugins: { legend: { position: 'bottom' } },
-                                cutout: '62%'
-                            }
-                        });
-                    } catch (e) { console.error('chart status', e); }
+                const statusItems = patrao
+                    ? [
+                        { label: 'Sobras novas', value: novos, color: VZ.novo },
+                        { label: 'Sobras c/ contato', value: contactados, color: VZ.contato },
+                        { label: 'Outros', value: descartados, color: VZ.fora },
+                    ]
+                    : [
+                        { label: 'Novos', value: novos, color: VZ.novo },
+                        { label: 'Contactados', value: contactados, color: VZ.contato },
+                        { label: 'Descartados', value: descartados, color: VZ.fora },
+                    ];
+                if (!vzStatus(pieEl, statusItems, patrao ? 'sobras no pool' : 'leads na sua conta') && pieEl) {
+                    vzEmpty(pieEl, 'Nenhum lead ainda', 'Assim que os leads chegarem, o status aparece aqui.',
+                        patrao ? '' : `<button type="button" class="btn btn-primary" onclick="navigateTo('/orders')">Pedir leads</button>`);
                 }
-
-                if (barEl) {
-                    try {
-                        const labels = Object.keys(stats.nichos || {});
-                        const values = Object.values(stats.nichos || {});
-                        const barCtx = barEl.getContext('2d');
-                        chartNiche = new Chart(barCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: labels.map(l => String(l).toUpperCase()),
-                                datasets: [{
-                                    data: values,
-                                    backgroundColor: '#00d4ff',
-                                    borderRadius: 4
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                animation: false,
-                                plugins: { legend: { display: false } },
-                                scales: {
-                                    x: { grid: { display: false } },
-                                    y: {
-                                        grid: { color: '#1a2233' },
-                                        beginAtZero: true,
-                                        ticks: { precision: 0 }
-                                    }
-                                }
-                            }
-                        });
-                    } catch (e) { console.error('chart niche', e); }
+                if (!vzRank(barEl, stats.nichos, VZ.novo, 7) && barEl) {
+                    vzEmpty(barEl, 'Sem nichos ainda', 'Os nichos dos seus leads aparecem aqui.');
                 }
 
                 if (!stillHome()) return;
@@ -7461,6 +7496,18 @@
 
         const ICO_WA = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.85 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
         const ICO_CALL = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.15 15.15 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.4 21 3 13.6 3 4.5a1 1 0 011-1H7.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>`;
+        // Raios dos hot leads piscam juntos: alinha a fase de cada um ao mesmo relógio
+        (function syncZaps() {
+            const PERIOD = 3200;
+            const align = el => { el.style.animationDelay = -(Date.now() % PERIOD) + 'ms'; };
+            const scan = root => {
+                if (root.classList && root.classList.contains('fire-ico')) align(root);
+                if (root.querySelectorAll) root.querySelectorAll('.fire-ico').forEach(align);
+            };
+            new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) scan(n); })))
+                .observe(document.documentElement, { childList: true, subtree: true });
+            document.addEventListener('DOMContentLoaded', () => scan(document));
+        })();
         const FIRE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.6 1.8 4.4 13.6h6.3l-1.5 8.6 9.6-12.6h-6.5z"/><path fill="#fff" opacity=".55" d="M12.6 4.6 7.6 11.8h3.2z"/></svg>`;
 
         function actionButtons(l, stopProp) {
@@ -7948,6 +7995,12 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             } catch (e) { console.error(e); }
         }
 
+        function setReportPeriod(p) {
+            const sel = document.getElementById('report-period');
+            if (sel) sel.value = p;
+            document.querySelectorAll('.period-seg button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+            loadReports();
+        }
         async function loadReports() {
             const periodEl = document.getElementById('report-period');
             if (!periodEl) return;
@@ -7982,70 +8035,18 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                 const empty = document.getElementById('reports-empty-hint');
                 if (empty) empty.style.display = total === 0 ? '' : 'none';
 
-                const canvas = document.getElementById('chart-report');
-                if (canvas && typeof Chart !== 'undefined') {
-                    const ctx = canvas.getContext('2d');
-                    if (chartReport) chartReport.destroy();
-                    chartReport = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Sem contato', 'Contactados', 'Convertidos (aprox.)'],
-                            datasets: [{
-                                data: [
-                                    novos,
-                                    contact,
-                                    Math.round((contact * (Number(data.conversao_taxa) || 0)) / 100),
-                                ],
-                                backgroundColor: ['#00d4ff', '#C9A060', '#34d399'],
-                                borderWidth: 0,
-                            }],
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: { color: '#8b9bb4', boxWidth: 12, padding: 14 },
-                                },
-                            },
-                            cutout: '62%',
-                        },
-                    });
+                const conv = Math.round((contact * (Number(data.conversao_taxa) || 0)) / 100);
+                const funnelEl = document.getElementById('chart-report');
+                if (!vzStatus(funnelEl, [
+                    { label: 'Sem contato', value: novos, color: VZ.novo },
+                    { label: 'Contactados', value: Math.max(0, contact - conv), color: VZ.contato },
+                    { label: 'Convertidos', value: conv, color: VZ.ganho },
+                ], 'leads no período') && funnelEl) {
+                    vzEmpty(funnelEl, 'Sem leads neste período', 'Troque o período ou peça leads novos.');
                 }
-
-                const labels = Object.keys(data.problemas_comuns || {});
-                const values = Object.values(data.problemas_comuns || {});
-                const canvas2 = document.getElementById('chart-problems');
-                if (canvas2 && typeof Chart !== 'undefined') {
-                    const ctx2 = canvas2.getContext('2d');
-                    if (chartProblems) chartProblems.destroy();
-                    chartProblems = new Chart(ctx2, {
-                        type: 'bar',
-                        data: {
-                            labels: labels.length ? labels : ['Sem sinais'],
-                            datasets: [{
-                                data: values.length ? values : [0],
-                                backgroundColor: '#00d4ff',
-                                borderRadius: 6,
-                            }],
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: {
-                                    grid: { color: 'rgba(26,34,51,0.9)' },
-                                    beginAtZero: true,
-                                    ticks: { precision: 0, color: '#5a6b82' },
-                                },
-                                y: {
-                                    grid: { display: false },
-                                    ticks: { color: '#8b9bb4' },
-                                },
-                            },
-                        },
-                    });
+                const probEl = document.getElementById('chart-problems');
+                if (!vzRank(probEl, data.problemas_comuns, VZ.contato, 7) && probEl) {
+                    vzEmpty(probEl, 'Nenhum problema registrado', 'Os sinais encontrados nos leads (sem site, sem Instagram…) aparecem aqui.');
                 }
             } catch (e) {
                 console.error(e);

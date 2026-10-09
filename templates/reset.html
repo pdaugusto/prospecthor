@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nova senha — ProspecTHOR</title>
   <meta name="theme-color" content="#05070b" />
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=5" />
-  <link rel="icon" type="image/png" href="/static/favicon-32x32.png?v=5" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=5" />
-  <link rel="manifest" href="/static/site.webmanifest?v=5" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=6" />
+  <link rel="icon" type="image/png" href="/static/favicon-32x32.png?v=6" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=6" />
+  <link rel="manifest" href="/static/site.webmanifest?v=6" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -20,8 +20,8 @@
     .bg { position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(ellipse 50% 40% at 50% 0%, rgba(0,212,255,.1), transparent 55%), var(--bg); }
     .wrap { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px 32px; width:100%; }
     .brand { display:inline-flex; align-items:center; gap:11px; margin-bottom:28px; }
-    .brand-mark { width:40px; height:40px; border-radius:12px; background:linear-gradient(145deg,#00d4ff 0%,#0a6fa8 100%); display:grid; place-items:center; overflow:hidden; }
-    .brand-mark img { width:26px; height:26px; display:block; }
+    .brand-mark { width:40px; height:40px; border-radius:12px; background: #0c111a; display:grid; place-items:center; overflow:hidden; }
+    .brand-mark img { width: 32px; height: 32px; display:block; }
     .brand-word { font-size:16px; font-weight:800; color:#fff; }
     .brand-word span { color:var(--neon); }
     .card { width:100%; max-width:400px; padding:32px 28px 26px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(165deg,rgba(14,18,28,.98),rgba(8,10,16,.99)); position:relative; }
@@ -44,7 +44,7 @@
 <body>
   <div class="bg" aria-hidden="true"></div>
   <div class="wrap">
-    <a class="brand" href="/"><span class="brand-mark"><img src="/static/thor-mask.png" alt="" width="26" height="26" /></span><span class="brand-word">Prospec<span>THOR</span></span></a>
+    <a class="brand" href="/"><span class="brand-mark"><img src="/static/logo-mark.svg?v=6" alt="" width="32" height="32" /></span><span class="brand-word">Prospec<span>THOR</span></span></a>
     <div class="card">
       <h1>Nova senha</h1>
       {% if done %}

@@ -290,7 +290,7 @@
             border-color: var(--neon); color: var(--neon);
             background: var(--neon-dim); text-decoration: none;
         }
-        /* Prompt / mensagem — branco (precisa configurar antes do WA) */
+        /* Prompt / mensagem Avanti — branco */
         .icon-btn.prompt {
             background: #ffffff;
             border-color: #e8eef7;
@@ -3458,7 +3458,7 @@
                 <div class="onboard-check" id="onboard-check" hidden>
                     <div class="onboard-head">
                         <h3>Comece por aqui</h3>
-                        <span id="onboard-count">0 de 3</span>
+                        <span id="onboard-count">0 de 2</span>
                     </div>
                     <div class="onboard-bar"><i id="onboard-fill"></i></div>
                     <div id="onboard-steps"></div>
@@ -4163,14 +4163,9 @@
             </div>
             <div class="modal-body">
                 <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;">
-                    1) Coloque <strong style="color:var(--text)">seu nome uma vez</strong> · 2) Revise · 3) WhatsApp já com o texto.<br>
-                    <span style="color:var(--neon);">O nome vale em <strong>todos</strong> os leads deste aparelho.</span>
+                    1) Revise a mensagem feita para este lead · 2) WhatsApp já com o texto.<br>
+                    <span style="color:var(--neon);">Mensagem da <strong>Avanti Business</strong>, personalizada com nome, cidade e segmento.</span>
                 </p>
-                <div class="form-g">
-                    <label>Seu nome (salva neste aparelho · todos os leads)</label>
-                    <input type="text" id="seller-name" placeholder="Ex: João" oninput="saveSellerName(this.value)" onblur="saveSellerName(this.value, true)" autocomplete="name">
-                    <small id="seller-name-status" style="display:block;margin-top:6px;font-size:11px;color:var(--muted);"></small>
-                </div>
                 <div class="form-g">
                     <label>Canal</label>
                     <select id="prompt-channel" onchange="generatePrompt()">
@@ -4678,59 +4673,77 @@
         }
 
         function getSellerName() {
-            return (localStorage.getItem('prospecthor_seller_name') || '').trim();
+            return 'Avanti Business';
         }
 
         function refreshSellerNameStatus() {
-            const el = document.getElementById('seller-name-status');
-            if (!el) return;
-            const n = getSellerName();
-            if (n) {
-                el.innerHTML = `Nome salvo: <strong style="color:var(--text)">${esc(n)}</strong> — usado em todos os prompts e no WhatsApp.`;
-            } else {
-                el.textContent = 'Ainda sem nome. Digite uma vez e fica padrão nos outros leads.';
-            }
+            return;
         }
 
-        /** Mensagem de abordagem (mesmo texto do modal) */
+        /** Mensagem de abordagem Avanti (mesmo texto do modal) */
         function buildApproachMessage(lead, channel) {
             if (!lead) return '';
-            const seller = getSellerName() || '[Seu Nome]';
             const ch = channel || 'whatsapp';
-            const city = lead.city || 'sua região';
-            const niche = lead.niche || 'negócio';
-            const name = lead.name || 'empresa';
-            const n = String(niche || '').toLowerCase();
+            const city = lead.city || 'sua cidade';
+            const niche = lead.niche || lead.category || 'seu segmento';
+            const name = lead.name || 'sua empresa';
+            const n = String(lead.niche || lead.category || '').toLowerCase();
             let offer = 'site profissional e presença digital';
-            if (n.includes('restaurant') || n.includes('padaria') || n.includes('acai')) {
-                offer = 'cardápio digital, site e mais pedidos pelo WhatsApp';
-            } else if (n.includes('foodtruck') || n.includes('food')) {
-                offer = 'cardápio digital com QR Code e pedidos no WhatsApp';
+            let searchTerm = niche;
+            if (n.includes('padaria') || n.includes('panific')) {
+                offer = 'cardápio digital e mais pedidos no WhatsApp';
+                searchTerm = 'padaria';
+            } else if (n.includes('acai') || n.includes('aça') || n.includes('sorvet')) {
+                offer = 'cardápio digital e mais pedidos no WhatsApp';
+                searchTerm = 'açaiteria';
+            } else if (n.includes('restaurant') || n.includes('pizz') || n.includes('hamburg') || n.includes('marmit') || n.includes('comida')) {
+                offer = 'cardápio digital e mais pedidos no WhatsApp';
+                searchTerm = 'restaurante';
+            } else if (n.includes('foodtruck') || n.includes('food') || n.includes('lanche') || n.includes('pastel')) {
+                offer = 'cardápio digital e mais pedidos no WhatsApp';
+                searchTerm = 'lanchonete';
             } else if (n.includes('odonto') || n.includes('clinica') || n.includes('fisio') || n.includes('psico') || n.includes('estetica')) {
-                offer = 'site com agenda online e WhatsApp para marcar';
+                offer = 'site com agenda online e captação no WhatsApp';
+                searchTerm = 'clínica';
             } else if (n.includes('advoc')) {
-                offer = 'site institucional e captura de clientes no Google';
+                offer = 'site institucional e captação de clientes';
+                searchTerm = 'advogado';
             } else if (n.includes('imob') || n.includes('construt')) {
-                offer = 'site com catálogo de imóveis/obras e landing de lançamento';
-            } else if (n.includes('barbear') || n.includes('manicure') || n.includes('salao')) {
-                offer = 'agenda online e página de serviços/preços';
+                offer = 'site com catálogo e captação de clientes';
+                searchTerm = 'imobiliária';
+            } else if (n.includes('barbear') || n.includes('manicure') || n.includes('salao') || n.includes('cabel')) {
+                offer = 'agenda online e página de serviços';
+                searchTerm = 'barbearia';
             } else if (n.includes('mentor') || n.includes('palestr')) {
-                offer = 'site de autoridade, captura de leads e página de eventos';
+                offer = 'site de autoridade e captação de alunos';
+                searchTerm = 'curso';
             } else if (n.includes('contab')) {
-                offer = 'site com serviços e formulário de captação';
-            } else if (n.includes('hotel')) {
-                offer = 'site com reservas e vitrine do hotel';
+                offer = 'site com serviços e captação de clientes';
+                searchTerm = 'contador';
+            } else if (n.includes('hotel') || n.includes('pousada')) {
+                offer = 'site com reservas e vitrine';
+                searchTerm = 'hotel';
             } else if (n.includes('seguro')) {
-                offer = 'landing de cotação e site profissional';
+                offer = 'site profissional e captação de clientes';
+                searchTerm = 'seguradora';
+            } else if (n.includes('academia') || n.includes('fitness')) {
+                offer = 'site com planos e captação de alunos';
+                searchTerm = 'academia';
+            } else if (n.includes('pet') || n.includes('vet')) {
+                offer = 'site com serviços e agendamento';
+                searchTerm = 'pet shop';
+            } else if (n.includes('oficina') || n.includes('mecan')) {
+                offer = 'página de serviços e captação no WhatsApp';
+                searchTerm = 'oficina';
             }
 
             if (ch === 'instagram') {
-                return 'Oi! Sou ' + seller + '. Vi a ' + name + ' no Google e percebi que vocês ainda não têm presença digital completa. Trabalho com ' + offer + ' para ' + niche + '. Topa um papo rápido de 5 min?';
+                return 'Olá, ' + name + '! Aqui é da Avanti Business. Dei uma olhada em vocês aqui em ' + city + ' e vi que quem busca ' + searchTerm + ' em ' + city + ' não encontra um site de vocês. No fim esse cliente acaba indo para o concorrente. A gente ajuda empresas tradicionais a entrar no digital com ' + offer + '. Já temos uma boa experiência nisso. Para ' + name + ' a gente faz um diagnóstico e uma melhoria inicial sem custo e sem compromisso. Posso te chamar aqui? É só responder sim.';
             }
             if (ch === 'email') {
-                return 'Assunto: Presença digital para ' + name + '\n\nOlá, equipe da ' + name + ',\n\nMeu nome é ' + seller + '. Analisei a presença digital da empresa em ' + city + ' e vi uma oportunidade de melhorar com ' + offer + '.\n\nGostaria de agendar uma conversa breve para apresentar uma proposta simples.\n\nAtenciosamente,\n' + seller;
+                return 'Assunto: Uma ideia para ' + name + ' em ' + city + '\n\nOlá, equipe da ' + name + ',\n\nAqui é da Avanti Business. Dei uma olhada em vocês aqui em ' + city + ' e vi que quem busca ' + searchTerm + ' em ' + city + ' não encontra um site de vocês. No fim esse cliente acaba indo para o concorrente.\n\nA gente ajuda empresas tradicionais a entrar no digital com ' + offer + '. Já temos uma boa experiência nisso.\n\nPara ' + name + ' a gente faz um diagnóstico e uma melhoria inicial sem custo e sem compromisso. Posso mandar por aqui?\n\nÉ só responder sim.\n\nAtenciosamente,\nAvanti Business';
             }
-            return 'Olá! Tudo bem? Me chamo ' + seller + '.\n\nVi a ' + name + ' aqui em ' + city + ' e percebi que vocês ainda não têm site próprio. Isso faz com que muita gente te encontre no Google e acabe indo pro concorrente.\n\nA gente faz ' + offer + '. Posso te mostrar em 5 minutos como fica?\n\nQual o melhor horário pra gente conversar?';
+            return 'Olá, ' + name + '! Aqui é da Avanti Business. Dei uma olhada em vocês aqui em ' + city + ' e vi que quem busca ' + searchTerm + ' em ' + city + ' não encontra um site de vocês. No fim esse cliente acaba indo para o concorrente. A gente ajuda empresas tradicionais a entrar no digital com ' + offer + '. Já temos uma boa experiência nisso. Para ' + name + ' a gente faz um diagnóstico e uma melhoria inicial sem custo e sem compromisso. Posso mandar por aqui? É só responder sim.';
         }
 
         function navigateTo(path) {
@@ -7625,7 +7638,7 @@
                 primaryBtn = `<a class="icon-btn ig" href="${esc(ig)}" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram" onclick="${stop}">Instagram</a>`;
             }
             return `
-                <button class="icon-btn prompt" type="button" title="Montar mensagem (seu nome)" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
+                <button class="icon-btn prompt" type="button" title="Montar mensagem" aria-label="Mensagem" onclick="${stop}openPrompt(${id})">✎</button>
                 <button class="icon-btn fav${isFav(l) ? ' on' : ''}" type="button" title="${isFav(l) ? 'Desfavoritar' : 'Favoritar'}" aria-label="Favoritar" aria-pressed="${isFav(l) ? 'true' : 'false'}" onclick="${stop}toggleFavorite(${id})" style="${isFav(l) ? 'color:#E8C994;' : ''}">${isFav(l) ? '★' : '☆'}</button>
                 ${primaryBtn}
                 ${tel && ch !== 'whatsapp' ? `<a class="icon-btn call" href="tel:${tel}" title="Ligar" aria-label="Ligar" onclick="${stop}">${ICO_CALL}</a>` : ''}
@@ -7918,7 +7931,7 @@
                                 <span class="badge-status ${st}">${statusLabel(st)}</span>
                             </div>
                             <div class="action-stack">
-                                <button class="btn btn-prompt-white" type="button" onclick="openPrompt(${lead.id})">✎ Montar mensagem (seu nome)</button>
+                                <button class="btn btn-prompt-white" type="button" onclick="openPrompt(${lead.id})">✎ Montar mensagem</button>
                                 ${(() => {
                                     const ch = primaryContactChannel(lead);
                                     const ig = instagramHref(lead);
@@ -8172,8 +8185,6 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         function setupPrompt() {
-            const saved = getSellerName();
-            document.getElementById('seller-name').value = saved;
             // canal padrão = contato principal do lead
             const chSel = document.getElementById('prompt-channel');
             if (chSel && activePromptLead) {
@@ -8184,43 +8195,23 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             document.getElementById('prompt-modal').classList.add('active');
             generatePrompt();
             updatePromptWaHint();
-            refreshSellerNameStatus();
-            if (!saved) {
-                setTimeout(() => document.getElementById('seller-name')?.focus(), 80);
-            }
         }
 
         function closePrompt() {
-            // garante que o que estiver no campo fique salvo ao fechar
-            const v = document.getElementById('seller-name')?.value?.trim();
-            if (v) localStorage.setItem('prospecthor_seller_name', v);
             document.getElementById('prompt-modal').classList.remove('active');
             activePromptLead = null;
         }
 
         function saveSellerName(name, allowClear) {
-            const v = (name || '').trim();
-            // não apaga o nome salvo se a pessoa só apagou o campo sem querer
-            if (v) {
-                localStorage.setItem('prospecthor_seller_name', v);
-            } else if (allowClear) {
-                localStorage.removeItem('prospecthor_seller_name');
-            }
-            generatePrompt();
-            updatePromptWaHint();
-            refreshSellerNameStatus();
+            return;
         }
 
         function generatePrompt() {
             if (!activePromptLead) return;
-            const inputName = document.getElementById('seller-name')?.value?.trim();
-            if (inputName) localStorage.setItem('prospecthor_seller_name', inputName);
             const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
-            // se o campo estiver vazio no meio da digitação, ainda usa o nome salvo
             const msg = buildApproachMessage(activePromptLead, channel);
             document.getElementById('prompt-text').value = msg;
             updatePromptWaHint();
-            refreshSellerNameStatus();
         }
 
         function updatePromptWaHint() {
@@ -8230,7 +8221,6 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             const lead = activePromptLead;
             const hasPhone = lead && phoneDigits(lead.phone);
             const ig = lead ? instagramHref(lead) : '';
-            const hasName = !!getSellerName();
             const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
             if (channel === 'instagram' || (!hasPhone && ig)) {
                 if (btn) {
@@ -8238,24 +8228,20 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                     btn.textContent = ig ? 'Abrir Instagram do lead' : 'Sem Instagram';
                 }
                 hint.textContent = ig
-                    ? 'Sem WhatsApp válido — use Instagram (copie a mensagem e cole no Direct).'
+                    ? 'Sem WhatsApp válido. Use Instagram (copie a mensagem e cole no Direct).'
                     : 'Sem telefone e sem Instagram neste lead.';
                 return;
             }
             if (btn) btn.textContent = 'Abrir WhatsApp com esta mensagem';
             if (!hasPhone) {
                 hint.textContent = ig
-                    ? 'Sem telefone — mude o canal para Instagram ou use Copiar.'
-                    : 'Este lead não tem telefone — use Copiar e mande por outro canal.';
+                    ? 'Sem telefone. Mude o canal para Instagram ou use Copiar.'
+                    : 'Este lead não tem telefone. Use Copiar e mande por outro canal.';
                 if (btn) btn.disabled = true;
                 return;
             }
             if (btn) btn.disabled = false;
-            if (!hasName) {
-                hint.textContent = 'Dica: preencha seu nome acima — a mensagem no WhatsApp sai personalizada.';
-            } else {
-                hint.textContent = 'Ao clicar, o WhatsApp abre com o texto já escrito. É só enviar.';
-            }
+            hint.textContent = 'Ao clicar, o WhatsApp abre com o texto já escrito. É só revisar e enviar.';
         }
 
         /** WhatsApp direto; se só tem IG, abre Instagram */
@@ -8272,19 +8258,13 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                 alert('Este lead não tem WhatsApp/telefone nem Instagram.');
                 return;
             }
-            if (!getSellerName()) {
-                activePromptLead = lead;
-                setupPrompt();
-                alert('Coloque seu nome na mensagem e depois toque em “Abrir WhatsApp com esta mensagem”.');
-                return;
-            }
             const text = buildApproachMessage(lead, 'whatsapp');
             const url = waLink(lead.phone, text);
             if (url) {
                 openExternalUrl(url);
                 updateStatus(id, 'contactado');
             }
-        }   
+        }
 
         /** Do modal: usa o texto da caixa (editável) */
         function openWhatsAppFromPrompt() {
@@ -8303,13 +8283,6 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             const phone = activePromptLead.phone;
             if (!phoneDigits(phone)) {
                 alert('Este lead não tem telefone.');
-                return;
-            }
-            const nameInput = document.getElementById('seller-name')?.value?.trim();
-            if (nameInput) localStorage.setItem('prospecthor_seller_name', nameInput);
-            if (!getSellerName()) {
-                alert('Preencha seu nome antes de abrir o WhatsApp.');
-                document.getElementById('seller-name')?.focus();
                 return;
             }
             const text = document.getElementById('prompt-text')?.value || buildApproachMessage(activePromptLead, 'whatsapp');
@@ -8342,7 +8315,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
         }
 
-        /* Checklist de ativação: nome → ver leads → chamar 1 */
+        /* Checklist de ativação: ver leads → chamar 1 (mensagem Avanti pronta) */
         function onboardKey() {
             const id = (currentUser && currentUser.id != null) ? currentUser.id : 'anon';
             return 'prospecthor_check_' + id;
@@ -8357,7 +8330,6 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             let dismissed = false;
             try { dismissed = localStorage.getItem(onboardKey()) === 'done'; } catch (_) {}
             if (dismissed) { card.classList.add('done'); card.hidden = true; return; }
-            const hasName = !!(typeof getSellerName === 'function' && getSellerName());
             const leads = Array.isArray(allLeads) ? allLeads : [];
             const hasLeads = leads.length > 0;
             let contacted = false;
@@ -8368,29 +8340,25 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                 });
             } catch (_) {}
             const steps = [
-                { ok: hasName, label: 'Coloque seu nome (vale pra todas as abordagens)' },
                 { ok: hasLeads, label: 'Veja seus leads (bônus de 5 já na conta)' },
                 { ok: contacted, label: 'Chame 1 lead no WhatsApp' },
             ];
             const n = steps.filter(s => s.ok).length;
-            if (n >= 3) {
+            if (n >= 2) {
                 try { localStorage.setItem(onboardKey(), 'done'); } catch (_) {}
                 card.classList.add('done'); card.hidden = true;
                 return;
             }
             card.hidden = false;
             card.classList.remove('done');
-            document.getElementById('onboard-count').textContent = n + ' de 3';
-            document.getElementById('onboard-fill').style.width = Math.round(n / 3 * 100) + '%';
+            document.getElementById('onboard-count').textContent = n + ' de 2';
+            document.getElementById('onboard-fill').style.width = Math.round(n / 2 * 100) + '%';
             const box = document.getElementById('onboard-steps');
-            const escName = (typeof esc === 'function' ? esc : String)(typeof getSellerName === 'function' ? (getSellerName() || '') : '');
             box.innerHTML = steps.map((s, i) => {
                 const dot = s.ok ? '✓' : (i + 1);
                 let action = '';
                 if (!s.ok) {
                     if (i === 0) {
-                        action = `<span class="mini-in"><input id="check-name" placeholder="Seu nome" value="${escName}" maxlength="40" /><button type="button" onclick="checkSaveName()">Salvar</button></span>`;
-                    } else if (i === 1) {
                         action = `<button type="button" class="ghost" onclick="navigateTo('${hasLeads ? '/leads' : '/orders'}')">${hasLeads ? 'Ver leads' : 'Pedir leads'}</button>`;
                     } else {
                         action = `<button type="button" class="ghost" onclick="navigateTo('/leads')">Chamar agora</button>`;
@@ -8400,15 +8368,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
             }).join('');
         }
         function checkSaveName() {
-            const inp = document.getElementById('check-name');
-            const v = (inp && inp.value || '').trim();
-            if (!v) { if (inp) inp.focus(); return; }
-            try {
-                if (typeof saveSellerName === 'function') saveSellerName(v, true);
-                else localStorage.setItem('prospecthor_seller_name', v);
-            } catch (_) {}
-            showToast('Nome salvo ✓');
-            renderChecklist();
+            return;
         }
 
         function openSidebar() {

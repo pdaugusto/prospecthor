@@ -285,7 +285,8 @@ def authenticate(username: str, password: str) -> dict[str, Any] | None:
         if row:
             user = dict(row)
             stored = user.pop("password_hash", "") or ""
-            # active = só "recebe leads" (distribuição/bot). NÃO bloqueia login.
+            if not int(user.get("active") or 0):
+                return None
             if not verify_password(password, stored):
                 # Fallback: patrao ainda com senha só na env (migração)
                 if (
@@ -741,7 +742,7 @@ def create_user(
                 username,
                 _hash_password(password),
                 role,
-                int(monthly_quota or 50),
+                int(monthly_quota if monthly_quota is not None else 50),
                 json.dumps(cities or [], ensure_ascii=False),
                 json.dumps(niches or [], ensure_ascii=False),
                 label or dname or username,
@@ -1414,6 +1415,7 @@ def distribute_selected_leads(
     """
     ensure_schema()
     result: dict[str, Any] = {
+        "ok": True,
         "distributed": 0,
         "skipped": 0,
         "skipped_no_phone": 0,
@@ -1425,6 +1427,7 @@ def distribute_selected_leads(
         "remaining_free": 0,
     }
     if not _DATABASE_URL:
+        result["ok"] = False
         result["message"] = "DATABASE_URL não configurada"
         return result
 
@@ -1589,7 +1592,8 @@ def distribute_selected_leads(
         except Exception:
             pass
         logger.warning("[Users] distribute_selected_leads: %s", exc)
-        result["message"] = f"Erro: {exc}"
+        result["ok"] = False
+        result["message"] = "Não foi possível distribuir os leads. Tente novamente."
         return result
     finally:
         conn.close()
@@ -1613,6 +1617,7 @@ def distribute_free_leads(
     # limpa carteiras: sem telefone não fica com cliente
     freed = unassign_leads_without_phone()
     result: dict[str, Any] = {
+        "ok": True,
         "distributed": 0,
         "remaining_free": 0,
         "skipped": 0,
@@ -1621,6 +1626,7 @@ def distribute_free_leads(
         "message": "",
     }
     if not _DATABASE_URL:
+        result["ok"] = False
         result["message"] = "DATABASE_URL não configurada"
         return result
 
@@ -1796,7 +1802,8 @@ def distribute_free_leads(
         except Exception:
             pass
         logger.warning("[Users] distribute_free_leads falhou: %s", exc)
-        result["message"] = str(exc)
+        result["ok"] = False
+        result["message"] = "Não foi possível distribuir os leads. Tente novamente."
         return result
     finally:
         try:

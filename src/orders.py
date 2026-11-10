@@ -208,7 +208,7 @@ def create_order(
     Cliente pede N leads. Reserva N Trovoedas.
     Returns { ok, order?, error?, balance? }
     """
-    from src.trovoeda import REASON_RESERVE, apply_delta, get_balance
+    from src.trovoeda import REASON_RESERVE, apply_delta_in_transaction, get_balance
 
     if not user_id or not _DATABASE_URL:
         return {"ok": False, "error": "usuário inválido"}
@@ -262,13 +262,8 @@ def create_order(
             ),
         )
         order = _row_to_dict(cur.fetchone())
-        conn.commit()
-        cur.close()
-        conn.close()
-        conn = None
-
-        # reserva fora da tx do pedido (ledger tem tx própria)
-        spent = apply_delta(
+        spent = apply_delta_in_transaction(
+            cur,
             int(user_id),
             -qty,
             reason=REASON_RESERVE,
@@ -277,19 +272,18 @@ def create_order(
             ref_id=str(order["id"]),
         )
         if not spent.get("ok"):
-            # reverte o pedido se a reserva falhar
-            try:
-                c2 = _connect()
-                c2.cursor().execute("DELETE FROM lead_orders WHERE id = %s;", (order["id"],))
-                c2.commit()
-                c2.close()
-            except Exception:
-                pass
+            conn.rollback()
+            cur.close()
+            conn.close()
             return {
                 "ok": False,
                 "error": spent.get("error") or "falha ao reservar Trovoedas",
                 "balance": spent.get("balance", bal),
             }
+        conn.commit()
+        cur.close()
+        conn.close()
+        conn = None
 
         order = get_order(int(order["id"])) or order
         return {
@@ -305,7 +299,7 @@ def create_order(
                 conn.close()
         except Exception:
             pass
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False, "error": "erro interno"}
 
 
 def cancel_order(order_id: int, user_id: int) -> dict[str, Any]:
@@ -347,7 +341,7 @@ def _release_and_close(
     host_note: str = "",
     reviewed_by: int | None = None,
 ) -> dict[str, Any]:
-    from src.trovoeda import REASON_RELEASE, apply_delta
+    from src.trovoeda import REASON_RELEASE, apply_delta_in_transaction
 
     oid = int(order["id"])
     uid = int(order["user_id"])
@@ -356,25 +350,35 @@ def _release_and_close(
     # só devolve o que ainda não foi “entregue” (no pending delivered=0)
     to_release = max(0, reserved - delivered)
 
-    bal = None
-    if to_release > 0:
-        r = apply_delta(
-            uid,
-            to_release,
-            reason=REASON_RELEASE,
-            note=f"Estorno pedido #{oid} · {to_release} Trovoeda(s)",
-            ref_type="order",
-            ref_id=str(oid),
-            created_by=reviewed_by,
-        )
-        if not r.get("ok"):
-            return {"ok": False, "error": r.get("error") or "falha no estorno"}
-        bal = r.get("balance")
-
     ensure_schema()
+    conn = None
     try:
         conn = _connect()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM lead_orders WHERE id = %s FOR UPDATE;", (oid,))
+        locked = cur.fetchone()
+        if not locked or locked.get("status") != STATUS_PENDING:
+            conn.rollback()
+            return {"ok": False, "error": "pedido já foi processado"}
+        locked_reserved = max(0, int(locked.get("reserved") or 0))
+        locked_delivered = max(0, int(locked.get("delivered") or 0))
+        to_release = max(0, locked_reserved - locked_delivered)
+        bal = None
+        if to_release > 0:
+            released = apply_delta_in_transaction(
+                cur,
+                uid,
+                to_release,
+                reason=REASON_RELEASE,
+                note=f"Estorno pedido #{oid} · {to_release} Trovoeda(s)",
+                ref_type="order",
+                ref_id=str(oid),
+                created_by=reviewed_by,
+            )
+            if not released.get("ok"):
+                conn.rollback()
+                return {"ok": False, "error": released.get("error") or "falha no estorno"}
+            bal = released.get("balance")
         now = _now()
         cur.execute(
             """
@@ -385,7 +389,7 @@ def _release_and_close(
                 reviewed_by = %s,
                 reviewed_at = %s,
                 updated_at = %s
-            WHERE id = %s AND status = %s;
+            WHERE id = %s;
             """,
             (
                 new_status,
@@ -394,20 +398,25 @@ def _release_and_close(
                 now,
                 now,
                 oid,
-                STATUS_PENDING,
             ),
         )
-        if cur.rowcount == 0:
-            conn.rollback()
-            cur.close()
-            conn.close()
-            return {"ok": False, "error": "pedido já foi processado"}
         conn.commit()
         cur.close()
         conn.close()
     except Exception as exc:
         logger.warning("[Orders] _release_and_close: %s", exc)
-        return {"ok": False, "error": str(exc)}
+        try:
+            if conn:
+                conn.rollback()
+        except Exception:
+            pass
+        return {"ok": False, "error": "erro interno"}
+    finally:
+        try:
+            if conn:
+                conn.close()
+        except Exception:
+            pass
 
     return {
         "ok": True,
@@ -470,7 +479,7 @@ def approve_order(
         conn.close()
     except Exception as exc:
         logger.warning("[Orders] approve_order: %s", exc)
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False, "error": "erro interno"}
 
     delivered_now = 0
     if auto_deliver:
@@ -493,6 +502,32 @@ def approve_order(
 
 
 def fulfill_order(
+    order_id: int,
+    *,
+    host_id: int | None = None,
+    max_leads: int | None = None,
+) -> dict[str, Any]:
+    """Serializa entregas do mesmo pedido para impedir sobre-entrega concorrente."""
+    if not order_id or not _DATABASE_URL:
+        return {"ok": False, "error": "pedido inválido"}
+    lock_conn = _connect()
+    try:
+        lock_cur = lock_conn.cursor()
+        lock_cur.execute("SELECT pg_advisory_xact_lock(%s, %s);", (7351, int(order_id)))
+        result = _fulfill_order_locked(
+            int(order_id), host_id=host_id, max_leads=max_leads
+        )
+        lock_conn.commit()
+        return result
+    except Exception as exc:
+        lock_conn.rollback()
+        logger.warning("[Orders] fulfill lock: %s", exc)
+        return {"ok": False, "error": "erro interno"}
+    finally:
+        lock_conn.close()
+
+
+def _fulfill_order_locked(
     order_id: int,
     *,
     host_id: int | None = None,
@@ -568,7 +603,7 @@ def fulfill_order(
         conn.close()
     except Exception as exc:
         logger.warning("[Orders] fulfill update: %s", exc)
-        return {"ok": False, "error": str(exc), "delivered_now": n}
+        return {"ok": False, "error": "erro interno", "delivered_now": n}
 
     order2 = get_order(int(order_id))
     msg = f"Entregues {n} lead(s). Total {new_delivered}/{qty}."

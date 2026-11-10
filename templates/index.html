@@ -4163,20 +4163,22 @@
             </div>
             <div class="modal-body">
                 <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;">
-                    1) Revise a mensagem feita para este lead · 2) WhatsApp já com o texto.<br>
-                    <span style="color:var(--neon);">Mensagem da <strong>Avanti Business</strong>, personalizada com nome, cidade e segmento.</span>
+                    Escreva sua própria abordagem ou edite a sugestão antes de usar.<br>
+                    <span style="color:var(--neon);">Mensagem da <strong id="approach-seller-name">Avanti Business</strong>, personalizada com nome, cidade e segmento.</span>
                 </p>
                 <div class="form-g">
-                    <label>Canal</label>
-                    <select id="prompt-channel" onchange="generatePrompt()">
+                    <label for="prompt-channel">Canal</label>
+                    <select id="prompt-channel" onchange="changePromptChannel()">
                         <option value="whatsapp">WhatsApp</option>
                         <option value="instagram">Instagram</option>
                         <option value="email">E-mail</option>
                     </select>
                 </div>
                 <div class="form-g">
-                    <label>Mensagem</label>
-                    <textarea id="prompt-text" style="min-height:180px;" placeholder="A mensagem aparece aqui…"></textarea>
+                    <label for="prompt-text">Sua mensagem — pode editar à vontade</label>
+                    <textarea id="prompt-text" aria-describedby="prompt-edit-hint" oninput="savePromptDraft()" style="min-height:220px;font-size:16px;line-height:1.6;resize:vertical;" placeholder="Escreva sua mensagem aqui…"></textarea>
+                    <p id="prompt-edit-hint" style="font-size:13px;color:var(--muted);margin-top:8px;">Rascunhos ficam nesta aba, separados por lead e canal. Nada é enviado automaticamente.</p>
+                    <button type="button" class="btn btn-sm" onclick="restorePromptSuggestion()">Restaurar sugestão</button>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     <button type="button" class="btn btn-wa" id="btn-prompt-open-wa" style="width:100%;" onclick="openWhatsAppFromPrompt()">
@@ -4248,6 +4250,8 @@
         let sortAsc = false;
         let chartStatus, chartNiche, chartReport, chartProblems;
         let activePromptLead = null;
+        const promptDrafts = new Map();
+        let activePromptChannel = 'whatsapp';
         let leadsCacheAt = 0;
         const CACHE_MS = 45000;
         // NUNCA assumir admin antes do /api/me — causava filtro "só sobras" e lista vazia
@@ -4673,15 +4677,22 @@
         }
 
         function getSellerName() {
-            return 'Avanti Business';
+            return String(currentUser.username || '').trim().toLowerCase() === 'draken' ? 'Agência Draken' : 'Avanti Business';
         }
 
         function refreshSellerNameStatus() {
-            return;
+            const seller = document.getElementById('approach-seller-name');
+            if (seller) seller.textContent = getSellerName();
         }
 
         /** Mensagem de abordagem Avanti (mesmo texto do modal) */
         function buildApproachMessage(lead, channel) {
+            if (!lead) return '';
+            refreshSellerNameStatus();
+            return buildApproachMessageBase(lead, channel).replaceAll('Avanti Business', getSellerName());
+        }
+
+        function buildApproachMessageBase(lead, channel) {
             if (!lead) return '';
             const ch = channel || 'whatsapp';
             const city = lead.city || 'sua cidade';
@@ -8198,6 +8209,7 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         }
 
         function closePrompt() {
+            savePromptDraft();
             document.getElementById('prompt-modal').classList.remove('active');
             activePromptLead = null;
         }
@@ -8209,9 +8221,32 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
         function generatePrompt() {
             if (!activePromptLead) return;
             const channel = document.getElementById('prompt-channel')?.value || 'whatsapp';
-            const msg = buildApproachMessage(activePromptLead, channel);
+            activePromptChannel = channel;
+            const key = promptDraftKey(channel);
+            const msg = promptDrafts.has(key) ? promptDrafts.get(key) : buildApproachMessage(activePromptLead, channel);
             document.getElementById('prompt-text').value = msg;
             updatePromptWaHint();
+        }
+
+        function promptDraftKey(channel) {
+            return JSON.stringify([currentUser.id, currentUser.username, activePromptLead?.id, channel]);
+        }
+
+        function savePromptDraft() {
+            if (!activePromptLead) return;
+            promptDrafts.set(promptDraftKey(activePromptChannel), document.getElementById('prompt-text').value);
+        }
+
+        function changePromptChannel() {
+            savePromptDraft();
+            generatePrompt();
+        }
+
+        function restorePromptSuggestion() {
+            if (!activePromptLead) return;
+            if (!confirm('Substituir o texto deste canal pela sugestão original?')) return;
+            promptDrafts.delete(promptDraftKey(activePromptChannel));
+            generatePrompt();
         }
 
         function updatePromptWaHint() {
@@ -8285,13 +8320,15 @@ ${services.map(s => `- ${s}`).join('\n') || '- Site profissional'}`;
                 alert('Este lead não tem telefone.');
                 return;
             }
-            const text = document.getElementById('prompt-text')?.value || buildApproachMessage(activePromptLead, 'whatsapp');
+            const text = document.getElementById('prompt-text')?.value || '';
+            if (!text.trim()) { alert('Escreva uma mensagem antes de abrir o WhatsApp.'); return; }
             const url = waLink(phone, text);
             if (url) openExternalUrl(url);
         }
 
         async function copyPrompt() {
             const t = document.getElementById('prompt-text');
+            if (!t.value.trim()) { t.focus(); showToast('Escreva uma mensagem para copiar.'); return; }
             try {
                 await navigator.clipboard.writeText(t.value);
                 showToast('Mensagem copiada ✓');

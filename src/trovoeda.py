@@ -87,13 +87,20 @@ def ensure_schema() -> None:
         cur.execute(
             "CREATE INDEX IF NOT EXISTS idx_trovoeda_ledger_user ON trovoeda_ledger (user_id, id DESC);"
         )
-
-        # pedidos de lead (cliente → host)
-        try:
-            from src.orders import ensure_schema as _orders_schema
-            _orders_schema()
-        except Exception as _ox:
-            logger.warning("[Trovoeda] orders schema: %s", _ox)
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS stripe_payments (
+                session_id      TEXT PRIMARY KEY,
+                event_id        TEXT UNIQUE NOT NULL,
+                user_id         INTEGER NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+                package_slug    TEXT NOT NULL,
+                coins           INTEGER NOT NULL,
+                amount_total    INTEGER NOT NULL,
+                currency        TEXT NOT NULL,
+                created_at      TEXT NOT NULL DEFAULT (NOW()::TEXT)
+            );
+            """
+        )
 
         # pacotes (preço futuro Stripe) — seed opcional
         cur.execute(
@@ -181,6 +188,14 @@ def ensure_schema() -> None:
     finally:
         conn.close()
 
+    # A segunda conexão cria FKs para app_users. Não pode esperar o lock
+    # da transação de ALTER TABLE ainda aberta nesta função.
+    try:
+        from src.orders import ensure_schema as _orders_schema
+        _orders_schema()
+    except Exception as exc:
+        logger.warning("[Trovoeda] orders schema: %s", exc)
+
 
 def get_balance(user_id: int) -> int:
     if not user_id or not _DATABASE_URL:
@@ -229,52 +244,22 @@ def apply_delta(
         conn = _connect()
         cur = conn.cursor()
         cur.execute("BEGIN")
-        cur.execute(
-            "SELECT COALESCE(trovoedas_balance, 0) FROM app_users WHERE id = %s FOR UPDATE;",
-            (int(user_id),),
+        result = apply_delta_in_transaction(
+            cur,
+            int(user_id),
+            delta,
+            reason=reason,
+            note=note,
+            ref_type=ref_type,
+            ref_id=ref_id,
+            created_by=created_by,
+            allow_negative=allow_negative,
         )
-        row = cur.fetchone()
-        if not row:
+        if not result.get("ok"):
             conn.rollback()
             cur.close()
             conn.close()
-            return {"ok": False, "balance": 0, "delta": 0, "error": "usuário não encontrado"}
-
-        bal = int(row[0] or 0)
-        new_bal = bal + delta
-        if new_bal < 0 and not allow_negative:
-            conn.rollback()
-            cur.close()
-            conn.close()
-            return {
-                "ok": False,
-                "balance": bal,
-                "delta": 0,
-                "error": f"saldo insuficiente ({bal})",
-            }
-
-        cur.execute(
-            "UPDATE app_users SET trovoedas_balance = %s WHERE id = %s;",
-            (new_bal, int(user_id)),
-        )
-        cur.execute(
-            """
-            INSERT INTO trovoeda_ledger
-                (user_id, delta, reason, ref_type, ref_id, balance_after, note, created_by, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-            """,
-            (
-                int(user_id),
-                delta,
-                (reason or "adjust")[:64],
-                (ref_type or "")[:64],
-                (ref_id or "")[:128],
-                new_bal,
-                (note or "")[:500],
-                int(created_by) if created_by else None,
-                datetime.now().isoformat(),
-            ),
-        )
+            return result
         conn.commit()
         cur.close()
         conn.close()
@@ -282,10 +267,10 @@ def apply_delta(
             "[Trovoeda] user=%s delta=%s → %s reason=%s",
             user_id,
             delta,
-            new_bal,
+            result.get("balance"),
             reason,
         )
-        return {"ok": True, "balance": new_bal, "delta": delta}
+        return result
     except Exception as exc:
         logger.warning("[Trovoeda] apply_delta: %s", exc)
         try:
@@ -294,7 +279,122 @@ def apply_delta(
                 conn.close()
         except Exception:
             pass
-        return {"ok": False, "balance": get_balance(user_id), "delta": 0, "error": str(exc)}
+        return {"ok": False, "balance": get_balance(user_id), "delta": 0, "error": "erro interno"}
+
+
+def apply_delta_in_transaction(
+    cur,
+    user_id: int,
+    delta: int,
+    *,
+    reason: str,
+    note: str = "",
+    ref_type: str = "",
+    ref_id: str = "",
+    created_by: int | None = None,
+    allow_negative: bool = False,
+) -> dict[str, Any]:
+    """Aplica saldo e ledger usando a transação já aberta pelo chamador."""
+    cur.execute(
+        "SELECT COALESCE(trovoedas_balance, 0) AS balance FROM app_users WHERE id = %s FOR UPDATE;",
+        (int(user_id),),
+    )
+    row = cur.fetchone()
+    if not row:
+        return {"ok": False, "balance": 0, "delta": 0, "error": "usuário não encontrado"}
+    balance = int((row.get("balance") if isinstance(row, dict) else row[0]) or 0)
+    new_balance = balance + int(delta)
+    if new_balance < 0 and not allow_negative:
+        return {
+            "ok": False,
+            "balance": balance,
+            "delta": 0,
+            "error": f"saldo insuficiente ({balance})",
+        }
+    cur.execute(
+        "UPDATE app_users SET trovoedas_balance = %s WHERE id = %s;",
+        (new_balance, int(user_id)),
+    )
+    cur.execute(
+        """
+        INSERT INTO trovoeda_ledger
+            (user_id, delta, reason, ref_type, ref_id, balance_after, note, created_by, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """,
+        (
+            int(user_id), int(delta), (reason or "adjust")[:64],
+            (ref_type or "")[:64], (ref_id or "")[:128], new_balance,
+            (note or "")[:500], int(created_by) if created_by else None,
+            datetime.now().isoformat(),
+        ),
+    )
+    return {"ok": True, "balance": new_balance, "delta": int(delta)}
+
+
+def credit_stripe_purchase(
+    *,
+    user_id: int,
+    coins: int,
+    package_slug: str,
+    session_id: str,
+    event_id: str,
+    amount_total: int,
+    currency: str,
+) -> dict[str, Any]:
+    """Credita uma sessão Stripe exatamente uma vez e valida o catálogo."""
+    if not session_id or not event_id or not package_slug:
+        return {"ok": False, "error": "dados Stripe incompletos"}
+    ensure_schema()
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT coins, price_cents FROM trovoeda_packages
+            WHERE slug = %s AND active = 1 LIMIT 1 FOR UPDATE;
+            """,
+            (package_slug,),
+        )
+        pkg = cur.fetchone()
+        if not pkg:
+            conn.rollback()
+            return {"ok": False, "error": "pacote desconhecido"}
+        expected_coins, expected_amount = int(pkg[0] or 0), int(pkg[1] or 0)
+        if int(coins) != expected_coins or int(amount_total) != expected_amount or currency != "brl":
+            conn.rollback()
+            return {"ok": False, "error": "pagamento não confere com o catálogo"}
+        cur.execute(
+            """
+            INSERT INTO stripe_payments
+                (session_id, event_id, user_id, package_slug, coins, amount_total, currency)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT DO NOTHING;
+            """,
+            (session_id, event_id, int(user_id), package_slug, expected_coins, expected_amount, currency),
+        )
+        if cur.rowcount == 0:
+            conn.rollback()
+            return {"ok": True, "duplicate": True, "delta": 0, "balance": get_balance(user_id)}
+        result = apply_delta_in_transaction(
+            cur,
+            int(user_id),
+            expected_coins,
+            reason=REASON_PURCHASE,
+            note=f"Compra via Stripe: {package_slug} ({expected_coins} Trovoedas)",
+            ref_type="stripe_session",
+            ref_id=session_id,
+        )
+        if not result.get("ok"):
+            conn.rollback()
+            return result
+        conn.commit()
+        return result
+    except Exception as exc:
+        conn.rollback()
+        logger.exception("[Trovoeda] falha ao creditar Stripe")
+        return {"ok": False, "error": "erro interno"}
+    finally:
+        conn.close()
 
 
 def admin_grant(
@@ -465,10 +565,10 @@ def list_ledger(user_id: int, limit: int = 50) -> list[dict[str, Any]]:
 
 
 def list_packages(active_only: bool = True) -> list[dict[str, Any]]:
+    """Read the installed catalog; write flows initialize their own schema."""
     if not _DATABASE_URL:
         return []
     try:
-        ensure_schema()
         conn = _connect()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         if active_only:

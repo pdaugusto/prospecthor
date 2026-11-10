@@ -1,0 +1,14 @@
+<div class="live-pool-tools">
+  <div class="live-filters"><label>Responsável<select data-lead-filter="owner"><option value="">Todos</option><option value="free">Somente livres</option>{% for user in users if user.username!='patrao' and user.role!='admin' %}<option value="{{ user.id }}">{{ user.label or user.username }}</option>{% endfor %}</select></label><a class="secondary-button" href="/admin/leads">Atualizar pool</a></div>
+  <details class="live-inline"><summary>Distribuir leads do pool</summary>
+    <p class="field-help">Selecione os leads livres na tabela e escolha o cliente. Esta é a distribuição administrativa por cota, sem reserva de Trovoedas. Para entregar uma compra, use Pedidos dos clientes.</p>
+    <form class="suite-form" data-live-form="distribute-selected">
+      <div class="field-pair"><label>Cliente destinatário<select name="user_id" required><option value="">Escolher cliente</option>{% for user in users if user.active and user.role!='admin' and user.username!='patrao' %}<option value="{{ user.id }}">{{ user.label or user.username }}</option>{% endfor %}</select></label><div class="live-selection-summary"><strong data-selected-count>0 selecionados</strong><button class="suite-link" type="button" data-clear-selection>Limpar seleção</button></div></div>
+      <label class="live-checkbox"><input type="checkbox" name="respect_quota" checked> Respeitar a cota mensal do cliente</label>
+      <div class="form-actions"><button class="primary-button" type="submit">Distribuir selecionados</button><a class="secondary-button" data-distribution-refresh href="/admin/leads" hidden>Conferir pool atualizado</a></div><p class="form-message" role="status"></p>
+    </form>
+    <details class="live-inline"><summary>Distribuição automática</summary>
+      <form class="suite-form" data-live-form="distribute-auto"><div class="field-pair"><label>Quantidade máxima<input name="limit" type="number" min="1" step="1" value="10" required></label><label>Destino<select name="user_id"><option value="">Clientes ativos com cota disponível</option>{% for user in users if user.active and user.role!='admin' and user.username!='patrao' %}<option value="{{ user.id }}">{{ user.label or user.username }}</option>{% endfor %}</select></label></div><p class="field-help">A operação existente distribui os leads livres elegíveis respeitando as cotas.</p><button class="secondary-button" type="submit">Distribuir automaticamente</button><a class="secondary-button" data-distribution-refresh href="/admin/leads" hidden>Conferir pool atualizado</a><p class="form-message" role="status"></p></form>
+    </details>
+  </details>
+</div>

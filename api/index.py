@@ -11,9 +11,20 @@ from datetime import datetime, timedelta
 from functools import wraps
 from collections import defaultdict
 from flask import Flask, jsonify, render_template, request, make_response, session, redirect, url_for
+from werkzeug.exceptions import ServiceUnavailable
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
+
+# Local .env must be loaded before modules snapshot DATABASE_URL and secrets.
+# Production environment variables always take precedence.
+from dotenv import load_dotenv
+load_dotenv(os.path.join(_ROOT, ".env"), override=False)
+if __name__ == "__main__":
+    # Local network workaround already used by the operator's cockpit.
+    from src.tunel_pg import garantir_tunel
+    if os.getenv("DATABASE_URL"):
+        os.environ["DATABASE_URL"] = garantir_tunel()
 
 app = Flask(
     __name__,
@@ -23,33 +34,33 @@ app = Flask(
 )
 
 import hashlib as _hashlib
+from urllib.parse import urlsplit
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 # Patrão fixo — nunca default de senha no código
 DASHBOARD_USER = "patrao"
 DASHBOARD_PASS = (os.getenv("DASHBOARD_PASS") or "").strip()
 
-# Sessão: SEMPRE estável entre instâncias Vercel.
-# Se FLASK_SECRET_KEY faltar, deriva do DATABASE_URL (mesma em todos os pods).
-# secrets.token_hex aleatório quebrava login/admin entre cold starts.
+# Sessão: em produção o segredo precisa ser explícito e independente do banco.
 _secret = (
     os.getenv("FLASK_SECRET_KEY")
     or os.getenv("DASHBOARD_SECRET_KEY")
     or ""
 ).strip()
 if not _secret:
-    _seed = DATABASE_URL or os.getenv("VERCEL_GIT_COMMIT_SHA") or "prospecthor-local"
-    _secret = _hashlib.sha256(f"prospecthor-session-v1|{_seed}".encode("utf-8")).hexdigest()
+    if os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or os.getenv("PRODUCTION") == "1":
+        raise RuntimeError("FLASK_SECRET_KEY obrigatória em produção")
+    _secret = secrets.token_hex(32)
+    app.logger.warning("FLASK_SECRET_KEY ausente; usando chave efêmera somente para desenvolvimento")
 app.secret_key = _secret
 _is_vercel = bool(os.getenv("VERCEL") or os.getenv("VERCEL_ENV"))
-# Sessão longa: fica logado até clicar em Sair (não só 12h)
-_SESSION_DAYS = int(os.getenv("SESSION_DAYS") or "90")
+_SESSION_HOURS = max(1, min(int(os.getenv("SESSION_HOURS") or "12"), 720))
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     # Secure só em HTTPS (Vercel). Em HTTP local o cookie precisa poder ser setado.
     SESSION_COOKIE_SECURE=_is_vercel or os.getenv("SESSION_COOKIE_SECURE", "").lower() in ("1", "true"),
-    PERMANENT_SESSION_LIFETIME=timedelta(days=max(1, _SESSION_DAYS)),
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=_SESSION_HOURS),
     # a cada request renova o prazo do cookie
     SESSION_REFRESH_EACH_REQUEST=True,
     SESSION_COOKIE_NAME="prospecthor_session",
@@ -122,7 +133,7 @@ _CACHE_TTL = 45
 
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, connect_timeout=5)
 
 
 def _is_raio_lead(lead):
@@ -341,12 +352,13 @@ def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None
         return _filter_leads_for_session(_cache["leads"][cache_key], scope, owner_id)
 
     if not DATABASE_URL:
-        return []
+        raise ServiceUnavailable("Banco de dados não configurado.")
 
     # Cliente sem id válido = lista vazia
     if not is_patrao and not uid_int:
         return []
 
+    conn = None
     try:
         try:
             from src.users import ensure_schema
@@ -406,9 +418,11 @@ def get_all_leads(use_cache=True, scope: str | None = None, owner_id: int | None
         _cache["leads_at"][cache_key] = now
         return leads
     except Exception:
-        if not is_patrao:
-            return []
-        return _filter_leads_for_session(_cache["leads"].get(cache_key) or [], scope, owner_id)
+        app.logger.exception("Falha ao consultar leads")
+        raise ServiceUnavailable("Não foi possível consultar seus leads.")
+    finally:
+        if conn:
+            conn.close()
 
 
 def _pool_summary() -> dict:
@@ -474,6 +488,25 @@ def _no_store_private(resp):
         resp.headers["Cache-Control"] = "private, no-store, no-cache, must-revalidate"
         resp.headers["Pragma"] = "no-cache"
         resp.headers["Vary"] = "Cookie"
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    resp.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' https://cdn.jsdelivr.net; "
+        "object-src 'none'",
+    )
+    if request.is_secure or _is_vercel:
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return resp
 
 
@@ -563,6 +596,27 @@ def _keep_session_alive():
         session.permanent = True
 
 
+@app.before_request
+def _reject_cross_site_writes():
+    """Bloqueia CSRF preservando os clientes same-origin existentes."""
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return None
+    if request.path == "/api/webhook/stripe":
+        return None
+    if (request.headers.get("Sec-Fetch-Site") or "").lower() == "cross-site":
+        return jsonify({"error": "Cross-site request blocked"}), 403
+    origin = (request.headers.get("Origin") or "").strip()
+    if not origin:
+        return None
+    proto = (request.headers.get("X-Forwarded-Proto") or request.scheme).split(",")[0].strip()
+    host = (request.headers.get("X-Forwarded-Host") or request.host).split(",")[0].strip()
+    expected = urlsplit(f"{proto}://{host}")
+    supplied = urlsplit(origin)
+    if (supplied.scheme, supplied.netloc) != (expected.scheme, expected.netloc):
+        return jsonify({"error": "Origin not allowed"}), 403
+    return None
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -584,18 +638,8 @@ def admin_required(f):
             return jsonify({"error": "Unauthorized"}), 401
         if not _is_real_admin():
             return jsonify({"error": "Forbidden"}), 403
-        if _is_impersonating() and request.path.startswith("/api/"):
-            # impersonate: só bloqueia rotas admin (users/audit/bot)
-            # allow stop impersonate
-            if request.path.rstrip("/").endswith("/impersonate/stop"):
-                return f(*args, **kwargs)
-            if (
-                request.path.startswith("/api/users")
-                or request.path.startswith("/api/audit")
-                or request.path.startswith("/api/bot-status")
-                or request.path.startswith("/api/bot-plan")
-            ):
-                return jsonify({"error": "Indisponível em modo impersonate. Volte à sua conta."}), 403
+        if _is_impersonating():
+            return jsonify({"error": "Indisponível em modo impersonate. Volte à sua conta."}), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -693,8 +737,7 @@ def _packages_for_view():
     Moedas (daily_cap = None) compararam com Faísca (primeira moeda).
     """
     try:
-        from src.trovoeda import list_packages, ensure_schema
-        ensure_schema()
+        from src.trovoeda import list_packages
         pkgs = list_packages(active_only=True)
     except Exception:
         pkgs = []
@@ -758,8 +801,7 @@ def landing_page():
     if session.get("logged_in"):
         return redirect("/leads")
     try:
-        from src.trovoeda import public_stats, ensure_schema
-        ensure_schema()
+        from src.trovoeda import public_stats
         stats = public_stats()
     except Exception:
         stats = {"leads_total": 0, "leads_raio": 0, "cities": 0, "niches": 0}
@@ -1032,13 +1074,10 @@ def _ensure_password_reset_schema():
 
 
 def _send_password_reset_email(to_email: str, reset_url: str) -> bool:
-    """Envia link por SMTP se configurado. Retorna False se sem SMTP (logui o link)."""
+    """Envia link por SMTP sem registrar o token em logs."""
     host = (os.getenv("SMTP_HOST") or "").strip()
     if not host:
-        try:
-            app.logger.warning("password reset (sem SMTP) %s -> %s", to_email, reset_url)
-        except Exception:
-            pass
+        app.logger.warning("password reset solicitado, mas SMTP não está configurado")
         return False
     try:
         import smtplib
@@ -1229,12 +1268,14 @@ def api_me():
     if u.get("id") and (not is_adm or imp):
         try:
             from src.users import count_assigned_this_month, get_user_by_id
-            from src.trovoeda import get_balance
-            full = get_user_by_id(int(u["id"])) or {}
+            full = get_user_by_id(int(u["id"]))
+            if not full or not full.get("active"):
+                session.clear()
+                return jsonify({"error": "Sua sessão não está mais disponível. Entre novamente."}), 401
             payload["monthly_quota"] = full.get("monthly_quota", 0)
             payload["assigned_this_month"] = count_assigned_this_month(int(u["id"]))
             payload["label"] = full.get("label") or u.get("username")
-            payload["trovoedas"] = int(full.get("trovoedas_balance") or get_balance(int(u["id"])) or 0)
+            payload["trovoedas"] = int(full.get("trovoedas_balance") or 0)
             payload["trovoedas_infinite"] = False
             payload["plan_slug"] = full.get("plan_slug")
             payload["daily_quota"] = full.get("daily_quota")
@@ -1242,8 +1283,8 @@ def api_me():
             if imp:
                 payload["impersonate_label"] = payload["label"]
         except Exception:
-            payload.setdefault("trovoedas", 0)
-            payload.setdefault("trovoedas_infinite", False)
+            app.logger.exception("Falha ao carregar a conta")
+            return jsonify({"error": "Não foi possível carregar sua conta. Tente novamente."}), 503
     elif is_adm and not imp:
         payload["label"] = "Patrão"
         # Host: saldo ilimitado (não gasta Trovoeda)
@@ -1577,12 +1618,11 @@ def api_orders_fulfill(order_id: int):
 @app.route("/api/trovoeda/checkout", methods=["POST"])
 @login_required
 def api_trovoeda_checkout():
-    """
-    Inicia checkout Stripe do pacote.
-    Fase atual: retorna 501 se Stripe não configurado (UI da loja já funciona).
-    """
+    """Checkout avulso com preço e quantidade do catálogo do servidor."""
     data = request.get_json(silent=True) or {}
-    slug = (data.get("package") or data.get("slug") or "").strip().lower()
+    if not isinstance(data, dict):
+        return jsonify({"error": "Pacote inválido."}), 400
+    slug = str(data.get("package") or data.get("slug") or "").strip().lower()
     if not slug:
         return jsonify({"error": "package obrigatório"}), 400
 
@@ -1592,36 +1632,43 @@ def api_trovoeda_checkout():
     pkg = pkgs.get(slug)
     if not pkg:
         return jsonify({"error": "pacote não encontrado"}), 404
+    if pkg.get("daily_cap"):
+        return jsonify({"error": "Planos mensais têm contratação assistida. Fale com a operação."}), 409
+    uid = _effective_user_id()
+    if not uid or (_is_real_admin() and not _is_impersonating()):
+        return jsonify({"error": "Entre na conta cliente para comprar Trovoedas."}), 403
+    cents, coins = int(pkg.get("price_cents") or 0), int(pkg.get("coins") or 0)
+    if cents <= 0 or coins <= 0:
+        return jsonify({"error": "Este pacote está temporariamente indisponível."}), 503
 
     secret = (os.getenv("STRIPE_API_KEY") or os.getenv("STRIPE_SECRET_KEY") or "").strip()
-    price_id = (pkg.get("stripe_price_id") or "").strip() or (
-        os.getenv(f"STRIPE_PRICE_{slug.upper()}") or ""
-    ).strip()
 
-    if not secret or not price_id:
+    if not secret:
         return jsonify({
             "status": "not_configured",
             "message": "Stripe ainda não configurado",
             "package": pkg,
         }), 501
 
-    # Stripe real — fases seguintes; mantém stub seguro
     try:
         import stripe  # type: ignore
         stripe.api_key = secret
-        uid = _effective_user_id()
         success = request.host_url.rstrip("/") + "/shop?paid=1"
         cancel = request.host_url.rstrip("/") + "/shop?canceled=1"
         session_obj = stripe.checkout.Session.create(
             mode="payment",
-            line_items=[{"price": price_id, "quantity": 1}],
+            # Historical Stripe price IDs can diverge from the displayed catalog.
+            line_items=[{"price_data": {"currency":"brl", "unit_amount":cents,
+                "product_data":{"name":f"ProspecTHOR · {pkg.get('name') or slug}",
+                                "description":f"{coins} Trovoedas · recarga avulsa"}},
+                "quantity":1}],
             success_url=success,
             cancel_url=cancel,
             client_reference_id=str(uid or ""),
             metadata={
                 "user_id": str(uid or ""),
                 "package": slug,
-                "coins": str(pkg.get("coins") or 0),
+                "coins": str(coins),
             },
         )
         return jsonify({"url": session_obj.url, "session_id": session_obj.id})
@@ -1631,14 +1678,14 @@ def api_trovoeda_checkout():
             "message": "Pacote stripe não instalado no servidor",
             "package": pkg,
         }), 501
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        app.logger.exception("Falha ao iniciar checkout Stripe")
+        return jsonify({"error": "Não foi possível iniciar o pagamento"}), 502
 
 
 @app.route("/api/webhook/stripe", methods=["POST"])
 def api_webhook_stripe():
     """Recebe eventos do Stripe, valida assinatura e injeta Trovoedas."""
-    import traceback
     try:
         import stripe  # type: ignore
 
@@ -1655,16 +1702,19 @@ def api_webhook_stripe():
         except ValueError:
             app.logger.error("[Webhook] Payload inválido")
             return "Invalid payload", 400
-        except Exception as e:
+        except Exception:
             # Cobre stripe.error.SignatureVerificationError e stripe.SignatureVerificationError
-            app.logger.error("[Webhook] Assinatura inválida: %s", e)
-            return f"Invalid signature: {e}", 400
+            app.logger.warning("[Webhook] Assinatura inválida")
+            return "Invalid signature", 400
 
         event_dict = event.to_dict()
         app.logger.info("[Webhook] Evento recebido: %s", event_dict.get("type"))
 
-        if event_dict.get("type") == "checkout.session.completed":
+        if event_dict.get("type") in {"checkout.session.completed", "checkout.session.async_payment_succeeded"}:
             session_obj = event_dict["data"]["object"]
+            if session_obj.get("payment_status") != "paid":
+                app.logger.info("[Webhook] sessão ainda não paga: %s", session_obj.get("id"))
+                return "", 200
             uid_str = (session_obj.get("client_reference_id") or "").strip()
             metadata = session_obj.get("metadata") or {}
             coins_str = str(metadata.get("coins") or "0").strip()
@@ -1676,16 +1726,20 @@ def api_webhook_stripe():
             )
 
             if uid_str and uid_str.isdigit() and coins_str.isdigit() and int(coins_str) > 0:
-                from src.trovoeda import apply_delta
-                result = apply_delta(
-                    int(uid_str),
-                    int(coins_str),
-                    reason="purchase",
-                    note=f"Compra via Stripe: {metadata.get('package', 'pacote')} ({coins_str} Trovoedas)",
-                    ref_type="stripe_session",
-                    ref_id=str(session_obj.get("id") or ""),
+                from src.trovoeda import credit_stripe_purchase
+                result = credit_stripe_purchase(
+                    user_id=int(uid_str),
+                    coins=int(coins_str),
+                    package_slug=str(metadata.get("package") or ""),
+                    session_id=str(session_obj.get("id") or ""),
+                    event_id=str(event_dict.get("id") or ""),
+                    amount_total=int(session_obj.get("amount_total") or 0),
+                    currency=str(session_obj.get("currency") or "").lower(),
                 )
                 app.logger.info("[Webhook] apply_delta resultado: %s", result)
+                if not result.get("ok"):
+                    # Stripe must retry: receipt alone is not successful credit.
+                    return "Payment credit failed", 500
                 _invalidate_cache()
             else:
                 app.logger.warning(
@@ -1693,10 +1747,9 @@ def api_webhook_stripe():
                 )
 
         return "", 200
-    except Exception as exc:
-        err_msg = traceback.format_exc()
-        app.logger.error(f"[Webhook Exception] {err_msg}")
-        return f"Internal Error: {err_msg}", 500
+    except Exception:
+        app.logger.exception("[Webhook] falha interna")
+        return "Internal Error", 500
 
 
 @app.route("/api/impersonate", methods=["POST"])
@@ -1747,7 +1800,7 @@ def api_impersonate_start():
             "label": session["label"],
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/impersonate/stop", methods=["POST"])
@@ -1784,7 +1837,7 @@ def api_impersonate_stop():
         _invalidate_cache()
         return jsonify({"success": True, "impersonating": False, "username": real_user})
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/leads")
@@ -1909,7 +1962,7 @@ def api_update_status(lead_id):
         _invalidate_cache()
         return jsonify({"success": True})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "erro interno"}), 500
 
 
 @app.route("/api/leads/<int:lead_id>/favorite", methods=["PUT", "POST"])
@@ -1962,7 +2015,7 @@ def api_toggle_favorite(lead_id):
             pass
         return jsonify({"success": True, "is_favorite": bool(fav_bool)})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "erro interno"}), 500
 
 
 @app.route("/api/leads/<int:lead_id>/report", methods=["POST"])
@@ -1973,94 +2026,115 @@ def api_report_lead(lead_id):
     if not lead:
         return jsonify({"error": "Not found"}), 404
     data = request.get_json(silent=True) or {}
-    reason = (data.get("reason") or "numero_invalido").strip()[:60] or "numero_invalido"
+    if not isinstance(data, dict):
+        return jsonify({"error": "Solicitação inválida."}), 400
+    reason = str(data.get("reason") or "numero_invalido").strip()[:60] or "numero_invalido"
     uid = _effective_user_id()
+    conn = None
     try:
-        from src.audit import ensure_schema as audit_schema, log_action
+        from src.audit import ensure_schema as audit_schema
         audit_uid, audit_uname = _audit_actor()
-        try:
-            audit_schema()
-        except Exception:
-            pass
+        audit_schema()
         week_ago = (datetime.now() - timedelta(days=7)).isoformat()
         conn = get_db()
         cur = conn.cursor()
+        cur.execute("SELECT pg_advisory_xact_lock(%s, %s)", (19744, int(uid or 0)))
+        cur.execute("SELECT id FROM companies WHERE id=%s AND assigned_to=%s FOR UPDATE", (lead_id, uid))
+        if not cur.fetchone():
+            return jsonify({"error": "Not found"}), 404
         cur.execute(
             "SELECT COUNT(*) FROM audit_log WHERE action = 'report_invalid' AND user_id = %s AND created_at >= %s;",
             (uid, week_ago),
         )
         n = int((cur.fetchone() or [0])[0] or 0)
-        cur.close()
-        conn.close()
         if n >= 3:
             return jsonify({"error": "Limite de 3 pedidos de reposição por semana."}), 429
-        log_action(
-            "report_invalid",
-            user_id=audit_uid,
-            username=audit_uname,
-            lead_id=lead_id,
-            company_name=lead.get("name"),
-            details={"reason": reason, "phone": lead.get("phone")},
-        )
-        return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        cur.execute("""INSERT INTO audit_log
+            (created_at,user_id,username,action,lead_id,company_name,details)
+            VALUES (%s,%s,%s,'report_invalid',%s,%s,%s) RETURNING id""",
+            (datetime.now().isoformat(),uid,audit_uname,lead_id,lead.get("name"),
+             json.dumps({"reason":reason,"phone":lead.get("phone"),"actor_id":audit_uid})))
+        report_id = cur.fetchone()[0]
+        conn.commit()
+        return jsonify({"success": True,"report_id":report_id})
+    except Exception:
+        if conn:
+            conn.rollback()
+        app.logger.exception("Falha ao registrar ocorrência")
+        return jsonify({"error": "Não foi possível registrar a ocorrência."}), 503
+    finally:
+        if conn:
+            conn.close()
 
 
 @app.route("/api/leads/<int:lead_id>/resolve-report", methods=["POST"])
 @admin_required
 def api_resolve_report(lead_id):
-    """Patrão aprova (devolve 1 Trovoeda ao dono) ou recusa a reposição."""
-    lead = get_lead_by_id(lead_id)
-    if not lead:
-        return jsonify({"error": "Not found"}), 404
+    """Resolve uma ocorrência e seu crédito na mesma transação, sem repetição."""
     data = request.get_json(silent=True) or {}
-    approve = bool(data.get("approve", True))
+    if not isinstance(data, dict) or not isinstance(data.get("approve", True), bool):
+        return jsonify({"error": "Informe uma decisão válida."}), 400
+    approve = data.get("approve", True)
     try:
-        from src.audit import log_action
-        from src.trovoeda import admin_grant
+        report_id = int(data["report_id"]) if data.get("report_id") is not None else None
+    except (TypeError, ValueError):
+        return jsonify({"error": "Ocorrência inválida."}), 400
+    conn = None
+    try:
+        from src.audit import ensure_schema as audit_schema
+        from src.trovoeda import ensure_schema as coins_schema, apply_delta_in_transaction
+        audit_schema()
+        coins_schema()
         audit_uid, audit_uname = _audit_actor()
-        owner = lead.get("assigned_to")
-        owner_plan = None
-        if owner:
-            try:
-                conn_p = get_db()
-                cur_p = conn_p.cursor()
-                cur_p.execute("SELECT plan_slug FROM app_users WHERE id = %s;", (int(owner),))
-                prow = cur_p.fetchone()
-                cur_p.close()
-                conn_p.close()
-                owner_plan = (prow[0] if prow else None) or None
-            except Exception:
-                owner_plan = None
+        conn = get_db()
+        cur = conn.cursor()
+        # Serialize decisions for this lead, including old clients without report_id.
+        cur.execute("SELECT name, assigned_to FROM companies WHERE id=%s FOR UPDATE", (lead_id,))
+        lead = cur.fetchone()
+        if not lead:
+            return jsonify({"error": "Not found"}), 404
+        name, owner = lead
+        if not owner:
+            return jsonify({"error": "Lead sem dono — nada a repor."}), 400
+        cur.execute("""SELECT id FROM audit_log
+            WHERE action='report_invalid' AND lead_id=%s AND user_id=%s
+            AND (%s::integer IS NULL OR id=%s) ORDER BY id DESC LIMIT 1""",
+            (lead_id, owner, report_id, report_id))
+        report = cur.fetchone()
+        if not report:
+            return jsonify({"error": "Nenhuma ocorrência deste proprietário encontrada."}), 404
+        report_id = report[0]
+        cur.execute("SELECT id FROM audit_log WHERE action='report_resolved' AND lead_id=%s AND id>%s LIMIT 1",
+                    (lead_id, report_id))
+        if cur.fetchone():
+            return jsonify({"error": "Esta ocorrência já foi resolvida."}), 409
+        cur.execute("SELECT plan_slug FROM app_users WHERE id=%s", (owner,))
+        row = cur.fetchone()
+        owner_plan = row[0] if row else None
         if approve:
-            if not owner:
-                return jsonify({"error": "Lead sem dono — nada a repor."}), 400
-            admin_grant(int(owner), 1, created_by=audit_uid, note=f"reposicao lead {lead_id}")
-            try:
-                conn = get_db()
-                cur = conn.cursor()
-                cur.execute(
-                    "UPDATE companies SET contact_status = 'reposto' WHERE id = %s;",
-                    (lead_id,),
-                )
-                conn.commit()
-                cur.close()
-                conn.close()
-            except Exception:
-                pass
-        log_action(
-            "report_resolved",
-            user_id=audit_uid,
-            username=audit_uname,
-            lead_id=lead_id,
-            company_name=lead.get("name"),
-            details={"approve": approve, "owner_plan": owner_plan},
-        )
+            credited = apply_delta_in_transaction(cur, int(owner), 1, reason="admin_grant",
+                created_by=audit_uid, note=f"reposicao lead {lead_id}",
+                ref_type="report", ref_id=str(report_id))
+            if not credited.get("ok"):
+                conn.rollback()
+                return jsonify({"error": "Não foi possível creditar a reposição."}), 503
+            cur.execute("UPDATE companies SET contact_status='reposto' WHERE id=%s", (lead_id,))
+        cur.execute("""INSERT INTO audit_log
+            (created_at,user_id,username,action,lead_id,company_name,details)
+            VALUES (%s,%s,%s,'report_resolved',%s,%s,%s)""",
+            (datetime.now().isoformat(),audit_uid,audit_uname,lead_id,name,
+             json.dumps({"approve":approve,"owner_plan":owner_plan,"report_id":report_id})))
+        conn.commit()
         _invalidate_cache()
         return jsonify({"success": True, "approve": approve, "owner_plan": owner_plan})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        if conn:
+            conn.rollback()
+        app.logger.exception("Falha ao resolver ocorrência")
+        return jsonify({"error": "Não foi possível resolver a ocorrência."}), 503
+    finally:
+        if conn:
+            conn.close()
 
 
 @app.route("/api/stats")
@@ -2125,22 +2199,18 @@ def api_stats():
 @app.route("/api/reports/<period>")
 @login_required
 def api_reports(period):
+    from src.lead_metrics import select_report_period, lead_status, public_signals
     # Patrão: relatório no escopo atual (default sobras); cliente: só os dele
     if _is_patrao_view():
         scope, owner_id = _parse_leads_scope()
         leads = get_all_leads(use_cache=True, scope=scope, owner_id=owner_id)
     else:
         leads = get_all_leads(use_cache=True, scope="own", owner_id=_effective_user_id())
-    days = 1 if period == "daily" else 7 if period == "weekly" else 30
-    cutoff = datetime.now() - timedelta(days=days)
-    filtered = []
-    for l in leads:
-        try:
-            created = datetime.fromisoformat(str(l.get("created_at", "")).replace("Z", "").split("+")[0])
-            if created >= cutoff:
-                filtered.append(l)
-        except Exception:
-            filtered.append(l)
+    try:
+        report = select_report_period(leads, period)
+    except ValueError as error:
+        return jsonify({"error":str(error)}), 400
+    filtered = report["leads"]
 
     def _is_score_meta_problem(text: str) -> bool:
         """Ignora lixo de cálculo interno (ex.: Blocos /100: dor=…·cap=…)."""
@@ -2164,7 +2234,7 @@ def api_reports(period):
     convertidos = 0
     for l in filtered:
         try:
-            for p in json.loads(l.get("lead_problems") or "[]"):
+            for p in public_signals(l.get("lead_problems")):
                 if _is_score_meta_problem(str(p)):
                     continue
                 # normaliza label: corta detalhe após " — " ou " (+N)"
@@ -2175,10 +2245,10 @@ def api_reports(period):
                 problemas[k] = problemas.get(k, 0) + 1
         except Exception:
             pass
-        notes = (l.get("notes") or "").lower()
-        if l.get("contacted_at"):
+        status = lead_status(l)
+        if l.get("contacted_at") or status in {"contactado","convertido"}:
             contactados += 1
-        if notes == "convertido":
+        if status == "convertido":
             convertidos += 1
 
     # top sinais reais (sem meta de score)
@@ -2188,6 +2258,7 @@ def api_reports(period):
 
     total = len(filtered)
     return jsonify({
+        **{key:value for key,value in report.items() if key!="leads"},
         "total": total,
         "quentes": total,
         "mornos": contactados,
@@ -2201,11 +2272,17 @@ def api_reports(period):
 @app.route("/api/export/csv")
 @login_required
 def api_export_csv():
+    from src.lead_metrics import lead_status, select_report_period, csv_safe_cell
     if _is_patrao_view():
         scope, owner_id = _parse_leads_scope()
         leads = get_all_leads(use_cache=False, scope=scope, owner_id=owner_id)
     else:
         leads = get_all_leads(use_cache=False, scope="own", owner_id=_effective_user_id())
+    if request.args.get("period"):
+        try:
+            leads = select_report_period(leads,request.args["period"])["leads"]
+        except ValueError as error:
+            return jsonify({"error":str(error)}), 400
     output = io.StringIO()
     output.write("\ufeff")
     w = csv.writer(output, delimiter=";")
@@ -2214,15 +2291,7 @@ def api_export_csv():
         headers.append("AssignedTo")
     w.writerow(headers)
     for l in leads:
-        notes = (l.get("notes") or "").lower()
-        if notes == "descartado":
-            st = "descartado"
-        elif notes == "convertido":
-            st = "convertido"
-        elif l.get("contacted_at"):
-            st = "contactado"
-        else:
-            st = "novo"
+        st = lead_status(l)
         row = [
             l.get("name", ""),
             l.get("phone", ""),
@@ -2235,7 +2304,7 @@ def api_export_csv():
         ]
         if _is_admin():
             row.append(l.get("assigned_to") or "")
-        w.writerow(row)
+        w.writerow([csv_safe_cell(cell) for cell in row])
     resp = make_response(output.getvalue())
     resp.headers["Content-Disposition"] = "attachment; filename=leads_raio.csv"
     resp.headers["Content-type"] = "text/csv; charset=utf-8"
@@ -2277,14 +2346,30 @@ def api_users_list():
 @admin_required
 def api_users_create():
     data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "Dados de cliente inválidos."}), 400
+    username = str(data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+    if not 3 <= len(username) <= 40 or any(not (c.isalnum() or c in "_.-") for c in username):
+        return jsonify({"error": "Use um login de 3 a 40 caracteres: letras, números, ponto, hífen ou sublinhado."}), 400
+    if username in {"patrao", "admin", "root", "sistema"}:
+        return jsonify({"error": "Este login é reservado."}), 400
+    if not isinstance(password, str) or not 8 <= len(password) <= 128:
+        return jsonify({"error": "Use uma senha de 8 a 128 caracteres."}), 400
+    try:
+        quota = int(data["monthly_quota"]) if data.get("monthly_quota") is not None else 50
+        if quota < 0:
+            raise ValueError()
+    except (ValueError, TypeError):
+        return jsonify({"error": "Informe uma cota mensal inteira, maior ou igual a zero."}), 400
     try:
         from src.users import create_user, ensure_schema
         ensure_schema()
         from src.audit import log_action
         user = create_user(
-            username=data.get("username", ""),
-            password=data.get("password", ""),
-            monthly_quota=int(data.get("monthly_quota") or 50),
+            username=username,
+            password=password,
+            monthly_quota=quota,
             role=data.get("role") or "client",
             cities=data.get("cities") or [],
             niches=data.get("niches") or [],
@@ -2299,8 +2384,13 @@ def api_users_create():
         )
         _invalidate_cache()
         return jsonify(user), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    except psycopg2.errors.UniqueViolation:
+        return jsonify({"error": "Este login já está em uso. Escolha outro."}), 409
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception:
+        app.logger.exception("Falha ao criar cliente")
+        return jsonify({"error": "Não foi possível criar o cliente. Tente novamente."}), 503
 
 
 @app.route("/api/users/<int:user_id>", methods=["PUT", "POST"])
@@ -2363,8 +2453,12 @@ def api_users_update(user_id):
         )
         _invalidate_cache()
         return jsonify({"success": True, "user": user})
+    except psycopg2.errors.ForeignKeyViolation:
+        return jsonify({"error": "Esta conta tem registros financeiros protegidos. Use Desativar para preservar o histórico."}), 409
+    except psycopg2.errors.UniqueViolation:
+        return jsonify({"error": "Este login já está em uso. Escolha outro."}), 409
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/users/<int:user_id>/reset-month", methods=["POST"])
@@ -2379,7 +2473,7 @@ def api_users_reset_month(user_id):
         u = get_user_by_id(int(user_id))
         return jsonify({"success": True, "reset_rows": n, "user": u})
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/users/<int:user_id>/assign-plan", methods=["POST"])
@@ -2425,6 +2519,7 @@ def api_users_assign_plan(user_id):
                 user_id,
                 plan_slug=None,
                 daily_quota=None,
+                monthly_quota=0,
             )
 
         if not user:
@@ -2444,7 +2539,7 @@ def api_users_assign_plan(user_id):
         _invalidate_cache()
         return jsonify({"success": True, "user": user})
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
@@ -2458,7 +2553,7 @@ def api_users_delete(user_id):
         _invalidate_cache()
         return jsonify({"success": ok})
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "erro interno"}), 400
 
 
 @app.route("/api/leads/<int:lead_id>/assign", methods=["PUT", "POST"])
@@ -2517,9 +2612,15 @@ def api_leads_distribute():
     from src.users import distribute_free_leads, distribute_selected_leads
     from src.audit import log_action
     data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "Solicitação de distribuição inválida."}), 400
     lead_ids = data.get("lead_ids") or data.get("ids") or []
     if isinstance(lead_ids, (int, str)):
         lead_ids = [lead_ids]
+    if not isinstance(lead_ids, list) or any(not str(value).isdigit() or int(value)<=0 for value in lead_ids):
+        return jsonify({"error": "Informe identificadores válidos de leads."}), 400
+    if lead_ids and data.get("user_id") in (None,"","null"):
+        return jsonify({"error": "Escolha o cliente destinatário dos leads selecionados."}), 400
 
     # —— seleção manual: leads escolhidos + destinatário ——
     if lead_ids and data.get("user_id") not in (None, "", "null"):
@@ -2530,11 +2631,14 @@ def api_leads_distribute():
         respect = data.get("respect_quota", True)
         if isinstance(respect, str):
             respect = respect.lower() in ("1", "true", "yes", "sim")
-        result = distribute_selected_leads(
-            lead_ids=[int(x) for x in lead_ids if str(x).strip().isdigit() or isinstance(x, int)],
-            user_id=only,
-            respect_quota=bool(respect),
-        )
+        try:
+            result = distribute_selected_leads(lead_ids=[int(x) for x in lead_ids],
+                user_id=only, respect_quota=bool(respect))
+        except Exception:
+            app.logger.exception("Falha na distribuição selecionada")
+            return jsonify({"error":"Não foi possível distribuir os leads. Tente novamente."}), 503
+        if not result.get("ok", True):
+            return jsonify({"error":"Não foi possível distribuir os leads. Tente novamente."}), 503
         audit_uid, audit_uname = _audit_actor()
         log_action(
             "distribute_selected",
@@ -2557,14 +2661,22 @@ def api_leads_distribute():
     only_uid = data.get("user_id")
     try:
         lim = int(limit) if limit not in (None, "", "null") else None
+        if lim is not None and lim <= 0:
+            raise ValueError()
     except (TypeError, ValueError):
-        lim = None
+        return jsonify({"error":"Informe uma quantidade inteira maior que zero."}), 400
     try:
         only = int(only_uid) if only_uid not in (None, "", "null", 0, "0") else None
     except (TypeError, ValueError):
-        only = None
+        return jsonify({"error":"Cliente destinatário inválido."}), 400
 
-    result = distribute_free_leads(limit=lim, only_user_id=only)
+    try:
+        result = distribute_free_leads(limit=lim, only_user_id=only)
+    except Exception:
+        app.logger.exception("Falha na distribuição automática")
+        return jsonify({"error":"Não foi possível distribuir os leads. Tente novamente."}), 503
+    if not result.get("ok", True):
+        return jsonify({"error":"Não foi possível distribuir os leads. Tente novamente."}), 503
     audit_uid, audit_uname = _audit_actor()
     log_action(
         "distribute_free",
@@ -2617,20 +2729,36 @@ def api_lead_delete(lead_id):
     return jsonify({"success": True, "deleted_id": lead_id, "name": lead.get("name")})
 
 
+def _audit_filter_values():
+    try:
+        limit=int(request.args.get("limit") or 150)
+        lead_id=int(request.args["lead_id"]) if request.args.get("lead_id") else None
+        if not 1 <= limit <= 500 or (lead_id is not None and lead_id<=0):
+            raise ValueError()
+        since=datetime.fromisoformat(request.args["since"]).date() if request.args.get("since") else None
+        until=datetime.fromisoformat(request.args["until"]).date() if request.args.get("until") else None
+        if since and until and since>until:
+            raise ValueError()
+    except (TypeError,ValueError):
+        raise ValueError("Revise as datas, o identificador do lead e o limite de 1 a 500 registros.")
+    return {"username":(request.args.get("username") or "")[:80] or None,
+            "action":(request.args.get("action") or "")[:80] or None,
+            "lead_id":lead_id,"limit":limit,
+            "since":since.isoformat()+"T00:00:00" if since else None,
+            "until":until.isoformat()+"T23:59:59.999999" if until else None}
+
+
 @app.route("/api/audit")
 @login_required
 @admin_required
 def api_audit():
     from src.audit import query_logs, ensure_schema
+    try:
+        filters=_audit_filter_values()
+    except ValueError as error:
+        return jsonify({"error":str(error)}), 400
     ensure_schema()
-    logs = query_logs(
-        username=request.args.get("username") or None,
-        lead_id=int(request.args["lead_id"]) if request.args.get("lead_id") else None,
-        action=request.args.get("action") or None,
-        since=request.args.get("since") or None,
-        until=request.args.get("until") or None,
-        limit=int(request.args.get("limit") or 150),
-    )
+    logs = query_logs(**filters)
     return jsonify(logs)
 
 
@@ -2722,4 +2850,11 @@ def api_settings():
     return jsonify({"niches": [], "cities": []})
 
 
+from api.green_ui import install_green_ui
+render_template = install_green_ui(app, render_template, globals())
+
 handler = app
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=int(os.getenv("PORT") or "5000"),
+            debug=False, use_reloader=False)

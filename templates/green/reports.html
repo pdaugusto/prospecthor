@@ -1,0 +1,10 @@
+<div class="page-intro"><div><h1>Relatórios</h1><p>Entradas na carteira e situação atual dos leads recebidos no período.</p></div><a class="secondary-button" href="{{ url_for('api_export_csv',period=report.period) }}">Exportar CSV do período {{ svg('external') }}</a></div>
+<section class="panel suite-panel">
+  <form method="get" action="/reports" class="live-report-period" aria-label="Período do relatório">
+    {% for key,label in [('daily','Hoje'),('weekly','7 dias'),('monthly','30 dias')] %}<button class="{{ 'primary-button' if key==report.period else 'secondary-button' }}" type="submit" name="period" value="{{ key }}" {% if key==report.period %}aria-current="true"{% endif %}>{{ label }}</button>{% endfor %}
+  </form>
+  <p class="field-help">{{ report.start_date.split('-')|reverse|join('/') }} a {{ report.end_date.split('-')|reverse|join('/') }} · horário de Brasília · {{ metrics.total }} leads recebidos. Prioridade da data: atribuição, criação e coleta.</p>
+  {% if report.unknown_dates %}<p class="field-help">{{ report.unknown_dates }} registros sem data utilizável não entram neste recorte.</p>{% endif %}
+</section>
+{% include 'green/insights.html' %}
+<section class="panel suite-panel"><h2>Oportunidades por nicho</h2><dl class="suite-dl">{% for niche,count in metrics.niches %}<div><dt>{{ niche }}</dt><dd>{{ count }} leads</dd></div>{% else %}<p>Nenhum lead recebido neste período. Selecione outro intervalo para consultar o histórico.</p>{% endfor %}</dl></section>

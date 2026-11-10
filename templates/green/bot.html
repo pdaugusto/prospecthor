@@ -1,0 +1,30 @@
+<div class="page-intro"><div><h1>Operação do robô</h1><p>Consulte o último estado registrado. Iniciar, pausar e configurar missões continua no cockpit do operador.</p></div><a class="secondary-button" href="/bot">Atualizar estado</a></div>
+{% set state=bot.get('status') or 'desconhecido' %}
+<section class="panel suite-panel live-operation" aria-labelledby="operation-heading">
+  <div class="live-operation-heading"><h2 id="operation-heading">Estado registrado</h2><span class="status-badge">{{ {'rodando':'Em execução','parado':'Parado','erro':'Com erro','desconhecido':'Não informado'}.get(state,state) }}</span></div>
+  <p class="field-help">Atualizado em {{ (bot.get('updated_at') or 'data não informada')|replace('T',' ') }}. Esta consulta não confirma que o processo continua ativo.</p>
+  {% if bot.get('stale') %}<p class="field-help" role="status">O backend sinalizou ausência de atualização recente. Confira o processo no cockpit antes de iniciar outra missão.</p>{% endif %}
+  {% if bot.get('last_error') %}<p class="form-message is-error" role="alert">A operação registrou um erro. Consulte os eventos abaixo e o cockpit do operador.</p>{% endif %}
+  <dl class="live-operation-facts">
+    <div><dt>Leads nesta sessão</dt><dd>{{ bot.get('session_leads_count') if bot.get('session_leads_count') is not none else 'Não informado' }}</dd></div>
+    <div><dt>Meta da missão</dt><dd>{{ bot.get('mission_target') or 'Sem meta registrada' }}</dd></div>
+    <div><dt>Última sessão concluída</dt><dd>{{ bot.get('last_leads_count') if bot.get('last_leads_count') is not none else 'Não informada' }}</dd></div>
+  </dl>
+  <dl class="live-operation-details"><dt>Última atividade</dt><dd>{{ bot.get('last_job') or 'Nenhuma atividade registrada.' }}</dd><dt>Último início</dt><dd>{{ (bot.get('last_started_at') or 'Não informado')|replace('T',' ') }}</dd><dt>Último término</dt><dd>{{ (bot.get('last_finished_at') or 'Não informado')|replace('T',' ') }}</dd></dl>
+</section>
+<div class="live-operation-grid">
+  <section class="panel suite-panel"><h2>Plano registrado</h2><p class="field-help">Configuração lida pelo backend, não uma confirmação da missão em execução.</p>
+    <dl class="live-operation-details"><dt>Meta de leads</dt><dd>{{ bot_plan.get('target_leads') if bot_plan.get('target_leads') is not none else 'Não informada' }}</dd>
+      {% set catalog=bot_plan.get('catalog') or {} %}
+      {% for key,label,items in [('city_ids','Cidades',catalog.get('cities') or []),('niche_ids','Nichos',catalog.get('niches') or [])] %}
+      <dt>{{ label }}</dt><dd>{% for id in bot_plan.get(key) or [] %}{% set match=namespace(label=id) %}{% for item in items %}{% if item.id==id %}{% set match.label=(item.nome ~ ' / ' ~ item.estado) if key=='city_ids' else item.label %}{% endif %}{% endfor %}<span class="live-operation-tag">{{ match.label }}</span>{% else %}Nenhum selecionado no plano.{% endfor %}</dd>{% endfor %}
+      <dt>Observações</dt><dd>{{ bot_plan.get('notes') or 'Sem observações.' }}</dd><dt>Última edição</dt><dd>{{ (bot_plan.get('updated_at') or 'Não informada')|replace('T',' ') }}{% if bot_plan.get('updated_by') %} · {{ bot_plan.updated_by }}{% endif %}</dd>
+    </dl>
+  </section>
+  <section class="panel suite-panel"><h2>Leads por nicho na sessão</h2><p class="field-help">Contagem informativa registrada pelo robô; não representa uma cota por nicho.</p>
+    <dl class="live-operation-counts">{% for niche,count in (bot.get('niche_counts') or {}).items() %}<div><dt>{{ niche }}</dt><dd>{{ count }}</dd></div>{% else %}<p class="empty-state">Não há contagens por nicho registradas nesta consulta.</p>{% endfor %}</dl>
+  </section>
+</div>
+<section class="panel suite-panel"><div class="panel-heading"><h2>Eventos recentes</h2><span class="field-help">Mais recentes primeiro</span></div>
+  {% if bot.get('logs') %}<div class="live-table-scroll"><table class="suite-table live-operation-log"><thead><tr><th scope="col">Registro</th><th scope="col">Nível</th><th scope="col">Mensagem</th></tr></thead><tbody>{% for entry in bot.logs %}<tr><td>{{ (entry.created_at or '')|replace('T',' ') }}</td><td>{{ entry.level }}</td><td>{{ entry.message }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="empty-state">Nenhum evento disponível. Atualize a consulta após acompanhar a missão no cockpit.</p>{% endif %}
+</section>

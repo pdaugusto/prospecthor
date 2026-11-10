@@ -1,0 +1,12 @@
+<section class="panel suite-panel">
+  <form method="get" action="{{ request.path }}" class="live-filters" data-audit-filters>
+    <label>Usuário<input name="username" value="{{ request.args.get('username','') }}" maxlength="80" placeholder="Nome de login"></label>
+    <label>Ação<input name="action" value="{{ request.args.get('action','') }}" maxlength="80" placeholder="Ex.: report_invalid"></label>
+    <label>De<input name="since" type="date" value="{{ request.args.get('since','') }}"></label>
+    <label>Até<input name="until" type="date" value="{{ request.args.get('until','') }}"></label>
+    <label>Lead<input name="lead_id" type="number" min="1" step="1" value="{{ request.args.get('lead_id','') }}" placeholder="Identificador"></label>
+    <label>Máximo de registros<input name="limit" type="number" min="1" max="500" value="{{ request.args.get('limit','150') }}" required></label>
+    <div class="form-actions"><button class="primary-button" type="submit">Filtrar histórico</button><a class="secondary-button" href="{{ request.path }}">Limpar filtros</a></div>
+  </form>
+  {% if filter_error %}<p class="form-message is-error" role="alert">{{ filter_error }} Corrija os campos e tente novamente.</p>{% else %}<p class="field-help">A data final inclui o dia inteiro. Até 500 registros por consulta, do mais recente para o mais antigo.</p>{% endif %}
+</section>

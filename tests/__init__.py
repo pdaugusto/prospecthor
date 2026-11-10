@@ -1,1 +1,1 @@
-
+"""Testes automatizados do ProspecTHOR."""

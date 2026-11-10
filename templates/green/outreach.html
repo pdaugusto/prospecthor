@@ -1,0 +1,12 @@
+<section class="panel suite-panel live-outreach">
+  <h2>Prepare sua abordagem</h2>
+  <p>Revise o rascunho antes de entrar em contato. O ProspecTHOR não envia mensagens por você.</p>
+  <div class="suite-form" data-outreach data-drafts='{{ drafts|tojson }}'>
+    <label>Canal<select data-outreach-channel><option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="email">E-mail</option></select></label>
+    <label>Mensagem editável<textarea id="lead-draft" data-outreach-text rows="6" maxlength="5000">{{ drafts.whatsapp }}</textarea></label>
+    <div class="form-actions"><button type="button" class="secondary-button" data-copy-text="lead-draft">Copiar mensagem</button>{% if wa_link(lead.phone) %}<a class="primary-button" data-message-whatsapp data-base-url="{{ wa_link(lead.phone) }}" href="{{ wa_link(lead.phone,drafts.whatsapp) }}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp com mensagem {{ svg('external') }}</a>{% endif %}</div>
+    <p class="field-help">O rascunho é editável e não é salvo ao sair desta página. Abrir o WhatsApp apenas prepara a conversa; o envio é uma decisão sua.</p>
+    <p class="form-message" data-copy-status role="status"></p>
+  </div>
+  <details class="live-inline"><summary>Resumo para copiar</summary><div class="suite-form"><label>Resumo do lead<textarea id="lead-summary" rows="9" readonly>{{ summary }}</textarea></label><button type="button" class="secondary-button" data-copy-text="lead-summary">Copiar resumo</button><p class="form-message" data-copy-status role="status"></p></div></details>
+</section>

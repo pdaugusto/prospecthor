@@ -1,0 +1,49 @@
+<div class="page-intro"><div><h1>Clientes e planos</h1><p>Gerencie o acesso, o plano e as Trovoedas de cada cliente.</p></div></div>
+<section class="panel suite-panel">
+  <details>
+    <summary class="suite-link">Criar novo cliente</summary>
+    <form class="suite-form live-user-create" data-live-form="user-create">
+      <div class="field-pair">
+        <label>Login<input name="username" autocomplete="off" minlength="3" maxlength="40" required></label>
+        <label>Nome exibido<input name="label" maxlength="120" required></label>
+      </div>
+      <div class="field-pair">
+        <label>Senha inicial<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+        <label>Cota mensal<input name="monthly_quota" type="number" min="0" step="1" value="0" required></label>
+      </div>
+      <p class="field-help">Cota zero: sem distribuição automática. O cliente poderá pedir leads usando Trovoedas. Este acesso não recebe bônus de cadastro.</p>
+      <div class="form-actions"><button class="primary-button" type="submit">Criar acesso do cliente</button></div>
+      <p class="form-message" role="status"></p>
+    </form>
+  </details>
+</section>
+<section class="panel suite-panel"><p class="field-help live-table-help">Deslize a tabela para ver o plano, o saldo e as ações de cada cliente.</p><div class="ledger-wrap" tabindex="0" role="region" aria-label="Tabela de clientes, com rolagem horizontal"><table class="suite-table live-users">
+  <thead><tr><th>Cliente</th><th>Acesso</th><th>Plano e cota</th><th>Saldo</th><th>Ações</th></tr></thead>
+  <tbody>{% for user in users if user.username!='patrao' and user.role!='admin' %}
+    <tr>
+      <td><strong>{{ user.label or user.username }}</strong><small>@{{ user.username }}</small></td>
+      <td><button class="secondary-button" data-api="/api/users/{{ user.id }}" data-payload='{{ {"active":not user.active}|tojson }}' data-confirm="Alterar o acesso de {{ user.username }}?">{{ 'Desativar' if user.active else 'Ativar' }}</button></td>
+      <td><select class="suite-select" data-user-plan="{{ user.id }}" aria-label="Plano de {{ user.username }}"><option value="">Sem pacote</option>{% for p in packages if p.daily_cap %}<option value="{{ p.slug }}" {% if p.slug==user.plan_slug %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select><small>{{ user.assigned_this_month or 0 }} / {{ user.monthly_quota or 0 }} no mês{% if user.daily_quota %} · {{ user.daily_quota }} por dia{% endif %}</small></td>
+      <td>{{ user.trovoedas_balance or 0 }}</td>
+      <td>
+        <button class="secondary-button" data-api="/api/impersonate" data-payload='{{ {"user_id":user.id}|tojson }}' data-confirm="Abrir a visão de {{ user.username }}?" data-reload="/">Ver como cliente</button>
+        <details class="live-inline"><summary>Editar acesso e cota</summary>
+          <form class="suite-form" data-live-form="user-edit" data-user-id="{{ user.id }}">
+            <label>Login<input name="username" value="{{ user.username }}" minlength="3" maxlength="40" required></label>
+            <label>Nome exibido<input name="label" value="{{ user.label or user.username }}" maxlength="120" required></label>
+            <label>Cota mensal<input name="monthly_quota" type="number" value="{{ user.monthly_quota or 0 }}" min="0" step="1" required></label>
+            <label>Nova senha (opcional)<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128"></label>
+            <p class="field-help">Deixe a senha vazia para manter a atual. Alterar a cota não remove os leads já atribuídos.</p>
+            <button class="secondary-button" type="submit">Salvar alterações</button><p class="form-message" role="status"></p>
+          </form>
+          <div class="form-actions live-admin-maintenance">
+            <button class="secondary-button" data-api="/api/users/{{ user.id }}" data-payload='{"action":"reset-month"}' data-confirm="Zerar o uso mensal de {{ user.username }}? Os leads permanecem com este cliente.">Zerar uso do mês</button>
+            <button class="secondary-button" data-api="/api/users/{{ user.id }}" data-payload='{"action":"delete"}' data-confirm="Excluir a conta de {{ user.username }}? O login e o histórico associado serão removidos; os leads voltarão ao pool. Para preservar o histórico, use Desativar. Contas com pagamentos protegidos não podem ser excluídas.">Excluir conta</button>
+          </div>
+        </details>
+        <details class="live-inline"><summary>Ajustar Trovoedas</summary><form class="suite-form" data-live-form="grant" data-user-id="{{ user.id }}"><label>Quantidade (negativa para debitar)<input name="amount" type="number" required></label><label>Justificativa<input name="note" maxlength="500" required></label><button class="secondary-button" type="submit">Confirmar ajuste</button><p class="form-message" role="status"></p></form></details>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="5">Nenhum cliente encontrado. Use “Criar novo cliente” para cadastrar o primeiro acesso.</td></tr>{% endfor %}
+  </tbody>
+</table></div></section>

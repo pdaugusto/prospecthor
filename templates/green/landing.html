@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ProspecTHOR — Leads locais com potencial real</title>
+  <meta name="description" content="Encontre empresas sem site, entenda a oportunidade e comece pelos leads com maior chance de fechar.">
+  <meta name="theme-color" content="#080908">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/green/style.css?v=2">
+<link rel="stylesheet" href="/static/green/assets/pricing-cards.css?v=3"><style>.pricing-panels>.plan-set>.prospect-pricing{grid-column:1/-1}</style>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <div class="scroll-progress" aria-hidden="true"><i></i></div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#" aria-label="ProspecTHOR, início">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="/static/green/assets/thor-helmet-reference.png" alt="">
+        </span>
+        <span>Prospec<b>THOR</b></span>
+      </a>
+      <nav aria-label="Navegação principal">
+        <a href="#como">Como funciona</a>
+        <a href="#score">Score</a>
+        <a href="#planos">Planos</a>
+        <a href="#faq">Dúvidas</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="login-link" href="/login">Entrar</a>
+        <a class="button button-small" href="/register">Testar grátis <span>↗</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero">
+      <div class="hero-noise" aria-hidden="true"></div>
+      <div class="hero-copy reveal is-visible">
+        <p class="eyebrow"><i></i> Prospecção local, agora com contexto</p>
+        <h1>Encontre o cliente <em>antes da concorrência.</em></h1>
+        <p class="hero-lead">O ProspecTHOR varre cidades, encontra empresas sem site e ordena cada oportunidade por uma nota de 0 a 100.</p>
+        <div class="hero-actions">
+          <a class="button button-beam" href="/register">Começar com 5 leads grátis <span>↗</span></a>
+          <a class="ghost-link" href="#como"><i>▶</i> Ver como funciona</a>
+        </div>
+        <ul class="hero-checks" aria-label="Condições">
+          <li>Sem cartão</li>
+          <li>Sem contrato</li>
+          <li>Saldo não expira</li>
+        </ul>
+      </div>
+
+      <div class="hero-product reveal is-visible" data-tilt>
+        <div class="orbit orbit-a" aria-hidden="true"></div>
+        <div class="orbit orbit-b" aria-hidden="true"></div>
+        <div class="radar-pulse" aria-hidden="true"></div>
+        <div class="product-window spotlight">
+          <div class="window-bar">
+            <span class="window-dots"><i></i><i></i><i></i></span>
+            <span class="window-path">prospecthor / radar</span>
+            <span class="window-live"><i></i> AO VIVO</span>
+          </div>
+          <div class="product-head">
+            <div><span>Radar de oportunidade</span><h2>Vitória da Conquista · BA</h2></div>
+            <button type="button" aria-label="Filtros">Filtros <b>3</b></button>
+          </div>
+          <div class="scan-line" aria-hidden="true"><i></i></div>
+          <div class="lead-table">
+            <button class="lead-row is-active" type="button" data-score="88">
+              <span class="lead-rank">01</span>
+              <span class="lead-company"><b>Madeiras e Material ABC</b><small>Construção · sem site próprio</small></span>
+              <span class="lead-meta">★ 4,6 <small>158 avaliações</small></span>
+              <span class="lead-score hot">88</span>
+            </button>
+            <button class="lead-row" type="button" data-score="84">
+              <span class="lead-rank">02</span>
+              <span class="lead-company"><b>Odonto Prime</b><small>Odontologia · somente Instagram</small></span>
+              <span class="lead-meta">★ 4,8 <small>96 avaliações</small></span>
+              <span class="lead-score">84</span>
+            </button>
+            <button class="lead-row" type="button" data-score="79">
+              <span class="lead-rank">03</span>
+              <span class="lead-company"><b>Vértice Esquadrias</b><small>Serviços · site fora do ar</small></span>
+              <span class="lead-meta">★ 4,7 <small>71 avaliações</small></span>
+              <span class="lead-score">79</span>
+            </button>
+          </div>
+          <div class="score-reason">
+            <div class="score-number"><strong data-live-score>88</strong><span>/100</span></div>
+            <div>
+              <p>Por que este lead está quente?</p>
+              <div class="reason-tags"><span>Sem site <b>+36</b></span><span>Alta procura <b>+20</b></span><span>Boa reputação <b>+20</b></span><span>Contato direto <b>+12</b></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="float-card float-card-a"><span>Empresas no catálogo</span><b>{{ stats.get('leads_total',0) }}</b><small>Dados da plataforma</small></div>
+        <div class="float-card float-card-b"><span>Lead Raio</span><b>Sem site</b><small>prioridade máxima</small></div>
+      </div>
+
+      <div class="hero-stats reveal is-visible" aria-label="Números reais da plataforma">
+        <div><strong>{{ stats.get('leads_total',0) }}</strong><span>leads mapeados</span></div>
+        <div><strong>{{ stats.get('cities',0) }}</strong><span>cidades no catálogo</span></div>
+        <div><strong>{{ stats.get('niches',0) }}</strong><span>nichos no catálogo</span></div>
+        <p>Dados públicos organizados para você vender presença digital com contexto.</p>
+      </div>
+    </section>
+
+    <section class="statement section">
+      <p class="section-index">01 — O problema</p>
+      <div class="statement-copy reveal">
+        <p>Pesquisar empresa por empresa não é prospecção.</p>
+        <h2>Seu melhor cliente pode estar <em>invisível</em> justamente porque ainda não tem site.</h2>
+      </div>
+      <div class="statement-aside reveal">
+        <p>Listas prontas mostram quem já investe em marketing. O ProspecTHOR encontra o oposto: negócios reais, bem avaliados e com uma lacuna digital que você consegue resolver.</p>
+        <a href="#score">Entender o score <span>↓</span></a>
+      </div>
+    </section>
+
+    <section class="process-story" id="como" data-journey aria-labelledby="journey-title">
+      <div class="journey-sticky">
+        <div class="journey-head">
+          <div>
+            <p class="section-index">02 — Da lacuna ao contrato</p>
+            <h2 id="journey-title">O caminho até o seu<br>próximo cliente.</h2>
+          </div>
+          <div class="journey-counter" aria-live="polite"><span data-journey-current>01</span><i></i><small>04</small></div>
+        </div>
+        <div class="journey-progress" aria-hidden="true"><i data-journey-progress></i></div>
+        <div class="journey-viewport">
+          <div class="journey-track" data-journey-track>
+            <article class="journey-step is-active" data-journey-step>
+              <div class="journey-step-head"><span>01</span><small>A lacuna</small></div>
+              <div class="journey-visual absence-visual" aria-hidden="true">
+                <div class="search-result"><i></i><span><b>Clínica Horizonte</b><small>Salvador · BA</small></span><em>4,8</em></div>
+                <div class="missing-site"><span>www.clinicahorizonte.com.br</span><strong>SEM SITE</strong><small>O cliente existe. A presença digital ainda não.</small></div>
+              </div>
+              <div class="journey-copy"><h3>Um bom negócio está invisível.</h3><p>A empresa tem reputação, clientes e operação real — mas depende das redes sociais ou nem aparece direito no Google.</p></div>
+            </article>
+
+            <article class="journey-step" data-journey-step>
+              <div class="journey-step-head"><span>02</span><small>A captura</small></div>
+              <div class="journey-visual capture-visual" aria-hidden="true">
+                <div class="capture-radar"><i></i><b></b><b></b><b></b></div>
+                <div class="capture-feed"><span><i></i> Reputação encontrada</span><span><i></i> Site não localizado</span><span><i></i> Contato público validado</span></div>
+              </div>
+              <div class="journey-copy"><h3>O ProspecTHOR encontra o sinal.</h3><p>Você escolhe cidade e nicho. O radar organiza dados públicos e separa empresas com uma lacuna digital que você pode resolver.</p></div>
+            </article>
+
+            <article class="journey-step" data-journey-step>
+              <div class="journey-step-head"><span>03</span><small>A prioridade</small></div>
+              <div class="journey-visual priority-visual" aria-hidden="true">
+                <div class="priority-score"><strong>88</strong><span>chance de fechar</span></div>
+                <div class="priority-reasons"><span>Sem site <b>+36</b></span><span>Alta procura <b>+20</b></span><span>Boa reputação <b>+20</b></span><span>Contato direto <b>+12</b></span></div>
+              </div>
+              <div class="journey-copy"><h3>O score mostra quem vem primeiro.</h3><p>Cada lead recebe uma nota de 0 a 100 e os motivos por trás dela. Você para de adivinhar e começa pela melhor chance.</p></div>
+            </article>
+
+            <article class="journey-step" data-journey-step>
+              <div class="journey-step-head"><span>04</span><small>A abordagem</small></div>
+              <div class="journey-visual contact-visual" aria-hidden="true">
+                <div class="message-bubble"><small>Você · agora</small><p>Vi que a Clínica Horizonte é muito bem avaliada, mas ainda não tem um site próprio. Posso te mostrar uma ideia?</p><span>Entregue ✓✓</span></div>
+                <div class="reply-bubble"><small>Clínica Horizonte</small><p>Claro, pode me enviar.</p></div>
+              </div>
+              <div class="journey-copy"><h3>Você chega com contexto.</h3><p>Contato direto, argumento real e o momento certo. A conversa começa sobre uma necessidade visível — não com uma mensagem genérica.</p></div>
+            </article>
+          </div>
+        </div>
+        <p class="journey-hint">Continue rolando para acompanhar a jornada <span>→</span></p>
+      </div>
+    </section>
+
+    <section class="score-section" id="score">
+      <div class="score-sticky">
+        <div class="section-heading reveal">
+          <p class="section-index">03 — Score ProspecTHOR</p>
+          <h2>Uma nota simples.<br><em>Motivos transparentes.</em></h2>
+          <p>Não é uma caixa-preta. Cada ponto explica por que aquele negócio merece sua atenção agora.</p>
+        </div>
+        <div class="score-stage reveal" data-score-stage>
+          <div class="score-ring">
+            <svg viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="88"/><circle class="score-progress" cx="110" cy="110" r="88"/></svg>
+            <div><strong>88</strong><span>oportunidade</span></div>
+          </div>
+          <span class="score-chip chip-a">Dor clara <b>+36</b></span>
+          <span class="score-chip chip-b">Demanda local <b>+20</b></span>
+          <span class="score-chip chip-c">Reputação <b>+20</b></span>
+          <span class="score-chip chip-d">Abordagem fácil <b>+12</b></span>
+        </div>
+      </div>
+      <div class="score-story">
+        <article class="story-card reveal"><span>01</span><h3>Dor digital</h3><p>Sem site próprio, site fora do ar ou presença dependente de rede social.</p><b>32% da nota</b></article>
+        <article class="story-card reveal"><span>02</span><h3>Capacidade de pagar</h3><p>Tempo de mercado, reputação, volume de avaliações e sinais de operação.</p><b>30% da nota</b></article>
+        <article class="story-card reveal"><span>03</span><h3>Visibilidade atual</h3><p>O quanto a empresa já aparece e quanto está deixando de capturar online.</p><b>23% da nota</b></article>
+        <article class="story-card reveal"><span>04</span><h3>Facilidade de contato</h3><p>WhatsApp, telefone ou Instagram pronto para iniciar uma conversa relevante.</p><b>15% da nota</b></article>
+      </div>
+    </section>
+
+    <section class="deliver section">
+      <div class="section-heading reveal">
+        <p class="section-index">04 — O que chega até você</p>
+        <h2>Um lead que já vem com assunto.</h2>
+        <p>Menos tempo juntando pistas. Mais contexto para escrever uma abordagem que não parece spam.</p>
+      </div>
+      <div class="bento-grid">
+        <article class="bento bento-main spotlight reveal">
+          <span class="bento-label">Ficha completa</span>
+          <h3>Madeiras e Material ABC</h3>
+          <p>Construção · Vitória da Conquista, BA</p>
+          <div class="contact-preview"><span>WhatsApp verificado</span><b>(77) 9••••-••••</b><button type="button">Liberar por 1 Trovoeda</button></div>
+        </article>
+        <article class="bento spotlight reveal"><span class="bento-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.6a8 8 0 0 1-11.8 7L3.6 20l1.2-4.5A8 8 0 1 1 20 11.6Z"/><path d="M8 8.2c.7 3.3 2.4 5 5.8 5.8"/></svg></span><h3>Contato que funciona</h3><p>WhatsApp, telefone ou Instagram antes de gastar seu crédito.</p></article>
+        <article class="bento spotlight reveal"><span class="bento-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 10 11l4 4 6-8"/><path d="M14 7h6v6"/></svg></span><h3>Motivo da nota</h3><p>Os sinais ficam visíveis para orientar sua primeira mensagem.</p></article>
+        <article class="bento bento-wide spotlight reveal">
+          <div><span class="bento-label">Cobertura atual</span><h3>50 cidades. 38 nichos.<br>Uma busca por vez.</h3></div>
+          <div class="city-stream" aria-label="Exemplos de cidades"><span>Salvador</span><span>Recife</span><span>Goiânia</span><span>Manaus</span><span>Curitiba</span><span>Fortaleza</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="plans section" id="planos">
+      <div class="section-heading reveal">
+        <p class="section-index">05 — Trovoedas</p>
+        <h2>Pague pelo lead.<br>Não pela promessa.</h2>
+        <p>1 Trovoeda libera 1 contato. Escolha créditos avulsos ou uma rotina mensal.</p>
+      </div>
+      <div class="plan-toggle reveal" role="group" aria-label="Tipo de plano">
+        <button class="is-active" type="button" data-plan-toggle="avulso" aria-pressed="true">Créditos avulsos</button>
+        <button type="button" data-plan-toggle="mensal" aria-pressed="false">Planos mensais</button>
+      </div>
+{% from 'green/macros.html' import packages_grid with context %}<div class="pricing-panels"><div class="plan-set prospect-pricing is-active" data-plan-set="avulso">{{ packages_grid(packages,false,true) }}</div><div class="plan-set prospect-pricing" data-plan-set="mensal">{{ packages_grid(packages,true,true) }}</div></div><p class="pp-footnote">Preços e volumes consultados no catálogo ativo do servidor.</p>
+    </section>
+
+    <section class="comparison section">
+      <div class="section-heading reveal">
+        <p class="section-index">06 — Comparação honesta</p>
+        <h2>A lista comum começa<br>onde a oportunidade termina.</h2>
+      </div>
+      <div class="comparison-table reveal">
+        <div class="compare-row compare-head"><span>Critério</span><span>Lista pronta</span><span>Busca no Google</span><span>ProspecTHOR</span></div>
+        <div class="compare-row"><span>Quem aparece</span><span>Quem já tem site</span><span>Quem paga anúncio</span><span>Quem precisa de site</span></div>
+        <div class="compare-row"><span>Priorização</span><span>Alfabética</span><span>Por anúncio</span><span>Nota de oportunidade</span></div>
+        <div class="compare-row"><span>Contato pronto</span><span>Às vezes</span><span>Não</span><span>WhatsApp, tel. ou Instagram</span></div>
+        <div class="compare-row"><span>Você paga por</span><span>A lista inteira</span><span>O clique</span><span>Só o lead liberado</span></div>
+      </div>
+    </section>
+
+    <section class="faq section" id="faq">
+      <div class="section-heading reveal">
+        <p class="section-index">07 — Dúvidas</p>
+        <h2>Antes de ligar o radar.</h2>
+      </div>
+      <div class="faq-list reveal">
+        <details open><summary>De onde vêm os dados das empresas?<span>+</span></summary><p>De fontes públicas, como Google Maps, OpenStreetMap e bases públicas de CNPJ. O sistema organiza e audita os sinais digitais de cada negócio.</p></details>
+        <details><summary>O que é um lead “Raio”?<span>+</span></summary><p>É uma empresa que não tem site próprio. Ela usa apenas rede social ou não possui presença digital relevante — a oportunidade mais direta para quem vende sites.</p></details>
+        <details><summary>Como a nota de 0 a 100 é calculada?<span>+</span></summary><p>O score combina dor digital, capacidade de pagar, visibilidade atual e facilidade de abordagem. O motivo de cada ponto fica visível.</p></details>
+        <details><summary>E se o contato estiver errado?<span>+</span></summary><p>Você reporta o lead pelo painel e a Trovoeda volta ao saldo. Se o contato não serve, você não paga por ele.</p></details>
+        <details><summary>Preciso assinar um plano?<span>+</span></summary><p>Não. Os créditos avulsos não expiram. Os planos mensais existem para quem prospecta todos os dias e quer reduzir o custo por lead.</p></details>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="closing-glow" aria-hidden="true"></div>
+      <div class="closing-copy reveal">
+        <p class="eyebrow"><i></i> Cinco oportunidades por nossa conta</p>
+        <h2>Sua próxima lista de clientes já existe. <em>Falta alguém varrer.</em></h2>
+        <p>Crie sua conta sem cartão e descubra se o ProspecTHOR funciona para a sua cidade.</p>
+        <a class="button button-beam" href="/register">Começar com 5 leads grátis <span>↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-main">
+      <a class="brand" href="#" aria-label="ProspecTHOR, início"><span class="brand-mark" aria-hidden="true"><img src="/static/green/assets/thor-helmet-reference.png" alt=""></span><span>Prospec<b>THOR</b></span></a>
+      <p>Prospecção local para quem vende presença digital.</p>
+      <div><a href="#como">Produto</a><a href="#planos">Planos</a><a href="#faq">Dúvidas</a><a href="/login">Entrar</a></div>
+    </div>
+    <div class="footer-legal"><span>© 2026 ProspecTHOR</span><span>Dados públicos. Oportunidades reais.</span></div>
+  </footer>
+
+  <script src="/static/green/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<div class="ledger-wrap" tabindex="0" role="region" aria-label="Lista de leads com rolagem horizontal">
+<table class="suite-table live-leads"><thead><tr>
+  {% if admin %}<th><input type="checkbox" data-select-visible aria-label="Selecionar leads livres desta página"></th>{% endif %}
+  {% for label,key in [('Empresa','name'),('Cidade','city'),('Contato','contact'),('Score','score'),('Status','status')] %}
+  <th {% if paginate %}aria-sort="none"{% endif %}>{% if paginate %}<button type="button" class="live-sort" data-lead-sort="{{ key }}">{{ label }}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3 7 3-3 3 3M6 4v12m5-3 3 3 3-3m-3 3V4"/></svg></button>{% else %}{{ label }}{% endif %}</th>
+  {% endfor %}<th>Ações</th>{% if admin %}<th>Responsável</th>{% endif %}
+</tr></thead><tbody>
+{% for lead in rows %}
+<tr data-lead-row data-name="{{ lead.name or '' }}" data-contact="{{ lead.phone or '' }}" data-status="{{ lead_status(lead) }}" data-score="{{ lead.lead_score or 0 }}" data-favorite="{{ 'true' if lead.is_favorite else 'false' }}" data-city="{{ lead.city or '' }}" data-niche="{{ lead.niche or '' }}" data-owner="{{ lead.assigned_to or 'free' }}" class="{{ 'live-priority' if loop.index<=3 and (lead.lead_score or 0)>=80 else '' }}">
+  {% if admin %}<td><input type="checkbox" data-select-lead="{{ lead.id }}" aria-label="Selecionar {{ lead.name }}" {% if lead.assigned_to %}disabled title="Este lead já tem responsável"{% endif %}></td>{% endif %}
+  <td><a class="live-company" href="/lead/{{ lead.id }}"><i>{{ (lead.name or '?')[:2]|upper }}</i><span><strong>{{ lead.name }}</strong><small>{{ lead.niche or lead.category or 'Sem nicho' }}</small></span></a></td>
+  <td>{{ lead.city or '—' }}{% if lead.state %} · {{ lead.state }}{% endif %}</td>
+  <td>{% if contact_url(lead) %}<a class="live-contact" href="{{ contact_url(lead) }}" target="_blank" rel="noopener noreferrer">{{ svg('whatsapp' if wa_link(lead.phone) else 'external') }}{{ 'WhatsApp' if wa_link(lead.phone) else 'Instagram' }}</a>{% elif lead.phone %}<a href="{{ phone_url(lead.phone) }}">{{ lead.phone }}</a>{% else %}Sem contato{% endif %}</td>
+  <td><span class="score-pill">{{ lead.lead_score or 0 }}</span></td>
+  <td><span class="status-label">{{ status_labels.get(lead_status(lead),lead_status(lead)) }}</span></td>
+  <td><div class="form-actions"><button type="button" class="icon-button" data-favorite="{{ lead.id }}" aria-pressed="{{ 'true' if lead.is_favorite else 'false' }}" aria-label="Salvar {{ lead.name }}">{{ svg('bookmark') }}</button><a class="suite-link" href="/lead/{{ lead.id }}">Abrir ficha</a>{% if admin %}<button class="suite-link" type="button" data-api="/api/leads/{{ lead.id }}/delete" data-confirm="Apagar definitivamente {{ lead.name }} do banco? A exclusão afeta também o responsável atual e não devolve Trovoedas automaticamente.">Excluir</button>{% endif %}</div></td>
+  {% if admin %}<td><select class="suite-select" data-assign="{{ lead.id }}" aria-label="Responsável por {{ lead.name }}"><option value="">Livre</option>{% for user in users if user.role!='admin' and user.username!='patrao' %}<option value="{{ user.id }}" {% if user.id==lead.assigned_to %}selected{% endif %} {% if not user.active %}disabled{% endif %}>{{ user.label or user.username }}{{ ' (inativo)' if not user.active else '' }}</option>{% endfor %}</select></td>{% endif %}
+</tr>
+{% else %}<tr><td colspan="{{ 8 if admin else 6 }}"><div class="suite-empty"><h3>Nenhum lead por aqui ainda.</h3><p>{{ 'O pool ainda não tem leads disponíveis nesta consulta.' if admin else 'Os contatos atribuídos à sua conta aparecerão nesta lista.' }}</p><a class="primary-button" href="{{ '/bot' if admin else '/pedir' }}">{{ 'Ver operação' if admin else 'Pedir leads' }}</a></div></td></tr>{% endfor %}
+</tbody></table></div>
+<p data-list-empty class="live-filter-empty" hidden>Nenhum lead corresponde a esses filtros.</p>
+{% if paginate %}<nav class="live-pagination" data-lead-pager aria-label="Páginas da lista de leads"><button class="secondary-button" type="button" data-page-step="-1">Anterior</button><span data-page-label role="status"></span><button class="secondary-button" type="button" data-page-step="1">Próxima</button><label>Por página<select class="suite-select" data-page-size><option>20</option><option>50</option><option>100</option></select></label></nav>{% endif %}

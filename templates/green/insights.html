@@ -1,0 +1,25 @@
+<section class="chart-grid market-grid" id="insights">
+<article class="panel chart-panel allocation-card">
+  <div class="panel-heading"><div><h2>Status da carteira</h2><p>Distribuição dos {{ metrics.total }} leads {{ 'do período' if page=='reports' else 'da conta' }}</p></div></div>
+  <div class="allocation-layout"><div class="allocation-ring" aria-label="{{ metrics.total }} leads na carteira">
+    <svg viewBox="0 0 160 160" aria-hidden="true"><circle class="ring-track" cx="80" cy="80" r="56"/>
+    {% set ns=namespace(offset=0) %}{% for key,cls in [('novo','new'),('contactado','contacted'),('convertido','converted'),('descartado','discarded'),('reposto','discarded')] %}
+      {% set size=(metrics.counts.get(key,0)*352/(metrics.total or 1)) %}<circle class="donut-segment segment-{{ cls }}" cx="80" cy="80" r="56" pathLength="352" stroke-dasharray="{{ size }} {{ 352-size }}" stroke-dashoffset="{{ -ns.offset }}"/>{% set ns.offset=ns.offset+size %}
+    {% endfor %}</svg>
+    <div><strong>{{ metrics.total }}</strong><span>leads</span><small>{{ 'no período' if page=='reports' else 'na conta' }}</small></div>
+  </div><div class="allocation-list">
+    {% for key,cls in [('novo','new'),('contactado','contacted'),('convertido','converted'),('descartado','discarded'),('reposto','discarded')] %}<div><span><i class="{{ cls }}"></i><b>{{ status_labels[key] }}</b></span><strong>{{ metrics.counts.get(key,0) }}</strong><small>{{ (metrics.counts.get(key,0)*100/(metrics.total or 1))|round|int }}%</small></div>{% endfor %}
+  </div></div>
+</article>
+<article class="panel chart-panel trend-card">
+  <div class="panel-heading"><div><h2>Entradas na carteira</h2><p>{{ 'Leads recebidos hoje' if metrics.days==1 else 'Leads recebidos nos últimos '~metrics.days~' dias' }}</p></div><strong>{{ metrics.series|sum }}</strong></div>
+  <div class="trend-plot"><svg viewBox="0 0 564 210" role="img" aria-label="Entradas diárias: {{ metrics.series|join(', ') }}">
+    <defs><linearGradient id="liveArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfff69" stop-opacity=".18"/><stop offset="1" stop-color="#cfff69" stop-opacity="0"/></linearGradient></defs>
+    <g class="chart-grid-lines">{% for y in [32,72,112,152,178] %}<line x1="24" y1="{{ y }}" x2="540" y2="{{ y }}"/>{% endfor %}</g>
+    {% if metrics.area %}<path d="{{ metrics.area }}" fill="url(#liveArea)"/>{% endif %}<path d="{{ metrics.path }}" fill="none" stroke="#cfff69" stroke-width="2"/>
+    {% if metrics.days==1 %}<circle cx="{{ metrics.points[0][0] }}" cy="{{ metrics.points[0][1] }}" r="4" fill="#cfff69"/>{% endif %}
+    <g class="x-labels">{% for mark in metrics.axis_labels %}<text x="{{ mark.x }}" y="203" text-anchor="{{ 'middle' if metrics.days==1 else ('start' if loop.first else 'end' if loop.last else 'middle') }}">{{ mark.date }}</text>{% endfor %}</g>
+  </svg></div>
+  <div class="live-series-values">{% for mark in metrics.axis_labels %}<span>{{ mark.value }}</span>{% endfor %}</div>
+  <p class="field-help">Data de atribuição; quando ausente ou inválida, criação e coleta. Horário de Brasília.</p>
+</article></section>
